@@ -138,6 +138,7 @@ class Slideshow {
         ex = Executors.newFixedThreadPool(2);
         vex = Executors.newSingleThreadExecutor();
         bex = Executors.newSingleThreadExecutor();
+        pex = Executors.newSingleThreadExecutor();
         browseLoad = null;
         browseKey = null;
         DisplayMetrics dm = ctx.getResources().getDisplayMetrics();
@@ -170,6 +171,8 @@ class Slideshow {
         if (ex != null) ex.shutdownNow();
         if (vex != null) vex.shutdownNow();
         if (bex != null) bex.shutdownNow();
+        if (pex != null) pex.shutdownNow();
+        synchronized (bcache) { bcache.clear(); }
         releasePlayer();
         queue.clear();
         cur = null;
@@ -717,6 +720,54 @@ class Slideshow {
         prefetch();
     }
 
+    // caché pequeña de fotos ya preparadas para pasar al instante con ◀ ▶ en el visor
+    private final java.util.LinkedHashMap<String, Slide> bcache = new java.util.LinkedHashMap<String, Slide>();
+    private java.util.concurrent.ExecutorService pex;
+    private static final int BCACHE_MAX = 6;
+
+    private Slide bcacheGet(String k) {
+        synchronized (bcache) {
+            Slide v = bcache.remove(k);
+            if (v != null) bcache.put(k, v);
+            return v;
+        }
+    }
+
+    private void bcachePut(String k, Slide v) {
+        synchronized (bcache) {
+            bcache.remove(k);
+            bcache.put(k, v);
+            while (bcache.size() > BCACHE_MAX) {
+                java.util.Iterator<String> it = bcache.keySet().iterator();
+                it.next();
+                it.remove();
+            }
+        }
+    }
+
+    /** En el visor, deja listas la siguiente, la siguiente de esa y la anterior. */
+    private void browseAhead(Item from) {
+        int ci = indexOfKey(from.key());
+        if (ci < 0) return;
+        int[] offs = {1, -1, 2, 3};
+        for (int o : offs) {
+            int i = ci + o;
+            if (i < 0 || i >= items.size()) continue;
+            final Item it = items.get(i);
+            if (bcacheGet(it.key()) != null) continue;
+            final int sess = session;
+            if (pex == null) return;
+            pex.submit(new Runnable() {
+                public void run() {
+                    if (sess != session || !running) return;
+                    if (bcacheGet(it.key()) != null) return;
+                    Slide t = buildPhoto(it);
+                    if (t != null && sess == session) bcachePut(it.key(), t);
+                }
+            });
+        }
+    }
+
     private void browseStep(int dir) {
         if (items.isEmpty()) return;
         String k = browseKey != null ? browseKey : (cur != null ? cur.item.key() : cfg.startKey);
@@ -739,11 +790,17 @@ class Slideshow {
                 boolean vid = false;
                 try { vid = Prefs.video(ctx) && MetaFetcher.isVideo(ctx, it); } catch (Exception ignored) { }
                 final boolean isVid = vid;
-                final Slide p = buildPhoto(it);   // la foto, o la imagen fija del vídeo
+                Slide cached = bcacheGet(it.key());
+                if (cached == null) {
+                    cached = buildPhoto(it);   // la foto, o la imagen fija del vídeo
+                    if (cached != null) bcachePut(it.key(), cached);
+                }
+                final Slide p = cached;
                 h.post(new Runnable() {
                     public void run() {
                         if (!running || sess != session || myGen != gen) return;
                         if (p != null) display(p, !isVid);
+                        browseAhead(it);
                         if (!isVid) {
                             if (p == null) flash("No se pudo cargar esta foto", 2500);
                             return;
@@ -973,6 +1030,25 @@ class Slideshow {
         back.setAlpha(0f);
         back.bringToFront();
         overlaysToFront();
+        if (browse()) {
+            // paso manual por el álbum: cambio inmediato, sin fundido
+            back.setAlpha(1f);
+            front.setImageDrawable(null);
+            front.setAlpha(0f);
+            if (hideVideo) {
+                releasePlayer();
+                videoHolder.setAlpha(0f);
+                videoHolder.setVisibility(View.INVISIBLE);
+            }
+            info.animate().cancel();
+            set(tvAlbum, Prefs.showAlbum(ctx) ? s.album : null);
+            set(tvDate, Prefs.showDate(ctx) ? s.date : null);
+            set(tvPlace, Prefs.showPlace(ctx) && s.place != null ? "\u2316 " + s.place : null);
+            info.setVisibility(View.VISIBLE);
+            info.setAlpha(1f);
+            showingA = !showingA;
+            return;
+        }
         setInfo(s);
         if (hideVideo) releasePlayer();
         back.animate().alpha(1f).setDuration(hideVideo ? 800 : 1200)

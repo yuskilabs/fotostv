@@ -1,6 +1,6 @@
 {
-  "version": "5.5.1",
+  "version": "5.6",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 251078,
-  "notes": "- Vídeos verticales: el ajuste al tamaño de la pantalla se hace redimensionando la vista del vídeo (centrada) en vez de con una transformación, para que los lados queden negros y no verdes."
+  "notes": "- Paso manual instantáneo en el visor: al ir con ◀ ▶ por un álbum no hay fundido, y la app deja preparadas por detrás las siguientes fotos (y la anterior) para que aparezcan al momento. El pase de diapositivas conserva sus fundidos."
 }
