@@ -29,9 +29,28 @@ class WebConfigServer extends Thread {
         setDaemon(true);
     }
 
+    /** Intenta siempre el 8080 (la dirección no debe cambiar); solo si sigue ocupado tras varios intentos usa otro. */
     boolean open() {
-        for (int p = 8080; p < 8090; p++) {
-            try { server = new ServerSocket(p); port = p; return true; } catch (IOException ignored) { }
+        for (int t = 0; t < 8; t++) {
+            try {
+                ServerSocket ss = new ServerSocket();
+                ss.setReuseAddress(true);
+                ss.bind(new java.net.InetSocketAddress(8080));
+                server = ss;
+                port = 8080;
+                return true;
+            } catch (IOException ignored) { }
+            try { Thread.sleep(300); } catch (InterruptedException e) { break; }
+        }
+        for (int p = 8081; p < 8090; p++) {
+            try {
+                ServerSocket ss = new ServerSocket();
+                ss.setReuseAddress(true);
+                ss.bind(new java.net.InetSocketAddress(p));
+                server = ss;
+                port = p;
+                return true;
+            } catch (IOException ignored) { }
         }
         return false;
     }

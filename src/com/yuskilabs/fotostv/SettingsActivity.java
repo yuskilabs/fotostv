@@ -178,18 +178,30 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         super.onStart();
         refreshCache();
         silentCheck();
-        server = new WebConfigServer(this, this);
-        if (server.open()) {
-            server.start();
-            String ip = localIp();
-            webInfo.setText("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + server.port);
-        } else {
-            webInfo.setText("No se pudo abrir la web de configuración.");
-        }
+        final WebConfigServer srv = new WebConfigServer(this, this);
+        server = srv;
+        webInfo.setText("Abriendo la web de configuración…");
+        new Thread(new Runnable() {
+            public void run() {
+                final boolean ok = srv.open();
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        if (server != srv) { srv.close(); return; }   // ya se salió de la pantalla
+                        if (ok) {
+                            srv.start();
+                            String ip = localIp();
+                            webInfo.setText("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + srv.port);
+                        } else {
+                            webInfo.setText("No se pudo abrir la web de configuración.");
+                        }
+                    }
+                });
+            }
+        }).start();
     }
 
     @Override protected void onStop() {
-        if (server != null) server.close();
+        if (server != null) { server.close(); server = null; }
         super.onStop();
     }
 
@@ -383,9 +395,27 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     private void openDreamSettings() {
+        // 1) pantalla propia de Android TV («Salvapantallas» dentro de Preferencias del dispositivo)
+        String[][] tv = {
+            {"com.android.tv.settings", "com.android.tv.settings.device.display.daydream.DaydreamActivity"},
+            {"com.android.tv.settings", "com.android.tv.settings.device.display.daydream.DaydreamActivity$Settings"},
+        };
+        for (String[] c : tv) {
+            try {
+                Intent i = new Intent();
+                i.setClassName(c[0], c[1]);
+                startActivity(i);
+                return;
+            } catch (Throwable ignored) { }
+        }
+        // 2) ajuste estándar de Android
         try {
             startActivity(new Intent(Settings.ACTION_DREAM_SETTINGS));
-        } catch (Exception e) {
+            return;
+        } catch (Throwable ignored) { }
+        try {
+            startActivity(new Intent(Settings.ACTION_DISPLAY_SETTINGS));
+        } catch (Throwable e) {
             startActivity(new Intent(Settings.ACTION_SETTINGS));
         }
     }

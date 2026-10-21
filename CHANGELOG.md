@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.7
+- **La dirección de la web de configuración ya no cambia**: se usa siempre el puerto 8080 (antes saltaba al 8081 si el anterior tardaba en liberarse). Solo usa otro si sigue ocupado tras varios intentos.
+- **«Elegir salvapantallas»** abre directamente el ajuste de salvapantallas de Android TV (si el dispositivo no lo permite, abre el ajuste estándar de Android).
+
 ## 5.6.7
 - El pin del lugar es ahora un dibujo propio, blanco y sencillo, que no depende de la fuente del dispositivo.
 

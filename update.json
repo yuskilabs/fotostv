@@ -1,6 +1,6 @@
 {
-  "version": "5.6.7",
+  "version": "5.7",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 255255,
-  "notes": "- El pin del lugar es ahora un dibujo propio, blanco y sencillo, que no depende de la fuente del dispositivo."
+  "notes": "- La dirección de la web de configuración ya no cambia: se usa siempre el puerto 8080 (antes saltaba al 8081 si el anterior tardaba en liberarse). Solo usa otro si sigue ocupado tras varios intentos.\n- «Elegir salvapantallas» abre directamente el ajuste de salvapantallas de Android TV (si el dispositivo no lo permite, abre el ajuste estándar de Android)."
 }
