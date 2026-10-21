@@ -138,7 +138,7 @@ class Slideshow {
         ex = Executors.newFixedThreadPool(2);
         vex = Executors.newSingleThreadExecutor();
         bex = Executors.newSingleThreadExecutor();
-        pex = Executors.newFixedThreadPool(3);
+        pex = Executors.newFixedThreadPool(4);
         browseLoad = null;
         browseKey = null;
         DisplayMetrics dm = ctx.getResources().getDisplayMetrics();
@@ -568,7 +568,8 @@ class Slideshow {
     // fotos ya descargadas (comprimidas) para el visor: se guardan muchas porque ocupan poco
     private final java.util.LinkedHashMap<String, byte[]> bytesCache = new java.util.LinkedHashMap<String, byte[]>();
     private long bytesTotal;
-    private static final long BYTES_MAX = 40L * 1024 * 1024;
+    // un cuarto de la memoria de la app, entre 40 y 100 MB
+    private static final long BYTES_MAX = Math.max(40L << 20, Math.min(100L << 20, Runtime.getRuntime().maxMemory() / 4));
 
     private byte[] photoBytes(Item it) throws Exception {
         String k = it.key();
@@ -784,7 +785,9 @@ class Slideshow {
         if (ci < 0) return;
         final int sess = session;
         final String centre = from.key();
-        int[] offs = {1, -1, 2, 3, 4, -2, 5, 6, 7, 8, 9, 10, 11, 12};
+        int[] offs = new int[30];
+        offs[0] = 1; offs[1] = -1; offs[2] = 2;
+        for (int n = 3; n < 30; n++) offs[n] = n <= 5 ? n : (n == 6 ? -2 : (n == 7 ? -3 : n - 2));
         for (final int o : offs) {
             int i = ci + o;
             if (i < 0 || i >= items.size()) continue;
@@ -798,7 +801,7 @@ class Slideshow {
                     String now = browseKey;
                     if (now != null && !now.equals(centre)) {
                         int ni = indexOfKey(now);
-                        if (ni < 0 || Math.abs(ni - ci) > 1) return;
+                        if (ni < 0 || Math.abs(ni - ci) > 2) return;
                     }
                     try {
                         if (decode) {

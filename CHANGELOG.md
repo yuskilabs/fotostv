@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.6.2
+- Más precarga en el visor: hasta 27 fotos por delante y 3 por detrás, con 4 descargas a la vez. La memoria usada para esto se ajusta al dispositivo (entre 40 y 100 MB).
+
 ## 5.6.1
 - **Paso manual más rápido**: se precargan por detrás hasta 12 fotos por delante y 2 por detrás (descarga en paralelo), y las 3 más cercanas ya decodificadas.
 - Arreglo: el letrero «Cargando vídeo…» se quedaba en pantalla si se seguía pasando sin esperar; ahora desaparece al cambiar de foto.
