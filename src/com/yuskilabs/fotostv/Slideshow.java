@@ -53,6 +53,7 @@ class Slideshow {
     private ExecutorService ex, vex, bex;
     private java.util.concurrent.Future<?> browseLoad;
     private volatile String browseKey;
+    private volatile boolean detecting;
     private int session;
     private String loadingKey;
     private final List<Slide> queue = new ArrayList<Slide>();
@@ -788,6 +789,26 @@ class Slideshow {
         int[] offs = new int[30];
         offs[0] = 1; offs[1] = -1; offs[2] = 2;
         for (int n = 3; n < 30; n++) offs[n] = n <= 5 ? n : (n == 6 ? -2 : (n == 7 ? -3 : n - 2));
+        // 1) averiguar de golpe cuáles de las próximas son vídeos (si no, cada una pide su dato al pasar)
+        final java.util.List<Item> unknown = new java.util.ArrayList<Item>();
+        for (int o : offs) {
+            int i = ci + o;
+            if (i < 0 || i >= items.size()) continue;
+            Item it = items.get(i);
+            if (MetaFetcher.cachedVideo(ctx, it) == null) unknown.add(it);
+        }
+        if (!unknown.isEmpty() && !detecting) {
+            detecting = true;
+            pex.submit(new Runnable() {
+                public void run() {
+                    try {
+                        for (int a = 0; a < unknown.size(); a += 20)
+                            MetaFetcher.detectVideos(ctx, unknown.subList(a, Math.min(unknown.size(), a + 20)));
+                    } catch (Throwable ignored) { }
+                    detecting = false;
+                }
+            });
+        }
         for (final int o : offs) {
             int i = ci + o;
             if (i < 0 || i >= items.size()) continue;

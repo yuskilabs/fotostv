@@ -1,6 +1,6 @@
 {
-  "version": "5.6.2",
+  "version": "5.6.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 251078,
-  "notes": "- Más precarga en el visor: hasta 27 fotos por delante y 3 por detrás, con 4 descargas a la vez. La memoria usada para esto se ajusta al dispositivo (entre 40 y 100 MB)."
+  "notes": "- Visor: antes de pasar, la app averigua de golpe cuáles de las siguientes fotos son vídeos. En mitad de un álbum, donde el mosaico no lo había comprobado, cada foto hacía su propia consulta y se notaba más lenta."
 }

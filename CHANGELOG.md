@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.6.3
+- Visor: antes de pasar, la app averigua de golpe cuáles de las siguientes fotos son vídeos. En mitad de un álbum, donde el mosaico no lo había comprobado, cada foto hacía su propia consulta y se notaba más lenta.
+
 ## 5.6.2
 - Más precarga en el visor: hasta 27 fotos por delante y 3 por detrás, con 4 descargas a la vez. La memoria usada para esto se ajusta al dispositivo (entre 40 y 100 MB).
 
