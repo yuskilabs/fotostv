@@ -81,32 +81,6 @@ Todas las APK deben ir firmadas con la misma clave para que Android acepte la ac
 - Las portadas de los álbumes son fotos al azar: la portada elegida en Google no viaja en el enlace compartido.
 - Solo se ha probado en una Nvidia Shield TV; en Fire TV puede haber diferencias (salvapantallas, almacenamiento reducido).
 
-## Numeración de versiones
-
-- Cambio muy pequeño (arreglo): tercer número, p. ej. 5.4 → 5.4.1.
-- Cambio mediano (novedad): segundo número, p. ej. 5.4 → 5.5.
-- Cambio muy grande: primer número, p. ej. 5.x → 6.0.
-
-## Publicar una versión
-
-```
-./build.sh && python3 tools/publish.py
-git add -A && git commit -m "FotosTV x.y" && git push
-```
-
-`publish.py` copia la APK a `dist/` y genera `update.json` con las notas de esa versión tomadas de `CHANGELOG.md`.
-
-## Compilar
-
-No usa Gradle. Hace falta `aapt`, `javac`, `dalvik-exchange`, `zipalign`, `apksigner` y el `android.jar` de la API 23 (la ruta está al principio de `build.sh`).
-
-```
-./build.sh                 # genera FotosTV.apk
-KEYSTORE=mi.keystore KS_PASS=secreto ./build.sh   # con tu propia clave de firma
-```
-
-Si no existe la clave, el script crea una nueva. **La clave de firma no se sube al repositorio**: guárdala a buen recaudo, porque sin ella no se puede publicar una actualización que Android acepte sobre la versión instalada.
-
 ## Estructura
 
 ```
@@ -130,6 +104,8 @@ tools/publish.py             publica la APK en dist/ y genera update.json
 ## Historial de cambios
 
 Consulta [CHANGELOG.md](CHANGELOG.md).
+
+Notas de compilación y publicación: [DESARROLLO.md](DESARROLLO.md).
 
 ## Licencia
 

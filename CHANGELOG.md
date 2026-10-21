@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.6.6
+- El lugar de la foto se indica con un pin 📍 en vez del símbolo de GPS.
+
 ## 5.6.5
 - Visor: la precarga vuelve a empezar al instante (sin la espera de la 5.6.4, que empeoraba el paso muy rápido). Se mantiene la subida anticipada a la GPU y la prioridad baja.
 

@@ -1,6 +1,6 @@
 {
-  "version": "5.6.5",
+  "version": "5.6.6",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 251078,
-  "notes": "- Visor: la precarga vuelve a empezar al instante (sin la espera de la 5.6.4, que empeoraba el paso muy rápido). Se mantiene la subida anticipada a la GPU y la prioridad baja."
+  "notes": "- El lugar de la foto se indica con un pin 📍 en vez del símbolo de GPS."
 }

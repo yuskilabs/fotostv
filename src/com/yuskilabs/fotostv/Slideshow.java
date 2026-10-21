@@ -341,7 +341,7 @@ class Slideshow {
             public void run() {
                 set(tvAlbum, Prefs.showAlbum(ctx) ? s.album : null);
                 set(tvDate, Prefs.showDate(ctx) ? s.date : null);
-                set(tvPlace, Prefs.showPlace(ctx) && s.place != null ? "\u2316 " + s.place : null);
+                set(tvPlace, Prefs.showPlace(ctx) && s.place != null ? "\uD83D\uDCCD " + s.place : null);
                 info.setVisibility(View.VISIBLE);
                 info.setAlpha(0f);
                 info.animate().alpha(1f).setDuration(600).start();
@@ -1134,7 +1134,7 @@ class Slideshow {
             info.animate().cancel();
             set(tvAlbum, Prefs.showAlbum(ctx) ? s.album : null);
             set(tvDate, Prefs.showDate(ctx) ? s.date : null);
-            set(tvPlace, Prefs.showPlace(ctx) && s.place != null ? "\u2316 " + s.place : null);
+            set(tvPlace, Prefs.showPlace(ctx) && s.place != null ? "\uD83D\uDCCD " + s.place : null);
             info.setVisibility(View.VISIBLE);
             info.setAlpha(1f);
             showingA = !showingA;
