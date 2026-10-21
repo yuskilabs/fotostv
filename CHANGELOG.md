@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.4.3
+- Pie de la pantalla principal: ahora solo el logo seguido de «yuskilabs» en minúsculas, sin «Hecho por».
+
 ## 5.4.2
 - **Arreglo de «Buscar actualización»**: ya no se queda pidiendo el permiso de instalar aunque esté activado. Ahora se intenta instalar directamente y solo se abre el ajuste si Android bloquea la instalación.
 

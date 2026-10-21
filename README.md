@@ -136,5 +136,5 @@ Por ahora sin licencia: el código es visible, pero no se concede permiso para r
 
 <p align="center">
   <img src="assets/yuskilabs-logo.png" alt="Yuski Labs" width="120"><br>
-  Hecho por <b>Yuski Labs</b>
+  <b>yuskilabs</b>
 </p>

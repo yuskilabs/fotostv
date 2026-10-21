@@ -1,6 +1,6 @@
 {
-  "version": "5.4.2",
+  "version": "5.4.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 251078,
-  "notes": "- Arreglo de «Buscar actualización»: ya no se queda pidiendo el permiso de instalar aunque esté activado. Ahora se intenta instalar directamente y solo se abre el ajuste si Android bloquea la instalación."
+  "notes": "- Pie de la pantalla principal: ahora solo el logo seguido de «yuskilabs» en minúsculas, sin «Hecho por»."
 }

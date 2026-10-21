@@ -125,13 +125,13 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         foot.setOrientation(LinearLayout.HORIZONTAL);
         foot.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
         foot.setPadding(0, dp(8), dp(4), 0);
-        TextView by = text("Hecho por Yuski Labs", 13, 0xFF7C93AD);
-        by.setPadding(0, 0, dp(10), 0);
-        foot.addView(by);
         ImageView yl = new ImageView(this);
         yl.setImageResource(R.drawable.yuski_logo);
         yl.setAdjustViewBounds(true);
-        foot.addView(yl, new LinearLayout.LayoutParams(-2, dp(34)));
+        foot.addView(yl, new LinearLayout.LayoutParams(-2, dp(30)));
+        TextView by = text("yuskilabs", 15, 0xFF9FB3C8);
+        by.setPadding(dp(8), 0, 0, 0);
+        foot.addView(by);
         right.addView(foot);
         root.addView(right, new LinearLayout.LayoutParams(0, -1, 0.60f));
 
