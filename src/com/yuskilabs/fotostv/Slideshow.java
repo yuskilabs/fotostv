@@ -52,7 +52,7 @@ class Slideshow {
     private final Handler h = new Handler(Looper.getMainLooper());
     private ExecutorService ex, vex, bex;
     private java.util.concurrent.Future<?> browseLoad;
-    private String browseKey;
+    private volatile String browseKey;
     private int session;
     private String loadingKey;
     private final List<Slide> queue = new ArrayList<Slide>();
@@ -138,7 +138,7 @@ class Slideshow {
         ex = Executors.newFixedThreadPool(2);
         vex = Executors.newSingleThreadExecutor();
         bex = Executors.newSingleThreadExecutor();
-        pex = Executors.newSingleThreadExecutor();
+        pex = Executors.newFixedThreadPool(3);
         browseLoad = null;
         browseKey = null;
         DisplayMetrics dm = ctx.getResources().getDisplayMetrics();
@@ -173,6 +173,7 @@ class Slideshow {
         if (bex != null) bex.shutdownNow();
         if (pex != null) pex.shutdownNow();
         synchronized (bcache) { bcache.clear(); }
+        synchronized (bytesCache) { bytesCache.clear(); bytesTotal = 0; }
         releasePlayer();
         queue.clear();
         cur = null;
@@ -564,13 +565,44 @@ class Slideshow {
         }
     }
 
+    // fotos ya descargadas (comprimidas) para el visor: se guardan muchas porque ocupan poco
+    private final java.util.LinkedHashMap<String, byte[]> bytesCache = new java.util.LinkedHashMap<String, byte[]>();
+    private long bytesTotal;
+    private static final long BYTES_MAX = 40L * 1024 * 1024;
+
+    private byte[] photoBytes(Item it) throws Exception {
+        String k = it.key();
+        synchronized (bytesCache) {
+            byte[] d = bytesCache.remove(k);
+            if (d != null) { bytesCache.put(k, d); return d; }
+        }
+        byte[] d = AlbumFetcher.get(it.url + "=w" + w + "-h" + hgt);
+        synchronized (bytesCache) {
+            byte[] old = bytesCache.put(k, d);
+            if (old != null) bytesTotal -= old.length;
+            bytesTotal += d.length;
+            java.util.Iterator<java.util.Map.Entry<String, byte[]>> e = bytesCache.entrySet().iterator();
+            while (bytesTotal > BYTES_MAX && e.hasNext()) {
+                java.util.Map.Entry<String, byte[]> x = e.next();
+                if (x.getKey().equals(k)) continue;
+                bytesTotal -= x.getValue().length;
+                e.remove();
+            }
+        }
+        return d;
+    }
+
+    private boolean hasBytes(String k) {
+        synchronized (bytesCache) { return bytesCache.containsKey(k); }
+    }
+
     private Slide buildPhoto(Item it) {
         try {
             Slide t = new Slide();
             t.item = it;
             t.album = it.album;
             long date = it.ts;
-            byte[] data = AlbumFetcher.get(it.url + "=w" + w + "-h" + hgt);
+            byte[] data = photoBytes(it);
             t.bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
             if (t.bmp == null) return null;
             boolean wantPlace = Prefs.showPlace(ctx);
@@ -745,24 +777,38 @@ class Slideshow {
         }
     }
 
-    /** En el visor, deja listas la siguiente, la siguiente de esa y la anterior. */
+    /** En el visor, baja por detrás varias fotos por delante y alguna por detrás; las más cercanas ya decodificadas. */
     private void browseAhead(Item from) {
-        int ci = indexOfKey(from.key());
+        if (pex == null) return;
+        final int ci = indexOfKey(from.key());
         if (ci < 0) return;
-        int[] offs = {1, -1, 2, 3};
-        for (int o : offs) {
+        final int sess = session;
+        final String centre = from.key();
+        int[] offs = {1, -1, 2, 3, 4, -2, 5, 6, 7, 8, 9, 10, 11, 12};
+        for (final int o : offs) {
             int i = ci + o;
             if (i < 0 || i >= items.size()) continue;
             final Item it = items.get(i);
-            if (bcacheGet(it.key()) != null) continue;
-            final int sess = session;
-            if (pex == null) return;
+            final boolean decode = o == 1 || o == -1 || o == 2;
+            if (decode ? bcacheGet(it.key()) != null : hasBytes(it.key())) continue;
             pex.submit(new Runnable() {
                 public void run() {
                     if (sess != session || !running) return;
-                    if (bcacheGet(it.key()) != null) return;
-                    Slide t = buildPhoto(it);
-                    if (t != null && sess == session) bcachePut(it.key(), t);
+                    // si ya te has movido lejos, esta tarea no sirve
+                    String now = browseKey;
+                    if (now != null && !now.equals(centre)) {
+                        int ni = indexOfKey(now);
+                        if (ni < 0 || Math.abs(ni - ci) > 1) return;
+                    }
+                    try {
+                        if (decode) {
+                            if (bcacheGet(it.key()) != null) return;
+                            Slide t = buildPhoto(it);
+                            if (t != null && sess == session) bcachePut(it.key(), t);
+                        } else if (!hasBytes(it.key())) {
+                            photoBytes(it);
+                        }
+                    } catch (Throwable ignored) { }
                 }
             });
         }
@@ -785,6 +831,11 @@ class Slideshow {
         browseKey = it.key();
         h.removeCallbacks(tick);
         if (browseLoad != null) { browseLoad.cancel(true); browseLoad = null; }
+        if (loadingKey != null) {   // se salta un vídeo que aún estaba cargando: fuera el letrero
+            loadingKey = null;
+            h.removeCallbacks(hideToast);
+            hideToast.run();
+        }
         ex.submit(new Runnable() {
             public void run() {
                 boolean vid = false;

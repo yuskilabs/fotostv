@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.6.1
+- **Paso manual más rápido**: se precargan por detrás hasta 12 fotos por delante y 2 por detrás (descarga en paralelo), y las 3 más cercanas ya decodificadas.
+- Arreglo: el letrero «Cargando vídeo…» se quedaba en pantalla si se seguía pasando sin esperar; ahora desaparece al cambiar de foto.
+
 ## 5.6
 - **Paso manual instantáneo en el visor**: al ir con ◀ ▶ por un álbum no hay fundido, y la app deja preparadas por detrás las siguientes fotos (y la anterior) para que aparezcan al momento. El pase de diapositivas conserva sus fundidos.
 

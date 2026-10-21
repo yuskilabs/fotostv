@@ -1,6 +1,6 @@
 {
-  "version": "5.6",
+  "version": "5.6.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 251078,
-  "notes": "- Paso manual instantáneo en el visor: al ir con ◀ ▶ por un álbum no hay fundido, y la app deja preparadas por detrás las siguientes fotos (y la anterior) para que aparezcan al momento. El pase de diapositivas conserva sus fundidos."
+  "notes": "- Paso manual más rápido: se precargan por detrás hasta 12 fotos por delante y 2 por detrás (descarga en paralelo), y las 3 más cercanas ya decodificadas.\n- Arreglo: el letrero «Cargando vídeo…» se quedaba en pantalla si se seguía pasando sin esperar; ahora desaparece al cambiar de foto."
 }
