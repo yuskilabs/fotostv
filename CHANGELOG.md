@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.4.2
+- **Arreglo de «Buscar actualización»**: ya no se queda pidiendo el permiso de instalar aunque esté activado. Ahora se intenta instalar directamente y solo se abre el ajuste si Android bloquea la instalación.
+
 ## 5.4.1
 - **Arreglo del fotograma verde al abrir un vídeo desde el mosaico**: el vídeo no se muestra hasta que se ha pintado un fotograma real, y si el primero sale verde se espera al siguiente.
 

@@ -20,6 +20,9 @@ public class InstallReceiver extends BroadcastReceiver {
             }
         } else if (status == PackageInstaller.STATUS_SUCCESS) {
             Toast.makeText(c, "FotosTV actualizada.", Toast.LENGTH_LONG).show();
+        } else if (status == PackageInstaller.STATUS_FAILURE_BLOCKED) {
+            Toast.makeText(c, "Android bloquea la instalación: activa «Permitir de esta fuente» para FotosTV y vuelve a intentarlo.", Toast.LENGTH_LONG).show();
+            Updater.openInstallSettings(c);
         } else {
             String msg = i.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             Toast.makeText(c, "No se pudo instalar" + (msg != null ? ": " + msg : "."), Toast.LENGTH_LONG).show();
