@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.5.1
+- Vídeos verticales: el ajuste al tamaño de la pantalla se hace redimensionando la vista del vídeo (centrada) en vez de con una transformación, para que los lados queden negros y no verdes.
+
 ## 5.5
 - Tras actualizar desde «Buscar actualización», la app intenta **volver a abrirse sola**. Android puede impedirlo en algunos dispositivos; en ese caso hay que abrirla a mano.
 

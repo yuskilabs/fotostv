@@ -1126,13 +1126,21 @@ class Slideshow {
     }
 
     private void fitVideo(int vw, int vh) {
+        if (player != null) {
+            try {
+                int pw = player.getVideoWidth(), ph = player.getVideoHeight();
+                if (pw > 0 && ph > 0) { vw = pw; vh = ph; }
+            } catch (Throwable ignored) {}
+        }
         if (vw <= 0 || vh <= 0) return;
-        float viewW = videoView.getWidth(), viewH = videoView.getHeight();
-        if (viewW <= 0 || viewH <= 0) return;
-        float scale = Math.min(viewW / vw, viewH / vh);
-        Matrix m = new Matrix();
-        m.setScale(vw * scale / viewW, vh * scale / viewH, viewW / 2f, viewH / 2f);
-        videoView.setTransform(m);
+        float holderW = videoHolder.getWidth(), holderH = videoHolder.getHeight();
+        if (holderW <= 0 || holderH <= 0) return;
+        float scale = Math.min(holderW / vw, holderH / vh);
+        int w = Math.max(1, Math.round(vw * scale)), hh = Math.max(1, Math.round(vh * scale));
+        // se ajusta el tamaño de la propia vista (centrada) en vez de usar una matriz: el resto queda negro
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w, hh, Gravity.CENTER);
+        videoView.setTransform(null);
+        videoView.setLayoutParams(lp);
     }
 
     private void endVideo() {
