@@ -288,6 +288,14 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private void downloadUpdate(final Updater.Info info) {
         if (updating) return;
+        if (!Updater.canInstall(this)) {
+            // primera vez: lleva directamente al ajuste que permite a FotosTV instalar apps
+            verInfo.setText("Activa «Permitir de esta fuente» para FotosTV y vuelve a pulsar «Buscar actualización».");
+            android.widget.Toast.makeText(this, "Activa «Permitir de esta fuente» y vuelve a pulsar «Buscar actualización».",
+                    android.widget.Toast.LENGTH_LONG).show();
+            Updater.openInstallSettings(this);
+            return;
+        }
         updating = true;
         verInfo.setText("Descargando la versión " + info.version + "…");
         new Thread(new Runnable() {
@@ -311,8 +319,12 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                         if (apk == null) {
                             verInfo.setText("No se pudo descargar (" + error + ")");
                         } else {
-                            verInfo.setText("Descargada. Confirma la instalación en la pantalla que se abre.");
-                            Updater.install(SettingsActivity.this, apk);
+                            try {
+                                Updater.install(SettingsActivity.this, apk);
+                                verInfo.setText("Descargada. Confirma la instalación en la pantalla que se abre.");
+                            } catch (Exception e) {
+                                verInfo.setText("No se pudo iniciar la instalación (" + e.getMessage() + ")");
+                            }
                         }
                     }
                 });

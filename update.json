@@ -1,6 +1,6 @@
 {
-  "version": "5.3",
+  "version": "5.4",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 246982,
-  "notes": "- Logo de Yuski Labs en la pantalla principal («Hecho por Yuski Labs»)."
+  "size": 251078,
+  "notes": "- Arreglo de la actualización desde la app: ahora se instala con el instalador de paquetes de Android (PackageInstaller), sin pasar el fichero a otra app. En Android 11 el instalador no podía leerlo desde la carpeta de la app y fallaba con «Permission denied»; en algunos dispositivos lo abría un gestor de archivos.\n- La primera vez que se pulsa «Buscar actualización» sin permiso para instalar, la app abre directamente el ajuste de Android «Permitir de esta fuente» y avisa de que hay que volver a pulsar.\n- Muestra un aviso si la instalación falla, con el motivo."
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.yuskilabs.fotostv" android:versionCode="25" android:versionName="5.3">
+    package="com.yuskilabs.fotostv" android:versionCode="26" android:versionName="5.4">
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="23" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
@@ -22,6 +22,7 @@
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen" />
         <activity android:name=".PreviewActivity" android:exported="false"
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen" />
+        <receiver android:name=".InstallReceiver" android:exported="false" />
         <service android:name=".PhotoDream" android:exported="true"
             android:label="@string/dream_name"
             android:permission="android.permission.BIND_DREAM_SERVICE">
