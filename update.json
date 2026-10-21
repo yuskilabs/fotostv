@@ -1,6 +1,6 @@
 {
-  "version": "5.7",
+  "version": "5.7.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 255255,
-  "notes": "- La dirección de la web de configuración ya no cambia: se usa siempre el puerto 8080 (antes saltaba al 8081 si el anterior tardaba en liberarse). Solo usa otro si sigue ocupado tras varios intentos.\n- «Elegir salvapantallas» abre directamente el ajuste de salvapantallas de Android TV (si el dispositivo no lo permite, abre el ajuste estándar de Android)."
+  "notes": "- Mosaicos: el recuadro de selección tiene ahora esquinas rectas, a juego con las miniaturas cuadradas (antes sus esquinas redondeadas sobresalían)."
 }

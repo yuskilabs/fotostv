@@ -442,7 +442,7 @@ public class BrowserActivity extends Activity {
         GradientDrawable sel = new GradientDrawable();
         sel.setColor(0x22FFFFFF);
         sel.setStroke(Ui.dp(this, 4), Color.WHITE);
-        sel.setCornerRadius(Ui.dp(this, 6));
+        sel.setCornerRadius(0);   // miniaturas cuadradas: recuadro con esquinas rectas
         g.setSelector(sel);
         g.setDrawSelectorOnTop(true);
         return g;

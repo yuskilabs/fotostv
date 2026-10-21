@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.7.1
+- Mosaicos: el recuadro de selección tiene ahora esquinas rectas, a juego con las miniaturas cuadradas (antes sus esquinas redondeadas sobresalían).
+
 ## 5.7
 - **La dirección de la web de configuración ya no cambia**: se usa siempre el puerto 8080 (antes saltaba al 8081 si el anterior tardaba en liberarse). Solo usa otro si sigue ocupado tras varios intentos.
 - **«Elegir salvapantallas»** abre directamente el ajuste de salvapantallas de Android TV (si el dispositivo no lo permite, abre el ajuste estándar de Android).
