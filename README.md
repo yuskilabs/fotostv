@@ -78,6 +78,12 @@ Todas las APK deben ir firmadas con la misma clave para que Android acepte la ac
 - Las portadas de los álbumes son fotos al azar: la portada elegida en Google no viaja en el enlace compartido.
 - Solo se ha probado en una Nvidia Shield TV; en Fire TV puede haber diferencias (salvapantallas, almacenamiento reducido).
 
+## Numeración de versiones
+
+- Cambio muy pequeño (arreglo): tercer número, p. ej. 5.4 → 5.4.1.
+- Cambio mediano (novedad): segundo número, p. ej. 5.4 → 5.5.
+- Cambio muy grande: primer número, p. ej. 5.x → 6.0.
+
 ## Publicar una versión
 
 ```

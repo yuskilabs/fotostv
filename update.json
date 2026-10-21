@@ -1,6 +1,6 @@
 {
-  "version": "5.4",
+  "version": "5.4.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 251078,
-  "notes": "- Arreglo de la actualización desde la app: ahora se instala con el instalador de paquetes de Android (PackageInstaller), sin pasar el fichero a otra app. En Android 11 el instalador no podía leerlo desde la carpeta de la app y fallaba con «Permission denied»; en algunos dispositivos lo abría un gestor de archivos.\n- La primera vez que se pulsa «Buscar actualización» sin permiso para instalar, la app abre directamente el ajuste de Android «Permitir de esta fuente» y avisa de que hay que volver a pulsar.\n- Muestra un aviso si la instalación falla, con el motivo."
+  "notes": "- Arreglo del fotograma verde al abrir un vídeo desde el mosaico: el vídeo no se muestra hasta que se ha pintado un fotograma real, y si el primero sale verde se espera al siguiente."
 }

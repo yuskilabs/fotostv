@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.4.1
+- **Arreglo del fotograma verde al abrir un vídeo desde el mosaico**: el vídeo no se muestra hasta que se ha pintado un fotograma real, y si el primero sale verde se espera al siguiente.
+
 ## 5.4
 - **Arreglo de la actualización desde la app**: ahora se instala con el instalador de paquetes de Android (`PackageInstaller`), sin pasar el fichero a otra app. En Android 11 el instalador no podía leerlo desde la carpeta de la app y fallaba con «Permission denied»; en algunos dispositivos lo abría un gestor de archivos.
 - La primera vez que se pulsa «Buscar actualización» sin permiso para instalar, la app abre directamente el ajuste de Android «Permitir de esta fuente» y avisa de que hay que volver a pulsar.

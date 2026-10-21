@@ -60,7 +60,9 @@ class Slideshow {
     private ImageView a, b;
     private TextureView videoView;
     private FrameLayout videoHolder;
-    private boolean revealed;
+    private boolean revealed, frameRendered;
+    private int greenTries;
+    private long videoStart;
     private int vidW, vidH;
     private Surface surface;
     private MediaPlayer player;
@@ -1021,8 +1023,33 @@ class Slideshow {
     }
 
     /** Muestra el vídeo con fundido, solo cuando ya se ha pintado su primer fotograma. */
+    /** true si la vista de vídeo enseña un fotograma verde uniforme (el decodificador aún no ha pintado nada real). */
+    private boolean looksGreen() {
+        try {
+            Bitmap b = videoView.getBitmap(32, 18);
+            if (b == null) return false;
+            int green = 0, n = 0;
+            for (int y = 0; y < b.getHeight(); y++) {
+                for (int x = 0; x < b.getWidth(); x++) {
+                    int c = b.getPixel(x, y);
+                    int r = Color.red(c), g = Color.green(c), bl = Color.blue(c);
+                    n++;
+                    if (g > r + 40 && g > bl + 40) green++;
+                }
+            }
+            b.recycle();
+            return n > 0 && green * 100 / n >= 90;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     private void revealVideo() {
         if (revealed || !running || !playingVideo || cur == null || !cur.video) return;
+        long waited = System.currentTimeMillis() - videoStart;
+        // no se enseña hasta que el reproductor ha pintado un fotograma real (y no el verde inicial)
+        if (!frameRendered && waited < 6000) { h.postDelayed(revealLater, 250); return; }
+        if (looksGreen() && greenTries++ < 25) { h.postDelayed(revealLater, 150); return; }
         revealed = true;
         fitVideo(vidW, vidH);
         videoHolder.bringToFront();
@@ -1035,6 +1062,9 @@ class Slideshow {
     private void playVideo(final Slide s) {
         playingVideo = true;
         revealed = false;
+        frameRendered = false;
+        greenTries = 0;
+        videoStart = System.currentTimeMillis();
         h.removeCallbacks(revealLater);
         videoHolder.animate().cancel();
         if (videoHolder.getVisibility() == View.VISIBLE && videoHolder.getAlpha() > 0.5f) freezeVideoFrame();
@@ -1062,7 +1092,9 @@ class Slideshow {
                 public boolean onInfo(MediaPlayer p, int what, int extra) {
                     if (p == player && what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
                         if (paused && !manual()) { try { p.pause(); } catch (Exception ignored) { } }
-                        h.postDelayed(revealLater, 150);   // da tiempo a que la vista pinte ese fotograma
+                        frameRendered = true;
+                        h.removeCallbacks(revealLater);
+                        h.postDelayed(revealLater, 250);   // da tiempo a que la vista pinte ese fotograma
                     }
                     return false;
                 }
