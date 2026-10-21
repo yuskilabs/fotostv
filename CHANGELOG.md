@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.6.5
+- Visor: la precarga vuelve a empezar al instante (sin la espera de la 5.6.4, que empeoraba el paso muy rápido). Se mantiene la subida anticipada a la GPU y la prioridad baja.
+
 ## 5.6.4
 - Visor: quitado el pequeño tirón al pasar hacia delante. Las fotos precargadas se suben a la GPU por detrás, la precarga empieza un instante después de pintar la foto y trabaja con prioridad baja para no competir con la pantalla.
 

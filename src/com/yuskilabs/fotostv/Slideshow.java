@@ -891,9 +891,7 @@ class Slideshow {
                     public void run() {
                         if (!running || sess != session || myGen != gen) return;
                         if (p != null) display(p, !isVid);
-                        h.removeCallbacks(aheadRun);
-                        aheadItem = it;
-                        h.postDelayed(aheadRun, 350);   // primero se pinta la foto; la precarga después, sin estorbar
+                        browseAhead(it);
                         if (!isVid) {
                             if (p == null) flash("No se pudo cargar esta foto", 2500);
                             return;

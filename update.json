@@ -1,6 +1,6 @@
 {
-  "version": "5.6.4",
+  "version": "5.6.5",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 251078,
-  "notes": "- Visor: quitado el pequeño tirón al pasar hacia delante. Las fotos precargadas se suben a la GPU por detrás, la precarga empieza un instante después de pintar la foto y trabaja con prioridad baja para no competir con la pantalla."
+  "notes": "- Visor: la precarga vuelve a empezar al instante (sin la espera de la 5.6.4, que empeoraba el paso muy rápido). Se mantiene la subida anticipada a la GPU y la prioridad baja."
 }
