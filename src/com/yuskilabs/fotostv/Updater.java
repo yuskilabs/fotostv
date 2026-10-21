@@ -120,6 +120,7 @@ class Updater {
 
     /** Instala con PackageInstaller: no hace falta que el sistema (ni un gestor de archivos) abra el fichero. */
     static void install(Context c, File apk) throws Exception {
+        c.getSharedPreferences("update", Context.MODE_PRIVATE).edit().putLong("pending", System.currentTimeMillis()).commit();
         PackageInstaller pi = c.getPackageManager().getPackageInstaller();
         PackageInstaller.SessionParams p = new PackageInstaller.SessionParams(
                 PackageInstaller.SessionParams.MODE_FULL_INSTALL);
