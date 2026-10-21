@@ -4,3 +4,4 @@ build/
 *.keystore
 *.jks
 .DS_Store
+!dist/FotosTV.apk

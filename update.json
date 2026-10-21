@@ -1,0 +1,6 @@
+{
+  "version": "5.2",
+  "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
+  "size": 238708,
+  "notes": "- Botón «Buscar actualización» en la pantalla principal: consulta la última versión publicada en este repositorio (update.json), muestra las novedades y, si quieres, descarga la APK y abre el instalador de Android.\n- La pantalla principal muestra la versión instalada y avisa en silencio cuando hay una nueva.\n- Se añade el permiso de instalación de paquetes (necesario para actualizar desde la propia app).\n- Botones de la pantalla principal algo más compactos para que quepan los seis."
+}

@@ -9,13 +9,13 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** Busca la última versión publicada en GitHub (Releases) y la descarga/instala. */
+/** Busca la última versión publicada en el repositorio de GitHub y la descarga/instala. */
 class Updater {
     static final String REPO = "yuskilabs/fotostv";
-    private static final String API = "https://api.github.com/repos/" + REPO + "/releases/latest";
+    /** Fichero del repositorio con la última versión publicada (lo genera tools/publish.py). */
+    private static final String INFO = "https://raw.githubusercontent.com/" + REPO + "/main/update.json";
 
     static class Info {
         String version = "", notes = "", apkUrl = "";
@@ -32,13 +32,13 @@ class Updater {
         }
     }
 
-    /** Último release con APK, o null si no hay ninguno publicado. */
+    /** Última versión publicada, o null si todavía no hay ninguna. */
     static Info latest() throws Exception {
-        HttpURLConnection c = (HttpURLConnection) new URL(API).openConnection();
+        HttpURLConnection c = (HttpURLConnection) new URL(INFO + "?t=" + System.currentTimeMillis()).openConnection();
         c.setConnectTimeout(15000);
         c.setReadTimeout(20000);
+        c.setUseCaches(false);
         c.setRequestProperty("User-Agent", "FotosTV");
-        c.setRequestProperty("Accept", "application/vnd.github+json");
         try {
             if (c.getResponseCode() == 404) return null;
             if (c.getResponseCode() != 200) throw new Exception("GitHub respondió " + c.getResponseCode());
@@ -49,17 +49,10 @@ class Updater {
             while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
             JSONObject o = new JSONObject(bo.toString("UTF-8"));
             Info i = new Info();
-            i.version = o.optString("tag_name", "").replaceFirst("^[vV]", "");
-            i.notes = o.optString("body", "");
-            JSONArray as = o.optJSONArray("assets");
-            if (as != null) for (int k = 0; k < as.length(); k++) {
-                JSONObject a = as.getJSONObject(k);
-                if (a.optString("name", "").toLowerCase().endsWith(".apk")) {
-                    i.apkUrl = a.optString("browser_download_url", "");
-                    i.size = a.optLong("size", 0);
-                    break;
-                }
-            }
+            i.version = o.optString("version", "");
+            i.notes = o.optString("notes", "");
+            i.apkUrl = o.optString("apk", "");
+            i.size = o.optLong("size", 0);
             return i.apkUrl.length() == 0 || i.version.length() == 0 ? null : i;
         } finally {
             c.disconnect();

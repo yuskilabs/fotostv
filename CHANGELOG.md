@@ -4,7 +4,7 @@ Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## 5.2
-- **Botón «Buscar actualización»** en la pantalla principal: consulta el último *release* de este repositorio, muestra las novedades y, si quieres, descarga la APK y abre el instalador de Android.
+- **Botón «Buscar actualización»** en la pantalla principal: consulta la última versión publicada en este repositorio (`update.json`), muestra las novedades y, si quieres, descarga la APK y abre el instalador de Android.
 - La pantalla principal muestra la versión instalada y avisa en silencio cuando hay una nueva.
 - Se añade el permiso de instalación de paquetes (necesario para actualizar desde la propia app).
 - Botones de la pantalla principal algo más compactos para que quepan los seis.

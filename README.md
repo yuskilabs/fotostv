@@ -20,7 +20,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 
 ## Instalación
 
-1. Descarga la última `FotosTV.apk` desde [Releases](https://github.com/yuskilabs/fotostv/releases/latest).
+1. Descarga la última [`FotosTV.apk`](https://github.com/yuskilabs/fotostv/raw/main/dist/FotosTV.apk) (la versión actual está en [`update.json`](update.json)).
 2. Instálala en la tele (por ejemplo con *Send Files to TV*, una memoria USB o `adb install FotosTV.apk`).
 3. Abre **FotosTV**.
 
@@ -62,7 +62,7 @@ En la página de ajustes del móvil, «Exportar» genera un texto con álbumes, 
 
 ### Actualizar
 
-Pantalla principal → **Buscar actualización**. Compara con el último release de este repositorio, muestra las novedades y descarga la APK. La primera vez, Android pedirá permitir a FotosTV «instalar apps desconocidas».
+Pantalla principal → **Buscar actualización**. Compara con la última versión publicada en este repositorio, muestra las novedades y descarga la APK. La primera vez, Android pedirá permitir a FotosTV «instalar apps desconocidas».
 Todas las APK deben ir firmadas con la misma clave para que Android acepte la actualización encima de la instalada.
 
 ## Privacidad
@@ -77,6 +77,15 @@ Todas las APK deben ir firmadas con la misma clave para que Android acepte la ac
 - Depende del formato de las páginas públicas de Google Fotos (sin API oficial).
 - Las portadas de los álbumes son fotos al azar: la portada elegida en Google no viaja en el enlace compartido.
 - Solo se ha probado en una Nvidia Shield TV; en Fire TV puede haber diferencias (salvapantallas, almacenamiento reducido).
+
+## Publicar una versión
+
+```
+./build.sh && python3 tools/publish.py
+git add -A && git commit -m "FotosTV x.y" && git push
+```
+
+`publish.py` copia la APK a `dist/` y genera `update.json` con las notas de esa versión tomadas de `CHANGELOG.md`.
 
 ## Compilar
 
@@ -105,6 +114,7 @@ src/com/yuskilabs/fotostv/
   Thumbs                     caché de miniaturas (memoria y disco)
   WebConfigServer            página de ajustes servida desde la tele
   Updater                    búsqueda e instalación de actualizaciones
+tools/publish.py             publica la APK en dist/ y genera update.json
   Prefs, Item, Session, Ui   utilidades
 ```
 
