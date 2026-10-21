@@ -121,6 +121,18 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         LinearLayout.LayoutParams c2p = new LinearLayout.LayoutParams(-1, 0, 1f);
         c2p.setMargins(0, dp(14), 0, 0);
         right.addView(c2, c2p);
+        LinearLayout foot = new LinearLayout(this);
+        foot.setOrientation(LinearLayout.HORIZONTAL);
+        foot.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
+        foot.setPadding(0, dp(8), dp(4), 0);
+        TextView by = text("Hecho por Yuski Labs", 13, 0xFF7C93AD);
+        by.setPadding(0, 0, dp(10), 0);
+        foot.addView(by);
+        ImageView yl = new ImageView(this);
+        yl.setImageResource(R.drawable.yuski_logo);
+        yl.setAdjustViewBounds(true);
+        foot.addView(yl, new LinearLayout.LayoutParams(-2, dp(34)));
+        right.addView(foot);
         root.addView(right, new LinearLayout.LayoutParams(0, -1, 0.60f));
 
         setContentView(root);
