@@ -1,6 +1,6 @@
 {
-  "version": "5.6.6",
+  "version": "5.6.7",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 251078,
-  "notes": "- El lugar de la foto se indica con un pin 📍 en vez del símbolo de GPS."
+  "size": 255255,
+  "notes": "- El pin del lugar es ahora un dibujo propio, blanco y sencillo, que no depende de la fuente del dispositivo."
 }

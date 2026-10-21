@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.6.7
+- El pin del lugar es ahora un dibujo propio, blanco y sencillo, que no depende de la fuente del dispositivo.
+
 ## 5.6.6
 - El lugar de la foto se indica con un pin 📍 en vez del símbolo de GPS.
 

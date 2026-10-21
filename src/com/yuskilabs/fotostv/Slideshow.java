@@ -341,7 +341,7 @@ class Slideshow {
             public void run() {
                 set(tvAlbum, Prefs.showAlbum(ctx) ? s.album : null);
                 set(tvDate, Prefs.showDate(ctx) ? s.date : null);
-                set(tvPlace, Prefs.showPlace(ctx) && s.place != null ? "\uD83D\uDCCD " + s.place : null);
+                setPlace(Prefs.showPlace(ctx) ? s.place : null);
                 info.setVisibility(View.VISIBLE);
                 info.setAlpha(0f);
                 info.animate().alpha(1f).setDuration(600).start();
@@ -350,6 +350,21 @@ class Slideshow {
         if (info.getVisibility() == View.VISIBLE && info.getAlpha() > 0.05f)
             info.animate().alpha(0f).setDuration(300).withEndAction(apply).start();
         else apply.run();
+    }
+
+    /** Lugar con un pin blanco delante (dibujo propio, no depende de la fuente del dispositivo). */
+    private void setPlace(String place) {
+        if (place == null || place.length() == 0) { tvPlace.setVisibility(View.GONE); return; }
+        tvPlace.setText(place);
+        try {
+            android.graphics.drawable.Drawable d = ctx.getResources().getDrawable(R.drawable.pin_white);
+            int hh = Math.round(tvPlace.getTextSize() * 1.05f);
+            int ww = Math.round(hh * d.getIntrinsicWidth() / (float) d.getIntrinsicHeight());
+            d.setBounds(0, 0, ww, hh);
+            tvPlace.setCompoundDrawables(d, null, null, null);
+            tvPlace.setCompoundDrawablePadding(Math.round(hh * 0.35f));
+        } catch (Throwable ignored) { }
+        tvPlace.setVisibility(View.VISIBLE);
     }
 
     private static void set(TextView t, String s) {
@@ -1134,7 +1149,7 @@ class Slideshow {
             info.animate().cancel();
             set(tvAlbum, Prefs.showAlbum(ctx) ? s.album : null);
             set(tvDate, Prefs.showDate(ctx) ? s.date : null);
-            set(tvPlace, Prefs.showPlace(ctx) && s.place != null ? "\uD83D\uDCCD " + s.place : null);
+            setPlace(Prefs.showPlace(ctx) ? s.place : null);
             info.setVisibility(View.VISIBLE);
             info.setAlpha(1f);
             showingA = !showingA;
