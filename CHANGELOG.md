@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.6.4
+- Visor: quitado el pequeño tirón al pasar hacia delante. Las fotos precargadas se suben a la GPU por detrás, la precarga empieza un instante después de pintar la foto y trabaja con prioridad baja para no competir con la pantalla.
+
 ## 5.6.3
 - Visor: antes de pasar, la app averigua de golpe cuáles de las siguientes fotos son vídeos. En mitad de un álbum, donde el mosaico no lo había comprobado, cada foto hacía su propia consulta y se notaba más lenta.
 

@@ -1,6 +1,6 @@
 {
-  "version": "5.6.3",
+  "version": "5.6.4",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 251078,
-  "notes": "- Visor: antes de pasar, la app averigua de golpe cuáles de las siguientes fotos son vídeos. En mitad de un álbum, donde el mosaico no lo había comprobado, cada foto hacía su propia consulta y se notaba más lenta."
+  "notes": "- Visor: quitado el pequeño tirón al pasar hacia delante. Las fotos precargadas se suben a la GPU por detrás, la precarga empieza un instante después de pintar la foto y trabaja con prioridad baja para no competir con la pantalla."
 }

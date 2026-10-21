@@ -54,6 +54,10 @@ class Slideshow {
     private java.util.concurrent.Future<?> browseLoad;
     private volatile String browseKey;
     private volatile boolean detecting;
+    private Item aheadItem;
+    private final Runnable aheadRun = new Runnable() {
+        public void run() { if (running && aheadItem != null) browseAhead(aheadItem); }
+    };
     private int session;
     private String loadingKey;
     private final List<Slide> queue = new ArrayList<Slide>();
@@ -139,7 +143,16 @@ class Slideshow {
         ex = Executors.newFixedThreadPool(2);
         vex = Executors.newSingleThreadExecutor();
         bex = Executors.newSingleThreadExecutor();
-        pex = Executors.newFixedThreadPool(4);
+        pex = Executors.newFixedThreadPool(4, new java.util.concurrent.ThreadFactory() {
+            public Thread newThread(final Runnable r) {
+                return new Thread(new Runnable() {
+                    public void run() {
+                        try { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND); } catch (Throwable ignored) { }
+                        r.run();
+                    }
+                });
+            }
+        });
         browseLoad = null;
         browseKey = null;
         DisplayMetrics dm = ctx.getResources().getDisplayMetrics();
@@ -828,7 +841,10 @@ class Slideshow {
                         if (decode) {
                             if (bcacheGet(it.key()) != null) return;
                             Slide t = buildPhoto(it);
-                            if (t != null && sess == session) bcachePut(it.key(), t);
+                            if (t != null && sess == session) {
+                                try { t.bmp.prepareToDraw(); } catch (Throwable ignored) { }   // sube la imagen a la GPU ya
+                                bcachePut(it.key(), t);
+                            }
                         } else if (!hasBytes(it.key())) {
                             photoBytes(it);
                         }
@@ -875,7 +891,9 @@ class Slideshow {
                     public void run() {
                         if (!running || sess != session || myGen != gen) return;
                         if (p != null) display(p, !isVid);
-                        browseAhead(it);
+                        h.removeCallbacks(aheadRun);
+                        aheadItem = it;
+                        h.postDelayed(aheadRun, 350);   // primero se pinta la foto; la precarga después, sin estorbar
                         if (!isVid) {
                             if (p == null) flash("No se pudo cargar esta foto", 2500);
                             return;
