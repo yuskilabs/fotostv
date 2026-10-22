@@ -243,6 +243,13 @@ class Slideshow {
         tvAlbum.setAlpha(0.8f);
         tvDate = text(28, Gravity.START);
         tvPlace = text(21, Gravity.START);
+        // una sola línea cada una: así una fecha larga nunca se parte ni se corta («18 de diciembre de»)
+        TextView[] lines = {tvAlbum, tvDate, tvPlace};
+        for (TextView t : lines) {
+            t.setSingleLine(true);
+            t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            t.setHorizontallyScrolling(false);
+        }
         info.addView(tvAlbum);
         info.addView(tvDate);
         info.addView(tvPlace);
@@ -343,6 +350,7 @@ class Slideshow {
                 set(tvDate, Prefs.showDate(ctx) ? s.date : null);
                 setPlace(Prefs.showPlace(ctx) ? s.place : null);
                 info.setVisibility(View.VISIBLE);
+                info.requestLayout();
                 info.setAlpha(0f);
                 info.animate().alpha(1f).setDuration(600).start();
             }
@@ -1151,6 +1159,7 @@ class Slideshow {
             set(tvDate, Prefs.showDate(ctx) ? s.date : null);
             setPlace(Prefs.showPlace(ctx) ? s.place : null);
             info.setVisibility(View.VISIBLE);
+            info.requestLayout();
             info.setAlpha(1f);
             showingA = !showingA;
             return;
