@@ -15,7 +15,7 @@ import android.view.accessibility.AccessibilityEvent;
  * Solo observa que se pulsa una tecla; no lee el contenido de la pantalla ni guarda nada.
  */
 public class IdleService extends AccessibilityService {
-    private static final long CHECK_MS = 15000;
+    private static final long CHECK_MS = 5000;
     private final Handler h = new Handler();
     private volatile long last;
     private volatile boolean showing;
@@ -65,6 +65,7 @@ public class IdleService extends AccessibilityService {
         last = System.currentTimeMillis();
         try {
             Intent i = new Intent(this, PreviewActivity.class);
+            i.putExtra("auto", true);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(i);
         } catch (Throwable t) {

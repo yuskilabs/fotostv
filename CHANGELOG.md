@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.8.1
+- Inicio automático más pulido: entra con un fundido suave y sale con otro, y comprueba la inactividad cada 5 segundos (antes 15), así que salta casi en el minuto exacto.
+
 ## 5.8
 - **Inicio automático (experimental)**, pensado para la Fire TV con FireOS 8, donde Amazon no deja usar salvapantallas de terceros. Un servicio de accesibilidad detecta que no se usa el mando durante unos minutos (y que no hay nada sonando) y abre el pase de fotos. Se elige el tiempo con el nuevo botón «Inicio automático» de la pantalla principal. Hay que activarlo una vez por ADB (ver README).
 

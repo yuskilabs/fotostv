@@ -12,9 +12,20 @@ public class PreviewActivity extends Activity {
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.BLACK));
         FrameLayout root = new FrameLayout(this);
         setContentView(root);
+        if (getIntent().getBooleanExtra("auto", false)) {
+            // entrada suave cuando se abre solo por inactividad
+            root.setAlpha(0f);
+            root.animate().alpha(1f).setDuration(1800).start();
+        }
         show = new Slideshow(this, root, true);
+    }
+
+    @Override public void finish() {
+        super.finish();
+        overridePendingTransition(0, android.R.anim.fade_out);
     }
 
     @Override protected void onResume() { super.onResume(); show.start(); }
