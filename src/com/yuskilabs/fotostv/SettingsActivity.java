@@ -155,6 +155,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         setContentView(root);
         browse.requestFocus();
         updateStatus(null);
+        if (Prefs.idleMin(this) > 0 && !idleServiceOn()) reenableIdleService();
     }
 
     private Button side(String label, View.OnClickListener l) {
@@ -450,13 +451,33 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         }
     }
 
+    /**
+     * Android desactiva el servicio al actualizar la app. Si se concedió una vez el permiso por ADB
+     * (WRITE_SECURE_SETTINGS), la propia app lo vuelve a activar.
+     */
+    private boolean reenableIdleService() {
+        try {
+            if (checkCallingOrSelfPermission("android.permission.WRITE_SECURE_SETTINGS")
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) return false;
+            String me = getPackageName() + "/" + getPackageName() + ".IdleService";
+            String cur = Settings.Secure.getString(getContentResolver(), "enabled_accessibility_services");
+            if (cur != null && cur.contains(me)) return true;
+            String now = cur == null || cur.length() == 0 ? me : cur + ":" + me;
+            Settings.Secure.putString(getContentResolver(), "enabled_accessibility_services", now);
+            Settings.Secure.putInt(getContentResolver(), "accessibility_enabled", 1);
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     /** Para equipos sin salvapantallas estándar (Fire TV con FireOS 8): abre el pase tras unos minutos sin tocar el mando. */
     private void cycleIdle() {
         int cur = Prefs.idleMin(this), next = IDLE_OPTS[0];
         for (int i = 0; i < IDLE_OPTS.length; i++) if (IDLE_OPTS[i] == cur) next = IDLE_OPTS[(i + 1) % IDLE_OPTS.length];
         Prefs.sp(this).edit().putInt("idleMin", next).commit();
         idleBtn.setText(idleLabel());
-        if (next > 0 && !idleServiceOn()) {
+        if (next > 0 && !idleServiceOn() && !reenableIdleService()) {
             android.widget.Toast.makeText(this, "Falta activar el servicio por ADB (mira el léeme de GitHub).", android.widget.Toast.LENGTH_LONG).show();
         }
     }

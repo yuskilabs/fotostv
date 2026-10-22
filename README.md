@@ -35,6 +35,12 @@ adb shell settings put secure accessibility_enabled 1
 adb shell appops set com.yuskilabs.fotostv SYSTEM_ALERT_WINDOW allow
 ```
 
+Opcional, para que sobreviva a las actualizaciones de la app (Android desactiva el servicio al actualizar): concede una sola vez este permiso y FotosTV volverá a activar el servicio sola al abrirse.
+
+```
+adb shell pm grant com.yuskilabs.fotostv android.permission.WRITE_SECURE_SETTINGS
+```
+
 Después, en la pantalla principal, el botón **Inicio automático** elige el tiempo (2, 5, 10, 15 o 30 minutos). El tiempo de FotosTV debe ser menor que el del reposo de la Fire TV. El servicio solo observa que se pulsa una tecla: no lee la pantalla ni guarda nada. Para quitarlo: `adb shell settings put secure enabled_accessibility_services ""`.
 
 ### Elegir FotosTV como salvapantallas

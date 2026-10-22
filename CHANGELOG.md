@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.9.2
+- Inicio automático: Android desactiva el servicio al actualizar la app. Si se concede una vez el permiso `WRITE_SECURE_SETTINGS` por ADB, la propia app vuelve a activarlo sola al abrirse (ver README).
+
 ## 5.9.1
 - Pantalla principal: los siete botones de la izquierda caben ahora sin desplazarse (logo, título y botones algo más compactos).
 - La lista «Tus álbumes» se puede recorrer con el mando: pulsa ▶ para entrar en ella (se marca con un recuadro azul) y ▲ ▼ para bajar. Con más de 3 álbumes muestra arriba el total de álbumes y elementos.
