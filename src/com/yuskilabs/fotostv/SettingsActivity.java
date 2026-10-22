@@ -218,24 +218,35 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         });
     }
 
-    private void updateStatus(String msg) {
-        StringBuilder sb = new StringBuilder();
-        if (msg != null) sb.append(msg).append("\n");
-        List<Prefs.Album> albums = Prefs.albums(this);
-        if (albums.isEmpty()) sb.append("Todavía no hay ningún álbum.");
-        boolean all = "all".equals(Prefs.albumMode(this));
-        if (!albums.isEmpty())
-            sb.append(all ? "Se muestran todos los álbumes:\n" : "Se muestran solo los álbumes marcados:\n");
-        for (Prefs.Album al : albums) {
-            AlbumFetcher.AlbumData d = Prefs.albumCache(this, al.url);
-            String name = al.name.length() > 0 ? al.name : (d != null && d.title.length() > 0 ? d.title : al.url);
-            boolean on = all || al.show;
-            sb.append(on ? "\u25CF " : "\u25CB ").append(name);
-            if (d != null) sb.append("  \u2014  ").append(d.items.size()).append(" elementos");
-            if (!on) sb.append("   (oculto)");
-            sb.append("\n");
-        }
-        status.setText(sb.toString().trim());
+    private int statusSeq;
+
+    private void updateStatus(final String msg) {
+        final int seq = ++statusSeq;
+        new Thread(new Runnable() {
+            public void run() {
+                StringBuilder sb = new StringBuilder();
+                if (msg != null) sb.append(msg).append("\n");
+                List<Prefs.Album> albums = Prefs.albums(SettingsActivity.this);
+                if (albums.isEmpty()) sb.append("Todavía no hay ningún álbum.");
+                boolean all = "all".equals(Prefs.albumMode(SettingsActivity.this));
+                if (!albums.isEmpty())
+                    sb.append(all ? "Se muestran todos los álbumes:\n" : "Se muestran solo los álbumes marcados:\n");
+                for (Prefs.Album al : albums) {
+                    String[] info = Prefs.albumInfo(SettingsActivity.this, al.url);
+                    String t = info != null ? info[0] : "";
+                    String name = al.name.length() > 0 ? al.name : (t.length() > 0 ? t : al.url);
+                    boolean on = all || al.show;
+                    sb.append(on ? "\u25CF " : "\u25CB ").append(name);
+                    if (info != null) sb.append("  \u2014  ").append(info[2]).append(" elementos");
+                    if (!on) sb.append("   (oculto)");
+                    sb.append("\n");
+                }
+                final String text = sb.toString().trim();
+                h.post(new Runnable() {
+                    public void run() { if (seq == statusSeq) status.setText(text); }
+                });
+            }
+        }).start();
     }
 
     private void checkAlbum() {

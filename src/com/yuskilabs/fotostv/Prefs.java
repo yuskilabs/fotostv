@@ -102,32 +102,134 @@ class Prefs {
     static void setLastShown(Context c, String key) { meta(c).edit().putString("last", key).apply(); }
 
     // ---- caché de contenido de cada álbum ----
+    // ---- caché de álbumes: un archivo por álbum (antes, todo en un único texto gigante dentro de los ajustes,
+    // que con decenas de álbumes y miles de fotos se releía entero por cada álbum y dejaba la app colgada)
+    private static boolean migrated;
+
+    private static java.io.File cacheDir(Context c) {
+        java.io.File d = new java.io.File(c.getFilesDir(), "albumcache");
+        d.mkdirs();
+        return d;
+    }
+
+    private static java.io.File cacheFile(Context c, String url) {
+        String h;
+        try {
+            byte[] b = java.security.MessageDigest.getInstance("SHA-1").digest(url.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (byte x : b) sb.append(String.format("%02x", x));
+            h = sb.toString();
+        } catch (Exception e) {
+            h = Integer.toHexString(url.hashCode());
+        }
+        return new java.io.File(cacheDir(c), h + ".txt");
+    }
+
+    private static void writeCache(Context c, String url, String title, String key, List<Item> items) throws java.io.IOException {
+        java.io.File f = cacheFile(c, url);
+        java.io.File tmp = new java.io.File(f.getPath() + ".tmp");
+        java.io.BufferedWriter w = new java.io.BufferedWriter(new java.io.OutputStreamWriter(new java.io.FileOutputStream(tmp), "UTF-8"), 1 << 16);
+        try {
+            try {
+                w.write(new JSONObject().put("title", title).put("key", key).put("count", items.size()).toString());
+            } catch (Exception e) { throw new java.io.IOException(e.getMessage()); }
+            w.write("\n");
+            for (Item it : items) {
+                w.write(it.url); w.write('\t');
+                w.write(Long.toString(it.ts)); w.write('\t');
+                w.write(it.id == null ? "" : it.id); w.write('\n');
+            }
+        } finally {
+            w.close();
+        }
+        f.delete();
+        tmp.renameTo(f);
+    }
+
+    /** Pasa la caché antigua (un solo texto en los ajustes) al formato nuevo, una sola vez. */
+    private static synchronized void migrate(Context c) {
+        if (migrated) return;
+        SharedPreferences s = sp(c);
+        String old = s.getString("cache", null);
+        if (old != null) {
+            try {
+                JSONObject all = new JSONObject(old);
+                java.util.Iterator<String> keys = all.keys();
+                while (keys.hasNext()) {
+                    String url = keys.next();
+                    JSONObject o = all.optJSONObject(url);
+                    if (o == null) continue;
+                    List<Item> list = new ArrayList<Item>();
+                    String key = o.optString("key", "");
+                    JSONArray items = o.optJSONArray("items");
+                    if (items != null) for (int i = 0; i < items.length(); i++) {
+                        JSONArray it = items.getJSONArray(i);
+                        Item x = new Item(it.getString(0), it.optLong(1, 0));
+                        x.id = it.optString(2, "");
+                        list.add(x);
+                    }
+                    writeCache(c, url, o.optString("title", ""), key, list);
+                }
+            } catch (Throwable ignored) { }
+            s.edit().remove("cache").commit();
+        }
+        migrated = true;
+    }
+
     static void saveAlbumCache(Context c, String url, AlbumFetcher.AlbumData d) {
         try {
-            JSONObject all = new JSONObject(sp(c).getString("cache", "{}"));
-            JSONArray items = new JSONArray();
-            for (Item it : d.items) items.put(new JSONArray().put(it.url).put(it.ts).put(it.id));
-            all.put(url, new JSONObject().put("title", d.title).put("key", d.key).put("items", items));
-            sp(c).edit().putString("cache", all.toString()).apply();
+            migrate(c);
+            synchronized (Prefs.class) { writeCache(c, url, d.title, d.key, d.items); }
         } catch (Exception ignored) { }
+    }
+
+    /** Título, clave y número de elementos de un álbum, sin cargar sus fotos (lectura casi instantánea). */
+    static String[] albumInfo(Context c, String url) {
+        try {
+            migrate(c);
+            java.io.File f = cacheFile(c, url);
+            if (!f.exists()) return null;
+            java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(f), "UTF-8"));
+            try {
+                String line = r.readLine();
+                if (line == null) return null;
+                JSONObject o = new JSONObject(line);
+                return new String[]{o.optString("title", ""), o.optString("key", ""), String.valueOf(o.optInt("count", 0))};
+            } finally {
+                r.close();
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     static AlbumFetcher.AlbumData albumCache(Context c, String url) {
         try {
-            JSONObject o = new JSONObject(sp(c).getString("cache", "{}")).optJSONObject(url);
-            if (o == null) return null;
-            AlbumFetcher.AlbumData d = new AlbumFetcher.AlbumData();
-            d.title = o.optString("title", "");
-            d.key = o.optString("key", "");
-            JSONArray items = o.getJSONArray("items");
-            for (int i = 0; i < items.length(); i++) {
-                JSONArray it = items.getJSONArray(i);
-                Item x = new Item(it.getString(0), it.optLong(1, 0));
-                x.id = it.optString(2, "");
-                x.akey = d.key;
-                d.items.add(x);
+            migrate(c);
+            java.io.File f = cacheFile(c, url);
+            if (!f.exists()) return null;
+            java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(f), "UTF-8"), 1 << 16);
+            try {
+                String line = r.readLine();
+                if (line == null) return null;
+                JSONObject o = new JSONObject(line);
+                AlbumFetcher.AlbumData d = new AlbumFetcher.AlbumData();
+                d.title = o.optString("title", "");
+                d.key = o.optString("key", "");
+                while ((line = r.readLine()) != null) {
+                    String[] p = line.split("\t", 3);
+                    if (p.length < 2) continue;
+                    long ts = 0;
+                    try { ts = Long.parseLong(p[1]); } catch (Exception ignored) { }
+                    Item x = new Item(p[0], ts);
+                    x.id = p.length > 2 ? p[2] : "";
+                    x.akey = d.key;
+                    d.items.add(x);
+                }
+                return d;
+            } finally {
+                r.close();
             }
-            return d;
         } catch (Exception e) {
             return null;
         }

@@ -366,9 +366,9 @@ class WebConfigServer extends Thread {
         if (albums.isEmpty()) sb.append("<p class='muted'>Todavía no hay álbumes.</p>");
         for (int i = 0; i < albums.size(); i++) {
             Prefs.Album al = albums.get(i);
-            AlbumFetcher.AlbumData d = Prefs.albumCache(ctx, al.url);
-            String title = d != null && d.title.length() > 0 ? d.title : "Nombre (opcional)";
-            int count = d != null ? d.items.size() : 0;
+            String[] info = Prefs.albumInfo(ctx, al.url);
+            String title = info != null && info[0].length() > 0 ? info[0] : "Nombre (opcional)";
+            int count = info != null ? Integer.parseInt(info[2]) : 0;
             sb.append("<div class='card'>")
               .append("<input name='name").append(i).append("' placeholder='").append(esc(title))
               .append("' value='").append(esc(al.name)).append("'>")
