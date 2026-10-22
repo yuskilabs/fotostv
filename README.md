@@ -25,6 +25,18 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 2. Instálala en la tele (por ejemplo con *Send Files to TV*, una memoria USB o `adb install FotosTV.apk`).
 3. Abre **FotosTV**.
 
+### Fire TV con FireOS 8: inicio automático (experimental)
+
+FireOS 8 sustituye el salvapantallas de Android por su «Fondo ambiental», y no admite salvapantallas de terceros. Como alternativa, FotosTV puede abrir el pase de fotos por sí sola tras unos minutos sin usar el mando (y sin nada sonando). Se activa una vez por ADB:
+
+```
+adb shell settings put secure enabled_accessibility_services com.yuskilabs.fotostv/com.yuskilabs.fotostv.IdleService
+adb shell settings put secure accessibility_enabled 1
+adb shell appops set com.yuskilabs.fotostv SYSTEM_ALERT_WINDOW allow
+```
+
+Después, en la pantalla principal, el botón **Inicio automático** elige el tiempo (2, 5, 10, 15 o 30 minutos). El tiempo de FotosTV debe ser menor que el del reposo de la Fire TV. El servicio solo observa que se pulsa una tecla: no lee la pantalla ni guarda nada. Para quitarlo: `adb shell settings put secure enabled_accessibility_services ""`.
+
 ### Elegir FotosTV como salvapantallas
 
 - **Android TV / Google TV**: botón **«Elegir salvapantallas»** de la app, o Ajustes → Preferencias del dispositivo → Salvapantallas.

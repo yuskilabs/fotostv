@@ -27,6 +27,9 @@ class Prefs {
     static int thumbMB(Context c) { return sp(c).getInt("thumbMB", smallStorage(c) ? 150 : 500); }
     static int videoMB(Context c) { return sp(c).getInt("videoMB", smallStorage(c) ? 500 : 1500); }
 
+    /** Minutos sin usar el mando antes de abrir el pase solo (0 = desactivado). Solo para equipos sin salvapantallas estándar. */
+    static int idleMin(Context c) { return sp(c).getInt("idleMin", 0); }
+
     static int interval(Context c) { return sp(c).getInt("interval", 60); }
     static String fit(Context c) { return sp(c).getString("fit", "auto"); }
     /** random | norepeat | asc | desc */

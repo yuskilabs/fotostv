@@ -77,6 +77,10 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         left.addView(side("Vista previa del salvapantallas", new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, PreviewActivity.class)); }
         }));
+        idleBtn = side(idleLabel(), new View.OnClickListener() {
+            public void onClick(View v) { cycleIdle(); }
+        });
+        left.addView(idleBtn);
         left.addView(side("Elegir salvapantallas", new View.OnClickListener() {
             public void onClick(View v) { openDreamSettings(); }
         }));
@@ -392,6 +396,34 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                 });
             }
         }).start();
+    }
+
+    private Button idleBtn;
+    private static final int[] IDLE_OPTS = {0, 2, 5, 10, 15, 30};
+
+    private String idleLabel() {
+        int m = Prefs.idleMin(this);
+        return m == 0 ? "Inicio automático: no" : "Inicio automático: " + m + " min";
+    }
+
+    private boolean idleServiceOn() {
+        try {
+            String s = Settings.Secure.getString(getContentResolver(), "enabled_accessibility_services");
+            return s != null && s.contains(getPackageName() + "/");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** Para equipos sin salvapantallas estándar (Fire TV con FireOS 8): abre el pase tras unos minutos sin tocar el mando. */
+    private void cycleIdle() {
+        int cur = Prefs.idleMin(this), next = IDLE_OPTS[0];
+        for (int i = 0; i < IDLE_OPTS.length; i++) if (IDLE_OPTS[i] == cur) next = IDLE_OPTS[(i + 1) % IDLE_OPTS.length];
+        Prefs.sp(this).edit().putInt("idleMin", next).commit();
+        idleBtn.setText(idleLabel());
+        if (next > 0 && !idleServiceOn()) {
+            android.widget.Toast.makeText(this, "Falta activar el servicio por ADB (mira el léeme de GitHub).", android.widget.Toast.LENGTH_LONG).show();
+        }
     }
 
     private void openDreamSettings() {
