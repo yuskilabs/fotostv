@@ -59,18 +59,29 @@ class WebConfigServer extends Thread {
         try { if (server != null) server.close(); } catch (IOException ignored) { }
     }
 
+    private final java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(6);
+
     @Override public void run() {
         while (server != null && !server.isClosed()) {
-            Socket s = null;
             try {
-                s = server.accept();
-                s.setSoTimeout(10000);
-                handle(s);
+                final Socket s = server.accept();
+                // cada conexión en su propio hilo: los navegadores abren conexiones «de reserva» vacías
+                // que, atendidas de una en una, dejaban la página colgada hasta agotar su tiempo
+                pool.submit(new Runnable() {
+                    public void run() {
+                        try {
+                            s.setSoTimeout(10000);
+                            handle(s);
+                        } catch (IOException ignored) {
+                        } finally {
+                            try { s.close(); } catch (IOException ignored) { }
+                        }
+                    }
+                });
             } catch (IOException ignored) {
-            } finally {
-                try { if (s != null) s.close(); } catch (IOException ignored) { }
             }
         }
+        pool.shutdownNow();
     }
 
     private static String readLine(InputStream in) throws IOException {

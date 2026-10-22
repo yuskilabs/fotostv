@@ -1,6 +1,6 @@
 {
-  "version": "5.7.1",
+  "version": "5.7.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 255255,
-  "notes": "- Mosaicos: el recuadro de selección tiene ahora esquinas rectas, a juego con las miniaturas cuadradas (antes sus esquinas redondeadas sobresalían)."
+  "notes": "- Web de configuración más robusta: atiende varias conexiones a la vez. Antes, una conexión vacía «de reserva» del navegador podía dejar la página cargando hasta agotar su tiempo (visto en un Fire TV Stick)."
 }

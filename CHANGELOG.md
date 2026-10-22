@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.7.2
+- **Web de configuración más robusta**: atiende varias conexiones a la vez. Antes, una conexión vacía «de reserva» del navegador podía dejar la página cargando hasta agotar su tiempo (visto en un Fire TV Stick).
+
 ## 5.7.1
 - Mosaicos: el recuadro de selección tiene ahora esquinas rectas, a juego con las miniaturas cuadradas (antes sus esquinas redondeadas sobresalían).
 
