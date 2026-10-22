@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.9.1
+- Pantalla principal: los siete botones de la izquierda caben ahora sin desplazarse (logo, título y botones algo más compactos).
+- La lista «Tus álbumes» se puede recorrer con el mando: pulsa ▶ para entrar en ella (se marca con un recuadro azul) y ▲ ▼ para bajar. Con más de 3 álbumes muestra arriba el total de álbumes y elementos.
+
 ## 5.9
 - **Arreglo de la pantalla negra con muchos álbumes** (probado el fallo con ~30 álbumes y ~30.000 fotos): la caché de todos los álbumes estaba guardada como un único texto gigante dentro de los ajustes y la pantalla principal lo releía entero una vez por cada álbum, bloqueándose. Ahora cada álbum tiene su propio archivo y la lista se prepara en segundo plano. La caché antigua se convierte sola la primera vez, sin perder álbumes ni ajustes.
 - La página de configuración del móvil también carga mucho más rápido con muchos álbumes.

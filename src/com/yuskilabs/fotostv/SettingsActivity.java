@@ -57,17 +57,17 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         head.setGravity(Gravity.CENTER_VERTICAL);
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.icon);
-        head.addView(logo, new LinearLayout.LayoutParams(dp(72), dp(72)));
-        TextView title = text("FotosTV", 36, Color.WHITE);
+        head.addView(logo, new LinearLayout.LayoutParams(dp(56), dp(56)));
+        TextView title = text("FotosTV", 30, Color.WHITE);
         title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         title.setPadding(dp(14), 0, 0, 0);
         head.addView(title);
         left.addView(head);
-        TextView tag = text("Tus álbumes de Google Fotos, en la tele y como salvapantallas", 15, 0xFF9FB3C8);
-        tag.setPadding(0, dp(8), 0, dp(4));
+        TextView tag = text("Tus álbumes de Google Fotos, en la tele y como salvapantallas", 13, 0xFF9FB3C8);
+        tag.setPadding(0, dp(2), 0, 0);
         left.addView(tag);
         verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
-        verInfo.setPadding(0, 0, 0, dp(14));
+        verInfo.setPadding(0, 0, 0, dp(8));
         left.addView(verInfo);
 
         Button browse = side("Ver álbumes", new View.OnClickListener() {
@@ -117,7 +117,20 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         c2.addView(cardTitle("Tus álbumes"));
         status = text("", 15, Color.WHITE);
         ScrollView sv = new ScrollView(this);
-        sv.setFocusable(false);
+        // se puede entrar con el mando (derecha) y desplazar con arriba/abajo cuando la lista es larga
+        sv.setFocusable(true);
+        sv.setFocusableInTouchMode(false);
+        sv.setVerticalScrollBarEnabled(true);
+        sv.setScrollbarFadingEnabled(false);
+        GradientDrawable svOn = new GradientDrawable();
+        svOn.setColor(0x00000000);
+        svOn.setCornerRadius(dp(8));
+        svOn.setStroke(dp(3), 0xFF3D8BFD);
+        StateListDrawable svBg = new StateListDrawable();
+        svBg.addState(new int[]{android.R.attr.state_focused}, svOn);
+        svBg.addState(new int[]{}, new android.graphics.drawable.ColorDrawable(0x00000000));
+        sv.setBackground(svBg);
+        sv.setPadding(dp(8), dp(4), dp(8), dp(4));
         sv.addView(status);
         c2.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
         cacheInfo = text("", 13, 0xFF9FB3C8);
@@ -146,10 +159,12 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private Button side(String label, View.OnClickListener l) {
         Button b = Ui.button(this, label, l);
-        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        b.setPadding(dp(18), dp(7), dp(18), dp(7));
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        b.setMinHeight(0);
+        b.setMinimumHeight(0);
+        b.setPadding(dp(16), dp(5), dp(16), dp(5));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-        lp.setMargins(0, 0, 0, dp(6));
+        lp.setMargins(0, 0, 0, dp(4));
         b.setLayoutParams(lp);
         return b;
     }
@@ -231,6 +246,15 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                 boolean all = "all".equals(Prefs.albumMode(SettingsActivity.this));
                 if (!albums.isEmpty())
                     sb.append(all ? "Se muestran todos los álbumes:\n" : "Se muestran solo los álbumes marcados:\n");
+                long total = 0;
+                int known = 0;
+                for (Prefs.Album al : albums) {
+                    String[] i0 = Prefs.albumInfo(SettingsActivity.this, al.url);
+                    if (i0 != null) { try { total += Long.parseLong(i0[2]); known++; } catch (Exception ignored) { } }
+                }
+                if (albums.size() > 3 && total > 0)
+                    sb.append(albums.size()).append(" álbumes \u00B7 ").append(String.format(java.util.Locale.GERMANY, "%,d", total))
+                      .append(" elementos  (usa \u25B6 y \u25B2\u25BC para recorrer la lista)\n");
                 for (Prefs.Album al : albums) {
                     String[] info = Prefs.albumInfo(SettingsActivity.this, al.url);
                     String t = info != null ? info[0] : "";
