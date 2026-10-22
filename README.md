@@ -60,7 +60,7 @@ Después, en la pantalla principal, el botón **Inicio automático** elige el ti
 2. En la pantalla principal de FotosTV aparece una dirección del tipo `http://192.168.1.x:8080`. Ábrela en el móvil (misma wifi).
 3. Pega el enlace en **Añadir álbum**, o varios enlaces (uno por línea) en **Añadir varios álbumes a la vez**.
 
-Los álbumes se añaden al instante, sin pulsar «Guardar». Desde la misma página se eligen el orden, el intervalo, el encuadre, los vídeos, la información en pantalla, las fotos ocultas y la caché.
+Los álbumes se añaden al instante, sin pulsar «Guardar». Se pueden ordenar a mano con «Subir» / «Bajar» (y «Guardar»), o automáticamente por la fecha de la última foto de cada álbum. Desde la misma página se eligen el orden, el intervalo, el encuadre, los vídeos, la información en pantalla, las fotos ocultas y la caché.
 
 ### Mando a distancia
 

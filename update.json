@@ -1,6 +1,6 @@
 {
-  "version": "5.9.2",
+  "version": "5.10",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 263517,
-  "notes": "- Inicio automático: Android desactiva el servicio al actualizar la app. Si se concede una vez el permiso WRITE_SECURE_SETTINGS por ADB, la propia app vuelve a activarlo sola al abrirse (ver README)."
+  "notes": "- Ordenar los álbumes: en la web de ajustes cada álbum tiene botones «↑ Subir» y «↓ Bajar» para ordenarlos a mano (se guarda con «Guardar»), y un nuevo selector «Orden de los álbumes en el explorador de la tele»: manual, o por la fecha de captura de la última foto de cada álbum (más reciente primero o más antiguo primero)."
 }

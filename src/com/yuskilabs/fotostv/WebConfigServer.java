@@ -184,6 +184,7 @@ class WebConfigServer extends Thread {
             .putString("fit", f.containsKey("fit") ? f.get("fit") : "auto")
             .putString("order", f.containsKey("order") ? f.get("order") : "random")
             .putString("albumMode", f.containsKey("albumMode") ? f.get("albumMode") : "all")
+            .putString("albumSort", f.containsKey("albumSort") ? f.get("albumSort") : "manual")
             .putBoolean("resume", f.containsKey("resume"))
             .putBoolean("video", f.containsKey("video"))
             .putBoolean("sound", f.containsKey("sound"))
@@ -378,6 +379,9 @@ class WebConfigServer extends Thread {
               .append("<span class='muted'>").append(count > 0 ? count + " elementos" : "sin comprobar")
               .append(!al.show && "selected".equals(Prefs.albumMode(ctx)) ? " \u00B7 oculto" : "").append("</span>")
               .append(chk("del" + i, "Quitar", false))
+              .append("</div><div class='row2'>")
+              .append("<button type='button' class='sec' onclick='mv(this,-1)'>\u2191 Subir</button>")
+              .append("<button type='button' class='sec' onclick='mv(this,1)'>\u2193 Bajar</button>")
               .append("</div></div>");
         }
         return sb.toString();
@@ -391,6 +395,7 @@ class WebConfigServer extends Thread {
           .append("<div class='row2'><button type='button' class='sec' onclick='markAll(true)'>Marcar todos</button>")
           .append("<button type='button' class='sec' onclick='markAll(false)'>Desmarcar todos</button></div>")
           .append("<button type='button' class='sec danger' onclick='delAll()'>Quitar todos los álbumes…</button>")
+          .append("<p class='muted'>Para ordenarlos a mano usa «Subir» y «Bajar» en cada álbum y pulsa «Guardar» abajo.</p>")
           .append("<div id='albums'>").append(albumsHtml()).append("</div>");
         sb.append("<div class='card new'><b>Añadir álbum</b>")
           .append("<input id='nu' type='url' placeholder='https://photos.app.goo.gl/…'>")
@@ -402,6 +407,12 @@ class WebConfigServer extends Thread {
           .append("<textarea id='nm' rows='6' placeholder='https://photos.app.goo.gl/…&#10;https://photos.app.goo.gl/…'></textarea>")
           .append("<button type='button' id='addm' class='sec' onclick='addMany()'>+ Importar todos</button>")
           .append("<p id='bmsg' class='muted'></p></div>");
+        String asort = Prefs.albumSort(ctx);
+        sb.append("<label>Orden de los álbumes en el explorador de la tele</label><select name='albumSort'>")
+          .append(opt("manual", "Manual (el de esta lista)", asort))
+          .append(opt("newest", "Por la última foto: el más reciente primero", asort))
+          .append(opt("oldest", "Por la última foto: el más antiguo primero", asort))
+          .append("</select><p class='muted'>La fecha es la de captura de la foto más reciente de cada álbum.</p>");
         sb.append("<label>¿Qué álbumes mostrar?</label><select name='albumMode'>")
           .append(opt("all", "Todos", mode)).append(opt("selected", "Solo los marcados con «Mostrar»", mode))
           .append("</select><p class='muted'>Con «Todos» la casilla «Mostrar» no se tiene en cuenta. "
@@ -459,6 +470,13 @@ class WebConfigServer extends Thread {
         + "+'Las fotos NO se borran de Google Fotos, pero tendrás que volver a añadir los enlaces uno a uno.\\n\\n'"
         + "+'¿Quitar todos?'))return;"
         + "for(var i=0;i<c.length;i++)c[i].checked=true;document.querySelector('form').submit();}"
+        + "function renum(){var cs=document.querySelectorAll('#albums .card');"
+        + "for(var i=0;i<cs.length;i++){var ins=cs[i].querySelectorAll('input');"
+        + "for(var j=0;j<ins.length;j++){ins[j].name=ins[j].name.replace(/[0-9]+$/,i);}}}"
+        + "function mv(b,d){var c=b;while(c&&!(c.className||'').match(/(^| )card( |$)/))c=c.parentNode;if(!c)return;"
+        + "var p=c.parentNode;if(d<0){var s=c.previousElementSibling;if(s&&(s.className||'').indexOf('card')>=0)p.insertBefore(c,s);}"
+        + "else{var s2=c.nextElementSibling;if(s2&&(s2.className||'').indexOf('card')>=0)p.insertBefore(s2,c);}"
+        + "renum();c.scrollIntoView({block:'center'});}"
         + "function markAll(v){var c=document.querySelectorAll('#albums input[type=checkbox][name^=show]');"
         + "for(var i=0;i<c.length;i++)c[i].checked=v;}"
         + "function addAlbum(){var u=document.getElementById('nu'),n=document.getElementById('nn'),"

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.yuskilabs.fotostv" android:versionCode="47" android:versionName="5.9.2">
+    package="com.yuskilabs.fotostv" android:versionCode="48" android:versionName="5.10">
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="23" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />

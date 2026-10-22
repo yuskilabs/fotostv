@@ -30,6 +30,9 @@ class Prefs {
     /** Minutos sin usar el mando antes de abrir el pase solo (0 = desactivado). Solo para equipos sin salvapantallas estándar. */
     static int idleMin(Context c) { return sp(c).getInt("idleMin", 0); }
 
+    /** Orden de los álbumes en el explorador de la tele: manual | newest | oldest (por la fecha de captura de su última foto). */
+    static String albumSort(Context c) { return sp(c).getString("albumSort", "manual"); }
+
     static int interval(Context c) { return sp(c).getInt("interval", 60); }
     static String fit(Context c) { return sp(c).getString("fit", "auto"); }
     /** random | norepeat | asc | desc */

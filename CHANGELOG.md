@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.10
+- **Ordenar los álbumes**: en la web de ajustes cada álbum tiene botones «↑ Subir» y «↓ Bajar» para ordenarlos a mano (se guarda con «Guardar»), y un nuevo selector **«Orden de los álbumes en el explorador de la tele»**: manual, o por la fecha de captura de la última foto de cada álbum (más reciente primero o más antiguo primero).
+
 ## 5.9.2
 - Inicio automático: Android desactiva el servicio al actualizar la app. Si se concede una vez el permiso `WRITE_SECURE_SETTINGS` por ADB, la propia app vuelve a activarlo sola al abrirse (ver README).
 

@@ -226,7 +226,35 @@ public class BrowserActivity extends Activity {
     }
 
     /** Añade delante la entrada «Todos» (todas las fotos de todos los álbumes). */
+    /** Fecha de captura de la foto más reciente del álbum (0 si no se conoce). */
+    private static long lastTs(Entry e) {
+        long m = 0;
+        for (Item it : e.items) if (it.ts > m) m = it.ts;
+        return m;
+    }
+
+    /** Aplica el orden elegido: el de la lista (manual) o por la fecha de la última foto de cada álbum. */
+    private List<Entry> sortEntries(List<Entry> list) {
+        final String mode = Prefs.albumSort(this);
+        if (!"newest".equals(mode) && !"oldest".equals(mode)) return list;
+        final boolean newest = "newest".equals(mode);
+        final java.util.Map<Entry, Long> ts = new java.util.IdentityHashMap<Entry, Long>();
+        for (Entry e : list) ts.put(e, lastTs(e));
+        List<Entry> l = new ArrayList<Entry>(list);
+        Collections.sort(l, new Comparator<Entry>() {
+            public int compare(Entry a, Entry b) {
+                long x = ts.get(a), y = ts.get(b);
+                if (x == 0 && y == 0) return 0;
+                if (x == 0) return 1;      // sin fecha, al final
+                if (y == 0) return -1;
+                return newest ? Long.compare(y, x) : Long.compare(x, y);
+            }
+        });
+        return l;
+    }
+
     private List<Entry> withAll(List<Entry> list) {
+        list = sortEntries(list);
         List<Entry> out = new ArrayList<Entry>();
         if (list.size() > 1) {
             Entry all = new Entry();
