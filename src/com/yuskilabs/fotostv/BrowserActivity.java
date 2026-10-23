@@ -81,9 +81,55 @@ public class BrowserActivity extends Activity {
     private android.widget.Button[] ordBtn = new android.widget.Button[3];
     private android.widget.Button playBtn;
     private static final String[] ORD_KEY = {"random", "asc", "desc"};
-    private static final String[] ORD_LABEL = {"Aleatorio", "Más antiguas primero", "Más recientes primero"};
+    private static final String[] ORD_LABEL = {"Aleatorio", "Antiguas primero", "Recientes primero"};
 
-    private static final int ALBUM_COLS = 4, PHOTO_COLS = 6;
+    private int albumCols, photoCols, photoTileH;
+    private String photoShape = "square";
+    private float photoRatio = 1f;
+    private android.widget.Button colsBtn, shapeBtn;
+    private String refocus;
+    private static final int[] ALBUM_COLS_OPT = {2, 3, 4, 5, 6, 7, 8};
+    private static final int[] PHOTO_COLS_OPT = {3, 4, 5, 6, 7, 8, 10, 12};
+    private static final int ORANGE = 0xFFFFB454;
+
+    private void computeLayout() {
+        albumCols = Prefs.albumCols(this);
+        photoCols = Prefs.photoCols(this);
+        photoShape = Prefs.photoShape(this);
+        photoRatio = "wide".equals(photoShape) ? 0.6667f : ("full".equals(photoShape) ? 0.75f : 1f);
+        albumTileW = (W - 2 * margin - (albumCols - 1) * gap) / albumCols;
+        albumTileH = (int) (albumTileW * 0.66f);
+        photoTile = (W - 2 * margin - (photoCols - 1) * gap) / photoCols;
+        photoTileH = (int) (photoTile * photoRatio);
+    }
+
+    private static int nextOpt(int[] o, int cur) {
+        for (int i = 0; i < o.length; i++) if (o[i] == cur) return o[(i + 1) % o.length];
+        return o[0];
+    }
+
+    private android.widget.Button sbtn(String label, View.OnClickListener l) {
+        android.widget.Button b = Ui.button(this, label, l);
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        b.setPadding(Ui.dp(this, 14), Ui.dp(this, 6), Ui.dp(this, 14), Ui.dp(this, 6));
+        b.setMinHeight(0); b.setMinimumHeight(0); b.setMinWidth(0); b.setMinimumWidth(0);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
+        lp.setMargins(0, 0, Ui.dp(this, 10), 0);
+        b.setLayoutParams(lp);
+        return b;
+    }
+
+    private ImageView logoView(int hdp) {
+        ImageView v = new ImageView(this);
+        v.setImageResource(R.drawable.logo_full);
+        v.setAdjustViewBounds(true);
+        v.setLayoutParams(new LinearLayout.LayoutParams(-2, Ui.dp(this, hdp)));
+        return v;
+    }
+
+    private static String shapeLabel(String sh) {
+        return "wide".equals(sh) ? "Formato: apaisada" : ("full".equals(sh) ? "Formato: completa" : "Formato: cuadrada");
+    }
 
     // ------------------------------------------------------------ ciclo de vida
     @Override protected void onCreate(Bundle b) {
@@ -92,9 +138,7 @@ public class BrowserActivity extends Activity {
         W = Math.max(dm.widthPixels, dm.heightPixels);
         margin = (int) (W * 0.035f);
         gap = Ui.dp(this, 10);
-        albumTileW = (W - 2 * margin - (ALBUM_COLS - 1) * gap) / ALBUM_COLS;
-        albumTileH = (int) (albumTileW * 0.66f);
-        photoTile = (W - 2 * margin - (PHOTO_COLS - 1) * gap) / PHOTO_COLS;
+        computeLayout();
         thumbs = Thumbs.get(this);
         root = new FrameLayout(this);
         root.setBackgroundColor(0xFF0F1D2E);
@@ -259,7 +303,7 @@ public class BrowserActivity extends Activity {
         if (list.size() > 1) {
             Entry all = new Entry();
             all.isAll = true;
-            all.title = "Todos los álbumes";
+            all.title = "Todas";
             for (Entry e : list) all.items.addAll(e.items);
             pickCover(all);
             out.add(all);
@@ -278,6 +322,7 @@ public class BrowserActivity extends Activity {
                     try {
                         AlbumFetcher.AlbumData d = AlbumFetcher.fetchAlbum(al.url);
                         Prefs.saveAlbumCache(BrowserActivity.this, al.url, d);
+                        if (d.partial) continue;   // descarga recortada: se queda la lista que ya hay
                         fresh.add(makeEntry(al, d));
                     } catch (Exception ignored) { }
                 }
@@ -327,20 +372,36 @@ public class BrowserActivity extends Activity {
         root.addView(t, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
     }
 
-    private void showAlbums() {
+    private void showAlbums() { showAlbums(false); }
+
+    private void showAlbums(boolean focusCols) {
         level = 0;
         photoGrid = null;
+        computeLayout();
         root.removeAllViews();
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout head = new LinearLayout(this);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        head.addView(logoView(44));
+        TextView title = text("Álbumes", 26, Color.WHITE);
+        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        title.setPadding(Ui.dp(this, 18), 0, 0, 0);
+        head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
+        colsBtn = sbtn("Columnas: " + albumCols, new View.OnClickListener() {
+            public void onClick(View v) {
+                Prefs.sp(BrowserActivity.this).edit().putInt("albumCols", nextOpt(ALBUM_COLS_OPT, albumCols)).commit();
+                showAlbums(true);
+            }
+        });
+        colsBtn.setLayoutParams(new LinearLayout.LayoutParams(-2, -2));
+        head.addView(colsBtn);
         LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, -2);
-        hp.setMargins(margin, Ui.dp(this, 22), margin, 0);
-        TextView title = text("FotosTV  ·  Álbumes", 30, Color.WHITE);
-        col.addView(title, hp);
-        TextView sub = text("OK para abrir  ·  Atrás para salir", 16, 0xFF9FB3C8);
-        col.addView(sub, hp);
+        hp.setMargins(margin, Ui.dp(this, 10), margin, 0);
+        col.addView(head, hp);
 
-        albumGrid = makeGrid(ALBUM_COLS);
+        albumGrid = makeGrid(albumCols);
         albumGrid.setAdapter(new AlbumAdapter());
         albumGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> p, View v, int pos, long id) { openEntry(pos); }
@@ -348,51 +409,81 @@ public class BrowserActivity extends Activity {
         col.addView(albumGrid, new LinearLayout.LayoutParams(-1, 0, 1f));
         root.addView(col, new FrameLayout.LayoutParams(-1, -1));
         albumGrid.setSelection(Math.min(albumPos, Math.max(0, entries.size() - 1)));
-        albumGrid.requestFocus();
+        if (focusCols) colsBtn.requestFocus(); else albumGrid.requestFocus();
     }
 
     private void openEntry(int pos) {
         if (pos < 0 || pos >= entries.size()) return;
         albumPos = pos;
         current = entries.get(pos);
-        showPhotos();
+        showPhotos(0);
     }
 
-    private void showPhotos() {
+    private void showPhotos(int sel) {
         level = 1;
         albumGrid = null;
+        computeLayout();
         synchronized (flagPending) { flagPending.clear(); }
         flagTried.clear();
         prefetched = -1;
         root.removeAllViews();
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout head = new LinearLayout(this);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        head.addView(logoView(38));
+        TextView nm = text(current.title, 22, ORANGE);
+        nm.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        nm.setPadding(Ui.dp(this, 18), 0, 0, 0);
+        nm.setSingleLine(true);
+        nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        head.addView(nm, new LinearLayout.LayoutParams(-2, -2));
+        TextView cn = text("  \u00B7  " + current.items.size() + " elementos", 16, 0xFFD0DBE8);
+        head.addView(cn);
         LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, -2);
-        hp.setMargins(margin, Ui.dp(this, 22), margin, 0);
-        col.addView(text(current.title + "  ·  " + current.items.size() + " elementos", 28, Color.WHITE), hp);
-        TextView sub = text("Ordenar con los 3 primeros botones  ·  OK en una foto para verla  ·  Atrás: botones, y otra vez: álbumes", 15, 0xFF9FB3C8);
-        col.addView(sub, hp);
+        hp.setMargins(margin, Ui.dp(this, 8), margin, 0);
+        col.addView(head, hp);
 
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(0, Ui.dp(this, 10), 0, Ui.dp(this, 6));
+        row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 4));
         for (int i = 0; i < 3; i++) {
             final String key = ORD_KEY[i];
-            ordBtn[i] = Ui.button(this, ORD_LABEL[i], new View.OnClickListener() {
+            ordBtn[i] = sbtn(ORD_LABEL[i], new View.OnClickListener() {
                 public void onClick(View v) { setOrder(key); }
             });
-            ordBtn[i].setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
             row.addView(ordBtn[i]);
         }
-        playBtn = Ui.button(this, "▶  Pase de diapositivas", play());
-        playBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        playBtn = sbtn("\u25B6  Pase", play());
         row.addView(playBtn);
+        colsBtn = sbtn("Columnas: " + photoCols, new View.OnClickListener() {
+            public void onClick(View v) {
+                Prefs.sp(BrowserActivity.this).edit().putInt("photoCols", nextOpt(PHOTO_COLS_OPT, photoCols)).commit();
+                refocus = "cols";
+                showPhotos(photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
+            }
+        });
+        row.addView(colsBtn);
+        shapeBtn = sbtn(shapeLabel(photoShape), new View.OnClickListener() {
+            public void onClick(View v) {
+                String n = "square".equals(photoShape) ? "wide" : ("wide".equals(photoShape) ? "full" : "square");
+                Prefs.sp(BrowserActivity.this).edit().putString("photoShape", n).commit();
+                refocus = "shape";
+                showPhotos(photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
+            }
+        });
+        row.addView(shapeBtn);
         refreshOrderButtons();
+        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
+        hs.setHorizontalScrollBarEnabled(false);
+        hs.setClipToPadding(false);
+        hs.addView(row);
         LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2);
         rp.setMargins(margin, 0, margin, 0);
-        col.addView(row, rp);
+        col.addView(hs, rp);
 
-        photoGrid = makeGrid(PHOTO_COLS);
+        photoGrid = makeGrid(photoCols);
         photoGrid.setAdapter(new PhotoAdapter());
         photoGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> p, View v, int pos, long id) { openViewer(pos); }
@@ -410,7 +501,11 @@ public class BrowserActivity extends Activity {
             TextView t = text("Este álbum no tiene fotos.", 22, Color.WHITE);
             root.addView(t, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
         }
-        photoGrid.requestFocus();
+        if (sel > 0) photoGrid.setSelection(sel);
+        if ("cols".equals(refocus)) colsBtn.requestFocus();
+        else if ("shape".equals(refocus)) shapeBtn.requestFocus();
+        else photoGrid.requestFocus();
+        refocus = null;
     }
 
     private void setOrder(String key) {
@@ -495,7 +590,7 @@ public class BrowserActivity extends Activity {
         public View getView(int pos, View cv, ViewGroup parent) {
             Tile t = cv instanceof Tile ? (Tile) cv : newAlbumTile();
             Entry e = entries.get(pos);
-            t.name.setText(e.isAll ? "★  " + e.title : e.title);
+            t.name.setText(e.title);
             t.count.setText(e.items.size() + " elementos");
             if (e.items.isEmpty()) thumbs.clearView(t.img);
             else thumbs.load(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));
@@ -515,13 +610,15 @@ public class BrowserActivity extends Activity {
         t.addView(t.shade, new FrameLayout.LayoutParams(-1, albumTileH / 2, Gravity.BOTTOM));
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 8));
-        t.name = text("", 20, Color.WHITE);
+        box.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 4));
+        t.name = text("", 16, Color.WHITE);
+        t.name.setPadding(0, 0, 0, 0);
         t.name.setSingleLine(true);
         t.name.setEllipsize(android.text.TextUtils.TruncateAt.END);
         t.name.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         t.name.setShadowLayer(6f, 0f, 2f, 0xCC000000);
-        t.count = text("", 14, 0xFFD0DBE8);
+        t.count = text("", 13, 0xFFD0DBE8);
+        t.count.setPadding(0, 0, 0, 0);
         t.count.setShadowLayer(6f, 0f, 2f, 0xCC000000);
         box.addView(t.name);
         box.addView(t.count);
@@ -537,7 +634,9 @@ public class BrowserActivity extends Activity {
         public View getView(int pos, View cv, ViewGroup parent) {
             Tile t = cv instanceof Tile ? (Tile) cv : newPhotoTile();
             Item it = current.shown().get(pos);
-            thumbs.load(t.img, it.url, r32(photoTile), r32(photoTile));
+            boolean crop = !"full".equals(photoShape);
+            t.img.setScaleType(crop ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
+            thumbs.load(t.img, it.url, r32(photoTile), r32(photoTileH), crop);
             prefetchAhead(pos);
             return t;
         }
@@ -548,12 +647,12 @@ public class BrowserActivity extends Activity {
         List<Item> l = current.shown();
         int to = Math.min(l.size() - 1, pos + AHEAD);
         for (int i = Math.max(prefetched + 1, pos + 1); i <= to; i++)
-            thumbs.prefetch(l.get(i).url, r32(photoTile), r32(photoTile));
+            thumbs.prefetch(l.get(i).url, r32(photoTile), r32(photoTileH), !"full".equals(photoShape));
         if (to > prefetched) prefetched = to;
     }
 
     private Tile newPhotoTile() {
-        Tile t = new Tile(this, 1f);
+        Tile t = new Tile(this, photoRatio);
         t.setBackgroundColor(0xFF1B2D44);
         t.img = new ImageView(this);
         t.img.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -598,8 +697,8 @@ public class BrowserActivity extends Activity {
         if (destroyed || photoGrid == null || current == null) return;
         if (flagBusy) { h.postDelayed(flagRun, 400); return; }
         // solo los que están a la vista (con un margen); los demás se pedirán al verlos
-        int first = Math.max(0, photoGrid.getFirstVisiblePosition() - PHOTO_COLS * 2);
-        int last = Math.min(current.items.size() - 1, photoGrid.getLastVisiblePosition() + PHOTO_COLS * 2);
+        int first = Math.max(0, photoGrid.getFirstVisiblePosition() - photoCols * 2);
+        int last = Math.min(current.items.size() - 1, photoGrid.getLastVisiblePosition() + photoCols * 2);
         Set<String> vis = new HashSet<String>();
         for (int i = first; i <= last; i++) vis.add(current.items.get(i).key());
         final List<Item> batch = new ArrayList<Item>();

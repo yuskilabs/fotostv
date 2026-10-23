@@ -32,6 +32,7 @@ class AlbumFetcher {
         String title = "";
         String key = "";
         List<Item> items = new ArrayList<Item>();
+        boolean partial;   // sacado de la propia página (máx. ~300), no de la lista completa
     }
 
     static final String RPC = "snAcKc";
@@ -50,6 +51,7 @@ class AlbumFetcher {
         if (t.find()) d.title = cleanTitle(t.group(1));
 
         // Todas las páginas mediante la petición interna de la web (de 300 en 300)
+        String partialErr = null;
         try {
             String ref = finalUrl[0];
             Matcher c = CANON.matcher(html);
@@ -62,7 +64,21 @@ class AlbumFetcher {
                 List<Item> all = new ArrayList<Item>();
                 String token = null;
                 for (int page = 0; page < 200; page++) {
-                    JSONArray r = batchPage(id, key, token);
+                    JSONArray r = null;
+                    Exception last = null;
+                    for (int tr = 0; tr < 3 && r == null; tr++) {
+                        try { r = batchPage(id, key, token); }
+                        catch (Exception e) {
+                            last = e;
+                            try { Thread.sleep(800); } catch (InterruptedException ie) { break; }
+                        }
+                    }
+                    if (r == null) {
+                        // si falla una página a medias, no se da por bueno un álbum recortado
+                        if (!all.isEmpty()) partialErr = "Descarga incompleta del álbum (" + all.size() + " elementos); se reintentará";
+                        else if (last != null) throw last;
+                        break;
+                    }
                     JSONArray items = r.optJSONArray(1);
                     if (items != null) for (int i = 0; i < items.length(); i++) {
                         JSONArray it = items.optJSONArray(i);
@@ -83,9 +99,10 @@ class AlbumFetcher {
                     token = r.isNull(2) ? null : r.optString(2, null);
                     if (token == null || token.length() == 0) break;
                 }
-                if (!all.isEmpty()) { d.items = all; d.key = key; return d; }
+                if (partialErr == null && !all.isEmpty()) { d.items = all; d.key = key; return d; }
             }
         } catch (Exception ignored) { }
+        if (partialErr != null) throw new IOException(partialErr);
 
         // Respaldo: lo que viene en la propia página (máximo unas 300)
         Set<String> seen = new HashSet<String>();
@@ -101,6 +118,7 @@ class AlbumFetcher {
         while (m.find()) {
             if (seen.add(m.group(1))) d.items.add(new Item(m.group(1), 0));
         }
+        d.partial = true;
         if (d.items.isEmpty())
             throw new IOException("No se encontraron fotos. ¿Es un álbum compartido con enlace?");
         return d;

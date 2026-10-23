@@ -71,8 +71,11 @@ class Thumbs {
     }
 
     /** Pide la miniatura (recortada al tamaño dado) de baseUrl y la pone en la vista. */
-    void load(ImageView v, String baseUrl, int w, int h) {
-        final String url = baseUrl + "=w" + w + "-h" + h + "-c";
+    void load(ImageView v, String baseUrl, int w, int h) { load(v, baseUrl, w, h, true); }
+
+    /** crop=false: la foto entera, ajustada dentro de w×h sin recortar. */
+    void load(ImageView v, String baseUrl, int w, int h, boolean crop) {
+        final String url = baseUrl + "=w" + w + "-h" + h + (crop ? "-c" : "");
         v.animate().cancel();
         v.setAlpha(1f);
         v.setTag(url);
@@ -98,8 +101,10 @@ class Thumbs {
     }
 
     /** Descarga la miniatura al disco (sin vista), con menos prioridad que lo que se está viendo. */
-    void prefetch(String baseUrl, int w, int h) {
-        String url = baseUrl + "=w" + w + "-h" + h + "-c";
+    void prefetch(String baseUrl, int w, int h) { prefetch(baseUrl, w, h, true); }
+
+    void prefetch(String baseUrl, int w, int h, boolean crop) {
+        String url = baseUrl + "=w" + w + "-h" + h + (crop ? "-c" : "");
         Task t = new Task();
         t.url = url;
         synchronized (queue) {

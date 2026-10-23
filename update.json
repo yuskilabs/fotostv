@@ -1,6 +1,6 @@
 {
-  "version": "5.12.3",
+  "version": "5.13.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 308654,
-  "notes": "- La web de configuración lleva el logo arriba y yuskilabs con su logo al final.\n- La caché se muestra en el propio botón («Vaciar caché (103 MB)») y ya no ocupa sitio en la lista de álbumes.\n- «Buscar actualización» pasa a llamarse «Actualizar»."
+  "size": 312750,
+  "notes": "- Explorador rediseñado: logo de la app a la izquierda en las cabeceras, «Álbumes» en negrita, sin textos de ayuda y con más espacio para las fotos.\n- Mosaico de álbumes: botón «Columnas» (2–8); el nombre de cada álbum, más pequeño y pegado al número y al borde de abajo; la primera casilla se llama «Todas».\n- Dentro de un álbum: nombre en negrita y color, botones más compactos, botón «Columnas» (3–12) y botón «Formato» de las miniaturas (cuadrada, apaisada o completa).\n- Arreglo: un álbum con más de 300 fotos podía quedarse a veces con solo 300 en el mosaico (descarga recortada); ahora una descarga incompleta no sustituye a la lista completa."
 }

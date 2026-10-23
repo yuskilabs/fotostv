@@ -25,6 +25,10 @@ class Prefs {
         }
     }
     static int thumbMB(Context c) { return sp(c).getInt("thumbMB", smallStorage(c) ? 150 : 500); }
+    static int albumCols(Context c) { return sp(c).getInt("albumCols", 4); }
+    static int photoCols(Context c) { return sp(c).getInt("photoCols", 6); }
+    /** square | wide | full */
+    static String photoShape(Context c) { return sp(c).getString("photoShape", "square"); }
     static int videoMB(Context c) { return sp(c).getInt("videoMB", smallStorage(c) ? 500 : 1500); }
 
     /** Minutos sin usar el mando antes de abrir el pase solo (0 = desactivado). Solo para equipos sin salvapantallas estándar. */
@@ -32,6 +36,9 @@ class Prefs {
 
     /** Orden de los álbumes en el explorador de la tele: manual | newest | oldest (por la fecha de captura de su última foto). */
     static String albumSort(Context c) { return sp(c).getString("albumSort", "manual"); }
+
+    /** Columnas del mosaico de álbumes y de fotos del explorador, y formato de las miniaturas de fotos: square | wide | full. */
+    static String photoFmt(Context c) { return sp(c).getString("photoFmt", "square"); }
 
     static int interval(Context c) { return sp(c).getInt("interval", 60); }
     static String fit(Context c) { return sp(c).getString("fit", "auto"); }
@@ -182,6 +189,11 @@ class Prefs {
     static void saveAlbumCache(Context c, String url, AlbumFetcher.AlbumData d) {
         try {
             migrate(c);
+            if (d.partial) {
+                // una descarga recortada (~300) nunca sustituye a una lista más completa ya guardada
+                AlbumFetcher.AlbumData old = albumCache(c, url);
+                if (old != null && old.items.size() > d.items.size()) return;
+            }
             synchronized (Prefs.class) { writeCache(c, url, d.title, d.key, d.items); }
         } catch (Exception ignored) { }
     }
