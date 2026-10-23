@@ -6,6 +6,10 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.Gravity;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.widget.ImageView;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
@@ -26,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class SettingsActivity extends Activity implements WebConfigServer.Listener {
-    private TextView webInfo, status, cacheInfo, verInfo;
+    private TextView webInfo, status, cacheInfo, verInfo, msgView;
     private boolean updating;
     private WebConfigServer server;
     private final Handler h = new Handler(Looper.getMainLooper());
@@ -41,35 +45,66 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             if (!found) { l.add(new Prefs.Album(extra.trim(), "", true)); Prefs.saveAlbums(this, l); }
         }
 
-        // fondo con degradado, dos columnas: logo y botones | tarjetas de información
+        // fondo con degradado. Arriba: logo + tarjeta del móvil. Abajo: botones | tus álbumes (misma altura)
         LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.HORIZONTAL);
-        root.setPadding(dp(44), dp(28), dp(44), dp(24));
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(44), dp(24), dp(44), dp(24));
         root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{0xFF0A1424, 0xFF14305A}));
         root.setClipChildren(false);
 
+        LinearLayout row1 = new LinearLayout(this);
+        row1.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.VERTICAL);
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.logo_full);
+        logo.setAdjustViewBounds(true);
+        top.addView(logo, new LinearLayout.LayoutParams(-2, dp(96)));
+        TextView tag = text("Tus álbumes de Google Fotos, en la tele y como salvapantallas", 13, 0xFF9FB3C8);
+        tag.setPadding(0, dp(6), 0, 0);
+        top.addView(tag);
+        LinearLayout vrow = new LinearLayout(this);
+        vrow.setOrientation(LinearLayout.HORIZONTAL);
+        vrow.setGravity(Gravity.CENTER_VERTICAL);
+        verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
+        verInfo.setPadding(0, dp(2), 0, 0);
+        vrow.addView(verInfo, new LinearLayout.LayoutParams(0, -2, 1f));
+        ImageView yl = new ImageView(this);
+        yl.setImageResource(R.drawable.yuski_logo);
+        yl.setAdjustViewBounds(true);
+        vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(22)));
+        TextView by = text("yuskilabs", 13, 0xFF9FB3C8);
+        by.setPadding(dp(6), 0, 0, 0);
+        vrow.addView(by);
+        top.addView(vrow);
+        row1.addView(top, new LinearLayout.LayoutParams(0, -2, 0.40f));
+
+        LinearLayout c1 = card();
+        c1.setPadding(dp(18), dp(8), dp(18), dp(8));
+        c1.setGravity(Gravity.CENTER_VERTICAL);
+        TextView c1t = cardTitle("Configúralo desde el móvil");
+        c1t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        c1t.setPadding(0, 0, 0, dp(2));
+        c1.addView(c1t);
+        c1.addView(line("1. En Google Fotos abre un álbum → Compartir → Crear enlace, y cópialo."));
+        c1.addView(line("2. Con el móvil en la misma wifi, abre esta dirección y pega los enlaces:"));
+        webInfo = text("", 17, 0xFF7CC4FF);
+        webInfo.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        webInfo.setPadding(0, dp(1), 0, dp(1));
+        c1.addView(webInfo);
+        c1.addView(line("3. Pulsa «Elegir salvapantallas» y selecciona «FotosTV»."));
+        LinearLayout.LayoutParams c1p = new LinearLayout.LayoutParams(0, -1, 0.60f);
+        c1p.setMargins(dp(32), 0, 0, 0);
+        row1.addView(c1, c1p);
+        root.addView(row1, new LinearLayout.LayoutParams(-1, -2));
+
+        LinearLayout row2 = new LinearLayout(this);
+        row2.setOrientation(LinearLayout.HORIZONTAL);
+        row2.setClipChildren(false);
         LinearLayout left = new LinearLayout(this);
         left.setOrientation(LinearLayout.VERTICAL);
         left.setClipChildren(false);
-        LinearLayout head = new LinearLayout(this);
-        head.setOrientation(LinearLayout.HORIZONTAL);
-        head.setGravity(Gravity.CENTER_VERTICAL);
-        ImageView logo = new ImageView(this);
-        logo.setImageResource(R.drawable.icon);
-        head.addView(logo, new LinearLayout.LayoutParams(dp(56), dp(56)));
-        TextView title = text("FotosTV", 30, Color.WHITE);
-        title.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        title.setPadding(dp(14), 0, 0, 0);
-        head.addView(title);
-        left.addView(head);
-        TextView tag = text("Tus álbumes de Google Fotos, en la tele y como salvapantallas", 13, 0xFF9FB3C8);
-        tag.setPadding(0, dp(2), 0, 0);
-        left.addView(tag);
-        verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
-        verInfo.setPadding(0, 0, 0, dp(8));
-        left.addView(verInfo);
-
         Button browse = side("Ver álbumes", new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, BrowserActivity.class)); }
         });
@@ -93,28 +128,15 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         left.addView(side("Buscar actualización", new View.OnClickListener() {
             public void onClick(View v) { updateFlow(); }
         }));
-        ScrollView leftScroll = new ScrollView(this);
-        leftScroll.setFillViewport(true);
-        leftScroll.setClipChildren(false);
-        leftScroll.addView(left);
-        root.addView(leftScroll, new LinearLayout.LayoutParams(0, -1, 0.40f));
-
-        LinearLayout right = new LinearLayout(this);
-        right.setOrientation(LinearLayout.VERTICAL);
-        right.setPadding(dp(32), 0, 0, 0);
-
-        LinearLayout c1 = card();
-        c1.addView(cardTitle("Configúralo desde el móvil"));
-        c1.addView(line("1. En Google Fotos abre un álbum → Compartir → Crear enlace, y cópialo."));
-        c1.addView(line("2. Con el móvil en la misma wifi, abre esta dirección y pega los enlaces:"));
-        webInfo = text("", 22, 0xFF7CC4FF);
-        webInfo.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        c1.addView(webInfo);
-        c1.addView(line("3. Pulsa «Elegir salvapantallas» y selecciona «FotosTV»."));
-        right.addView(c1);
+        row2.addView(left, new LinearLayout.LayoutParams(0, -1, 0.40f));
 
         LinearLayout c2 = card();
         c2.addView(cardTitle("Tus álbumes"));
+        msgView = text("", 15, Color.WHITE);
+        msgView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        msgView.setPadding(dp(8), dp(2), dp(8), dp(2));
+        msgView.setVisibility(View.GONE);
+        c2.addView(msgView);
         status = text("", 15, Color.WHITE);
         ScrollView sv = new ScrollView(this);
         // se puede entrar con el mando (derecha) y desplazar con arriba/abajo cuando la lista es larga
@@ -135,22 +157,12 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         c2.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
         cacheInfo = text("", 13, 0xFF9FB3C8);
         c2.addView(cacheInfo);
-        LinearLayout.LayoutParams c2p = new LinearLayout.LayoutParams(-1, 0, 1f);
-        c2p.setMargins(0, dp(14), 0, 0);
-        right.addView(c2, c2p);
-        LinearLayout foot = new LinearLayout(this);
-        foot.setOrientation(LinearLayout.HORIZONTAL);
-        foot.setGravity(Gravity.CENTER_VERTICAL | Gravity.END);
-        foot.setPadding(0, dp(8), dp(4), 0);
-        ImageView yl = new ImageView(this);
-        yl.setImageResource(R.drawable.yuski_logo);
-        yl.setAdjustViewBounds(true);
-        foot.addView(yl, new LinearLayout.LayoutParams(-2, dp(30)));
-        TextView by = text("yuskilabs", 15, 0xFF9FB3C8);
-        by.setPadding(dp(8), 0, 0, 0);
-        foot.addView(by);
-        right.addView(foot);
-        root.addView(right, new LinearLayout.LayoutParams(0, -1, 0.60f));
+        LinearLayout.LayoutParams c2p = new LinearLayout.LayoutParams(0, -1, 0.60f);
+        c2p.setMargins(dp(32), 0, 0, 0);
+        row2.addView(c2, c2p);
+        LinearLayout.LayoutParams r2p = new LinearLayout.LayoutParams(-1, 0, 1f);
+        r2p.setMargins(0, dp(14), 0, 0);
+        root.addView(row2, r2p);
 
         setContentView(root);
         browse.requestFocus();
@@ -164,7 +176,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         b.setMinHeight(0);
         b.setMinimumHeight(0);
         b.setPadding(dp(16), dp(5), dp(16), dp(5));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, 0, 1f);
         lp.setMargins(0, 0, 0, dp(4));
         b.setLayoutParams(lp);
         return b;
@@ -189,8 +201,8 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     private TextView line(String s) {
-        TextView t = text(s, 14, 0xFFBBCCDD);
-        t.setPadding(0, dp(3), 0, dp(3));
+        TextView t = text(s, 12, 0xFFBBCCDD);
+        t.setPadding(0, dp(2), 0, dp(2));
         return t;
     }
 
@@ -198,6 +210,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         super.onStart();
         refreshCache();
         silentCheck();
+        if (msgView.getVisibility() == View.VISIBLE && msgView.getText().toString().endsWith("\u2026")) startPulse();
         final WebConfigServer srv = new WebConfigServer(this, this);
         server = srv;
         webInfo.setText("Abriendo la web de configuración…");
@@ -221,6 +234,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     @Override protected void onStop() {
+        stopPulse();
         if (server != null) { server.close(); server = null; }
         super.onStop();
     }
@@ -238,40 +252,87 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private void updateStatus(final String msg) {
         final int seq = ++statusSeq;
+        if (msg == null) {
+            stopPulse();
+            msgView.setVisibility(View.GONE);
+        } else {
+            msgView.setText(msg);
+            msgView.setVisibility(View.VISIBLE);
+            if (msg.endsWith("\u2026")) startPulse();
+            else { stopPulse(); msgView.setTextColor(Color.WHITE); }
+        }
         new Thread(new Runnable() {
             public void run() {
-                StringBuilder sb = new StringBuilder();
-                if (msg != null) sb.append(msg).append("\n");
+                SpannableStringBuilder sb = new SpannableStringBuilder();
                 List<Prefs.Album> albums = Prefs.albums(SettingsActivity.this);
                 if (albums.isEmpty()) sb.append("Todavía no hay ningún álbum.");
                 boolean all = "all".equals(Prefs.albumMode(SettingsActivity.this));
                 if (!albums.isEmpty())
                     sb.append(all ? "Se muestran todos los álbumes:\n" : "Se muestran solo los álbumes marcados:\n");
                 long total = 0;
-                int known = 0;
                 for (Prefs.Album al : albums) {
                     String[] i0 = Prefs.albumInfo(SettingsActivity.this, al.url);
-                    if (i0 != null) { try { total += Long.parseLong(i0[2]); known++; } catch (Exception ignored) { } }
+                    if (i0 != null) { try { total += Long.parseLong(i0[2]); } catch (Exception ignored) { } }
                 }
                 if (albums.size() > 3 && total > 0)
-                    sb.append(albums.size()).append(" álbumes \u00B7 ").append(String.format(java.util.Locale.GERMANY, "%,d", total))
-                      .append(" elementos  (usa \u25B6 y \u25B2\u25BC para recorrer la lista)\n");
+                    sb.append(albums.size() + " álbumes \u00B7 " + String.format(java.util.Locale.GERMANY, "%,d", total)
+                      + " elementos\n");
+                if (!albums.isEmpty()) sb.append("\n");
                 for (Prefs.Album al : albums) {
                     String[] info = Prefs.albumInfo(SettingsActivity.this, al.url);
                     String t = info != null ? info[0] : "";
                     String name = al.name.length() > 0 ? al.name : (t.length() > 0 ? t : al.url);
                     boolean on = all || al.show;
-                    sb.append(on ? "\u25CF " : "\u25CB ").append(name);
-                    if (info != null) sb.append("  \u2014  ").append(info[2]).append(" elementos");
+                    sb.append(on ? "\u25CF " : "\u25CB ");
+                    int st = sb.length();
+                    sb.append(name);
+                    sb.setSpan(new ForegroundColorSpan(on ? 0xFFFFB454 : 0xFF7C93AD), st, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    sb.setSpan(new StyleSpan(Typeface.BOLD), st, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    if (info != null) sb.append("  \u2014  " + info[2]);
                     if (!on) sb.append("   (oculto)");
                     sb.append("\n");
                 }
-                final String text = sb.toString().trim();
+                final CharSequence text = trim(sb);
                 h.post(new Runnable() {
                     public void run() { if (seq == statusSeq) status.setText(text); }
                 });
             }
         }).start();
+    }
+
+    private static CharSequence trim(SpannableStringBuilder sb) {
+        int n = sb.length();
+        while (n > 0 && Character.isWhitespace(sb.charAt(n - 1))) n--;
+        return sb.subSequence(0, n);
+    }
+
+    // texto "Comprobando…" con colores de la paleta del logo y parpadeo suave
+    private android.animation.ValueAnimator pulse;
+    private static final int[] PAL = {0xFFFFAA46, 0xFFF43F7A, 0xFF8250F5};
+
+    private void startPulse() {
+        stopPulse();
+        final android.animation.ArgbEvaluator ev = new android.animation.ArgbEvaluator();
+        pulse = android.animation.ValueAnimator.ofFloat(0f, 1f);
+        pulse.setDuration(3000);
+        pulse.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        pulse.setInterpolator(new android.view.animation.LinearInterpolator());
+        pulse.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
+            public void onAnimationUpdate(android.animation.ValueAnimator a) {
+                float t = (Float) a.getAnimatedValue();
+                float pos = t * PAL.length;
+                int i = Math.min((int) pos, PAL.length - 1);
+                int c = (Integer) ev.evaluate(pos - i, PAL[i], PAL[(i + 1) % PAL.length]);
+                float k = 0.5f - 0.5f * (float) Math.cos(t * Math.PI * 2 * 3);
+                int alpha = (int) (255 * (0.45f + 0.55f * k));
+                msgView.setTextColor((alpha << 24) | (c & 0xFFFFFF));
+            }
+        });
+        pulse.start();
+    }
+
+    private void stopPulse() {
+        if (pulse != null) { pulse.cancel(); pulse = null; }
     }
 
     private void checkAlbum() {

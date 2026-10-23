@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.12.0
+- Pantalla principal rediseñada: logo completo y grande arriba; los botones ocupan la misma altura que la caja «Tus álbumes»; la tarjeta «Configúralo desde el móvil» es más pequeña.
+- Lista de álbumes: línea en blanco tras el total, solo el número de elementos y el nombre en negrita y de color.
+- «Comprobando álbumes…» parpadea suavemente con los colores del logo.
+- yuskilabs pasa a la línea de la versión (sin reservar espacio abajo).
+
 ## 5.11.7
 - Logo: letras más altas, menos achatadas.
 

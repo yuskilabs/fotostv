@@ -1,6 +1,6 @@
 {
-  "version": "5.11.7",
+  "version": "5.12.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 238941,
-  "notes": "- Logo: letras más altas, menos achatadas."
+  "size": 308654,
+  "notes": "- Pantalla principal rediseñada: logo completo y grande arriba; los botones ocupan la misma altura que la caja «Tus álbumes»; la tarjeta «Configúralo desde el móvil» es más pequeña.\n- Lista de álbumes: línea en blanco tras el total, solo el número de elementos y el nombre en negrita y de color.\n- «Comprobando álbumes…» parpadea suavemente con los colores del logo.\n- yuskilabs pasa a la línea de la versión (sin reservar espacio abajo)."
 }
