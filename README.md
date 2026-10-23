@@ -1,3 +1,8 @@
+<p align="center">
+  <img src="assets/fotostv-icon.png" alt="FotosTV" width="140"><br>
+  <img src="assets/fotostv-wordmark.png" alt="FotosTV" width="280">
+</p>
+
 # FotosTV
 
 Tus álbumes compartidos de Google Fotos en la tele: como **salvapantallas** y como **visor** con mosaico, sin descargar nada y sin cuenta de Google en el dispositivo.

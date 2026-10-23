@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.11
+- **Logo nuevo**: icono con foto apilada, pantalla de tele con montañas y un botón de «play» como sol, y el nombre en una letra mucho más gruesa (con «TV» en degradado). Cambia el icono, el banner del lanzador y el logo de la pantalla principal.
+
 ## 5.10.1
 - La fecha (y el nombre del álbum y el lugar) ocupan siempre una sola línea y se vuelve a calcular su tamaño al cambiar el texto, para que no salga cortada («18 de diciembre de» sin el año) en las primeras fotos.
 
