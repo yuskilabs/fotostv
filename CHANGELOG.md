@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.11.5
+- Banner: margen lateral algo menor.
+
 ## 5.11.4
 - Banner: el logo deja un margen a los lados.
 

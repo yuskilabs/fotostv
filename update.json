@@ -1,6 +1,6 @@
 {
-  "version": "5.11.4",
+  "version": "5.11.5",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 230749,
-  "notes": "- Banner: el logo deja un margen a los lados."
+  "size": 234845,
+  "notes": "- Banner: margen lateral algo menor."
 }
