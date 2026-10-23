@@ -1,6 +1,6 @@
 {
-  "version": "5.14.1",
+  "version": "5.14.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 321937,
-  "notes": "- Dentro de un álbum, el nombre va en blanco y negrita (como «Álbumes»)."
+  "notes": "- Botones de la pantalla principal alineados a la izquierda, junto a su icono.\n- Un solo botón «Antiguas» / «Recientes» que alterna al pulsarlo (junto a «Aleatorio»).\n- Cabeceras de álbumes y de fotos exactamente iguales (misma altura, logo y título) con una barra gris vertical tras el logo."
 }

@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.14.2
+- Botones de la pantalla principal alineados a la izquierda, junto a su icono.
+- Un solo botón «Antiguas» / «Recientes» que alterna al pulsarlo (junto a «Aleatorio»).
+- Cabeceras de álbumes y de fotos exactamente iguales (misma altura, logo y título) con una barra gris vertical tras el logo.
+
 ## 5.14.1
 - Dentro de un álbum, el nombre va en blanco y negrita (como «Álbumes»).
 

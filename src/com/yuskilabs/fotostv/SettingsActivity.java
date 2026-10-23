@@ -172,6 +172,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private Button side(String label, int icon, View.OnClickListener l) {
         Button b = Ui.icon(Ui.button(this, label, l), icon);
+        b.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         b.setMinHeight(0);
         b.setMinimumHeight(0);

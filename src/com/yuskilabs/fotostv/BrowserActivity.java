@@ -78,11 +78,8 @@ public class BrowserActivity extends Activity {
     private boolean destroyed, flagBusy, loaded;
     private int prefetched = -1;
     private static final int AHEAD = 150;
-    private android.widget.Button[] ordBtn = new android.widget.Button[3];
+    private android.widget.Button[] ordBtn = new android.widget.Button[2];
     private android.widget.Button playBtn;
-    private static final int[] ORD_ICON = {R.drawable.ic_shuffle, R.drawable.ic_up, R.drawable.ic_down};
-    private static final String[] ORD_KEY = {"random", "asc", "desc"};
-    private static final String[] ORD_LABEL = {"Aleatorio", "Antiguas primero", "Recientes primero"};
 
     private int albumCols, photoCols, photoTileH;
     private String photoShape = "square";
@@ -164,6 +161,26 @@ public class BrowserActivity extends Activity {
         v.setAdjustViewBounds(true);
         v.setLayoutParams(new LinearLayout.LayoutParams(-2, Ui.dp(this, hdp)));
         return v;
+    }
+
+    /** Cabecera común de las dos pantallas (misma altura, logo y separador gris). */
+    private LinearLayout header() {
+        LinearLayout head = new LinearLayout(this);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        head.addView(logoView(44));
+        View sep = new View(this);
+        sep.setBackgroundColor(0xFF6B7C90);
+        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(Ui.dp(this, 2), Ui.dp(this, 32));
+        sp.setMargins(Ui.dp(this, 16), 0, Ui.dp(this, 16), 0);
+        head.addView(sep, sp);
+        return head;
+    }
+
+    private LinearLayout.LayoutParams headParams() {
+        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, Ui.dp(this, 56));
+        hp.setMargins(margin, Ui.dp(this, 10), margin, 0);
+        return hp;
     }
 
     private static String shapeLabel(String sh) {
@@ -418,19 +435,13 @@ public class BrowserActivity extends Activity {
         root.removeAllViews();
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout head = new LinearLayout(this);
-        head.setOrientation(LinearLayout.HORIZONTAL);
-        head.setGravity(Gravity.CENTER_VERTICAL);
-        head.addView(logoView(44));
+        LinearLayout head = header();
         TextView title = text("Álbumes", 26, Color.WHITE);
         title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        title.setPadding(Ui.dp(this, 18), 0, 0, 0);
+        title.setPadding(0, 0, 0, 0);
         head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
-        LinearLayout cc = colsControl("album", ALBUM_COLS_RANGE, albumCols, "albumCols", true);
-        head.addView(cc);
-        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, -2);
-        hp.setMargins(margin, Ui.dp(this, 10), margin, 0);
-        col.addView(head, hp);
+        head.addView(colsControl("album", ALBUM_COLS_RANGE, albumCols, "albumCols", true));
+        col.addView(head, headParams());
 
         albumGrid = makeGrid(albumCols);
         albumGrid.setAdapter(new AlbumAdapter());
@@ -463,34 +474,31 @@ public class BrowserActivity extends Activity {
         root.removeAllViews();
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout head = new LinearLayout(this);
-        head.setOrientation(LinearLayout.HORIZONTAL);
-        head.setGravity(Gravity.CENTER_VERTICAL);
-        head.addView(logoView(44));
+        LinearLayout head = header();
         TextView nm = text(current.title, 26, TITLE_COLOR);
         nm.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        nm.setPadding(Ui.dp(this, 18), 0, 0, 0);
+        nm.setPadding(0, 0, 0, 0);
         nm.setSingleLine(true);
         nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
         head.addView(nm, new LinearLayout.LayoutParams(-2, -2));
         TextView cn = text("  \u00B7  " + current.items.size() + " elementos", 20, 0xFFD0DBE8);
+        cn.setPadding(0, 0, 0, 0);
         head.addView(cn);
-        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, -2);
-        hp.setMargins(margin, Ui.dp(this, 8), margin, 0);
-        col.addView(head, hp);
+        col.addView(head, headParams());
 
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 4));
         playBtn = sbtn("Pase", R.drawable.ic_play, play());
         row.addView(playBtn);
-        for (int i = 0; i < 3; i++) {
-            final String key = ORD_KEY[i];
-            ordBtn[i] = sbtn(ORD_LABEL[i], ORD_ICON[i], new View.OnClickListener() {
-                public void onClick(View v) { setOrder(key); }
-            });
-            row.addView(ordBtn[i]);
-        }
+        ordBtn[0] = sbtn("Aleatorio", R.drawable.ic_shuffle, new View.OnClickListener() {
+            public void onClick(View v) { setOrder("random"); }
+        });
+        row.addView(ordBtn[0]);
+        ordBtn[1] = sbtn("Antiguas", R.drawable.ic_up, new View.OnClickListener() {
+            public void onClick(View v) { setOrder(current != null && "asc".equals(current.order) ? "desc" : "asc"); }
+        });
+        row.addView(ordBtn[1]);
         row.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
         shapeBtn = sbtn(shapeLabel(photoShape), R.drawable.ic_format, new View.OnClickListener() {
             public void onClick(View v) {
@@ -549,9 +557,13 @@ public class BrowserActivity extends Activity {
     }
 
     private void refreshOrderButtons() {
-        for (int i = 0; i < 3; i++)
-            if (ordBtn[i] != null)
-                ordBtn[i].setText((current != null && ORD_KEY[i].equals(current.order) ? "\u2713  " : "") + ORD_LABEL[i]);
+        String o = current != null ? current.order : "";
+        if (ordBtn[0] != null) ordBtn[0].setText(("random".equals(o) ? "\u2713  " : "") + "Aleatorio");
+        if (ordBtn[1] != null) {
+            boolean desc = "desc".equals(o);
+            ordBtn[1].setText((("asc".equals(o) || desc) ? "\u2713  " : "") + (desc ? "Recientes" : "Antiguas"));
+            Ui.icon(ordBtn[1], desc ? R.drawable.ic_down : R.drawable.ic_up);
+        }
     }
 
     private View.OnClickListener play() {
