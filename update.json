@@ -1,6 +1,6 @@
 {
-  "version": "5.11.1",
+  "version": "5.11.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 243037,
-  "notes": "- Nombre del logo con una letra negrita más ligera y la «o» de «Fotos» convertida en un botón de «play» con el degradado, a juego con el sol del icono."
+  "size": 238941,
+  "notes": "- Logo: la parte \"Fotos\" del nombre es algo más negrita."
 }
