@@ -91,7 +91,7 @@ public class BrowserActivity extends Activity {
     private String refocus;
     private static final int[] ALBUM_COLS_RANGE = {2, 10};
     private static final int[] PHOTO_COLS_RANGE = {2, 14};
-    private static final int TITLE_COLOR = 0xFFFF6F9C;
+    private static final int TITLE_COLOR = 0xFFFFFFFF;
 
     private void computeLayout() {
         albumCols = Prefs.albumCols(this);

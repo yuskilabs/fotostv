@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.14.1
+- Dentro de un álbum, el nombre va en blanco y negrita (como «Álbumes»).
+
 ## 5.14.0
 - Iconos en todos los botones de la app (y emojis en los de la web).
 - Dentro de un álbum: cabecera del mismo tamaño que la de álbumes, el nombre en rosa, «Pase» el primer botón.
