@@ -105,6 +105,21 @@ class WebConfigServer extends Thread {
         String method = parts[0], path = parts.length > 1 ? parts[1] : "/";
         String body;
         String ctype = "text/html; charset=utf-8";
+        if (path.startsWith("/img/")) {
+            int id = path.startsWith("/img/yuski") ? R.drawable.yuski_logo : R.drawable.logo_full;
+            java.io.InputStream ri = ctx.getResources().openRawResource(id);
+            java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+            byte[] tmp = new byte[8192];
+            int rn;
+            while ((rn = ri.read(tmp)) > 0) bo.write(tmp, 0, rn);
+            ri.close();
+            OutputStream o2 = s.getOutputStream();
+            o2.write(("HTTP/1.1 200 OK\r\nContent-Type: image/png\r\nCache-Control: max-age=86400\r\nContent-Length: "
+                    + bo.size() + "\r\nConnection: close\r\n\r\n").getBytes("UTF-8"));
+            o2.write(bo.toByteArray());
+            o2.flush();
+            return;
+        }
         if (path.startsWith("/export")) {
             body = exportJson();
             ctype = "text/plain; charset=utf-8";
@@ -529,7 +544,7 @@ class WebConfigServer extends Thread {
             + "<meta name='viewport' content='width=device-width,initial-scale=1'>"
             + "<title>FotosTV</title><style>"
             + "body{font-family:-apple-system,system-ui,sans-serif;background:#0f1d2e;color:#eef;margin:0;padding:24px 16px}"
-            + "h1{font-size:22px;margin:0 0 8px}h2{font-size:17px;margin:28px 0 4px;color:#8cf}"
+            + "img.logo{height:72px;max-width:100%;display:block;margin:0 0 4px}.by{margin:44px 0 8px;text-align:right;color:#89a;font-size:15px}.by img{height:24px;vertical-align:middle;margin-right:8px}h2{font-size:17px;margin:28px 0 4px;color:#8cf}"
             + ".card{background:#162a40;border-radius:12px;padding:10px 12px;margin:10px 0}.card input{margin:4px 0}"
             + ".row{display:flex;justify-content:space-between;align-items:center;gap:8px}.row .chk{margin:6px 0}"
             + ".muted{color:#89a;font-size:14px}.new{border:1px dashed #456}"
@@ -539,7 +554,7 @@ class WebConfigServer extends Thread {
             + "button.sec{margin-top:10px;background:#2a4a6e;font-size:16px;padding:12px}button:disabled{opacity:.5}"
             + "button.danger{background:#7a2b36}.row2{display:flex;gap:10px}.row2 button{width:auto;flex:1}"
             + "button{margin-top:26px;width:100%;font-size:18px;padding:14px;border:0;border-radius:12px;background:#3d8bfd;color:#fff;font-weight:600}"
-            + ".ok{font-size:19px}a{color:#8cf}</style></head><body><h1>FotosTV</h1>"
-            + content + SCRIPT + "</body></html>";
+            + ".ok{font-size:19px}a{color:#8cf}</style></head><body><img class='logo' src='/img/logo.png' alt='FotosTV'>"
+            + content + "<div class='by'><img src='/img/yuski.png' alt=''>yuskilabs</div>" + SCRIPT + "</body></html>";
     }
 }

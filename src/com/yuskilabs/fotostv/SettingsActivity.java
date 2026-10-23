@@ -30,7 +30,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class SettingsActivity extends Activity implements WebConfigServer.Listener {
-    private TextView webInfo, status, cacheInfo, verInfo, msgView;
+    private TextView webInfo, status, verInfo, msgView;
+    private Button cacheBtn;
     private boolean updating;
     private WebConfigServer server;
     private final Handler h = new Handler(Looper.getMainLooper());
@@ -122,10 +123,11 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         left.addView(side("Comprobar álbumes", new View.OnClickListener() {
             public void onClick(View v) { checkAlbum(); }
         }));
-        left.addView(side("Vaciar caché", new View.OnClickListener() {
+        cacheBtn = side("Vaciar caché", new View.OnClickListener() {
             public void onClick(View v) { clearCache(); }
-        }));
-        left.addView(side("Buscar actualización", new View.OnClickListener() {
+        });
+        left.addView(cacheBtn);
+        left.addView(side("Actualizar", new View.OnClickListener() {
             public void onClick(View v) { updateFlow(); }
         }));
         row2.addView(left, new LinearLayout.LayoutParams(0, -1, 0.40f));
@@ -155,8 +157,6 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         sv.setPadding(dp(8), dp(4), dp(8), dp(4));
         sv.addView(status);
         c2.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
-        cacheInfo = text("", 13, 0xFF9FB3C8);
-        c2.addView(cacheInfo);
         LinearLayout.LayoutParams c2p = new LinearLayout.LayoutParams(0, -1, 0.60f);
         c2p.setMargins(dp(32), 0, 0, 0);
         row2.addView(c2, c2p);
@@ -448,7 +448,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                         if (updating || info == null) return;
                         String cur = Updater.installed(SettingsActivity.this);
                         if (Updater.newer(info.version, cur))
-                            verInfo.setText("Versión " + cur + "  ·  nueva versión " + info.version + " disponible (pulsa «Buscar actualización»)");
+                            verInfo.setText("Versión " + cur + "  ·  nueva versión " + info.version + " disponible (pulsa «Actualizar»)");
                     }
                 });
             }
@@ -487,7 +487,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                 final long vi = dirSize(new java.io.File(getCacheDir(), "videos"));
                 h.post(new Runnable() {
                     public void run() {
-                        cacheInfo.setText("Caché: " + mb(th + vi));
+                        cacheBtn.setText("Vaciar caché (" + mb(th + vi) + ")");
                     }
                 });
             }

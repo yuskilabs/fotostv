@@ -25,7 +25,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Precarga**: las siguientes fotos y vídeos se preparan por adelantado para que el pase no se pare.
 - **Paso manual instantáneo** en el visor: sin fundido, con decenas de fotos descargadas por adelantado (y las más cercanas ya preparadas) para que ◀ ▶ respondan al momento.
 - **Cachés con límite** configurable, para no llenar el dispositivo.
-- **Actualización desde la propia app** (botón «Buscar actualización»).
+- **Actualización desde la propia app** (botón «Actualizar»).
 
 ## Instalación
 
@@ -89,7 +89,7 @@ En la página de ajustes del móvil, «Exportar» genera un texto con álbumes, 
 
 ### Actualizar
 
-Pantalla principal → **Buscar actualización**. Compara con la última versión publicada en este repositorio, muestra las novedades y descarga la APK. Android pedirá confirmar la instalación y, si hace falta, permitir a FotosTV «instalar apps desconocidas».
+Pantalla principal → **Actualizar**. Compara con la última versión publicada en este repositorio, muestra las novedades y descarga la APK. Android pedirá confirmar la instalación y, si hace falta, permitir a FotosTV «instalar apps desconocidas».
 GitHub tarda unos minutos en refrescar los archivos tras publicar una versión, así que conviene esperar unos 5 minutos. Tras actualizar, la app intenta abrirse sola; Android puede impedirlo en algunos dispositivos.
 Todas las APK deben ir firmadas con la misma clave para que Android acepte la actualización encima de la instalada.
 

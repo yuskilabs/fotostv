@@ -1,6 +1,6 @@
 {
-  "version": "5.12.2",
+  "version": "5.12.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 308654,
-  "notes": "- Web de configuración reordenada: primero los ajustes generales, y al final los álbumes (añadir uno, añadir varios, opciones y lista). Hay un botón «Guardar» también antes de los álbumes."
+  "notes": "- La web de configuración lleva el logo arriba y yuskilabs con su logo al final.\n- La caché se muestra en el propio botón («Vaciar caché (103 MB)») y ya no ocupa sitio en la lista de álbumes.\n- «Buscar actualización» pasa a llamarse «Actualizar»."
 }
