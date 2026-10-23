@@ -106,28 +106,28 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         LinearLayout left = new LinearLayout(this);
         left.setOrientation(LinearLayout.VERTICAL);
         left.setClipChildren(false);
-        Button browse = side("Ver álbumes", new View.OnClickListener() {
+        Button browse = side("Ver álbumes", R.drawable.ic_albums, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, BrowserActivity.class)); }
         });
         left.addView(browse);
-        left.addView(side("Vista previa del salvapantallas", new View.OnClickListener() {
+        left.addView(side("Vista previa del salvapantallas", R.drawable.ic_preview, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, PreviewActivity.class)); }
         }));
-        idleBtn = side(idleLabel(), new View.OnClickListener() {
+        idleBtn = side(idleLabel(), R.drawable.ic_timer, new View.OnClickListener() {
             public void onClick(View v) { cycleIdle(); }
         });
         left.addView(idleBtn);
-        left.addView(side("Elegir salvapantallas", new View.OnClickListener() {
+        left.addView(side("Elegir salvapantallas", R.drawable.ic_tv, new View.OnClickListener() {
             public void onClick(View v) { openDreamSettings(); }
         }));
-        left.addView(side("Comprobar álbumes", new View.OnClickListener() {
+        left.addView(side("Comprobar álbumes", R.drawable.ic_check, new View.OnClickListener() {
             public void onClick(View v) { checkAlbum(); }
         }));
-        cacheBtn = side("Vaciar caché", new View.OnClickListener() {
+        cacheBtn = side("Vaciar caché", R.drawable.ic_delete, new View.OnClickListener() {
             public void onClick(View v) { clearCache(); }
         });
         left.addView(cacheBtn);
-        left.addView(side("Actualizar", new View.OnClickListener() {
+        left.addView(side("Actualizar", R.drawable.ic_download, new View.OnClickListener() {
             public void onClick(View v) { updateFlow(); }
         }));
         row2.addView(left, new LinearLayout.LayoutParams(0, -1, 0.40f));
@@ -170,8 +170,8 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         if (Prefs.idleMin(this) > 0 && !idleServiceOn()) reenableIdleService();
     }
 
-    private Button side(String label, View.OnClickListener l) {
-        Button b = Ui.button(this, label, l);
+    private Button side(String label, int icon, View.OnClickListener l) {
+        Button b = Ui.icon(Ui.button(this, label, l), icon);
         b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         b.setMinHeight(0);
         b.setMinimumHeight(0);

@@ -47,4 +47,15 @@ class Ui {
         btn.setLayoutParams(lp);
         return btn;
     }
+
+    /** Pone un icono blanco a la izquierda del texto del botón. */
+    static Button icon(Button b, int res) {
+        Context c = b.getContext();
+        android.graphics.drawable.Drawable d = c.getResources().getDrawable(res);
+        int sz = (int) (b.getTextSize() * 1.2f);
+        d.setBounds(0, 0, sz, sz);
+        b.setCompoundDrawables(d, null, null, null);
+        b.setCompoundDrawablePadding(dp(c, 10));
+        return b;
+    }
 }

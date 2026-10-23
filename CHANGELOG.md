@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.14.0
+- Iconos en todos los botones de la app (y emojis en los de la web).
+- Dentro de un álbum: cabecera del mismo tamaño que la de álbumes, el nombre en rosa, «Pase» el primer botón.
+- Columnas: botones «−» y «+» con la etiqueta «Columnas: N» en medio (sin foco).
+- Web: «yuskilabs» (centrado) enlaza con el léeme de GitHub.
+
 ## 5.13.0
 - Explorador rediseñado: logo de la app a la izquierda en las cabeceras, «Álbumes» en negrita, sin textos de ayuda y con más espacio para las fotos.
 - Mosaico de álbumes: botón «Columnas» (2–8); el nombre de cada álbum, más pequeño y pegado al número y al borde de abajo; la primera casilla se llama «Todas».

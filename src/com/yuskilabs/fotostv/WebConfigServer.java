@@ -444,22 +444,22 @@ class WebConfigServer extends Thread {
         else sb.append(chk("unhide", "Volver a mostrar las " + nh + " fotos ocultas", false));
         sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes y ajustes a otro dispositivo: pulsa «Exportar», copia el texto, y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya).</p>")
           .append("<textarea id='bk' rows='5' placeholder='Aquí aparece la copia, o pega la que quieras importar'></textarea>")
-          .append("<div class='row2'><button type='button' class='sec' onclick='expBk()'>Exportar</button>")
-          .append("<button type='button' class='sec' onclick='impBk()'>Importar</button></div>")
+          .append("<div class='row2'><button type='button' class='sec' onclick='expBk()'>📤 Exportar</button>")
+          .append("<button type='button' class='sec' onclick='impBk()'>📥 Importar</button></div>")
           .append("<p id='bkm' class='muted'></p>");
         sb.append("<h2>Mando</h2><p class='muted'>\u25C0 \u25B6 cambiar de foto \u00B7 \u25B2 pausar / continuar \u00B7 \u25BC ocultar esa foto \u00B7 cualquier otro botón sale del salvapantallas.</p>");
-        sb.append("<button type='submit'>Guardar</button>");
+        sb.append("<button type='submit'>💾 Guardar</button>");
         StringBuilder alb = new StringBuilder();
         alb.append("<h2>Álbumes</h2>");
         alb.append("<div class='card new'><b>Añadir álbum</b>")
           .append("<input id='nu' type='url' placeholder='https://photos.app.goo.gl/…'>")
           .append("<input id='nn' placeholder='Nombre (opcional; si no, el del álbum)'>")
-          .append("<button type='button' id='addb' class='sec' onclick='addAlbum()'>+ Añadir este álbum</button>")
+          .append("<button type='button' id='addb' class='sec' onclick='addAlbum()'>➕ Añadir este álbum</button>")
           .append("<p id='msg' class='muted'></p></div>");
         alb.append("<div class='card new'><b>Añadir varios álbumes a la vez</b>")
           .append("<p class='muted'>Pega los enlaces, uno debajo de otro.</p>")
           .append("<textarea id='nm' rows='6' placeholder='https://photos.app.goo.gl/…&#10;https://photos.app.goo.gl/…'></textarea>")
-          .append("<button type='button' id='addm' class='sec' onclick='addMany()'>+ Importar todos</button>")
+          .append("<button type='button' id='addm' class='sec' onclick='addMany()'>➕ Importar todos</button>")
           .append("<p id='bmsg' class='muted'></p></div>");
         String asort = Prefs.albumSort(ctx);
         alb.append("<label>Orden de los álbumes en el explorador de la tele</label><select name='albumSort'>")
@@ -471,13 +471,13 @@ class WebConfigServer extends Thread {
           .append(opt("all", "Todos", mode)).append(opt("selected", "Solo los marcados con «Mostrar»", mode))
           .append("</select><p class='muted'>Con «Todos» la casilla «Mostrar» no se tiene en cuenta. "
                 + "«Quitar» borra el álbum de la lista al guardar.</p>");
-        alb.append("<div class='row2'><button type='button' class='sec' onclick='markAll(true)'>Marcar todos</button>")
-          .append("<button type='button' class='sec' onclick='markAll(false)'>Desmarcar todos</button></div>")
-          .append("<button type='button' class='sec danger' onclick='delAll()'>Quitar todos los álbumes…</button>")
+        alb.append("<div class='row2'><button type='button' class='sec' onclick='markAll(true)'>✅ Marcar todos</button>")
+          .append("<button type='button' class='sec' onclick='markAll(false)'>⬜ Desmarcar todos</button></div>")
+          .append("<button type='button' class='sec danger' onclick='delAll()'>🗑 Quitar todos los álbumes…</button>")
           .append("<p class='muted'>Para ordenarlos a mano usa «Subir» y «Bajar» en cada álbum y pulsa «Guardar» abajo.</p>")
           .append("<div id='albums'>").append(albumsHtml()).append("</div>");
         sb.append(alb);
-        sb.append("<button type='submit'>Guardar</button></form>");
+        sb.append("<button type='submit'>💾 Guardar</button></form>");
         return page(sb.toString());
     }
 
@@ -544,7 +544,7 @@ class WebConfigServer extends Thread {
             + "<meta name='viewport' content='width=device-width,initial-scale=1'>"
             + "<title>FotosTV</title><style>"
             + "body{font-family:-apple-system,system-ui,sans-serif;background:#0f1d2e;color:#eef;margin:0;padding:24px 16px}"
-            + "img.logo{height:72px;max-width:100%;display:block;margin:0 0 4px}.by{margin:44px 0 8px;text-align:right;color:#89a;font-size:15px}.by img{height:24px;vertical-align:middle;margin-right:8px}h2{font-size:17px;margin:28px 0 4px;color:#8cf}"
+            + "img.logo{height:72px;max-width:100%;display:block;margin:0 0 4px}.by{margin:44px 0 8px;text-align:center;font-size:15px}.by a{color:#89a;text-decoration:none}.by img{height:24px;vertical-align:middle;margin-right:8px}h2{font-size:17px;margin:28px 0 4px;color:#8cf}"
             + ".card{background:#162a40;border-radius:12px;padding:10px 12px;margin:10px 0}.card input{margin:4px 0}"
             + ".row{display:flex;justify-content:space-between;align-items:center;gap:8px}.row .chk{margin:6px 0}"
             + ".muted{color:#89a;font-size:14px}.new{border:1px dashed #456}"
@@ -555,6 +555,6 @@ class WebConfigServer extends Thread {
             + "button.danger{background:#7a2b36}.row2{display:flex;gap:10px}.row2 button{width:auto;flex:1}"
             + "button{margin-top:26px;width:100%;font-size:18px;padding:14px;border:0;border-radius:12px;background:#3d8bfd;color:#fff;font-weight:600}"
             + ".ok{font-size:19px}a{color:#8cf}</style></head><body><img class='logo' src='/img/logo.png' alt='FotosTV'>"
-            + content + "<div class='by'><img src='/img/yuski.png' alt=''>yuskilabs</div>" + SCRIPT + "</body></html>";
+            + content + "<div class='by'><a href='https://github.com/yuskilabs/fotostv#readme' target='_blank'><img src='/img/yuski.png' alt=''>yuskilabs</a></div>" + SCRIPT + "</body></html>";
     }
 }

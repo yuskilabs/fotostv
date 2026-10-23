@@ -80,17 +80,18 @@ public class BrowserActivity extends Activity {
     private static final int AHEAD = 150;
     private android.widget.Button[] ordBtn = new android.widget.Button[3];
     private android.widget.Button playBtn;
+    private static final int[] ORD_ICON = {R.drawable.ic_shuffle, R.drawable.ic_up, R.drawable.ic_down};
     private static final String[] ORD_KEY = {"random", "asc", "desc"};
     private static final String[] ORD_LABEL = {"Aleatorio", "Antiguas primero", "Recientes primero"};
 
     private int albumCols, photoCols, photoTileH;
     private String photoShape = "square";
     private float photoRatio = 1f;
-    private android.widget.Button colsBtn, shapeBtn;
+    private android.widget.Button colsMinus, colsPlus, shapeBtn;
     private String refocus;
-    private static final int[] ALBUM_COLS_OPT = {2, 3, 4, 5, 6, 7, 8};
-    private static final int[] PHOTO_COLS_OPT = {3, 4, 5, 6, 7, 8, 10, 12};
-    private static final int ORANGE = 0xFFFFB454;
+    private static final int[] ALBUM_COLS_RANGE = {2, 10};
+    private static final int[] PHOTO_COLS_RANGE = {2, 14};
+    private static final int TITLE_COLOR = 0xFFFF6F9C;
 
     private void computeLayout() {
         albumCols = Prefs.albumCols(this);
@@ -103,20 +104,58 @@ public class BrowserActivity extends Activity {
         photoTileH = (int) (photoTile * photoRatio);
     }
 
-    private static int nextOpt(int[] o, int cur) {
-        for (int i = 0; i < o.length; i++) if (o[i] == cur) return o[(i + 1) % o.length];
-        return o[0];
-    }
-
-    private android.widget.Button sbtn(String label, View.OnClickListener l) {
+    private android.widget.Button sbtn(String label, int icon, View.OnClickListener l) {
         android.widget.Button b = Ui.button(this, label, l);
         b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        if (icon != 0) Ui.icon(b, icon);
         b.setPadding(Ui.dp(this, 14), Ui.dp(this, 6), Ui.dp(this, 14), Ui.dp(this, 6));
         b.setMinHeight(0); b.setMinimumHeight(0); b.setMinWidth(0); b.setMinimumWidth(0);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
         lp.setMargins(0, 0, Ui.dp(this, 10), 0);
         b.setLayoutParams(lp);
         return b;
+    }
+
+    /** Control «−  Columnas: N  +» con dos botones y la etiqueta en medio (sin foco). */
+    private LinearLayout colsControl(final String key, final int[] range, final int cur, final String prefKey,
+                                     final boolean albums) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.HORIZONTAL);
+        box.setGravity(Gravity.CENTER_VERTICAL);
+        android.widget.Button minus = sbtn("", R.drawable.ic_remove, null);
+        android.widget.Button plus = sbtn("", R.drawable.ic_add, null);
+        minus.setCompoundDrawablePadding(0);
+        plus.setCompoundDrawablePadding(0);
+        minus.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 6));
+        plus.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 6));
+        LinearLayout.LayoutParams z = new LinearLayout.LayoutParams(-2, -2);
+        z.setMargins(0, 0, 0, 0);
+        minus.setLayoutParams(z);
+        LinearLayout.LayoutParams z2 = new LinearLayout.LayoutParams(-2, -2);
+        z2.setMargins(0, 0, Ui.dp(this, 10), 0);
+        plus.setLayoutParams(z2);
+        TextView lab = text("Columnas: " + cur, 14, 0xFFD0DBE8);
+        lab.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
+        lab.setFocusable(false);
+        minus.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) { stepCols(range, cur, -1, prefKey, albums, "minus"); }
+        });
+        plus.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) { stepCols(range, cur, 1, prefKey, albums, "plus"); }
+        });
+        box.addView(minus);
+        box.addView(lab);
+        box.addView(plus);
+        if (key.equals("album")) { colsMinus = minus; colsPlus = plus; }
+        else { colsMinus = minus; colsPlus = plus; }
+        return box;
+    }
+
+    private void stepCols(int[] range, int cur, int d, String prefKey, boolean albums, String focusKey) {
+        int n = Math.max(range[0], Math.min(range[1], cur + d));
+        Prefs.sp(this).edit().putInt(prefKey, n).commit();
+        refocus = focusKey;
+        if (albums) showAlbums(); else showPhotos(photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
     }
 
     private ImageView logoView(int hdp) {
@@ -182,7 +221,7 @@ public class BrowserActivity extends Activity {
     @Override public void onBackPressed() {
         if (level == 1) {
             // primer «atrás»: sube a los botones; segundo: vuelve a los álbumes
-            if (photoGrid != null && photoGrid.hasFocus() && ordBtn[0] != null) ordBtn[0].requestFocus();
+            if (photoGrid != null && photoGrid.hasFocus() && playBtn != null) playBtn.requestFocus();
             else showAlbums();
         } else super.onBackPressed();
     }
@@ -372,9 +411,7 @@ public class BrowserActivity extends Activity {
         root.addView(t, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
     }
 
-    private void showAlbums() { showAlbums(false); }
-
-    private void showAlbums(boolean focusCols) {
+    private void showAlbums() {
         level = 0;
         photoGrid = null;
         computeLayout();
@@ -389,14 +426,8 @@ public class BrowserActivity extends Activity {
         title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         title.setPadding(Ui.dp(this, 18), 0, 0, 0);
         head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
-        colsBtn = sbtn("Columnas: " + albumCols, new View.OnClickListener() {
-            public void onClick(View v) {
-                Prefs.sp(BrowserActivity.this).edit().putInt("albumCols", nextOpt(ALBUM_COLS_OPT, albumCols)).commit();
-                showAlbums(true);
-            }
-        });
-        colsBtn.setLayoutParams(new LinearLayout.LayoutParams(-2, -2));
-        head.addView(colsBtn);
+        LinearLayout cc = colsControl("album", ALBUM_COLS_RANGE, albumCols, "albumCols", true);
+        head.addView(cc);
         LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, -2);
         hp.setMargins(margin, Ui.dp(this, 10), margin, 0);
         col.addView(head, hp);
@@ -409,7 +440,10 @@ public class BrowserActivity extends Activity {
         col.addView(albumGrid, new LinearLayout.LayoutParams(-1, 0, 1f));
         root.addView(col, new FrameLayout.LayoutParams(-1, -1));
         albumGrid.setSelection(Math.min(albumPos, Math.max(0, entries.size() - 1)));
-        if (focusCols) colsBtn.requestFocus(); else albumGrid.requestFocus();
+        if ("minus".equals(refocus)) colsMinus.requestFocus();
+        else if ("plus".equals(refocus)) colsPlus.requestFocus();
+        else albumGrid.requestFocus();
+        refocus = null;
     }
 
     private void openEntry(int pos) {
@@ -432,14 +466,14 @@ public class BrowserActivity extends Activity {
         LinearLayout head = new LinearLayout(this);
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setGravity(Gravity.CENTER_VERTICAL);
-        head.addView(logoView(38));
-        TextView nm = text(current.title, 22, ORANGE);
+        head.addView(logoView(44));
+        TextView nm = text(current.title, 26, TITLE_COLOR);
         nm.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         nm.setPadding(Ui.dp(this, 18), 0, 0, 0);
         nm.setSingleLine(true);
         nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
         head.addView(nm, new LinearLayout.LayoutParams(-2, -2));
-        TextView cn = text("  \u00B7  " + current.items.size() + " elementos", 16, 0xFFD0DBE8);
+        TextView cn = text("  \u00B7  " + current.items.size() + " elementos", 20, 0xFFD0DBE8);
         head.addView(cn);
         LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, -2);
         hp.setMargins(margin, Ui.dp(this, 8), margin, 0);
@@ -448,24 +482,17 @@ public class BrowserActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 4));
+        playBtn = sbtn("Pase", R.drawable.ic_play, play());
+        row.addView(playBtn);
         for (int i = 0; i < 3; i++) {
             final String key = ORD_KEY[i];
-            ordBtn[i] = sbtn(ORD_LABEL[i], new View.OnClickListener() {
+            ordBtn[i] = sbtn(ORD_LABEL[i], ORD_ICON[i], new View.OnClickListener() {
                 public void onClick(View v) { setOrder(key); }
             });
             row.addView(ordBtn[i]);
         }
-        playBtn = sbtn("\u25B6  Pase", play());
-        row.addView(playBtn);
-        colsBtn = sbtn("Columnas: " + photoCols, new View.OnClickListener() {
-            public void onClick(View v) {
-                Prefs.sp(BrowserActivity.this).edit().putInt("photoCols", nextOpt(PHOTO_COLS_OPT, photoCols)).commit();
-                refocus = "cols";
-                showPhotos(photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
-            }
-        });
-        row.addView(colsBtn);
-        shapeBtn = sbtn(shapeLabel(photoShape), new View.OnClickListener() {
+        row.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
+        shapeBtn = sbtn(shapeLabel(photoShape), R.drawable.ic_format, new View.OnClickListener() {
             public void onClick(View v) {
                 String n = "square".equals(photoShape) ? "wide" : ("wide".equals(photoShape) ? "full" : "square");
                 Prefs.sp(BrowserActivity.this).edit().putString("photoShape", n).commit();
@@ -502,7 +529,8 @@ public class BrowserActivity extends Activity {
             root.addView(t, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
         }
         if (sel > 0) photoGrid.setSelection(sel);
-        if ("cols".equals(refocus)) colsBtn.requestFocus();
+        if ("minus".equals(refocus)) colsMinus.requestFocus();
+        else if ("plus".equals(refocus)) colsPlus.requestFocus();
         else if ("shape".equals(refocus)) shapeBtn.requestFocus();
         else photoGrid.requestFocus();
         refocus = null;
