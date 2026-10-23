@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.11.3
+- Logo: letras del nombre más juntas.
+
 ## 5.11.2
 - Logo: la parte "Fotos" del nombre es algo más negrita.
 
