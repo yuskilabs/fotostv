@@ -1,6 +1,6 @@
 {
-  "version": "5.11",
+  "version": "5.11.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 238941,
-  "notes": "- Logo nuevo: icono con foto apilada, pantalla de tele con montañas y un botón de «play» como sol, y el nombre en una letra mucho más gruesa (con «TV» en degradado). Cambia el icono, el banner del lanzador y el logo de la pantalla principal."
+  "size": 243037,
+  "notes": "- Nombre del logo con una letra negrita más ligera y la «o» de «Fotos» convertida en un botón de «play» con el degradado, a juego con el sol del icono."
 }

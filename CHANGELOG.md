@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.11.1
+- Nombre del logo con una letra negrita más ligera y la «o» de «Fotos» convertida en un botón de «play» con el degradado, a juego con el sol del icono.
+
 ## 5.11
 - **Logo nuevo**: icono con foto apilada, pantalla de tele con montañas y un botón de «play» como sol, y el nombre en una letra mucho más gruesa (con «TV» en degradado). Cambia el icono, el banner del lanzador y el logo de la pantalla principal.
 
