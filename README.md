@@ -1,6 +1,9 @@
 <p align="center">
   <img src="assets/fotostv-icon.png" alt="FotosTV" width="140"><br>
-  <img src="assets/fotostv-wordmark.png" alt="FotosTV" width="280">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/fotostv-wordmark.png">
+    <img src="assets/fotostv-wordmark-claro.png" alt="FotosTV" width="280">
+  </picture>
 </p>
 
 # FotosTV
