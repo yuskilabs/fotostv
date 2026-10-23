@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.12.2
+- Web de configuración reordenada: primero los ajustes generales, y al final los álbumes (añadir uno, añadir varios, opciones y lista). Hay un botón «Guardar» también antes de los álbumes.
+
 ## 5.12.1
 - La caché se muestra solo como total (sin el desglose de vídeos temporales, que siempre salía a 0).
 

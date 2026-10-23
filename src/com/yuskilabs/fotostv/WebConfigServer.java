@@ -391,32 +391,6 @@ class WebConfigServer extends Thread {
         String iv = String.valueOf(Prefs.interval(ctx));
         String fit = Prefs.fit(ctx), order = Prefs.order(ctx), mode = Prefs.albumMode(ctx);
         StringBuilder sb = new StringBuilder("<form method='post' action='/save'>");
-        sb.append("<h2>Álbumes</h2>")
-          .append("<div class='row2'><button type='button' class='sec' onclick='markAll(true)'>Marcar todos</button>")
-          .append("<button type='button' class='sec' onclick='markAll(false)'>Desmarcar todos</button></div>")
-          .append("<button type='button' class='sec danger' onclick='delAll()'>Quitar todos los álbumes…</button>")
-          .append("<p class='muted'>Para ordenarlos a mano usa «Subir» y «Bajar» en cada álbum y pulsa «Guardar» abajo.</p>")
-          .append("<div id='albums'>").append(albumsHtml()).append("</div>");
-        sb.append("<div class='card new'><b>Añadir álbum</b>")
-          .append("<input id='nu' type='url' placeholder='https://photos.app.goo.gl/…'>")
-          .append("<input id='nn' placeholder='Nombre (opcional; si no, el del álbum)'>")
-          .append("<button type='button' id='addb' class='sec' onclick='addAlbum()'>+ Añadir este álbum</button>")
-          .append("<p id='msg' class='muted'></p></div>");
-        sb.append("<div class='card new'><b>Añadir varios álbumes a la vez</b>")
-          .append("<p class='muted'>Pega los enlaces, uno debajo de otro.</p>")
-          .append("<textarea id='nm' rows='6' placeholder='https://photos.app.goo.gl/…&#10;https://photos.app.goo.gl/…'></textarea>")
-          .append("<button type='button' id='addm' class='sec' onclick='addMany()'>+ Importar todos</button>")
-          .append("<p id='bmsg' class='muted'></p></div>");
-        String asort = Prefs.albumSort(ctx);
-        sb.append("<label>Orden de los álbumes en el explorador de la tele</label><select name='albumSort'>")
-          .append(opt("manual", "Manual (el de esta lista)", asort))
-          .append(opt("newest", "Por la última foto: el más reciente primero", asort))
-          .append(opt("oldest", "Por la última foto: el más antiguo primero", asort))
-          .append("</select><p class='muted'>La fecha es la de captura de la foto más reciente de cada álbum.</p>");
-        sb.append("<label>¿Qué álbumes mostrar?</label><select name='albumMode'>")
-          .append(opt("all", "Todos", mode)).append(opt("selected", "Solo los marcados con «Mostrar»", mode))
-          .append("</select><p class='muted'>Con «Todos» la casilla «Mostrar» no se tiene en cuenta. "
-                + "«Quitar» borra el álbum de la lista al guardar.</p>");
         sb.append("<h2>Presentación</h2><label>Orden</label><select name='order'>")
           .append(opt("random", "Aleatorio (se baraja cada vez que empieza)", order))
           .append(opt("norepeat", "Aleatorio sin repetir hasta verlas todas", order))
@@ -459,6 +433,35 @@ class WebConfigServer extends Thread {
           .append("<button type='button' class='sec' onclick='impBk()'>Importar</button></div>")
           .append("<p id='bkm' class='muted'></p>");
         sb.append("<h2>Mando</h2><p class='muted'>\u25C0 \u25B6 cambiar de foto \u00B7 \u25B2 pausar / continuar \u00B7 \u25BC ocultar esa foto \u00B7 cualquier otro botón sale del salvapantallas.</p>");
+        sb.append("<button type='submit'>Guardar</button>");
+        StringBuilder alb = new StringBuilder();
+        alb.append("<h2>Álbumes</h2>");
+        alb.append("<div class='card new'><b>Añadir álbum</b>")
+          .append("<input id='nu' type='url' placeholder='https://photos.app.goo.gl/…'>")
+          .append("<input id='nn' placeholder='Nombre (opcional; si no, el del álbum)'>")
+          .append("<button type='button' id='addb' class='sec' onclick='addAlbum()'>+ Añadir este álbum</button>")
+          .append("<p id='msg' class='muted'></p></div>");
+        alb.append("<div class='card new'><b>Añadir varios álbumes a la vez</b>")
+          .append("<p class='muted'>Pega los enlaces, uno debajo de otro.</p>")
+          .append("<textarea id='nm' rows='6' placeholder='https://photos.app.goo.gl/…&#10;https://photos.app.goo.gl/…'></textarea>")
+          .append("<button type='button' id='addm' class='sec' onclick='addMany()'>+ Importar todos</button>")
+          .append("<p id='bmsg' class='muted'></p></div>");
+        String asort = Prefs.albumSort(ctx);
+        alb.append("<label>Orden de los álbumes en el explorador de la tele</label><select name='albumSort'>")
+          .append(opt("manual", "Manual (el de esta lista)", asort))
+          .append(opt("newest", "Por la última foto: el más reciente primero", asort))
+          .append(opt("oldest", "Por la última foto: el más antiguo primero", asort))
+          .append("</select><p class='muted'>La fecha es la de captura de la foto más reciente de cada álbum.</p>");
+        alb.append("<label>¿Qué álbumes mostrar?</label><select name='albumMode'>")
+          .append(opt("all", "Todos", mode)).append(opt("selected", "Solo los marcados con «Mostrar»", mode))
+          .append("</select><p class='muted'>Con «Todos» la casilla «Mostrar» no se tiene en cuenta. "
+                + "«Quitar» borra el álbum de la lista al guardar.</p>");
+        alb.append("<div class='row2'><button type='button' class='sec' onclick='markAll(true)'>Marcar todos</button>")
+          .append("<button type='button' class='sec' onclick='markAll(false)'>Desmarcar todos</button></div>")
+          .append("<button type='button' class='sec danger' onclick='delAll()'>Quitar todos los álbumes…</button>")
+          .append("<p class='muted'>Para ordenarlos a mano usa «Subir» y «Bajar» en cada álbum y pulsa «Guardar» abajo.</p>")
+          .append("<div id='albums'>").append(albumsHtml()).append("</div>");
+        sb.append(alb);
         sb.append("<button type='submit'>Guardar</button></form>");
         return page(sb.toString());
     }

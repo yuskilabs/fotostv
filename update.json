@@ -1,6 +1,6 @@
 {
-  "version": "5.12.1",
+  "version": "5.12.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 308654,
-  "notes": "- La caché se muestra solo como total (sin el desglose de vídeos temporales, que siempre salía a 0)."
+  "notes": "- Web de configuración reordenada: primero los ajustes generales, y al final los álbumes (añadir uno, añadir varios, opciones y lista). Hay un botón «Guardar» también antes de los álbumes."
 }
