@@ -487,8 +487,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                 final long vi = dirSize(new java.io.File(getCacheDir(), "videos"));
                 h.post(new Runnable() {
                     public void run() {
-                        cacheInfo.setText("Caché: " + mb(th + vi) + "   (miniaturas " + mb(th)
-                                + " \u00B7 vídeos temporales " + mb(vi) + ")");
+                        cacheInfo.setText("Caché: " + mb(th + vi));
                     }
                 });
             }
