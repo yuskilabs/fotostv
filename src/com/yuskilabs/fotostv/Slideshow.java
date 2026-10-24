@@ -44,6 +44,7 @@ class Slideshow {
         boolean video;
         String album, date, place;
         java.io.File videoFile;
+        java.util.concurrent.Future<java.io.File> hdFut;   // descarga a la caché mientras se ve en directo
         String streamUrl;     // vídeo en directo (versión ligera) mientras baja la buena
         int startMs;          // empezar el vídeo por aquí (al pasar de baja a alta calidad)
         int state;            // 0 preparando, 1 descargando vídeo, 2 lista, 3 fallida
@@ -83,7 +84,10 @@ class Slideshow {
     private Slide cur;
     private final List<Item> hist = new ArrayList<Item>();
     private int histPos = -1, gen;
-    private TextView pauseBadge, toast;
+    private TextView pauseBadge, toast, tvPos, tvRem;
+    private LinearLayout progRow;
+    private FrameLayout progTrack;
+    private View progFill;
     private List<Item> items = new ArrayList<Item>();
     private int idx = -1, w, hgt, fails;
     private String lastKey;
@@ -290,6 +294,34 @@ class Slideshow {
         tp.setMargins(0, dp(28), 0, 0);
         root.addView(toast, tp);
 
+        progRow = new LinearLayout(ctx);
+        progRow.setOrientation(LinearLayout.HORIZONTAL);
+        progRow.setGravity(Gravity.CENTER_VERTICAL);
+        progRow.setVisibility(View.GONE);
+        tvPos = text(16, Gravity.CENTER);
+        tvRem = text(16, Gravity.CENTER);
+        tvPos.setText("0:00");
+        tvRem.setText("-0:00");
+        progTrack = new FrameLayout(ctx);
+        GradientDrawable tr = new GradientDrawable();
+        tr.setColor(0x66FFFFFF);
+        tr.setCornerRadius(dp(3));
+        progTrack.setBackground(tr);
+        progFill = new View(ctx);
+        GradientDrawable fl = new GradientDrawable();
+        fl.setColor(0xFF3D8BFD);
+        fl.setCornerRadius(dp(3));
+        progFill.setBackground(fl);
+        progTrack.addView(progFill, new FrameLayout.LayoutParams(0, -1));
+        LinearLayout.LayoutParams tkp = new LinearLayout.LayoutParams(0, dp(6), 1f);
+        tkp.setMargins(dp(12), 0, dp(12), 0);
+        progRow.addView(tvPos);
+        progRow.addView(progTrack, tkp);
+        progRow.addView(tvRem);
+        FrameLayout.LayoutParams prp = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
+        prp.setMargins(dp(48), 0, dp(48), dp(22));
+        root.addView(progRow, prp);
+
         boolean anyText = Prefs.clock(ctx) || Prefs.showAlbum(ctx) || Prefs.showDate(ctx) || Prefs.showPlace(ctx);
         shade.setVisibility(anyText ? View.VISIBLE : View.GONE);
         info.setVisibility(View.INVISIBLE);
@@ -302,7 +334,31 @@ class Slideshow {
         status.bringToFront();
         pauseBadge.bringToFront();
         toast.bringToFront();
+        progRow.bringToFront();
     }
+
+    private static String mmss(int ms) {
+        int t = Math.max(0, ms / 1000);
+        return (t / 60) + ":" + (t % 60 < 10 ? "0" : "") + (t % 60);
+    }
+
+    private final Runnable progTick = new Runnable() {
+        public void run() {
+            if (!running || !playingVideo || player == null) { progRow.setVisibility(View.GONE); return; }
+            try {
+                int d = player.getDuration(), c = player.getCurrentPosition();
+                if (d > 0) {
+                    progRow.setVisibility(View.VISIBLE);
+                    tvPos.setText(mmss(c));
+                    tvRem.setText("-" + mmss(d - c));
+                    FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) progFill.getLayoutParams();
+                    lp.width = (int) (progTrack.getWidth() * Math.min(1f, c / (float) d));
+                    progFill.setLayoutParams(lp);
+                }
+            } catch (Exception ignored) { }
+            h.postDelayed(this, 500);
+        }
+    };
 
     private GradientDrawable pill() {
         GradientDrawable g = new GradientDrawable();
@@ -601,7 +657,6 @@ class Slideshow {
         return null;
     }
 
-    private Item fbItem; private java.util.concurrent.Future<java.io.File> fbFut; private int fbSess, fbGen; private Slide fbMeta;
     private volatile String lqNote = "";
 
     /** Versión ligera (360p, si no 720p): pesa poco y llega antes. Se guarda aparte para no confundirla con la buena. */
@@ -770,24 +825,23 @@ class Slideshow {
         vex.submit(new Runnable() {
             public void run() {
                 java.io.File f = null;
-                try { f = loadVideo(t.item); } catch (Exception ignored) { }
+                java.util.concurrent.Future<java.io.File> fut = null;
+                try {
+                    if (ready(hdFile(t.item))) f = hdFile(t.item);
+                    else fut = hdEx.submit(new java.util.concurrent.Callable<java.io.File>() {
+                        public java.io.File call() { return loadVideo(t.item); }
+                    });
+                } catch (Exception ignored) { }
                 final java.io.File got = f;
-                Slide fallback = null;
-                if (got == null) fallback = buildPhoto(t.item);   // sin vídeo: al menos la imagen
-                final Slide fb = fallback;
+                final java.util.concurrent.Future<java.io.File> hf = fut;
                 h.post(new Runnable() {
                     public void run() {
                         if (sess != session || !running) return;
-                        if (got != null) {
-                            t.videoFile = got;
-                            t.date = MetaFetcher.formatDate(t.item.ts);
-                            t.state = 2;
-                        } else if (fb != null) {
-                            t.video = false;
-                            t.bmp = fb.bmp; t.date = fb.date; t.place = fb.place; t.state = 2;
-                        } else {
-                            t.state = 3;
-                        }
+                        t.date = MetaFetcher.formatDate(t.item.ts);
+                        if (got != null) t.videoFile = got;
+                        else if (hf != null) { t.streamUrl = t.item.url + "=m37"; t.hdFut = hf; }
+                        else { t.video = false; t.state = 3; onBuilt(t); return; }
+                        t.state = 2;
                         onBuilt(t);
                     }
                 });
@@ -1019,7 +1073,7 @@ class Slideshow {
                                         display(v, true);
                                         if (isLow && hdFut != null) {
                                             // se ve en directo (con búfer) y a la vez se guarda en la caché; si el directo falla, se usa el guardado
-                                            fbItem = it; fbFut = hdFut; fbSess = sess; fbGen = myGen; fbMeta = p;
+                                            v.hdFut = hdFut;
                                         }
                                     }
                                 });
@@ -1047,7 +1101,7 @@ class Slideshow {
                         if (cur == null || cur.item == null || !cur.item.key().equals(it.key())) return;
                         h.removeCallbacks(hideToast);
                         hideToast.run();
-                        if (hd == null) { flash("No se pudo cargar en alta calidad", 3000); return; }
+                        if (hd == null) { flash("No se pudo cargar el vídeo", 3000); if (!manual()) endVideo(); return; }
                         int pos = 0;
                         try { if (player != null) pos = player.getCurrentPosition(); } catch (Exception ignored) { }
                         Slide v = new Slide();
@@ -1445,6 +1499,8 @@ class Slideshow {
                     h.removeCallbacks(videoTimeout);
                     if (!Prefs.sound(ctx)) p.setVolume(0f, 0f);
                     if (s.startMs > 0) { try { p.seekTo(s.startMs); } catch (Exception ignored) { } }
+                    h.removeCallbacks(progTick);
+                    h.post(progTick);
                     p.start();   // también en pausa: hace falta para pintar el primer fotograma
                     int dur = p.getDuration();
                     if (!paused) h.postDelayed(videoTimeout, (dur > 0 ? dur : 5 * 60 * 1000) + 15000L);
@@ -1475,10 +1531,11 @@ class Slideshow {
             mp.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                 public boolean onError(MediaPlayer p, int what, int extra) {
                     if (p == player && s.streamUrl != null) {
-                        if (fbItem != null && fbFut != null) {
-                            upgradeVideo(fbItem, fbFut, fbSess, fbGen, fbMeta);
-                            fbFut = null;
-                        }
+                        if (s.hdFut != null) {
+                            java.util.concurrent.Future<java.io.File> f0 = s.hdFut;
+                            s.hdFut = null;
+                            upgradeVideo(s.item, f0, session, gen, s);
+                        } else endVideo();
                         return true;
                     }
                     if (p == player) {
@@ -1522,6 +1579,8 @@ class Slideshow {
     }
 
     private void releasePlayer() {
+        h.removeCallbacks(progTick);
+        if (progRow != null) progRow.setVisibility(View.GONE);
         if (player != null) {
             MediaPlayer p = player;
             player = null;

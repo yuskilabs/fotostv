@@ -1,6 +1,6 @@
 {
-  "version": "5.16.4",
+  "version": "5.17.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 347676,
-  "notes": "- Vídeos del visor: se reproducen en directo a máxima calidad con búfer (como YouTube) mientras se guardan en la caché; ya no hay salto de baja a alta calidad.\n- Si el directo falla, se usa el vídeo guardado. Quitados los avisos de calidad."
+  "notes": "- Salvapantallas: los vídeos también se reproducen en directo con búfer mientras se guardan en la caché.\n- Línea de tiempo al pie de los vídeos: tiempo transcurrido a la izquierda, tiempo restante a la derecha."
 }

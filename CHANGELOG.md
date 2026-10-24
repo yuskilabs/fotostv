@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.17.0
+- Salvapantallas: los vídeos también se reproducen en directo con búfer mientras se guardan en la caché.
+- Línea de tiempo al pie de los vídeos: tiempo transcurrido a la izquierda, tiempo restante a la derecha.
+
 ## 5.16.4
 - Vídeos del visor: se reproducen en directo a máxima calidad con búfer (como YouTube) mientras se guardan en la caché; ya no hay salto de baja a alta calidad.
 - Si el directo falla, se usa el vídeo guardado. Quitados los avisos de calidad.
