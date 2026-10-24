@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.17.1
+- Línea de tiempo del vídeo: blanca y más pegada al borde inferior.
+- Con un vídeo en marcha desaparecen hora, fecha, álbum y demás textos.
+- Controles del vídeo: ▼ pone la barra azul (OK pausa/continúa, ◀▶ ±5 s), ▲ vuelve a los controles normales, ▼ otra vez muestra la información.
+- La miniatura del álbum «Ocultas» sale difuminada.
+
 ## 5.17.0
 - Salvapantallas: los vídeos también se reproducen en directo con búfer mientras se guardan en la caché.
 - Línea de tiempo al pie de los vídeos: tiempo transcurrido a la izquierda, tiempo restante a la derecha.

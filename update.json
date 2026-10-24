@@ -1,6 +1,6 @@
 {
-  "version": "5.17.0",
+  "version": "5.17.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 347676,
-  "notes": "- Salvapantallas: los vídeos también se reproducen en directo con búfer mientras se guardan en la caché.\n- Línea de tiempo al pie de los vídeos: tiempo transcurrido a la izquierda, tiempo restante a la derecha."
+  "notes": "- Línea de tiempo del vídeo: blanca y más pegada al borde inferior.\n- Con un vídeo en marcha desaparecen hora, fecha, álbum y demás textos.\n- Controles del vídeo: ▼ pone la barra azul (OK pausa/continúa, ◀▶ ±5 s), ▲ vuelve a los controles normales, ▼ otra vez muestra la información.\n- La miniatura del álbum «Ocultas» sale difuminada."
 }

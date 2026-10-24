@@ -88,6 +88,8 @@ class Slideshow {
     private LinearLayout progRow;
     private FrameLayout progTrack;
     private View progFill;
+    private GradientDrawable progFillBg;
+    private boolean ctlMode;
     private List<Item> items = new ArrayList<Item>();
     private int idx = -1, w, hgt, fails;
     private String lastKey;
@@ -309,7 +311,8 @@ class Slideshow {
         progTrack.setBackground(tr);
         progFill = new View(ctx);
         GradientDrawable fl = new GradientDrawable();
-        fl.setColor(0xFF3D8BFD);
+        fl.setColor(Color.WHITE);
+        progFillBg = fl;
         fl.setCornerRadius(dp(3));
         progFill.setBackground(fl);
         progTrack.addView(progFill, new FrameLayout.LayoutParams(0, -1));
@@ -319,7 +322,7 @@ class Slideshow {
         progRow.addView(progTrack, tkp);
         progRow.addView(tvRem);
         FrameLayout.LayoutParams prp = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
-        prp.setMargins(dp(48), 0, dp(48), dp(22));
+        prp.setMargins(dp(48), 0, dp(48), dp(12));
         root.addView(progRow, prp);
 
         boolean anyText = Prefs.clock(ctx) || Prefs.showAlbum(ctx) || Prefs.showDate(ctx) || Prefs.showPlace(ctx);
@@ -1212,6 +1215,21 @@ class Slideshow {
     // ------------------------------------------------------------ mando
     /** Devuelve true si la tecla es de navegación (se consume); false = salir. */
     boolean onKey(int keyCode) {
+        boolean vid = playingVideo && player != null && revealed && cur != null && cur.video && panel == null;
+        if (vid) {
+            if (ctlMode) {
+                switch (keyCode) {
+                    case android.view.KeyEvent.KEYCODE_DPAD_RIGHT: seekBy(5000); return true;
+                    case android.view.KeyEvent.KEYCODE_DPAD_LEFT: seekBy(-5000); return true;
+                    case android.view.KeyEvent.KEYCODE_DPAD_UP: setCtl(false); return true;
+                    case android.view.KeyEvent.KEYCODE_DPAD_DOWN: openInfo(); return true;
+                    default: break;
+                }
+            } else if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+                setCtl(true);
+                return true;
+            }
+        }
         switch (keyCode) {
             case android.view.KeyEvent.KEYCODE_DPAD_RIGHT:
                 if (!manual()) setPaused(false, false);
@@ -1465,7 +1483,7 @@ class Slideshow {
         fitVideo(vidW, vidH);
         videoHolder.bringToFront();
         overlaysToFront();
-        setInfo(cur);
+        videoUi(true);
         videoHolder.animate().alpha(1f).setDuration(1000)
             .setInterpolator(new AccelerateDecelerateInterpolator()).withLayer().start();
     }
@@ -1578,7 +1596,38 @@ class Slideshow {
         goNext();
     }
 
+    /** Con un vídeo en marcha desaparecen hora, fecha, álbum, etc. */
+    private void videoUi(boolean on) {
+        if (on) {
+            info.animate().cancel();
+            info.setVisibility(View.INVISIBLE);
+            clock.setVisibility(View.INVISIBLE);
+            shade.setVisibility(View.INVISIBLE);
+        } else {
+            clock.setVisibility(Prefs.clock(ctx) ? View.VISIBLE : View.GONE);
+            boolean anyText = Prefs.clock(ctx) || Prefs.showAlbum(ctx) || Prefs.showDate(ctx) || Prefs.showPlace(ctx);
+            shade.setVisibility(anyText ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void setCtl(boolean on) {
+        ctlMode = on;
+        if (progFillBg != null) progFillBg.setColor(on ? 0xFF3D8BFD : Color.WHITE);
+        if (progFill != null) progFill.invalidate();
+    }
+
+    private void seekBy(int ms) {
+        try {
+            int d = player.getDuration();
+            player.seekTo(Math.max(0, Math.min(d > 0 ? d - 500 : Integer.MAX_VALUE, player.getCurrentPosition() + ms)));
+        } catch (Exception ignored) { }
+        h.removeCallbacks(progTick);
+        h.postDelayed(progTick, 150);
+    }
+
     private void releasePlayer() {
+        if (ctlMode) setCtl(false);
+        if (revealed) videoUi(false);
         h.removeCallbacks(progTick);
         if (progRow != null) progRow.setVisibility(View.GONE);
         if (player != null) {

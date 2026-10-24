@@ -882,6 +882,7 @@ public class BrowserActivity extends Activity {
             } else t.name.setCompoundDrawables(null, null, null, null);
             t.count.setText(e.items.size() + " elementos");
             if (e.items.isEmpty()) thumbs.clearView(t.img);
+            else if (e.kind == 3) thumbs.load(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, 32, 32);   // miniatura diminuta ampliada = difuminada
             else thumbs.load(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));
             return t;
         }
