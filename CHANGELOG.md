@@ -3,6 +3,13 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.16.2
+- Botones del álbum: menos espacio entre ellos y el control de columnas pasa a la cabecera, para que quepa todo.
+- Panel de información más compacto: caben todos los datos (coordenadas y altitud en una sola línea).
+- Al subir a los botones, el recuadro blanco de la foto desaparece.
+- Vídeos del visor: la versión ligera se pide a la vez que la buena y arranca al instante; después pasa a la buena por donde iba.
+- La caché de vídeos se conserva: solo se borra lo más antiguo cuando se supera el espacio configurado.
+
 ## 5.16.1
 - Vídeos en el visor: si la alta calidad no llega en un par de segundos, empieza enseguida con una versión ligera y, cuando la buena está lista, cambia a ella por donde iba («Baja calidad por ahora; mejorando…» / «Calidad máxima»). Antes, si Google tardaba, caía en silencio a la calidad más baja.
 - La alta calidad espera más (hasta 2 min) a que Google la prepare, y la baja calidad se guarda aparte, para que nunca se confunda con la buena en reproducciones posteriores.

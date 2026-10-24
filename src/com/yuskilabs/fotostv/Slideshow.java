@@ -540,7 +540,7 @@ class Slideshow {
         return dir;
     }
 
-    /** Borra los vídeos temporales salvo el actual, los de la cola de precarga y el que se está cargando. */
+    /** Mantiene la caché de vídeos: se conservan los más usados hasta el tope de espacio y se borra solo lo más antiguo. */
     private void cleanVideos() {
         java.io.File[] fs = videoDir().listFiles();
         if (fs == null) return;
@@ -548,16 +548,17 @@ class Slideshow {
         if (cur != null && cur.item != null) keep.add(cur.item.key());
         for (Slide q : queue) keep.add(q.item.key());
         if (loadingKey != null) keep.add(loadingKey);
-        // los de las últimas 10 fotos vistas se guardan por si se vuelve atrás (hasta un tope de espacio)
-        java.util.Set<String> recent = new java.util.HashSet<String>();
-        for (int i = Math.max(0, hist.size() - 10); i < hist.size(); i++) recent.add(hist.get(i).key());
         List<java.io.File> old = new ArrayList<java.io.File>();
+        long now = System.currentTimeMillis();
         for (java.io.File f : fs) {
             String n = f.getName();
+            if (n.endsWith(".part")) {                       // descargas a medias: fuera las de hace rato
+                if (now - f.lastModified() > 15 * 60 * 1000L) f.delete();
+                continue;
+            }
             int d = n.indexOf('.');
             String k = d > 0 ? n.substring(0, d) : n;
-            if (keep.contains(k)) continue;
-            if (recent.contains(k)) old.add(f); else f.delete();
+            if (!keep.contains(k)) old.add(f);
         }
         java.util.Collections.sort(old, new java.util.Comparator<java.io.File>() {
             public int compare(java.io.File x, java.io.File y) {
@@ -565,16 +566,26 @@ class Slideshow {
             }
         });
         long total = 0;
+        for (java.io.File f : fs) {
+            String n = f.getName();
+            int d = n.indexOf('.');
+            if (!n.endsWith(".part") && keep.contains(d > 0 ? n.substring(0, d) : n)) total += f.length();
+        }
+        long cap = Prefs.videoMB(ctx) * 1024L * 1024L;
         for (java.io.File f : old) {
             total += f.length();
-            if (total > Prefs.videoMB(ctx) * 1024L * 1024L) f.delete();
+            if (total > cap) f.delete();
         }
     }
 
     private java.io.File hdFile(Item it) { return new java.io.File(videoDir(), it.key() + ".mp4"); }
     private java.io.File lqFile(Item it) { return new java.io.File(videoDir(), it.key() + ".lq.mp4"); }
 
-    private static boolean ready(java.io.File f) { return f.exists() && f.length() > 10000; }
+    private static boolean ready(java.io.File f) {
+        if (!f.exists() || f.length() <= 10000) return false;
+        f.setLastModified(System.currentTimeMillis());      // usado hace poco: se borra el último
+        return true;
+    }
 
     /** Alta calidad (1080p, si no 720p). readMs: cuánto esperar a que Google prepare el vídeo. */
     private java.io.File loadHd(Item it, int readMs) {
@@ -589,14 +600,21 @@ class Slideshow {
         return null;
     }
 
-    /** Baja calidad (360p): pesa poco y llega enseguida. Se guarda aparte para no confundirla con la buena. */
+    private volatile String lqNote = "";
+
+    /** Versión ligera (360p, si no 720p): pesa poco y llega antes. Se guarda aparte para no confundirla con la buena. */
     private java.io.File loadLq(Item it, int readMs) {
         java.io.File f = lqFile(it);
         if (ready(f)) return f;
         java.io.File part = new java.io.File(videoDir(), it.key() + ".lq.part");
-        if (!Thread.currentThread().isInterrupted()
-                && AlbumFetcher.downloadVideo(it.url + "=m18", part, MAX_VIDEO, readMs) && part.renameTo(f)) return f;
+        StringBuilder why = new StringBuilder();
+        for (String v : new String[]{"=m18", "=m22"}) {
+            if (Thread.currentThread().isInterrupted()) break;
+            if (AlbumFetcher.downloadVideo(it.url + v, part, MAX_VIDEO, readMs) && part.renameTo(f)) return f;
+            why.append(v).append(": ").append(AlbumFetcher.lastVideoErr).append("  ");
+        }
         part.delete();
+        lqNote = why.toString().trim();
         return null;
     }
 
@@ -969,13 +987,18 @@ class Slideshow {
                                         hdF = hdEx.submit(new java.util.concurrent.Callable<java.io.File>() {
                                             public java.io.File call() { return loadHd(it, 120000); }
                                         });
-                                        try { f = hdF.get(2500, java.util.concurrent.TimeUnit.MILLISECONDS); }
-                                        catch (java.util.concurrent.TimeoutException te) { f = null; }
-                                        catch (java.util.concurrent.ExecutionException ee) { f = null; }
+                                        // la ligera se pide a la vez, sin esperar: llega antes y arranca ya
+                                        java.io.File lq0 = loadLq(it, 20000);
+                                        if (hdF.isDone()) {
+                                            try { f = hdF.get(); } catch (java.util.concurrent.ExecutionException ee) { f = null; }
+                                        }
+                                        if (f == null && lq0 != null) { f = lq0; low = true; }
                                         if (f == null) {
-                                            java.io.File lq = loadLq(it, 20000);
-                                            if (lq != null) { f = lq; low = true; }
-                                            else {
+                                            {
+                                                final String note = lqNote;
+                                                h.post(new Runnable() {
+                                                    public void run() { flash("Sin versión ligera (" + note + "); esperando la alta calidad…", 600000); }
+                                                });
                                                 try { f = hdF.get(); } catch (java.util.concurrent.ExecutionException ee) { f = null; }
                                             }
                                         }

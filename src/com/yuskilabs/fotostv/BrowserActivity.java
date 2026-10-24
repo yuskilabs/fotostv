@@ -120,7 +120,7 @@ public class BrowserActivity extends Activity {
         b.setPadding(Ui.dp(this, 14), Ui.dp(this, 6), Ui.dp(this, 14), Ui.dp(this, 6));
         b.setMinHeight(0); b.setMinimumHeight(0); b.setMinWidth(0); b.setMinimumWidth(0);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
-        lp.setMargins(0, 0, Ui.dp(this, 10), 0);
+        lp.setMargins(0, 0, Ui.dp(this, 6), 0);
         b.setLayoutParams(lp);
         return b;
     }
@@ -551,10 +551,13 @@ public class BrowserActivity extends Activity {
         nm.setPadding(0, 0, 0, 0);
         nm.setSingleLine(true);
         nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        nm.setMaxWidth((int) (W * 0.34f));
         head.addView(nm, new LinearLayout.LayoutParams(-2, -2));
         countView = text("", 20, 0xFFD0DBE8);
         countView.setPadding(0, 0, 0, 0);
-        head.addView(countView);
+        countView.setSingleLine(true);
+        head.addView(countView, new LinearLayout.LayoutParams(0, -2, 1f));
+        head.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
         updateCount();
         col.addView(head, headParams());
 
@@ -591,7 +594,6 @@ public class BrowserActivity extends Activity {
             }
         });
         row.addView(fitBtn);
-        row.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
         refreshOrderButtons();
         android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
         hs.setHorizontalScrollBarEnabled(false);
@@ -835,8 +837,17 @@ public class BrowserActivity extends Activity {
         sel.setColor(0x22FFFFFF);
         sel.setStroke(Ui.dp(this, 4), Color.WHITE);
         sel.setCornerRadius(0);   // miniaturas cuadradas: recuadro con esquinas rectas
+        final GradientDrawable selOn = sel;
+        final android.graphics.drawable.ColorDrawable selOff = new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT);
         g.setSelector(sel);
         g.setDrawSelectorOnTop(true);
+        // al subir a los botones, el recuadro blanco de la foto desaparece para que se vea dónde está el foco
+        g.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            public void onFocusChange(View v, boolean has) {
+                ((GridView) v).setSelector(has ? selOn : selOff);
+                v.invalidate();
+            }
+        });
         return g;
     }
 

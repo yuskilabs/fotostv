@@ -191,16 +191,19 @@ class AlbumFetcher {
     }
 
     /** readMs: cuánto se espera a que Google empiece a enviar (a veces prepara antes el vídeo). */
+    static volatile String lastVideoErr = "";
+
     static boolean downloadVideo(String url, java.io.File out, long maxBytes, int readMs) {
+        lastVideoErr = "";
         HttpURLConnection c = null;
         java.io.FileOutputStream fo = null;
         boolean ok = false;
         try {
             c = open(url, null, readMs);
             String type = c.getContentType();
-            if (type == null || !(type.startsWith("video/") || type.startsWith("application/octet-stream"))) return false;
+            if (type == null || !(type.startsWith("video/") || type.startsWith("application/octet-stream"))) { lastVideoErr = "tipo " + type; return false; }
             long len = c.getContentLength();
-            if (len > maxBytes) return false;
+            if (len > maxBytes) { lastVideoErr = "demasiado grande"; return false; }
             InputStream in = c.getInputStream();
             fo = new java.io.FileOutputStream(out);
             byte[] buf = new byte[65536];
@@ -215,6 +218,7 @@ class AlbumFetcher {
             ok = total > 10000;
             return ok;
         } catch (Exception e) {
+            lastVideoErr = String.valueOf(e.getMessage());
             return false;
         } finally {
             try { if (fo != null) fo.close(); } catch (IOException ignored) { }

@@ -34,7 +34,7 @@ class InfoPanel extends FrameLayout {
         setClickable(true);
         LinearLayout main = new LinearLayout(c);
         main.setOrientation(LinearLayout.HORIZONTAL);
-        main.setPadding(dp(48), dp(28), dp(48), dp(20));
+        main.setPadding(dp(44), dp(18), dp(44), dp(12));
         addView(main, new FrameLayout.LayoutParams(-1, -1));
 
         LinearLayout left = new LinearLayout(c);
@@ -43,7 +43,7 @@ class InfoPanel extends FrameLayout {
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setGravity(Gravity.CENTER_VERTICAL);
         head.addView(icon(R.drawable.ic_info, 28, 0xFFFFFFFF));
-        TextView t = text("Información", 26, Color.WHITE);
+        TextView t = text("Información", 22, Color.WHITE);
         t.setTypeface(Typeface.DEFAULT_BOLD);
         t.setPadding(dp(12), 0, 0, 0);
         head.addView(t);
@@ -51,7 +51,7 @@ class InfoPanel extends FrameLayout {
         View sep = new View(c);
         sep.setBackgroundColor(0xFF3A506B);
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-1, dp(1));
-        sp.setMargins(0, dp(12), 0, dp(8));
+        sp.setMargins(0, dp(6), 0, dp(4));
         left.addView(sep, sp);
         ScrollView sv = new ScrollView(c);
         sv.setVerticalScrollBarEnabled(false);
@@ -59,9 +59,9 @@ class InfoPanel extends FrameLayout {
         rows.setOrientation(LinearLayout.VERTICAL);
         sv.addView(rows);
         left.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
-        TextView hint = text("Pulsa cualquier botón para volver", 13, 0xFF7C93AD);
+        TextView hint = text("Pulsa cualquier botón para volver", 12, 0xFF7C93AD);
         left.addView(hint);
-        main.addView(left, new LinearLayout.LayoutParams(0, -1, 0.42f));
+        main.addView(left, new LinearLayout.LayoutParams(0, -1, 0.45f));
 
         mapBox = new FrameLayout(c);
         GradientDrawable mb = new GradientDrawable();
@@ -70,7 +70,7 @@ class InfoPanel extends FrameLayout {
         mb.setStroke(dp(1), 0xFF2C4766);
         mapBox.setBackground(mb);
         mapBox.setPadding(dp(3), dp(3), dp(3), dp(3));
-        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(0, -1, 0.58f);
+        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(0, -1, 0.55f);
         mp.setMargins(dp(32), 0, 0, 0);
         main.addView(mapBox, mp);
 
@@ -124,9 +124,11 @@ class InfoPanel extends FrameLayout {
             if (d.hasTime) addRow(R.drawable.ic_schedule, "Hora", new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(d.date)));
         }
         if (place != null) addRow(R.drawable.ic_place, "Lugar", place);
-        if (!Double.isNaN(d.lat))
-            addRow(R.drawable.ic_place, "Coordenadas", String.format(Locale.US, "%.5f, %.5f", d.lat, d.lon));
-        if (!Double.isNaN(d.alt) && d.alt != 0) addRow(R.drawable.ic_terrain, "Altitud", Math.round(d.alt) + " m");
+        if (!Double.isNaN(d.lat)) {
+            String c = String.format(Locale.US, "%.5f, %.5f", d.lat, d.lon);
+            if (!Double.isNaN(d.alt) && d.alt != 0) c += "  \u00B7  " + Math.round(d.alt) + " m";
+            addRow(R.drawable.ic_place, "Coordenadas y altitud", c);
+        }
         String cam = (d.make + " " + d.model).trim();
         if (d.model.toLowerCase(Locale.US).startsWith(d.make.toLowerCase(Locale.US)) && d.make.length() > 0) cam = d.model;
         if (cam.length() > 0) addRow(R.drawable.ic_camera, "Cámara", cam);
@@ -187,14 +189,14 @@ class InfoPanel extends FrameLayout {
         LinearLayout r = new LinearLayout(getContext());
         r.setOrientation(LinearLayout.HORIZONTAL);
         r.setGravity(Gravity.CENTER_VERTICAL);
-        r.setPadding(0, dp(5), 0, dp(5));
-        r.addView(icon(icon, 22, 0xFF7CC4FF));
+        r.setPadding(0, dp(2), 0, dp(2));
+        r.addView(icon(icon, 20, 0xFF7CC4FF));
         LinearLayout col = new LinearLayout(getContext());
         col.setOrientation(LinearLayout.VERTICAL);
-        col.setPadding(dp(14), 0, 0, 0);
-        TextView l = text(label, 12, 0xFF7C93AD);
+        col.setPadding(dp(12), 0, 0, 0);
+        TextView l = text(label, 11, 0xFF7C93AD);
         l.setPadding(0, 0, 0, 0);
-        TextView v = text(value, 17, Color.WHITE);
+        TextView v = text(value, 15, Color.WHITE);
         v.setPadding(0, 0, 0, 0);
         col.addView(l);
         col.addView(v);
@@ -215,7 +217,7 @@ class InfoPanel extends FrameLayout {
         t.setText(s);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTextColor(color);
-        t.setPadding(0, dp(3), 0, dp(3));
+        t.setPadding(0, dp(2), 0, dp(2));
         return t;
     }
 
