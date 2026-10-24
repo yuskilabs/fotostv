@@ -187,11 +187,16 @@ class AlbumFetcher {
      * Se aborta si supera maxBytes.
      */
     static boolean downloadVideo(String url, java.io.File out, long maxBytes) {
+        return downloadVideo(url, out, maxBytes, 30000);
+    }
+
+    /** readMs: cuánto se espera a que Google empiece a enviar (a veces prepara antes el vídeo). */
+    static boolean downloadVideo(String url, java.io.File out, long maxBytes, int readMs) {
         HttpURLConnection c = null;
         java.io.FileOutputStream fo = null;
         boolean ok = false;
         try {
-            c = open(url);
+            c = open(url, null, readMs);
             String type = c.getContentType();
             if (type == null || !(type.startsWith("video/") || type.startsWith("application/octet-stream"))) return false;
             long len = c.getContentLength();
@@ -268,12 +273,16 @@ class AlbumFetcher {
     }
 
     static HttpURLConnection open(String url, String[] finalUrl) throws IOException {
+        return open(url, finalUrl, 30000);
+    }
+
+    static HttpURLConnection open(String url, String[] finalUrl, int readMs) throws IOException {
         String u = url;
         for (int hop = 0; hop < 8; hop++) {
             HttpURLConnection c = (HttpURLConnection) new URL(u).openConnection();
             c.setInstanceFollowRedirects(false);
             c.setConnectTimeout(15000);
-            c.setReadTimeout(30000);
+            c.setReadTimeout(readMs);
             c.setRequestProperty("User-Agent", UA);
             c.setRequestProperty("Accept-Language", "es-ES,es;q=0.9");
             c.setRequestProperty("Cookie", "CONSENT=YES+cb; SOCS=CAI");

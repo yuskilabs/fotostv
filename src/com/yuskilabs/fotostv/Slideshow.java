@@ -44,14 +44,15 @@ class Slideshow {
         boolean video;
         String album, date, place;
         java.io.File videoFile;
+        int startMs;          // empezar el vídeo por aquí (al pasar de baja a alta calidad)
         int state;            // 0 preparando, 1 descargando vídeo, 2 lista, 3 fallida
     }
 
     private final Context ctx;
     private final FrameLayout root;
     private final Handler h = new Handler(Looper.getMainLooper());
-    private ExecutorService ex, vex, bex;
-    private java.util.concurrent.Future<?> browseLoad;
+    private ExecutorService ex, vex, bex, hdEx;
+    private java.util.concurrent.Future<?> browseLoad, upLoad;
     private volatile String browseKey;
     private volatile boolean detecting;
     private Item aheadItem;
@@ -145,6 +146,7 @@ class Slideshow {
         ex = Executors.newFixedThreadPool(2);
         vex = Executors.newSingleThreadExecutor();
         bex = Executors.newSingleThreadExecutor();
+        hdEx = Executors.newSingleThreadExecutor();
         pex = Executors.newFixedThreadPool(4, new java.util.concurrent.ThreadFactory() {
             public Thread newThread(final Runnable r) {
                 return new Thread(new Runnable() {
@@ -188,6 +190,7 @@ class Slideshow {
         if (ex != null) ex.shutdownNow();
         if (vex != null) vex.shutdownNow();
         if (bex != null) bex.shutdownNow();
+        if (hdEx != null) hdEx.shutdownNow();
         if (pex != null) pex.shutdownNow();
         synchronized (bcache) { bcache.clear(); }
         synchronized (bytesCache) { bytesCache.clear(); bytesTotal = 0; }
@@ -568,16 +571,45 @@ class Slideshow {
         }
     }
 
-    /** Descarga el vídeo (la mejor calidad disponible (1080p); si no, otras) a un archivo temporal. */
-    private java.io.File loadVideo(Item it) {
-        java.io.File f = new java.io.File(videoDir(), it.key() + ".mp4");
-        if (f.exists() && f.length() > 10000) return f;
+    private java.io.File hdFile(Item it) { return new java.io.File(videoDir(), it.key() + ".mp4"); }
+    private java.io.File lqFile(Item it) { return new java.io.File(videoDir(), it.key() + ".lq.mp4"); }
+
+    private static boolean ready(java.io.File f) { return f.exists() && f.length() > 10000; }
+
+    /** Alta calidad (1080p, si no 720p). readMs: cuánto esperar a que Google prepare el vídeo. */
+    private java.io.File loadHd(Item it, int readMs) {
+        java.io.File f = hdFile(it);
+        if (ready(f)) return f;
         java.io.File part = new java.io.File(videoDir(), it.key() + ".mp4.part");
-        String[] variants = {"=m37", "=m22", "=m18", "=dv"};
-        for (String v : variants) {
+        for (String v : new String[]{"=m37", "=m22"}) {
             if (Thread.currentThread().isInterrupted()) break;
-            if (AlbumFetcher.downloadVideo(it.url + v, part, MAX_VIDEO) && part.renameTo(f)) return f;
+            if (AlbumFetcher.downloadVideo(it.url + v, part, MAX_VIDEO, readMs) && part.renameTo(f)) return f;
         }
+        part.delete();
+        return null;
+    }
+
+    /** Baja calidad (360p): pesa poco y llega enseguida. Se guarda aparte para no confundirla con la buena. */
+    private java.io.File loadLq(Item it, int readMs) {
+        java.io.File f = lqFile(it);
+        if (ready(f)) return f;
+        java.io.File part = new java.io.File(videoDir(), it.key() + ".lq.part");
+        if (!Thread.currentThread().isInterrupted()
+                && AlbumFetcher.downloadVideo(it.url + "=m18", part, MAX_VIDEO, readMs) && part.renameTo(f)) return f;
+        part.delete();
+        return null;
+    }
+
+    /** Pase y vídeo suelto: la mejor calidad disponible; si no hay otra, la baja; y por último el original. */
+    private java.io.File loadVideo(Item it) {
+        java.io.File f = loadHd(it, 60000);
+        if (f != null) return f;
+        f = loadLq(it, 30000);
+        if (f != null) return f;
+        java.io.File hd = hdFile(it);
+        java.io.File part = new java.io.File(videoDir(), it.key() + ".mp4.part");
+        if (!Thread.currentThread().isInterrupted()
+                && AlbumFetcher.downloadVideo(it.url + "=dv", part, MAX_VIDEO, 30000) && part.renameTo(hd)) return hd;
         part.delete();
         return null;
     }
@@ -897,6 +929,7 @@ class Slideshow {
         browseKey = it.key();
         h.removeCallbacks(tick);
         if (browseLoad != null) { browseLoad.cancel(true); browseLoad = null; }
+        if (upLoad != null) { upLoad.cancel(true); upLoad = null; }
         if (loadingKey != null) {   // se salta un vídeo que aún estaba cargando: fuera el letrero
             loadingKey = null;
             h.removeCallbacks(hideToast);
@@ -927,11 +960,39 @@ class Slideshow {
                         browseLoad = bex.submit(new Runnable() {
                             public void run() {
                                 java.io.File f = null;
-                                try { f = loadVideo(it); } catch (Exception ignored) { }
+                                boolean low = false;
+                                java.util.concurrent.Future<java.io.File> hdF = null;
+                                try {
+                                    f = ready(hdFile(it)) ? hdFile(it) : null;
+                                    if (f == null) {
+                                        // la alta calidad se baja aparte; si no llega enseguida, se empieza con la baja
+                                        hdF = hdEx.submit(new java.util.concurrent.Callable<java.io.File>() {
+                                            public java.io.File call() { return loadHd(it, 120000); }
+                                        });
+                                        try { f = hdF.get(2500, java.util.concurrent.TimeUnit.MILLISECONDS); }
+                                        catch (java.util.concurrent.TimeoutException te) { f = null; }
+                                        catch (java.util.concurrent.ExecutionException ee) { f = null; }
+                                        if (f == null) {
+                                            java.io.File lq = loadLq(it, 20000);
+                                            if (lq != null) { f = lq; low = true; }
+                                            else {
+                                                try { f = hdF.get(); } catch (java.util.concurrent.ExecutionException ee) { f = null; }
+                                            }
+                                        }
+                                    }
+                                } catch (InterruptedException ie) {
+                                    if (hdF != null) hdF.cancel(true);
+                                    return;
+                                }
                                 final java.io.File got = f;
+                                final boolean isLow = low;
+                                final java.util.concurrent.Future<java.io.File> hdFut = hdF;
                                 h.post(new Runnable() {
                                     public void run() {
-                                        if (!running || sess != session || myGen != gen) return;
+                                        if (!running || sess != session || myGen != gen) {
+                                            if (hdFut != null) hdFut.cancel(true);
+                                            return;
+                                        }
                                         h.removeCallbacks(hideToast);
                                         hideToast.run();
                                         if (got == null) { flash("No se pudo cargar el vídeo", 3000); return; }
@@ -944,10 +1005,50 @@ class Slideshow {
                                         v.date = p != null && p.date != null ? p.date : MetaFetcher.formatDate(it.ts);
                                         v.place = p != null ? p.place : null;
                                         display(v, true);
+                                        if (isLow && hdFut != null) {
+                                            flash("Baja calidad por ahora; mejorando\u2026", 600000);
+                                            upgradeVideo(it, hdFut, sess, myGen, p);
+                                        }
                                     }
                                 });
                             }
                         });
+                    }
+                });
+            }
+        });
+    }
+
+    /** Espera a la alta calidad y, cuando llega, sigue el vídeo por donde iba. */
+    private void upgradeVideo(final Item it, final java.util.concurrent.Future<java.io.File> hdF,
+                              final int sess, final int myGen, final Slide meta) {
+        upLoad = vex.submit(new Runnable() {
+            public void run() {
+                java.io.File f = null;
+                try { f = hdF.get(); }
+                catch (InterruptedException ie) { hdF.cancel(true); return; }
+                catch (Exception ignored) { }
+                final java.io.File hd = f;
+                h.post(new Runnable() {
+                    public void run() {
+                        if (!running || sess != session || myGen != gen) return;
+                        if (cur == null || cur.item == null || !cur.item.key().equals(it.key())) return;
+                        h.removeCallbacks(hideToast);
+                        hideToast.run();
+                        if (hd == null) { flash("No se pudo cargar en alta calidad", 3000); return; }
+                        int pos = 0;
+                        try { if (player != null) pos = player.getCurrentPosition(); } catch (Exception ignored) { }
+                        Slide v = new Slide();
+                        v.item = it;
+                        v.album = it.album;
+                        v.video = true;
+                        v.videoFile = hd;
+                        v.state = 2;
+                        v.startMs = pos;
+                        v.date = meta != null && meta.date != null ? meta.date : MetaFetcher.formatDate(it.ts);
+                        v.place = meta != null ? meta.place : null;
+                        display(v, false);
+                        flash("Calidad máxima", 1500);
                     }
                 });
             }
@@ -1327,6 +1428,7 @@ class Slideshow {
                     if (p != player) return;
                     h.removeCallbacks(videoTimeout);
                     if (!Prefs.sound(ctx)) p.setVolume(0f, 0f);
+                    if (s.startMs > 0) { try { p.seekTo(s.startMs); } catch (Exception ignored) { } }
                     p.start();   // también en pausa: hace falta para pintar el primer fotograma
                     int dur = p.getDuration();
                     if (!paused) h.postDelayed(videoTimeout, (dur > 0 ? dur : 5 * 60 * 1000) + 15000L);
