@@ -601,6 +601,7 @@ class Slideshow {
         return null;
     }
 
+    private Item fbItem; private java.util.concurrent.Future<java.io.File> fbFut; private int fbSess, fbGen; private Slide fbMeta;
     private volatile String lqNote = "";
 
     /** Versión ligera (360p, si no 720p): pesa poco y llega antes. Se guarda aparte para no confundirla con la buena. */
@@ -1011,14 +1012,14 @@ class Slideshow {
                                         v.album = it.album;
                                         v.video = true;
                                         v.videoFile = got;
-                                        if (got == null && isLow) v.streamUrl = it.url + "=m18";
+                                        if (got == null && isLow) v.streamUrl = it.url + "=m37";
                                         v.state = 2;
                                         v.date = p != null && p.date != null ? p.date : MetaFetcher.formatDate(it.ts);
                                         v.place = p != null ? p.place : null;
                                         display(v, true);
                                         if (isLow && hdFut != null) {
-                                            flash("Baja calidad por ahora; mejorando\u2026", 600000);
-                                            upgradeVideo(it, hdFut, sess, myGen, p);
+                                            // se ve en directo (con búfer) y a la vez se guarda en la caché; si el directo falla, se usa el guardado
+                                            fbItem = it; fbFut = hdFut; fbSess = sess; fbGen = myGen; fbMeta = p;
                                         }
                                     }
                                 });
@@ -1059,7 +1060,6 @@ class Slideshow {
                         v.date = meta != null && meta.date != null ? meta.date : MetaFetcher.formatDate(it.ts);
                         v.place = meta != null ? meta.place : null;
                         display(v, false);
-                        flash("Calidad máxima", 1500);
                     }
                 });
             }
@@ -1475,7 +1475,10 @@ class Slideshow {
             mp.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                 public boolean onError(MediaPlayer p, int what, int extra) {
                     if (p == player && s.streamUrl != null) {
-                        flash("Sin vista previa (error " + what + "/" + extra + "); esperando la alta calidad…", 600000);
+                        if (fbItem != null && fbFut != null) {
+                            upgradeVideo(fbItem, fbFut, fbSess, fbGen, fbMeta);
+                            fbFut = null;
+                        }
                         return true;
                     }
                     if (p == player) {
@@ -1485,7 +1488,7 @@ class Slideshow {
                     return true;
                 }
             });
-            h.postDelayed(videoTimeout, 30000);
+            h.postDelayed(videoTimeout, s.streamUrl != null ? 90000 : 30000);
             mp.prepareAsync();
         } catch (Exception e) {
             endVideo();

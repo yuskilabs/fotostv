@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.16.4
+- Vídeos del visor: se reproducen en directo a máxima calidad con búfer (como YouTube) mientras se guardan en la caché; ya no hay salto de baja a alta calidad.
+- Si el directo falla, se usa el vídeo guardado. Quitados los avisos de calidad.
+
 ## 5.16.3
 - Esquinas de botones y recuadros menos redondeadas y recuadro blanco de los botones más fino.
 - El control de columnas vuelve a la fila de botones; botones más compactos para que quepa todo.
