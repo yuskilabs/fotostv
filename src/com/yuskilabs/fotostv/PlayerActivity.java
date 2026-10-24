@@ -20,8 +20,8 @@ public class PlayerActivity extends Activity {
         cfg.manual = Session.manual;
         cfg.startKey = Session.startKey;
         cfg.hint = cfg.manual
-                ? "\u25C0 \u25B6 cambiar foto    \u25B2 u OK pase automático    Atrás: volver al mosaico"
-                : "\u25C0 \u25B6 cambiar foto    \u25B2 pausa    \u25BC ocultar foto    Atrás: volver al mosaico";
+                ? "\u25C0 \u25B6 cambiar foto    OK pase automático    \u25B2 ocultar    \u25BC información    Atrás: mosaico"
+                : "\u25C0 \u25B6 cambiar foto    OK pausa    \u25B2 ocultar    \u25BC información    Atrás: mosaico";
         FrameLayout root = new FrameLayout(this);
         setContentView(root);
         show = new Slideshow(this, root, true, cfg);
@@ -45,14 +45,12 @@ public class PlayerActivity extends Activity {
         if (show == null) return super.dispatchKeyEvent(e);
         int k = e.getKeyCode();
         boolean down = e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0;
-        if (Slideshow.isNavKey(k)) {
-            if (down) show.onKey(k);
+        if (show.infoOpen()) {                       // con la información abierta, cualquier botón la cierra y continúa
+            if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
             return true;
         }
-        if (k == KeyEvent.KEYCODE_DPAD_CENTER || k == KeyEvent.KEYCODE_ENTER
-                || k == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE || k == KeyEvent.KEYCODE_MEDIA_PLAY
-                || k == KeyEvent.KEYCODE_MEDIA_PAUSE) {
-            if (down) show.onKey(KeyEvent.KEYCODE_DPAD_UP);   // OK = pausa / pase automático
+        if (Slideshow.isNavKey(k)) {
+            if (down) show.onKey(k);
             return true;
         }
         return super.dispatchKeyEvent(e);                     // Atrás vuelve al mosaico

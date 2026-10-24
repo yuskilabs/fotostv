@@ -114,6 +114,85 @@ class MetaFetcher {
         return r;
     }
 
+    /** Datos de la foto para el panel de información. */
+    static class Details {
+        double lat = Double.NaN, lon = Double.NaN, alt = Double.NaN;
+        long date;                 // fecha y hora de captura (ms, 0 = desconocida)
+        boolean hasTime;           // la hora viene del EXIF
+        String make = "", model = "", exposure = "", fnum = "", iso = "", focal = "";
+        int w, h;
+        String file = "";
+    }
+
+    private static String tag(Object ex, String name) {
+        try {
+            String v = ((ExifInterface) ex).getAttribute(name);
+            return v == null ? "" : v.trim();
+        } catch (Throwable t) { return ""; }
+    }
+
+    private static double num(String s) {
+        try {
+            int i = s.indexOf('/');
+            if (i > 0) return Double.parseDouble(s.substring(0, i)) / Double.parseDouble(s.substring(i + 1));
+            return Double.parseDouble(s);
+        } catch (Throwable t) { return Double.NaN; }
+    }
+
+    static Details details(Context c, Item it) {
+        Details d = new Details();
+        d.date = it.ts;
+        SharedPreferences m = Prefs.meta(c);
+        String k = "d1_" + it.key();
+        try {
+            String cached = m.getString(k, null);
+            if (cached != null) {
+                JSONObject o = new JSONObject(cached);
+                d.lat = o.optDouble("lat", Double.NaN); d.lon = o.optDouble("lon", Double.NaN);
+                d.alt = o.optDouble("alt", Double.NaN);
+                if (o.optLong("date", 0) > 0) { d.date = o.optLong("date"); d.hasTime = true; }
+                d.make = o.optString("make", ""); d.model = o.optString("model", "");
+                d.exposure = o.optString("exp", ""); d.fnum = o.optString("f", "");
+                d.iso = o.optString("iso", ""); d.focal = o.optString("foc", "");
+                d.w = o.optInt("w", 0); d.h = o.optInt("h", 0);
+                return d;
+            }
+        } catch (Throwable ignored) { }
+        try {
+            byte[] head = AlbumFetcher.get(it.url + "=d", 512 * 1024);
+            ExifInterface ex = (ExifInterface) ExifInterface.class
+                    .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(head));
+            float[] ll = new float[2];
+            if (ex.getLatLong(ll) && !(ll[0] == 0f && ll[1] == 0f)) { d.lat = ll[0]; d.lon = ll[1]; }
+            try { d.alt = ex.getAltitude(Double.NaN); } catch (Throwable ignored) { }
+            String dt = tag(ex, "DateTimeOriginal");
+            if (dt.length() == 0) dt = tag(ex, "DateTime");
+            if (dt.length() > 0) {
+                try { d.date = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.US).parse(dt).getTime(); d.hasTime = true; }
+                catch (Exception ignored) { }
+            }
+            d.make = tag(ex, "Make"); d.model = tag(ex, "Model");
+            double et = num(tag(ex, "ExposureTime"));
+            if (!Double.isNaN(et) && et > 0) d.exposure = et >= 1 ? String.format(Locale.US, "%.1f s", et)
+                    : "1/" + Math.round(1.0 / et) + " s";
+            double fn = num(tag(ex, "FNumber"));
+            if (!Double.isNaN(fn) && fn > 0) d.fnum = "f/" + String.format(Locale.US, "%.1f", fn);
+            d.iso = tag(ex, "ISOSpeedRatings");
+            double fl = num(tag(ex, "FocalLength"));
+            if (!Double.isNaN(fl) && fl > 0) d.focal = String.format(Locale.US, "%.1f mm", fl).replace(".0 mm", " mm");
+            try { d.w = Integer.parseInt(tag(ex, "ImageWidth")); d.h = Integer.parseInt(tag(ex, "ImageLength")); }
+            catch (Exception ignored) { }
+            JSONObject o = new JSONObject();
+            if (!Double.isNaN(d.lat)) { o.put("lat", d.lat); o.put("lon", d.lon); }
+            if (!Double.isNaN(d.alt)) o.put("alt", d.alt);
+            o.put("date", d.hasTime ? d.date : 0);
+            o.put("make", d.make); o.put("model", d.model); o.put("exp", d.exposure); o.put("f", d.fnum);
+            o.put("iso", d.iso); o.put("foc", d.focal); o.put("w", d.w); o.put("h", d.h);
+            m.edit().putString(k, o.toString()).apply();
+        } catch (Throwable ignored) { }
+        return d;
+    }
+
     static String place(Context c, double lat, double lon) {
         if (Double.isNaN(lat)) return null;
         SharedPreferences m = Prefs.meta(c);

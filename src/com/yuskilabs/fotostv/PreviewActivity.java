@@ -32,6 +32,10 @@ public class PreviewActivity extends Activity {
     @Override protected void onPause() { show.stop(); super.onPause(); }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
+        if (show.infoOpen()) {                       // cualquier botón cierra la información y sigue el pase
+            if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
+            return true;
+        }
         if (Slideshow.isNavKey(e.getKeyCode())) {
             if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) show.onKey(e.getKeyCode());
             return true;

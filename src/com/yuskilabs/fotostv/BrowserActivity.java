@@ -34,8 +34,9 @@ public class BrowserActivity extends Activity {
     private static class Entry {
         String title = "";
         String url = "";
-        boolean isAll;
-        List<Item> items = new ArrayList<Item>();
+        int kind;                 // 0 álbum normal, 1 Todas, 2 Favoritos, 3 Ocultas
+        List<Item> src = new ArrayList<Item>();     // todo lo del álbum
+        List<Item> items = new ArrayList<Item>();   // lo que se ve (sin las ocultas, salvo en «Ocultas»)
         List<Item> view;          // lista ordenada (null = tal cual la da Google)
         String order = "";       // random | asc | desc | vacío
         Item cover;
@@ -48,6 +49,7 @@ public class BrowserActivity extends Activity {
         final float ratio;
         ImageView img;
         TextView name, count, badge;
+        ImageView fav;
         View shade;
 
         Tile(android.content.Context c, float ratio) {
@@ -69,6 +71,10 @@ public class BrowserActivity extends Activity {
     private final LinkedHashSet<Item> flagPending = new LinkedHashSet<Item>();
     private final Set<String> flagTried = new HashSet<String>();
     private FrameLayout root;
+    private List<Entry> real = new ArrayList<Entry>();
+    private Entry allE, favE, hidE;
+    private java.util.Set<String> favSet = new HashSet<String>();
+    private InfoPanel infoPanel;
     private GridView albumGrid, photoGrid;
     private Entry current;
     private Thumbs thumbs;
@@ -78,7 +84,7 @@ public class BrowserActivity extends Activity {
     private boolean destroyed, flagBusy, loaded;
     private int prefetched = -1;
     private static final int AHEAD = 150;
-    private android.widget.Button[] ordBtn = new android.widget.Button[2];
+    private android.widget.Button orderBtn, fitBtn;
     private android.widget.Button playBtn;
 
     private int albumCols, photoCols, photoTileH;
@@ -184,7 +190,7 @@ public class BrowserActivity extends Activity {
     }
 
     private static String shapeLabel(String sh) {
-        return "wide".equals(sh) ? "Formato: apaisada" : ("full".equals(sh) ? "Formato: completa" : "Formato: cuadrada");
+        return "wide".equals(sh) ? "Miniaturas: apaisadas" : ("full".equals(sh) ? "Miniaturas: completas" : "Miniaturas: cuadradas");
     }
 
     // ------------------------------------------------------------ ciclo de vida
@@ -205,6 +211,10 @@ public class BrowserActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        if (loaded) {
+            int fp = photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0;
+            refreshAfterChange(fp);       // por si se ha ocultado o marcado algo en el visor
+        }
         // al volver de la pantalla completa, el mosaico se coloca en la última foto vista
         if (level == 1 && photoGrid != null && current != null && Session.lastKey != null) {
             for (int i = 0; i < current.shown().size(); i++) {
@@ -261,12 +271,12 @@ public class BrowserActivity extends Activity {
                     }
                     list.add(makeEntry(al, d));
                 }
-                final List<Entry> fin = withAll(list);
+                final List<Entry> fin = sortEntries(list);
                 h.post(new Runnable() {
                     public void run() {
                         if (destroyed) return;
-                        entries.clear();
-                        entries.addAll(fin);
+                        real = new ArrayList<Entry>(fin);
+                        compose();
                         loaded = true;
                         if (entries.isEmpty()) {
                             showMessage("No hay álbumes.\nAñádelos desde la web de ajustes de FotosTV.");
@@ -288,8 +298,8 @@ public class BrowserActivity extends Activity {
             it.album = e.title;
             if (it.akey.length() == 0) it.akey = d.key;
         }
+        e.src = d.items;
         e.items = d.items;
-        pickCover(e);
         return e;
     }
 
@@ -353,19 +363,82 @@ public class BrowserActivity extends Activity {
         return l;
     }
 
-    private List<Entry> withAll(List<Entry> list) {
-        list = sortEntries(list);
-        List<Entry> out = new ArrayList<Entry>();
-        if (list.size() > 1) {
-            Entry all = new Entry();
-            all.isAll = true;
-            all.title = "Todas";
-            for (Entry e : list) all.items.addAll(e.items);
-            pickCover(all);
-            out.add(all);
-        }
-        out.addAll(list);
+    /** Reordena sin barajar de nuevo lo que ya estaba barajado. */
+    private void reapply(Entry e) {
+        if ("random".equals(e.order) && e.view != null) {
+            java.util.Set<String> now = new HashSet<String>();
+            for (Item x : e.items) now.add(x.key());
+            java.util.Set<String> have = new HashSet<String>();
+            List<Item> nv = new ArrayList<Item>();
+            for (Item x : e.view) if (now.contains(x.key()) && have.add(x.key())) nv.add(x);
+            for (Item x : e.items) if (have.add(x.key())) nv.add(x);
+            e.view = nv;
+        } else applyOrder(e);
+    }
+
+    private static List<Item> visible(List<Item> src, java.util.Set<String> hid) {
+        List<Item> out = new ArrayList<Item>(src.size());
+        for (Item it : src) if (!hid.contains(it.key())) out.add(it);
         return out;
+    }
+
+    /** Rehace las listas que se ven: quita las ocultas, y arma Todas, Favoritos y Ocultas. */
+    private void compose() {
+        java.util.Set<String> hid = Prefs.hidden(this);
+        favSet = Prefs.favs(this);
+        for (Entry e : real) {
+            e.items = visible(e.src, hid);
+            reapply(e);
+            if (e.cover == null || hid.contains(e.cover.key())) pickCover(e);
+        }
+        java.util.LinkedHashMap<String, Item> vis = new java.util.LinkedHashMap<String, Item>();
+        java.util.LinkedHashMap<String, Item> hidden = new java.util.LinkedHashMap<String, Item>();
+        for (Entry e : real) {
+            for (Item it : e.src) {
+                if (hid.contains(it.key())) { if (!hidden.containsKey(it.key())) hidden.put(it.key(), it); }
+                else if (!vis.containsKey(it.key())) vis.put(it.key(), it);
+            }
+        }
+        if (allE == null) { allE = new Entry(); allE.kind = 1; allE.title = "Todas"; }
+        allE.items = new ArrayList<Item>(vis.values());
+        reapply(allE);
+        if (allE.cover == null || hid.contains(allE.cover.key())) pickCover(allE);
+        List<Item> favs = new ArrayList<Item>();
+        for (Item it : vis.values()) if (favSet.contains(it.key())) favs.add(it);
+        if (favs.isEmpty()) favE = null;
+        else {
+            if (favE == null) { favE = new Entry(); favE.kind = 2; favE.title = "Favoritos"; }
+            favE.items = favs;
+            reapply(favE);
+            if (favE.cover == null || !favSet.contains(favE.cover.key())) pickCover(favE);
+        }
+        if (hidden.isEmpty()) hidE = null;
+        else {
+            if (hidE == null) { hidE = new Entry(); hidE.kind = 3; hidE.title = "Ocultas"; }
+            hidE.items = new ArrayList<Item>(hidden.values());
+            reapply(hidE);
+            if (hidE.cover == null || !hid.contains(hidE.cover.key())) pickCover(hidE);
+        }
+        entries.clear();
+        if (real.size() > 1) entries.add(allE);
+        if (favE != null) entries.add(favE);
+        entries.addAll(real);
+        if (hidE != null) entries.add(hidE);
+    }
+
+    /** Vuelve a pintar la pantalla actual tras ocultar, mostrar o marcar una favorita. */
+    private void refreshAfterChange(int keepPos) {
+        compose();
+        if (level == 0 && albumGrid != null) {
+            ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
+        } else if (level == 1 && current != null) {
+            if (!entries.contains(current)) { showAlbums(); return; }
+            if (photoGrid != null) {
+                ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
+                int n = current.shown().size();
+                if (n > 0) photoGrid.setSelection(Math.max(0, Math.min(keepPos, n - 1)));
+            }
+        }
     }
 
     /** Actualiza los álbumes desde Google en segundo plano, sin bloquear el mosaico. */
@@ -394,27 +467,15 @@ public class BrowserActivity extends Activity {
         if (destroyed) return;
         boolean changed = false;
         for (Entry f : fresh) {
-            for (Entry e : entries) {
-                if (!e.isAll && e.url.equals(f.url) && e.items.size() != f.items.size()) {
-                    e.items = f.items;        // se cambia la lista entera, no se modifica la anterior
-                    applyOrder(e);
-                    if (e.cover == null) pickCover(e);
+            for (Entry e : real) {
+                if (e.url.equals(f.url) && e.src.size() != f.src.size()) {
+                    e.src = f.src;            // se cambia la lista entera, no se modifica la anterior
                     changed = true;
                 }
             }
         }
         if (!changed) return;
-        for (Entry e : entries) {
-            if (e.isAll) {
-                List<Item> all = new ArrayList<Item>();
-                for (Entry x : entries) if (!x.isAll) all.addAll(x.items);
-                e.items = all;
-                applyOrder(e);
-                if (e.cover == null) pickCover(e);
-            }
-        }
-        if (level == 0 && albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
-        if (level == 1 && photoGrid != null) ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
+        refreshAfterChange(photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
     }
 
     // ------------------------------------------------------------ pantallas
@@ -491,15 +552,12 @@ public class BrowserActivity extends Activity {
         row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 4));
         playBtn = sbtn("Pase", R.drawable.ic_play, play());
         row.addView(playBtn);
-        ordBtn[0] = sbtn("Aleatorio", R.drawable.ic_shuffle, new View.OnClickListener() {
-            public void onClick(View v) { setOrder("random"); }
+        orderBtn = sbtn("", R.drawable.ic_down, new View.OnClickListener() {
+            public void onClick(View v) {
+                if (current != null) setOrder(nextOrder(current.order));
+            }
         });
-        row.addView(ordBtn[0]);
-        ordBtn[1] = sbtn("Antiguas", R.drawable.ic_up, new View.OnClickListener() {
-            public void onClick(View v) { setOrder(current != null && "asc".equals(current.order) ? "desc" : "asc"); }
-        });
-        row.addView(ordBtn[1]);
-        row.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
+        row.addView(orderBtn);
         shapeBtn = sbtn(shapeLabel(photoShape), R.drawable.ic_format, new View.OnClickListener() {
             public void onClick(View v) {
                 String n = "square".equals(photoShape) ? "wide" : ("wide".equals(photoShape) ? "full" : "square");
@@ -509,6 +567,15 @@ public class BrowserActivity extends Activity {
             }
         });
         row.addView(shapeBtn);
+        fitBtn = sbtn(fitLabel(Prefs.fit(this)), R.drawable.ic_fullscreen, new View.OnClickListener() {
+            public void onClick(View v) {
+                String n = nextFit(Prefs.fit(BrowserActivity.this));
+                Prefs.sp(BrowserActivity.this).edit().putString("fit", n).commit();
+                fitBtn.setText(fitLabel(n));
+            }
+        });
+        row.addView(fitBtn);
+        row.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
         refreshOrderButtons();
         android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
         hs.setHorizontalScrollBarEnabled(false);
@@ -522,6 +589,9 @@ public class BrowserActivity extends Activity {
         photoGrid.setAdapter(new PhotoAdapter());
         photoGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> p, View v, int pos, long id) { openViewer(pos); }
+        });
+        photoGrid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) { itemMenu(pos); return true; }
         });
         photoGrid.setOnScrollListener(new android.widget.AbsListView.OnScrollListener() {
             public void onScrollStateChanged(android.widget.AbsListView v, int st) { }
@@ -544,6 +614,61 @@ public class BrowserActivity extends Activity {
         refocus = null;
     }
 
+    private void itemMenu(final int pos) {
+        if (current == null || pos < 0 || pos >= current.shown().size()) return;
+        final Item it = current.shown().get(pos);
+        final boolean isHid = Prefs.hidden(this).contains(it.key());
+        final boolean isFav = Prefs.favs(this).contains(it.key());
+        final String[] labels = {isHid ? "Mostrar" : "Ocultar", "Ver información",
+                isFav ? "Quitar de favoritos" : "Añadir a favoritos"};
+        final int[] icons = {isHid ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_info,
+                isFav ? R.drawable.ic_star_border : R.drawable.ic_star};
+        android.widget.ListAdapter ad = new android.widget.ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, labels) {
+            @Override public View getView(int i, View cv, ViewGroup parent) {
+                TextView tv = (TextView) super.getView(i, cv, parent);
+                tv.setTextColor(Color.WHITE);
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                android.graphics.drawable.Drawable d = getResources().getDrawable(icons[i]).mutate();
+                int sz = Ui.dp(BrowserActivity.this, 22);
+                d.setBounds(0, 0, sz, sz);
+                tv.setCompoundDrawables(d, null, null, null);
+                tv.setCompoundDrawablePadding(Ui.dp(BrowserActivity.this, 14));
+                tv.setGravity(Gravity.CENTER_VERTICAL);
+                return tv;
+            }
+        };
+        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setAdapter(ad, new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int which) {
+                    if (which == 0) {
+                        if (isHid) Prefs.unhide(BrowserActivity.this, it.key()); else Prefs.hide(BrowserActivity.this, it.key());
+                        refreshAfterChange(pos);
+                    } else if (which == 1) {
+                        showInfo(it);
+                    } else {
+                        Prefs.toggleFav(BrowserActivity.this, it.key());
+                        refreshAfterChange(pos);
+                    }
+                }
+            }).show();
+    }
+
+    private void showInfo(Item it) {
+        if (infoPanel != null) return;
+        infoPanel = new InfoPanel(this, it, it.album);
+        root.addView(infoPanel, new FrameLayout.LayoutParams(-1, -1));
+        infoPanel.bringToFront();
+    }
+
+    @Override public boolean dispatchKeyEvent(android.view.KeyEvent e) {
+        if (infoPanel != null) {                      // cualquier botón cierra la información
+            if (e.getAction() == android.view.KeyEvent.ACTION_DOWN) { infoPanel.detach(); infoPanel = null; }
+            return true;
+        }
+        return super.dispatchKeyEvent(e);
+    }
+
     private void setOrder(String key) {
         if (current == null) return;
         current.order = key;
@@ -557,13 +682,26 @@ public class BrowserActivity extends Activity {
     }
 
     private void refreshOrderButtons() {
+        if (orderBtn == null) return;
         String o = current != null ? current.order : "";
-        if (ordBtn[0] != null) ordBtn[0].setText(("random".equals(o) ? "\u2713  " : "") + "Aleatorio");
-        if (ordBtn[1] != null) {
-            boolean desc = "desc".equals(o);
-            ordBtn[1].setText((("asc".equals(o) || desc) ? "\u2713  " : "") + (desc ? "Recientes" : "Antiguas"));
-            Ui.icon(ordBtn[1], desc ? R.drawable.ic_down : R.drawable.ic_up);
-        }
+        if ("random".equals(o)) { orderBtn.setText("Aleatorio"); Ui.icon(orderBtn, R.drawable.ic_shuffle); }
+        else if ("asc".equals(o)) { orderBtn.setText("Antiguas primero"); Ui.icon(orderBtn, R.drawable.ic_up); }
+        else { orderBtn.setText("Recientes primero"); Ui.icon(orderBtn, R.drawable.ic_down); }
+    }
+
+    /** Aleatorio → Antiguas primero → Recientes primero → Aleatorio… (el orden de partida equivale a «Recientes»). */
+    private static String nextOrder(String o) {
+        if ("random".equals(o)) return "asc";
+        if ("asc".equals(o)) return "desc";
+        return "random";
+    }
+
+    private static String nextFit(String f) {
+        return "auto".equals(f) ? "crop" : ("crop".equals(f) ? "fit" : "auto");
+    }
+
+    private static String fitLabel(String f) {
+        return "crop".equals(f) ? "Pantalla: rellenar" : ("fit".equals(f) ? "Pantalla: original" : "Pantalla: automática");
     }
 
     private View.OnClickListener play() {
@@ -571,7 +709,7 @@ public class BrowserActivity extends Activity {
             public void onClick(View v) {
                 if (current == null || current.items.isEmpty()) return;
                 Session.items = current.shown();
-                Session.order = current.order.length() == 0 ? "random" : "keep";   // sin ordenar: aleatorio
+                Session.order = current.order.length() == 0 && current.kind != 3 ? "random" : "keep";   // sin ordenar: aleatorio
                 Session.manual = false;
                 Session.startKey = null;
                 Session.lastKey = null;
@@ -631,6 +769,16 @@ public class BrowserActivity extends Activity {
             Tile t = cv instanceof Tile ? (Tile) cv : newAlbumTile();
             Entry e = entries.get(pos);
             t.name.setText(e.title);
+            int ic = e.kind == 1 ? R.drawable.ic_albums : e.kind == 2 ? R.drawable.ic_star
+                    : e.kind == 3 ? R.drawable.ic_visibility_off : 0;
+            if (ic != 0) {
+                android.graphics.drawable.Drawable d = getResources().getDrawable(ic).mutate();
+                if (e.kind == 2) d.setColorFilter(0xFFFFC83D, android.graphics.PorterDuff.Mode.SRC_IN);
+                int sz = Ui.dp(BrowserActivity.this, 17);
+                d.setBounds(0, 0, sz, sz);
+                t.name.setCompoundDrawables(d, null, null, null);
+                t.name.setCompoundDrawablePadding(Ui.dp(BrowserActivity.this, 7));
+            } else t.name.setCompoundDrawables(null, null, null, null);
             t.count.setText(e.items.size() + " elementos");
             if (e.items.isEmpty()) thumbs.clearView(t.img);
             else thumbs.load(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));
@@ -677,6 +825,7 @@ public class BrowserActivity extends Activity {
             boolean crop = !"full".equals(photoShape);
             t.img.setScaleType(crop ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
             thumbs.load(t.img, it.url, r32(photoTile), r32(photoTileH), crop);
+            t.fav.setVisibility(favSet.contains(it.key()) ? View.VISIBLE : View.GONE);
             prefetchAhead(pos);
             return t;
         }
@@ -713,6 +862,13 @@ public class BrowserActivity extends Activity {
         bp.setMargins(Ui.dp(this, 8), 0, 0, Ui.dp(this, 8));
         t.addView(t.badge, bp);
         t.badge.setVisibility(View.GONE);
+        t.fav = new ImageView(this);
+        t.fav.setImageResource(R.drawable.ic_star);
+        t.fav.setColorFilter(0xFFFFC83D);
+        FrameLayout.LayoutParams fp = new FrameLayout.LayoutParams(Ui.dp(this, 24), Ui.dp(this, 24), Gravity.TOP | Gravity.END);
+        fp.setMargins(0, Ui.dp(this, 6), Ui.dp(this, 6), 0);
+        t.addView(t.fav, fp);
+        t.fav.setVisibility(View.GONE);
         return t;
     }
 

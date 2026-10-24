@@ -76,6 +76,8 @@ class Slideshow {
     private LinearLayout info;
     private TextView clock, status, tvAlbum, tvDate, tvPlace;
     private boolean showingA = true, running, waiting, playingVideo, paused;
+    private InfoPanel panel;
+    private boolean resumeAfterInfo;
     private Slide cur;
     private final List<Item> hist = new ArrayList<Item>();
     private int histPos = -1, gen;
@@ -99,7 +101,7 @@ class Slideshow {
     }
 
     private static final String DEFAULT_HINT =
-            "\u25C0 \u25B6 cambiar foto    \u25B2 pausa    \u25BC ocultar foto";
+            "\u25C0 \u25B6 cambiar foto    OK pausa    \u25B2 ocultar foto    \u25BC información";
 
     Slideshow(Context ctx, FrameLayout root, boolean showHint) {
         this(ctx, root, showHint, null);
@@ -180,6 +182,7 @@ class Slideshow {
 
     void stop() {
         running = false;
+        if (panel != null) { panel.detach(); panel = null; }
         h.removeCallbacksAndMessages(null);
         session++;
         if (ex != null) ex.shutdownNow();
@@ -241,20 +244,20 @@ class Slideshow {
         info.setOrientation(LinearLayout.VERTICAL);
         tvAlbum = text(18, Gravity.START);
         tvAlbum.setAlpha(0.8f);
-        tvDate = text(28, Gravity.START);
+        tvDate = text(24, Gravity.START);
         tvPlace = text(21, Gravity.START);
         // una sola línea cada una: así una fecha larga nunca se parte ni se corta («18 de diciembre de»)
         TextView[] lines = {tvAlbum, tvDate, tvPlace};
         for (TextView t : lines) {
             t.setSingleLine(true);
-            t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            t.setEllipsize(t == tvDate ? null : android.text.TextUtils.TruncateAt.END);   // la fecha nunca se corta con «…»
             t.setHorizontallyScrolling(false);
         }
         info.addView(tvAlbum);
         info.addView(tvDate);
         info.addView(tvPlace);
-        FrameLayout.LayoutParams ip = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.START);
-        ip.setMargins(dp(48), 0, 0, dp(32));
+        FrameLayout.LayoutParams ip = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM | Gravity.START);
+        ip.setMargins(dp(48), 0, dp(220), dp(32));   // ancho fijo (hasta la hora): el texto no se recorta
         root.addView(info, ip);
 
         clock = text(46, Gravity.END);
@@ -1052,22 +1055,54 @@ class Slideshow {
                 if (!manual()) setPaused(false, false);
                 goPrev();
                 return true;
+            case android.view.KeyEvent.KEYCODE_DPAD_CENTER:
+            case android.view.KeyEvent.KEYCODE_ENTER:
+            case android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+            case android.view.KeyEvent.KEYCODE_MEDIA_PLAY:
+            case android.view.KeyEvent.KEYCODE_MEDIA_PAUSE:
+                setPaused(!paused, true);       // OK: pausa / continúa
+                return true;
             case android.view.KeyEvent.KEYCODE_DPAD_UP:
-                setPaused(!paused, true);
+                hideCurrent();                  // ▲ oculta la foto
                 return true;
             case android.view.KeyEvent.KEYCODE_DPAD_DOWN:
-                hideCurrent();
+                openInfo();                     // ▼ pausa y muestra la información
                 return true;
             default:
                 return false;
         }
     }
 
+    boolean infoOpen() { return panel != null; }
+
+    private void openInfo() {
+        if (cur == null || cur.item == null || panel != null) return;
+        resumeAfterInfo = !paused;
+        setPaused(true, false);
+        panel = new InfoPanel(ctx, cur.item, cur.album != null && cur.album.length() > 0 ? cur.album : cur.item.album);
+        root.addView(panel, new FrameLayout.LayoutParams(-1, -1));
+        panel.bringToFront();
+    }
+
+    /** Cierra la información y sigue por donde estaba (si estaba en marcha). */
+    void closeInfo() {
+        if (panel == null) return;
+        panel.detach();
+        panel = null;
+        if (resumeAfterInfo) setPaused(false, true);
+        resumeAfterInfo = false;
+    }
+
     static boolean isNavKey(int keyCode) {
         return keyCode == android.view.KeyEvent.KEYCODE_DPAD_RIGHT
                 || keyCode == android.view.KeyEvent.KEYCODE_DPAD_LEFT
                 || keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP
-                || keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN;
+                || keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN
+                || keyCode == android.view.KeyEvent.KEYCODE_DPAD_CENTER
+                || keyCode == android.view.KeyEvent.KEYCODE_ENTER
+                || keyCode == android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
+                || keyCode == android.view.KeyEvent.KEYCODE_MEDIA_PLAY
+                || keyCode == android.view.KeyEvent.KEYCODE_MEDIA_PAUSE;
     }
 
     private void setPaused(boolean p, boolean announce) {
@@ -1097,8 +1132,9 @@ class Slideshow {
     }
 
     private void hideCurrent() {
-        if (cur == null || manual()) return;   // en el visor ▼ no hace nada (ocultar es del salvapantallas)
+        if (cur == null) return;
         Item it = cur.item;
+        int hideAt = manual() ? indexOfKey(it.key()) : -1;
         Prefs.hide(ctx, it.key());
         synchronized (this) {
             for (int i = all.size() - 1; i >= 0; i--)
@@ -1118,7 +1154,25 @@ class Slideshow {
         }
         for (int i = queue.size() - 1; i >= 0; i--)
             if (queue.get(i).item.key().equals(it.key())) queue.remove(i);
-        flash("Foto ocultada. No volverá a salir.", 2500);
+        flash("Foto ocultada. La encuentras en el álbum «Ocultas».", 2500);
+        if (manual()) {
+            // visor: se queda como estaba (parado o en pase) y pasa a la siguiente
+            if (items.isEmpty()) {
+                h.removeCallbacks(tick);
+                releasePlayer();
+                playingVideo = false;
+                cur = null;
+                status.setText("Ya no quedan fotos que ver.\nAtrás para volver al mosaico.");
+                return;
+            }
+            if (browse()) {
+                browseTo(items.get(Math.max(0, Math.min(hideAt, items.size() - 1))));
+            } else {
+                cur = null;
+                goNext();
+            }
+            return;
+        }
         setPaused(false, false);
         cur = null;
         if (all.isEmpty()) {

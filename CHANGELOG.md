@@ -3,6 +3,15 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.15.0
+- Información de la foto (▼): pantalla con los metadatos (archivo, fecha y hora, lugar, coordenadas, altitud, cámara, exposición, resolución) y, si tiene GPS, un mapa de OpenStreetMap con el punto exacto. Cualquier botón la cierra y el pase continúa por donde estaba.
+- Nuevos gestos: ▲ oculta la foto (también en el visor), ▼ información, OK pausa / continúa en todos los casos.
+- Mantener pulsado OK sobre una foto del mosaico: ocultar/mostrar, ver información, favoritas.
+- Álbumes nuevos: «Favoritos» (con estrella, aparece al marcar la primera) y «Ocultas» (al final, con el ojo tachado, donde se pueden volver a mostrar). «Todas» lleva ahora un icono de álbumes. Las fotos ocultas ya no salen en los demás mosaicos.
+- Un solo botón de orden (Aleatorio → Antiguas primero → Recientes primero), «Miniaturas» (cuadradas, apaisadas, completas) y nuevo «Pantalla» (automática, rellenar, original: el mismo ajuste «Encuadre» de la web); las columnas pasan al final.
+- Fecha en pantalla algo más pequeña y sin cortarse nunca con «…».
+- Logo: la «o» y la «s» un poco más separadas.
+
 ## 5.14.2
 - Botones de la pantalla principal alineados a la izquierda, junto a su icono.
 - Un solo botón «Antiguas» / «Recientes» que alterna al pulsarlo (junto a «Aleatorio»).

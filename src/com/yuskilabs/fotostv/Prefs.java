@@ -99,6 +99,24 @@ class Prefs {
         h.add(key);
         sp(c).edit().putStringSet("hidden", h).apply();
     }
+    static void unhide(Context c, String key) {
+        java.util.Set<String> h = hidden(c);
+        h.remove(key);
+        sp(c).edit().putStringSet("hidden", h).apply();
+    }
+
+    // ---- favoritas ----
+    static java.util.Set<String> favs(Context c) {
+        return new java.util.HashSet<String>(sp(c).getStringSet("favs", new java.util.HashSet<String>()));
+    }
+    static boolean toggleFav(Context c, String key) {
+        java.util.Set<String> f = favs(c);
+        boolean now = f.add(key);
+        if (!now) f.remove(key);
+        sp(c).edit().putStringSet("favs", f).apply();
+        return now;
+    }
+
     static void clearHidden(Context c) { sp(c).edit().remove("hidden").apply(); }
 
     // ---- fotos ya vistas en la vuelta actual (modo aleatorio) ----

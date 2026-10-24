@@ -75,12 +75,15 @@ Los álbumes se añaden al instante, sin pulsar «Guardar». Se pueden ordenar a
 | Dónde | Tecla | Acción |
 |---|---|---|
 | Salvapantallas / pase | ◀ ▶ | foto anterior / siguiente |
-| | ▲ | pausar / continuar |
-| | ▼ | ocultar esa foto para siempre |
+| | OK | pausar / continuar |
+| | ▲ | ocultar esa foto (queda en el álbum «Ocultas», donde se puede volver a mostrar) |
+| | ▼ | pausa y muestra la información de la foto, con el mapa si tiene GPS; cualquier botón la cierra y continúa |
 | | cualquier otra | salir |
 | Visor (desde el mosaico) | ◀ ▶ | anterior / siguiente en el orden del mosaico, al instante y sin fundido |
-| | ▲ u OK | activar el pase automático (▲ otra vez, vuelve al modo álbum) |
+| | OK | activar el pase automático (OK otra vez, vuelve al modo álbum) |
+| | ▲ / ▼ | ocultar la foto / información con mapa |
 | | Atrás | volver al mosaico |
+| Mosaico de fotos | mantener OK | ocultar o mostrar · ver información · añadir o quitar de favoritos |
 | Mosaico de fotos | Atrás | 1.ª vez: sube a los botones · 2.ª vez: vuelve a los álbumes |
 
 ### Copia de seguridad

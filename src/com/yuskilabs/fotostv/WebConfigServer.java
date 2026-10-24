@@ -447,7 +447,7 @@ class WebConfigServer extends Thread {
           .append("<div class='row2'><button type='button' class='sec' onclick='expBk()'>📤 Exportar</button>")
           .append("<button type='button' class='sec' onclick='impBk()'>📥 Importar</button></div>")
           .append("<p id='bkm' class='muted'></p>");
-        sb.append("<h2>Mando</h2><p class='muted'>\u25C0 \u25B6 cambiar de foto \u00B7 \u25B2 pausar / continuar \u00B7 \u25BC ocultar esa foto \u00B7 cualquier otro botón sale del salvapantallas.</p>");
+        sb.append("<h2>Mando</h2><p class='muted'>\u25C0 \u25B6 cambiar de foto \u00B7 OK pausar / continuar \u00B7 \u25B2 ocultar esa foto (queda en el álbum «Ocultas») \u00B7 \u25BC pausa y muestra la información de la foto (con el mapa si tiene GPS); cualquier botón la cierra y continúa \u00B7 en el salvapantallas, cualquier otro botón sale. En el mosaico, mantén pulsado OK sobre una foto para ocultar, ver información o marcar como favorita.</p>");
         sb.append("<button type='submit'>💾 Guardar</button>");
         StringBuilder alb = new StringBuilder();
         alb.append("<h2>Álbumes</h2>");

@@ -18,6 +18,10 @@ public class PhotoDream extends DreamService {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
+        if (show != null && show.infoOpen()) {
+            if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
+            return true;
+        }
         if (show != null && Slideshow.isNavKey(e.getKeyCode())) {
             if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) show.onKey(e.getKeyCode());
             return true;
