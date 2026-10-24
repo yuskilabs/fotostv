@@ -1,6 +1,6 @@
 {
-  "version": "5.15.0",
+  "version": "5.16.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 343509,
-  "notes": "- Información de la foto (▼): pantalla con los metadatos (archivo, fecha y hora, lugar, coordenadas, altitud, cámara, exposición, resolución) y, si tiene GPS, un mapa de OpenStreetMap con el punto exacto. Cualquier botón la cierra y el pase continúa por donde estaba.\n- Nuevos gestos: ▲ oculta la foto (también en el visor), ▼ información, OK pausa / continúa en todos los casos.\n- Mantener pulsado OK sobre una foto del mosaico: ocultar/mostrar, ver información, favoritas.\n- Álbumes nuevos: «Favoritos» (con estrella, aparece al marcar la primera) y «Ocultas» (al final, con el ojo tachado, donde se pueden volver a mostrar). «Todas» lleva ahora un icono de álbumes. Las fotos ocultas ya no salen en los demás mosaicos.\n- Un solo botón de orden (Aleatorio → Antiguas primero → Recientes primero), «Miniaturas» (cuadradas, apaisadas, completas) y nuevo «Pantalla» (automática, rellenar, original: el mismo ajuste «Encuadre» de la web); las columnas pasan al final.\n- Fecha en pantalla algo más pequeña y sin cortarse nunca con «…».\n- Logo: la «o» y la «s» un poco más separadas."
+  "size": 347676,
+  "notes": "- Dentro de un álbum, botón «Todo» / «Vídeos»: muestra solo los vídeos del álbum (se buscan por lotes y van apareciendo; lo ya detectado queda guardado)."
 }

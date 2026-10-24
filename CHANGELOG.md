@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.16.0
+- Dentro de un álbum, botón «Todo» / «Vídeos»: muestra solo los vídeos del álbum (se buscan por lotes y van apareciendo; lo ya detectado queda guardado).
+
 ## 5.15.0
 - Información de la foto (▼): pantalla con los metadatos (archivo, fecha y hora, lugar, coordenadas, altitud, cámara, exposición, resolución) y, si tiene GPS, un mapa de OpenStreetMap con el punto exacto. Cualquier botón la cierra y el pase continúa por donde estaba.
 - Nuevos gestos: ▲ oculta la foto (también en el visor), ▼ información, OK pausa / continúa en todos los casos.

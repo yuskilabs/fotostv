@@ -41,7 +41,10 @@ public class BrowserActivity extends Activity {
         String order = "";       // random | asc | desc | vacío
         Item cover;
 
-        List<Item> shown() { return view != null ? view : items; }
+        boolean onlyVideos;       // filtro «Vídeos»
+        List<Item> vids = new ArrayList<Item>();
+
+        List<Item> shown() { return onlyVideos ? vids : (view != null ? view : items); }
     }
 
     /** Casilla con proporción fija (alto = ancho × ratio) para las cuadrículas. */
@@ -84,7 +87,10 @@ public class BrowserActivity extends Activity {
     private boolean destroyed, flagBusy, loaded;
     private int prefetched = -1;
     private static final int AHEAD = 150;
-    private android.widget.Button orderBtn, fitBtn;
+    private android.widget.Button orderBtn, fitBtn, kindBtn;
+    private TextView countView;
+    private int scanGen, scanDone, scanTotal;
+    private final ExecutorService scanExec = Executors.newSingleThreadExecutor();
     private android.widget.Button playBtn;
 
     private int albumCols, photoCols, photoTileH;
@@ -232,6 +238,7 @@ public class BrowserActivity extends Activity {
         h.removeCallbacksAndMessages(null);
         bg.shutdownNow();
         flagExec.shutdownNow();
+        scanExec.shutdownNow();
         super.onDestroy();
     }
 
@@ -429,6 +436,7 @@ public class BrowserActivity extends Activity {
     /** Vuelve a pintar la pantalla actual tras ocultar, mostrar o marcar una favorita. */
     private void refreshAfterChange(int keepPos) {
         compose();
+        if (current != null && current.onlyVideos) { rebuildVids(); updateCount(); }
         if (level == 0 && albumGrid != null) {
             ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
         } else if (level == 1 && current != null) {
@@ -522,6 +530,8 @@ public class BrowserActivity extends Activity {
         if (pos < 0 || pos >= entries.size()) return;
         albumPos = pos;
         current = entries.get(pos);
+        current.onlyVideos = false;
+        scanGen++;
         showPhotos(0);
     }
 
@@ -542,9 +552,10 @@ public class BrowserActivity extends Activity {
         nm.setSingleLine(true);
         nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
         head.addView(nm, new LinearLayout.LayoutParams(-2, -2));
-        TextView cn = text("  \u00B7  " + current.items.size() + " elementos", 20, 0xFFD0DBE8);
-        cn.setPadding(0, 0, 0, 0);
-        head.addView(cn);
+        countView = text("", 20, 0xFFD0DBE8);
+        countView.setPadding(0, 0, 0, 0);
+        head.addView(countView);
+        updateCount();
         col.addView(head, headParams());
 
         LinearLayout row = new LinearLayout(this);
@@ -552,6 +563,11 @@ public class BrowserActivity extends Activity {
         row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 4));
         playBtn = sbtn("Pase", R.drawable.ic_play, play());
         row.addView(playBtn);
+        kindBtn = sbtn(current.onlyVideos ? "Vídeos" : "Todo", current.onlyVideos ? R.drawable.ic_video : R.drawable.ic_photo,
+                new View.OnClickListener() {
+            public void onClick(View v) { toggleKind(); }
+        });
+        row.addView(kindBtn);
         orderBtn = sbtn("", R.drawable.ic_down, new View.OnClickListener() {
             public void onClick(View v) {
                 if (current != null) setOrder(nextOrder(current.order));
@@ -669,10 +685,85 @@ public class BrowserActivity extends Activity {
         return super.dispatchKeyEvent(e);
     }
 
+    private void updateCount() {
+        if (countView == null || current == null) return;
+        String t;
+        if (current.onlyVideos) {
+            t = "  \u00B7  " + current.vids.size() + (current.vids.size() == 1 ? " vídeo" : " vídeos");
+            if (scanTotal > 0 && scanDone < scanTotal) t += "  \u00B7  buscando " + scanDone + "/" + scanTotal + "…";
+        } else {
+            t = "  \u00B7  " + current.items.size() + " elementos";
+        }
+        countView.setText(t);
+    }
+
+    /** Los vídeos ya conocidos de la lista actual, en su orden. */
+    private void rebuildVids() {
+        if (current == null) return;
+        List<Item> base = current.view != null ? current.view : current.items;
+        List<Item> out = new ArrayList<Item>();
+        for (Item it : base) {
+            Boolean v = MetaFetcher.cachedVideo(this, it);
+            if (v != null && v.booleanValue()) out.add(it);
+        }
+        current.vids = out;
+    }
+
+    /** Alterna entre «Todo» y «Vídeos». Los vídeos se buscan por lotes y se van mostrando según aparecen. */
+    private void toggleKind() {
+        if (current == null) return;
+        current.onlyVideos = !current.onlyVideos;
+        scanGen++;
+        scanDone = 0;
+        scanTotal = 0;
+        if (current.onlyVideos) {
+            rebuildVids();
+            startScan();
+        }
+        if (kindBtn != null) {
+            kindBtn.setText(current.onlyVideos ? "Vídeos" : "Todo");
+            Ui.icon(kindBtn, current.onlyVideos ? R.drawable.ic_video : R.drawable.ic_photo);
+        }
+        updateCount();
+        if (photoGrid != null) {
+            ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
+            photoGrid.setSelection(0);
+        }
+    }
+
+    private void startScan() {
+        final int gen = scanGen;
+        final Entry e = current;
+        final List<Item> base = new ArrayList<Item>(e.view != null ? e.view : e.items);
+        scanTotal = base.size();
+        scanDone = 0;
+        scanExec.submit(new Runnable() {
+            public void run() {
+                int total = base.size();
+                for (int i = 0; i < total; i += 40) {
+                    if (destroyed || gen != scanGen) return;
+                    try { MetaFetcher.detectVideos(BrowserActivity.this, new ArrayList<Item>(base.subList(i, Math.min(total, i + 40)))); }
+                    catch (Throwable ignored) { }
+                    final int done = Math.min(total, i + 40);
+                    h.post(new Runnable() {
+                        public void run() {
+                            if (destroyed || gen != scanGen || current != e) return;
+                            scanDone = done;
+                            rebuildVids();
+                            updateCount();
+                            if (photoGrid != null) ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
+                        }
+                    });
+                }
+            }
+        });
+    }
+
     private void setOrder(String key) {
         if (current == null) return;
         current.order = key;
         applyOrder(current);
+        if (current.onlyVideos) rebuildVids();
         prefetched = -1;
         refreshOrderButtons();
         if (photoGrid != null) {
