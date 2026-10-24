@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.17.2
+- Vídeos en directo: ahora se ven desde un servidor local que lee lo ya descargado, así el búfer es todo lo bajado y se reducen los tirones.
+- Los saltos de 5 s solo llegan hasta donde ya está descargado, para que no se bloquee.
+- La parte pendiente de la barra de progreso es más transparente.
+
 ## 5.17.1
 - Línea de tiempo del vídeo: blanca y más pegada al borde inferior.
 - Con un vídeo en marcha desaparecen hora, fecha, álbum y demás textos.

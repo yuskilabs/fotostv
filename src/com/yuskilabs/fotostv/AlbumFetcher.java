@@ -194,6 +194,10 @@ class AlbumFetcher {
     static volatile String lastVideoErr = "";
 
     static boolean downloadVideo(String url, java.io.File out, long maxBytes, int readMs) {
+        return downloadVideo(url, out, maxBytes, readMs, null);
+    }
+
+    static boolean downloadVideo(String url, java.io.File out, long maxBytes, int readMs, VideoProxy.Prog prog) {
         lastVideoErr = "";
         HttpURLConnection c = null;
         java.io.FileOutputStream fo = null;
@@ -204,6 +208,7 @@ class AlbumFetcher {
             if (type == null || !(type.startsWith("video/") || type.startsWith("application/octet-stream"))) { lastVideoErr = "tipo " + type; return false; }
             long len = c.getContentLength();
             if (len > maxBytes) { lastVideoErr = "demasiado grande"; return false; }
+            if (prog != null) { prog.written = 0; prog.len = len; }
             InputStream in = c.getInputStream();
             fo = new java.io.FileOutputStream(out);
             byte[] buf = new byte[65536];
@@ -213,6 +218,7 @@ class AlbumFetcher {
                 total += n;
                 if (total > maxBytes || Thread.currentThread().isInterrupted()) return false;
                 fo.write(buf, 0, n);
+                if (prog != null) prog.written = total;
             }
             in.close();
             ok = total > 10000;

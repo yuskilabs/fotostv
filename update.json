@@ -1,6 +1,6 @@
 {
-  "version": "5.17.1",
+  "version": "5.17.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 347676,
-  "notes": "- Línea de tiempo del vídeo: blanca y más pegada al borde inferior.\n- Con un vídeo en marcha desaparecen hora, fecha, álbum y demás textos.\n- Controles del vídeo: ▼ pone la barra azul (OK pausa/continúa, ◀▶ ±5 s), ▲ vuelve a los controles normales, ▼ otra vez muestra la información.\n- La miniatura del álbum «Ocultas» sale difuminada."
+  "size": 351772,
+  "notes": "- Vídeos en directo: ahora se ven desde un servidor local que lee lo ya descargado, así el búfer es todo lo bajado y se reducen los tirones.\n- Los saltos de 5 s solo llegan hasta donde ya está descargado, para que no se bloquee.\n- La parte pendiente de la barra de progreso es más transparente."
 }

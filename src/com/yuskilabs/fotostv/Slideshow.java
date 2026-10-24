@@ -45,6 +45,7 @@ class Slideshow {
         String album, date, place;
         java.io.File videoFile;
         java.util.concurrent.Future<java.io.File> hdFut;   // descarga a la caché mientras se ve en directo
+        VideoProxy.Prog prog;
         String streamUrl;     // vídeo en directo (versión ligera) mientras baja la buena
         int startMs;          // empezar el vídeo por aquí (al pasar de baja a alta calidad)
         int state;            // 0 preparando, 1 descargando vídeo, 2 lista, 3 fallida
@@ -306,7 +307,7 @@ class Slideshow {
         tvRem.setText("-0:00");
         progTrack = new FrameLayout(ctx);
         GradientDrawable tr = new GradientDrawable();
-        tr.setColor(0x66FFFFFF);
+        tr.setColor(0x33FFFFFF);
         tr.setCornerRadius(dp(3));
         progTrack.setBackground(tr);
         progFill = new View(ctx);
@@ -648,16 +649,25 @@ class Slideshow {
     }
 
     /** Alta calidad (1080p, si no 720p). readMs: cuánto esperar a que Google prepare el vídeo. */
-    private java.io.File loadHd(Item it, int readMs) {
+    private java.io.File loadHd(Item it, int readMs) { return loadHd(it, readMs, null); }
+
+    private java.io.File loadHd(Item it, int readMs, VideoProxy.Prog prog) {
         java.io.File f = hdFile(it);
-        if (ready(f)) return f;
+        if (ready(f)) { if (prog != null) { prog.len = f.length(); prog.written = f.length(); prog.done = true; } return f; }
         java.io.File part = new java.io.File(videoDir(), it.key() + ".mp4.part");
         for (String v : new String[]{"=m37", "=m22"}) {
             if (Thread.currentThread().isInterrupted()) break;
-            if (AlbumFetcher.downloadVideo(it.url + v, part, MAX_VIDEO, readMs) && part.renameTo(f)) return f;
+            if (AlbumFetcher.downloadVideo(it.url + v, part, MAX_VIDEO, readMs, prog) && part.renameTo(f)) { if (prog != null) prog.done = true; return f; }
         }
         part.delete();
+        if (prog != null) prog.failed = true;
         return null;
+    }
+
+    /** Dirección para ver el vídeo mientras se descarga (con todo lo bajado como búfer). */
+    private String streamFor(Item it, VideoProxy.Prog pr) {
+        String u = VideoProxy.get().register(new java.io.File(videoDir(), it.key() + ".mp4.part"), hdFile(it), pr);
+        return u != null ? u : it.url + "=m37";
     }
 
     private volatile String lqNote = "";
@@ -679,8 +689,10 @@ class Slideshow {
     }
 
     /** Pase y vídeo suelto: la mejor calidad disponible; si no hay otra, la baja; y por último el original. */
-    private java.io.File loadVideo(Item it) {
-        java.io.File f = loadHd(it, 60000);
+    private java.io.File loadVideo(Item it) { return loadVideo(it, null); }
+
+    private java.io.File loadVideo(Item it, VideoProxy.Prog prog) {
+        java.io.File f = loadHd(it, 60000, prog);
         if (f != null) return f;
         f = loadLq(it, 30000);
         if (f != null) return f;
@@ -829,10 +841,12 @@ class Slideshow {
             public void run() {
                 java.io.File f = null;
                 java.util.concurrent.Future<java.io.File> fut = null;
+                final VideoProxy.Prog pr = new VideoProxy.Prog();
+                t.prog = pr;
                 try {
                     if (ready(hdFile(t.item))) f = hdFile(t.item);
                     else fut = hdEx.submit(new java.util.concurrent.Callable<java.io.File>() {
-                        public java.io.File call() { return loadVideo(t.item); }
+                        public java.io.File call() { return loadVideo(t.item, pr); }
                     });
                 } catch (Exception ignored) { }
                 final java.io.File got = f;
@@ -842,7 +856,7 @@ class Slideshow {
                         if (sess != session || !running) return;
                         t.date = MetaFetcher.formatDate(t.item.ts);
                         if (got != null) t.videoFile = got;
-                        else if (hf != null) { t.streamUrl = t.item.url + "=m37"; t.hdFut = hf; }
+                        else if (hf != null) { t.streamUrl = streamFor(t.item, t.prog); t.hdFut = hf; }
                         else { t.video = false; t.state = 3; onBuilt(t); return; }
                         t.state = 2;
                         onBuilt(t);
@@ -1039,12 +1053,13 @@ class Slideshow {
                                 java.io.File f = null;
                                 boolean low = false;
                                 java.util.concurrent.Future<java.io.File> hdF = null;
+                                final VideoProxy.Prog pr = new VideoProxy.Prog();
                                 try {
                                     f = ready(hdFile(it)) ? hdFile(it) : null;
                                     if (f == null) {
                                         // la alta calidad se baja aparte; si no llega enseguida, se empieza con la baja
                                         hdF = hdEx.submit(new java.util.concurrent.Callable<java.io.File>() {
-                                            public java.io.File call() { return loadHd(it, 120000); }
+                                            public java.io.File call() { return loadHd(it, 120000, pr); }
                                         });
                                         // se empieza ya en directo con la versión ligera y la buena baja aparte
                                         low = true;
@@ -1069,7 +1084,7 @@ class Slideshow {
                                         v.album = it.album;
                                         v.video = true;
                                         v.videoFile = got;
-                                        if (got == null && isLow) v.streamUrl = it.url + "=m37";
+                                        if (got == null && isLow) { v.prog = pr; v.streamUrl = streamFor(it, pr); }
                                         v.state = 2;
                                         v.date = p != null && p.date != null ? p.date : MetaFetcher.formatDate(it.ts);
                                         v.place = p != null ? p.place : null;
@@ -1619,7 +1634,14 @@ class Slideshow {
     private void seekBy(int ms) {
         try {
             int d = player.getDuration();
-            player.seekTo(Math.max(0, Math.min(d > 0 ? d - 500 : Integer.MAX_VALUE, player.getCurrentPosition() + ms)));
+            int c = player.getCurrentPosition();
+            int max = d > 0 ? d - 500 : Integer.MAX_VALUE;
+            VideoProxy.Prog pg = cur != null ? cur.prog : null;
+            if (pg != null && !pg.done && pg.len > 0 && d > 0)   // solo hasta donde ya está bajado
+                max = Math.min(max, (int) (d * (pg.written / (double) pg.len)) - 4000);
+            int target = Math.max(0, Math.min(max, c + ms));
+            if (ms > 0 && target <= c) return;
+            player.seekTo(target);
         } catch (Exception ignored) { }
         h.removeCallbacks(progTick);
         h.postDelayed(progTick, 150);
