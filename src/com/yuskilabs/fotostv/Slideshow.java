@@ -44,6 +44,7 @@ class Slideshow {
         boolean video;
         String album, date, place;
         java.io.File videoFile;
+        String streamUrl;     // vídeo en directo (versión ligera) mientras baja la buena
         int startMs;          // empezar el vídeo por aquí (al pasar de baja a alta calidad)
         int state;            // 0 preparando, 1 descargando vídeo, 2 lista, 3 fallida
     }
@@ -306,7 +307,7 @@ class Slideshow {
     private GradientDrawable pill() {
         GradientDrawable g = new GradientDrawable();
         g.setColor(0x99000000);
-        g.setCornerRadius(dp(24));
+        g.setCornerRadius(dp(14));
         return g;
     }
 
@@ -987,24 +988,10 @@ class Slideshow {
                                         hdF = hdEx.submit(new java.util.concurrent.Callable<java.io.File>() {
                                             public java.io.File call() { return loadHd(it, 120000); }
                                         });
-                                        // la ligera se pide a la vez, sin esperar: llega antes y arranca ya
-                                        java.io.File lq0 = loadLq(it, 20000);
-                                        if (hdF.isDone()) {
-                                            try { f = hdF.get(); } catch (java.util.concurrent.ExecutionException ee) { f = null; }
-                                        }
-                                        if (f == null && lq0 != null) { f = lq0; low = true; }
-                                        if (f == null) {
-                                            {
-                                                final String note = lqNote;
-                                                h.post(new Runnable() {
-                                                    public void run() { flash("Sin versión ligera (" + note + "); esperando la alta calidad…", 600000); }
-                                                });
-                                                try { f = hdF.get(); } catch (java.util.concurrent.ExecutionException ee) { f = null; }
-                                            }
-                                        }
+                                        // se empieza ya en directo con la versión ligera y la buena baja aparte
+                                        low = true;
                                     }
-                                } catch (InterruptedException ie) {
-                                    if (hdF != null) hdF.cancel(true);
+                                } catch (RuntimeException ie) {
                                     return;
                                 }
                                 final java.io.File got = f;
@@ -1018,12 +1005,13 @@ class Slideshow {
                                         }
                                         h.removeCallbacks(hideToast);
                                         hideToast.run();
-                                        if (got == null) { flash("No se pudo cargar el vídeo", 3000); return; }
+                                        if (got == null && !isLow) { flash("No se pudo cargar el vídeo", 3000); return; }
                                         Slide v = new Slide();
                                         v.item = it;
                                         v.album = it.album;
                                         v.video = true;
                                         v.videoFile = got;
+                                        if (got == null && isLow) v.streamUrl = it.url + "=m18";
                                         v.state = 2;
                                         v.date = p != null && p.date != null ? p.date : MetaFetcher.formatDate(it.ts);
                                         v.place = p != null ? p.place : null;
@@ -1444,7 +1432,12 @@ class Slideshow {
         try {
             final MediaPlayer mp = new MediaPlayer();
             player = mp;
-            mp.setDataSource(s.videoFile.getAbsolutePath());
+            if (s.videoFile != null) mp.setDataSource(s.videoFile.getAbsolutePath());
+            else {
+                java.util.Map<String, String> hd = new java.util.HashMap<String, String>();
+                hd.put("User-Agent", AlbumFetcher.UA);
+                mp.setDataSource(ctx, android.net.Uri.parse(s.streamUrl), hd);
+            }
             mp.setSurface(surface);
             mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 public void onPrepared(MediaPlayer p) {
@@ -1481,6 +1474,10 @@ class Slideshow {
             });
             mp.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                 public boolean onError(MediaPlayer p, int what, int extra) {
+                    if (p == player && s.streamUrl != null) {
+                        flash("Sin vista previa (error " + what + "/" + extra + "); esperando la alta calidad…", 600000);
+                        return true;
+                    }
                     if (p == player) {
                         flash("No se pudo reproducir este vídeo (error " + what + "/" + extra + ")", 4000);
                         endVideo();

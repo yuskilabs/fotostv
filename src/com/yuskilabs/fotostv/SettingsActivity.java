@@ -148,7 +148,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         sv.setScrollbarFadingEnabled(false);
         GradientDrawable svOn = new GradientDrawable();
         svOn.setColor(0x00000000);
-        svOn.setCornerRadius(dp(8));
+        svOn.setCornerRadius(dp(5));
         svOn.setStroke(dp(3), 0xFF3D8BFD);
         StateListDrawable svBg = new StateListDrawable();
         svBg.addState(new int[]{android.R.attr.state_focused}, svOn);
@@ -189,7 +189,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         c.setPadding(dp(20), dp(12), dp(20), dp(12));
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(0x99162A40);
-        bg.setCornerRadius(dp(14));
+        bg.setCornerRadius(dp(8));
         bg.setStroke(dp(1), 0xFF2C4766);
         c.setBackground(bg);
         return c;

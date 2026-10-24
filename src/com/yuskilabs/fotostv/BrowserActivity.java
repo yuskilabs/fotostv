@@ -115,12 +115,12 @@ public class BrowserActivity extends Activity {
 
     private android.widget.Button sbtn(String label, int icon, View.OnClickListener l) {
         android.widget.Button b = Ui.button(this, label, l);
-        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         if (icon != 0) Ui.icon(b, icon);
-        b.setPadding(Ui.dp(this, 14), Ui.dp(this, 6), Ui.dp(this, 14), Ui.dp(this, 6));
+        b.setPadding(Ui.dp(this, 9), Ui.dp(this, 6), Ui.dp(this, 9), Ui.dp(this, 6));
         b.setMinHeight(0); b.setMinimumHeight(0); b.setMinWidth(0); b.setMinimumWidth(0);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
-        lp.setMargins(0, 0, Ui.dp(this, 6), 0);
+        lp.setMargins(0, 0, Ui.dp(this, 4), 0);
         b.setLayoutParams(lp);
         return b;
     }
@@ -135,16 +135,16 @@ public class BrowserActivity extends Activity {
         android.widget.Button plus = sbtn("", R.drawable.ic_add, null);
         minus.setCompoundDrawablePadding(0);
         plus.setCompoundDrawablePadding(0);
-        minus.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 6));
-        plus.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 6));
+        minus.setPadding(Ui.dp(this, 8), Ui.dp(this, 6), Ui.dp(this, 8), Ui.dp(this, 6));
+        plus.setPadding(Ui.dp(this, 8), Ui.dp(this, 6), Ui.dp(this, 8), Ui.dp(this, 6));
         LinearLayout.LayoutParams z = new LinearLayout.LayoutParams(-2, -2);
         z.setMargins(0, 0, 0, 0);
         minus.setLayoutParams(z);
         LinearLayout.LayoutParams z2 = new LinearLayout.LayoutParams(-2, -2);
-        z2.setMargins(0, 0, Ui.dp(this, 10), 0);
+        z2.setMargins(0, 0, 0, 0);
         plus.setLayoutParams(z2);
-        TextView lab = text("Columnas: " + cur, 14, 0xFFD0DBE8);
-        lab.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
+        TextView lab = text("Columnas: " + cur, 13, 0xFFD0DBE8);
+        lab.setPadding(Ui.dp(this, 6), 0, Ui.dp(this, 6), 0);
         lab.setFocusable(false);
         minus.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { stepCols(range, cur, -1, prefKey, albums, "minus"); }
@@ -551,13 +551,11 @@ public class BrowserActivity extends Activity {
         nm.setPadding(0, 0, 0, 0);
         nm.setSingleLine(true);
         nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        nm.setMaxWidth((int) (W * 0.34f));
         head.addView(nm, new LinearLayout.LayoutParams(-2, -2));
         countView = text("", 20, 0xFFD0DBE8);
         countView.setPadding(0, 0, 0, 0);
         countView.setSingleLine(true);
-        head.addView(countView, new LinearLayout.LayoutParams(0, -2, 1f));
-        head.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
+        head.addView(countView);
         updateCount();
         col.addView(head, headParams());
 
@@ -594,6 +592,7 @@ public class BrowserActivity extends Activity {
             }
         });
         row.addView(fitBtn);
+        row.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
         refreshOrderButtons();
         android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
         hs.setHorizontalScrollBarEnabled(false);

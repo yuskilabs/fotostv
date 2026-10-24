@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.16.3
+- Esquinas de botones y recuadros menos redondeadas y recuadro blanco de los botones más fino.
+- El control de columnas vuelve a la fila de botones; botones más compactos para que quepa todo.
+- Vídeos del visor: la versión ligera se reproduce en directo (sin descargarla antes) mientras baja la de máxima calidad, y luego se cambia a ella por donde iba.
+
 ## 5.16.2
 - Botones del álbum: menos espacio entre ellos y el control de columnas pasa a la cabecera, para que quepa todo.
 - Panel de información más compacto: caben todos los datos (coordenadas y altitud en una sola línea).

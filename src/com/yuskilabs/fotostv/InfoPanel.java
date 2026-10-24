@@ -66,7 +66,7 @@ class InfoPanel extends FrameLayout {
         mapBox = new FrameLayout(c);
         GradientDrawable mb = new GradientDrawable();
         mb.setColor(0x66162A40);
-        mb.setCornerRadius(dp(14));
+        mb.setCornerRadius(dp(8));
         mb.setStroke(dp(1), 0xFF2C4766);
         mapBox.setBackground(mb);
         mapBox.setPadding(dp(3), dp(3), dp(3), dp(3));

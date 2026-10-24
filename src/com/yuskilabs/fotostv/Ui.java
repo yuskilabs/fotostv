@@ -28,11 +28,11 @@ class Ui {
 
         GradientDrawable on = new GradientDrawable();
         on.setColor(0xFF3D8BFD);
-        on.setCornerRadius(dp(c, 10));
-        on.setStroke(dp(c, 4), Color.WHITE);
+        on.setCornerRadius(dp(c, 6));
+        on.setStroke(dp(c, 3), Color.WHITE);
         GradientDrawable off = new GradientDrawable();
         off.setColor(0xFF22364F);
-        off.setCornerRadius(dp(c, 10));
+        off.setCornerRadius(dp(c, 6));
         off.setStroke(dp(c, 1), 0xFF3A506B);
         StateListDrawable bg = new StateListDrawable();
         bg.addState(new int[]{android.R.attr.state_focused}, on);

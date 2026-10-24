@@ -1,6 +1,6 @@
 {
-  "version": "5.16.2",
+  "version": "5.16.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 347676,
-  "notes": "- Botones del álbum: menos espacio entre ellos y el control de columnas pasa a la cabecera, para que quepa todo.\n- Panel de información más compacto: caben todos los datos (coordenadas y altitud en una sola línea).\n- Al subir a los botones, el recuadro blanco de la foto desaparece.\n- Vídeos del visor: la versión ligera se pide a la vez que la buena y arranca al instante; después pasa a la buena por donde iba.\n- La caché de vídeos se conserva: solo se borra lo más antiguo cuando se supera el espacio configurado."
+  "notes": "- Esquinas de botones y recuadros menos redondeadas y recuadro blanco de los botones más fino.\n- El control de columnas vuelve a la fila de botones; botones más compactos para que quepa todo.\n- Vídeos del visor: la versión ligera se reproduce en directo (sin descargarla antes) mientras baja la de máxima calidad, y luego se cambia a ella por donde iba."
 }
