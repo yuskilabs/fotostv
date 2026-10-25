@@ -117,6 +117,14 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             public void onClick(View v) { cycleIdle(); }
         });
         left.addView(idleBtn);
+        vqBtn = side(vqLabel(), R.drawable.ic_video, new View.OnClickListener() {
+            public void onClick(View v) {
+                String q = Prefs.vq(SettingsActivity.this);
+                Prefs.sp(SettingsActivity.this).edit().putString("vq", "auto".equals(q) ? "hd" : "hd".equals(q) ? "sd" : "auto").commit();
+                vqBtn.setText(vqLabel());
+            }
+        });
+        left.addView(vqBtn);
         left.addView(side("Elegir salvapantallas", R.drawable.ic_tv, new View.OnClickListener() {
             public void onClick(View v) { openDreamSettings(); }
         }));
@@ -497,6 +505,13 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private Button idleBtn;
     private static final int[] IDLE_OPTS = {0, 2, 5, 10, 15, 30};
+
+    private Button vqBtn;
+
+    private String vqLabel() {
+        String q = Prefs.vq(this);
+        return "Vídeos: " + ("hd".equals(q) ? "calidad alta" : "sd".equals(q) ? "calidad media (más fluida)" : "calidad automática");
+    }
 
     private String idleLabel() {
         int m = Prefs.idleMin(this);

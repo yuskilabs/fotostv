@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.17.3
+- Con la barra azul, OK pausa/reanuda solo el vídeo (ya no toca el pase).
+- Nuevo botón «Vídeos: calidad automática / alta / media». En Fire TV la automática usa calidad media (720p) y espera a tener unos segundos descargados antes de empezar.
+
 ## 5.17.2
 - Vídeos en directo: ahora se ven desde un servidor local que lee lo ya descargado, así el búfer es todo lo bajado y se reducen los tirones.
 - Los saltos de 5 s solo llegan hasta donde ya está descargado, para que no se bloquee.

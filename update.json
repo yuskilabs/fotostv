@@ -1,6 +1,6 @@
 {
-  "version": "5.17.2",
+  "version": "5.17.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 351772,
-  "notes": "- Vídeos en directo: ahora se ven desde un servidor local que lee lo ya descargado, así el búfer es todo lo bajado y se reducen los tirones.\n- Los saltos de 5 s solo llegan hasta donde ya está descargado, para que no se bloquee.\n- La parte pendiente de la barra de progreso es más transparente."
+  "notes": "- Con la barra azul, OK pausa/reanuda solo el vídeo (ya no toca el pase).\n- Nuevo botón «Vídeos: calidad automática / alta / media». En Fire TV la automática usa calidad media (720p) y espera a tener unos segundos descargados antes de empezar."
 }

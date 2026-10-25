@@ -47,6 +47,14 @@ class Prefs {
     /** all | selected */
     static String albumMode(Context c) { return sp(c).getString("albumMode", "all"); }
     static boolean resume(Context c) { return sp(c).getBoolean("resume", false); }
+    /** Calidad de los vídeos: auto (media en Fire TV, que suele ir con wifi y menos potencia), alta o media. */
+    static String vq(Context c) { return sp(c).getString("vq", "auto"); }
+    static boolean videoSd(Context c) {
+        String q = vq(c);
+        if ("sd".equals(q)) return true;
+        if ("hd".equals(q)) return false;
+        return "Amazon".equalsIgnoreCase(android.os.Build.MANUFACTURER);
+    }
     static boolean video(Context c) { return sp(c).getBoolean("video", true); }
     static boolean sound(Context c) { return sp(c).getBoolean("sound", false); }
     static boolean clock(Context c) { return sp(c).getBoolean("clock", true); }

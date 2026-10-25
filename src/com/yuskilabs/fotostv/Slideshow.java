@@ -655,7 +655,7 @@ class Slideshow {
         java.io.File f = hdFile(it);
         if (ready(f)) { if (prog != null) { prog.len = f.length(); prog.written = f.length(); prog.done = true; } return f; }
         java.io.File part = new java.io.File(videoDir(), it.key() + ".mp4.part");
-        for (String v : new String[]{"=m37", "=m22"}) {
+        for (String v : Prefs.videoSd(ctx) ? new String[]{"=m22", "=m37"} : new String[]{"=m37", "=m22"}) {
             if (Thread.currentThread().isInterrupted()) break;
             if (AlbumFetcher.downloadVideo(it.url + v, part, MAX_VIDEO, readMs, prog) && part.renameTo(f)) { if (prog != null) prog.done = true; return f; }
         }
@@ -1234,6 +1234,11 @@ class Slideshow {
         if (vid) {
             if (ctlMode) {
                 switch (keyCode) {
+                    case android.view.KeyEvent.KEYCODE_DPAD_CENTER:
+                    case android.view.KeyEvent.KEYCODE_ENTER:
+                    case android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+                    case android.view.KeyEvent.KEYCODE_MEDIA_PLAY:
+                    case android.view.KeyEvent.KEYCODE_MEDIA_PAUSE: toggleVideoPause(); return true;
                     case android.view.KeyEvent.KEYCODE_DPAD_RIGHT: seekBy(5000); return true;
                     case android.view.KeyEvent.KEYCODE_DPAD_LEFT: seekBy(-5000); return true;
                     case android.view.KeyEvent.KEYCODE_DPAD_UP: setCtl(false); return true;
@@ -1631,6 +1636,26 @@ class Slideshow {
         if (progFill != null) progFill.invalidate();
     }
 
+    private boolean vidPaused;
+
+    /** Pausa o reanuda solo el vídeo (el pase no se toca). */
+    private void toggleVideoPause() {
+        if (player == null) return;
+        try {
+            if (vidPaused) {
+                vidPaused = false;
+                player.start();
+                int left = Math.max(5000, player.getDuration() - player.getCurrentPosition());
+                h.removeCallbacks(videoTimeout);
+                h.postDelayed(videoTimeout, left + 15000L);
+            } else {
+                vidPaused = true;
+                player.pause();
+                h.removeCallbacks(videoTimeout);
+            }
+        } catch (Exception ignored) { }
+    }
+
     private void seekBy(int ms) {
         try {
             int d = player.getDuration();
@@ -1648,6 +1673,7 @@ class Slideshow {
     }
 
     private void releasePlayer() {
+        vidPaused = false;
         if (ctlMode) setCtl(false);
         if (revealed) videoUi(false);
         h.removeCallbacks(progTick);

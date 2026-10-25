@@ -122,6 +122,10 @@ final class VideoProxy {
             if (total <= 0) { out.write("HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\n\r\n".getBytes()); return; }
             if (from >= total) { out.write(("HTTP/1.1 416 Range Not Satisfiable\r\nContent-Range: bytes */" + total + "\r\nContent-Length: 0\r\n\r\n").getBytes()); return; }
             if (to < 0 || to >= total) to = total - 1;
+            // antes de empezar se espera a tener unos segundos por delante (wifi lento, dispositivos justos)
+            long need = Math.min(total, from + 4L * 1024 * 1024);
+            t0 = System.currentTimeMillis();
+            while (!p.done && !p.failed && p.written < need && System.currentTimeMillis() - t0 < 20000) Thread.sleep(50);
             long n = to - from + 1;
             String head = (ranged ? "HTTP/1.1 206 Partial Content\r\n" : "HTTP/1.1 200 OK\r\n")
                     + "Content-Type: video/mp4\r\nAccept-Ranges: bytes\r\nContent-Length: " + n + "\r\n"
