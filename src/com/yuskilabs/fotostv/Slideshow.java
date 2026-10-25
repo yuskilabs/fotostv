@@ -109,6 +109,7 @@ class Slideshow {
         String hint;               // texto de ayuda al empezar
     }
 
+    private static boolean hintShown;
     private static final String DEFAULT_HINT =
             "\u25C0 \u25B6 cambiar foto    OK pausa    \u25B2 ocultar foto    \u25BC información";
 
@@ -186,8 +187,10 @@ class Slideshow {
             if (idx + 1 >= 0 && idx + 1 < items.size()) browseTo(items.get(idx + 1));
         } else prefetch();
         if (cfg == null) refresh();
-        if (showHint || (cfg != null && cfg.hint != null))
+        if (!hintShown && (showHint || (cfg != null && cfg.hint != null))) {
+            hintShown = true;   // el letrero de arriba solo sale la primera vez
             flash(cfg != null && cfg.hint != null ? cfg.hint : DEFAULT_HINT, 5000);
+        }
     }
 
     void stop() {

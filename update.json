@@ -1,6 +1,6 @@
 {
-  "version": "5.17.5",
+  "version": "5.17.6",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 351772,
-  "notes": "- Álbum «Ocultas»: la miniatura sale con un desenfoque suave (blur) en vez de pixelada.\n- Degradado de las tarjetas de álbum más progresivo."
+  "notes": "- El letrero de ayuda de arriba solo sale la primera vez que abres una foto (ya no cada vez)."
 }
