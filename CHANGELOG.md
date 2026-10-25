@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.17.5
+- Álbum «Ocultas»: la miniatura sale con un desenfoque suave (blur) en vez de pixelada.
+- Degradado de las tarjetas de álbum más progresivo.
+
 ## 5.17.4
 - Pase de diapositivas: un vídeo solo entra cuando ya tiene unos segundos descargados; mientras, siguen las fotos (el orden puede alterarse), así el pase no se para.
 

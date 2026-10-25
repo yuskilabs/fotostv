@@ -37,6 +37,8 @@ class Thumbs {
     private static class Task {
         ImageView v;
         String url;
+        String tag;
+        boolean blur;
     }
 
     private final Context app;
@@ -74,12 +76,18 @@ class Thumbs {
     void load(ImageView v, String baseUrl, int w, int h) { load(v, baseUrl, w, h, true); }
 
     /** crop=false: la foto entera, ajustada dentro de w×h sin recortar. */
-    void load(ImageView v, String baseUrl, int w, int h, boolean crop) {
+    void load(ImageView v, String baseUrl, int w, int h, boolean crop) { load(v, baseUrl, w, h, crop, false); }
+
+    /** Igual, pero la miniatura sale con un desenfoque suave (álbum «Ocultas»). */
+    void loadBlur(ImageView v, String baseUrl, int w, int h) { load(v, baseUrl, w, h, true, true); }
+
+    private void load(ImageView v, String baseUrl, int w, int h, boolean crop, boolean blur) {
         final String url = baseUrl + "=w" + w + "-h" + h + (crop ? "-c" : "");
+        final String tag = blur ? url + "#b" : url;
         v.animate().cancel();
         v.setAlpha(1f);
-        v.setTag(url);
-        Bitmap b = mem.get(url);
+        v.setTag(tag);
+        Bitmap b = mem.get(tag);
         if (b != null && !b.isRecycled()) {
             v.setImageBitmap(b);
             return;
@@ -88,6 +96,8 @@ class Thumbs {
         Task t = new Task();
         t.v = v;
         t.url = url;
+        t.tag = tag;
+        t.blur = blur;
         synchronized (queue) {
             queue.addFirst(t);
             while (queue.size() > MAX_QUEUE) dropLast();
@@ -167,9 +177,10 @@ class Thumbs {
             } catch (Exception ignored) { }
             return;
         }
-        if (!t.url.equals(t.v.getTag())) return;     // la vista ya enseña otra cosa
-        Bitmap bm = mem.get(t.url);
+        if (!t.tag.equals(t.v.getTag())) return;     // la vista ya enseña otra cosa
+        Bitmap bm = mem.get(t.tag);
         if (bm == null) {
+            bm = mem.get(t.url);
             File f = fileFor(t.url);
             if (f.exists()) {
                 bm = decode(f);
@@ -186,17 +197,54 @@ class Thumbs {
                 } catch (Exception ignored) { }
             }
             if (bm != null) mem.put(t.url, bm);
+            if (bm != null && t.blur) { Bitmap bl = blurred(bm); if (bl != null) { bm = bl; mem.put(t.tag, bm); } }
         }
         final Bitmap out = bm;
         if (out == null) return;
         main.post(new Runnable() {
             public void run() {
-                if (!t.url.equals(t.v.getTag())) return;
+                if (!t.tag.equals(t.v.getTag())) return;
                 t.v.setImageBitmap(out);
                 t.v.setAlpha(0f);
                 t.v.animate().alpha(1f).setDuration(180).start();
             }
         });
+    }
+
+    /** Desenfoque suave: se reduce mucho la imagen y se le pasan varios promedios; al ampliarla queda difuminada. */
+    private static Bitmap blurred(Bitmap src) {
+        try {
+            int w = 48, h = Math.max(1, Math.round(48f * src.getHeight() / src.getWidth()));
+            Bitmap s = Bitmap.createScaledBitmap(src, w, h, true);
+            int[] a = new int[w * h], b = new int[w * h];
+            s.getPixels(a, 0, w, 0, 0, w, h);
+            int r = 3;
+            for (int pass = 0; pass < 3; pass++) {
+                for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {          // horizontal
+                    int ar = 0, ag = 0, ab = 0, n = 0;
+                    for (int k = -r; k <= r; k++) {
+                        int xx = Math.max(0, Math.min(w - 1, x + k));
+                        int c = a[y * w + xx];
+                        ar += (c >> 16) & 255; ag += (c >> 8) & 255; ab += c & 255; n++;
+                    }
+                    b[y * w + x] = 0xFF000000 | ((ar / n) << 16) | ((ag / n) << 8) | (ab / n);
+                }
+                for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {          // vertical
+                    int ar = 0, ag = 0, ab = 0, n = 0;
+                    for (int k = -r; k <= r; k++) {
+                        int yy = Math.max(0, Math.min(h - 1, y + k));
+                        int c = b[yy * w + x];
+                        ar += (c >> 16) & 255; ag += (c >> 8) & 255; ab += c & 255; n++;
+                    }
+                    a[y * w + x] = 0xFF000000 | ((ar / n) << 16) | ((ag / n) << 8) | (ab / n);
+                }
+            }
+            Bitmap o = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            o.setPixels(a, 0, w, 0, 0, w, h);
+            return o;
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     private Bitmap decode(File f) {

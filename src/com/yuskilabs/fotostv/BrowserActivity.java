@@ -882,7 +882,7 @@ public class BrowserActivity extends Activity {
             } else t.name.setCompoundDrawables(null, null, null, null);
             t.count.setText(e.items.size() + " elementos");
             if (e.items.isEmpty()) thumbs.clearView(t.img);
-            else if (e.kind == 3) thumbs.load(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, 32, 32);   // miniatura diminuta ampliada = difuminada
+            else if (e.kind == 3) thumbs.loadBlur(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));
             else thumbs.load(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));
             return t;
         }
@@ -896,8 +896,8 @@ public class BrowserActivity extends Activity {
         t.addView(t.img, new FrameLayout.LayoutParams(-1, -1));
         t.shade = new View(this);
         t.shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
-                new int[]{0xCC000000, 0x00000000}));
-        t.addView(t.shade, new FrameLayout.LayoutParams(-1, albumTileH / 2, Gravity.BOTTOM));
+                new int[]{0xD9000000, 0xA6000000, 0x66000000, 0x2B000000, 0x00000000}));
+        t.addView(t.shade, new FrameLayout.LayoutParams(-1, albumTileH * 6 / 10, Gravity.BOTTOM));
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 4));

@@ -1,6 +1,6 @@
 {
-  "version": "5.17.4",
+  "version": "5.17.5",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 351772,
-  "notes": "- Pase de diapositivas: un vídeo solo entra cuando ya tiene unos segundos descargados; mientras, siguen las fotos (el orden puede alterarse), así el pase no se para."
+  "notes": "- Álbum «Ocultas»: la miniatura sale con un desenfoque suave (blur) en vez de pixelada.\n- Degradado de las tarjetas de álbum más progresivo."
 }
