@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.17.4
+- Pase de diapositivas: un vídeo solo entra cuando ya tiene unos segundos descargados; mientras, siguen las fotos (el orden puede alterarse), así el pase no se para.
+
 ## 5.17.3
 - Con la barra azul, OK pausa/reanuda solo el vídeo (ya no toca el pase).
 - Nuevo botón «Vídeos: calidad automática / alta / media». En Fire TV la automática usa calidad media (720p) y espera a tener unos segundos descargados antes de empezar.

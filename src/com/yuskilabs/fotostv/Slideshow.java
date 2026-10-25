@@ -849,6 +849,18 @@ class Slideshow {
                         public java.io.File call() { return loadVideo(t.item, pr); }
                     });
                 } catch (Exception ignored) { }
+                // el vídeo solo entra en el pase cuando ya hay unos segundos descargados: mientras, siguen las fotos
+                if (f == null && fut != null) {
+                    long t0 = System.currentTimeMillis();
+                    while (!fut.isDone() && sess == session && running && System.currentTimeMillis() - t0 < 180000) {
+                        if (pr.len > 0 && pr.written >= Math.min(pr.len, 6L * 1024 * 1024)) break;
+                        try { Thread.sleep(100); } catch (InterruptedException ie) { return; }
+                    }
+                    if (fut.isDone()) {
+                        try { f = fut.get(); } catch (Exception ignored) { f = null; }
+                        fut = null;
+                    }
+                }
                 final java.io.File got = f;
                 final java.util.concurrent.Future<java.io.File> hf = fut;
                 h.post(new Runnable() {
