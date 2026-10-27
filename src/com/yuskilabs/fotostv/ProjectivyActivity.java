@@ -102,6 +102,11 @@ public class ProjectivyActivity extends Activity {
         }));
         list.addView(head("ÁLBUMES"));
         final List<Prefs.Album> albums = Prefs.albums(this);
+        list.addView(item((ProjectivyService.allOn(this) ? "\u2611  " : "\u2610  ") + "Todas (todos los álbumes, también los que añadas)", new Runnable() {
+            public void run() {
+                ProjectivyService.sp(ProjectivyActivity.this).edit().putBoolean("pv_all", !ProjectivyService.allOn(ProjectivyActivity.this)).apply();
+            }
+        }));
         list.addView(item("Marcar todos", new Runnable() {
             public void run() {
                 Set<String> n = new HashSet<String>();
@@ -118,7 +123,7 @@ public class ProjectivyActivity extends Activity {
                 String[] inf = Prefs.albumInfo(this, a.url);
                 name = inf != null && inf[0].length() > 0 ? inf[0] : "Álbum sin nombre";
             }
-            list.addView(item((ProjectivyService.albumOn(this, a.url) ? "\u2611  " : "\u2610  ") + name, new Runnable() {
+            list.addView(item(((ProjectivyService.allOn(this) || ProjectivyService.albumOn(this, a.url)) ? "\u2611  " : "\u2610  ") + name, new Runnable() {
                 public void run() {
                     Set<String> sel = ProjectivyService.sp(ProjectivyActivity.this).getStringSet("pv_albums", null);
                     Set<String> n = new HashSet<String>();

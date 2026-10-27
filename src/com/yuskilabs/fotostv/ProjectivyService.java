@@ -84,6 +84,9 @@ public class ProjectivyService extends Service {
     /** Verticales y cuadradas: no = fuera; blur = enteras sobre fondo difuminado; fill = rellenar (recorta). */
     static String vert(Context c) { return sp(c).getString("pv_vert", "no"); }
 
+    /** «Todas»: usa los álbumes de golpe, sin tener que marcarlos uno a uno. */
+    static boolean allOn(Context c) { return sp(c).getBoolean("pv_all", false); }
+
     static boolean videos(Context c) { return sp(c).getBoolean("pv_videos", false); }
 
     /** Avisa a Projectivy de que hay que pedir otra vez las fotos. */
@@ -109,7 +112,7 @@ public class ProjectivyService extends Service {
         boolean anyVert = !"no".equals(vert(c));
         Set<String> hidden = Prefs.hidden(c);
         for (Prefs.Album a : Prefs.albums(c)) {
-            if (!albumOn(c, a.url)) continue;
+            if (!allOn(c) && !albumOn(c, a.url)) continue;
             AlbumFetcher.AlbumData d = Prefs.albumCache(c, a.url);
             if (d == null) continue;
             for (Item x : d.items) {
