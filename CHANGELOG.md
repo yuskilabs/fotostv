@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.18.3
+- Fondo para Projectivy: quitado «Marcar todos» (lo cubre «Todas»).
+
 ## 5.18.2
 - Fondo para Projectivy: opción «Todas» (todos los álbumes, incluidos los que añadas después). El orden es siempre aleatorio.
 

@@ -107,15 +107,11 @@ public class ProjectivyActivity extends Activity {
                 ProjectivyService.sp(ProjectivyActivity.this).edit().putBoolean("pv_all", !ProjectivyService.allOn(ProjectivyActivity.this)).apply();
             }
         }));
-        list.addView(item("Marcar todos", new Runnable() {
-            public void run() {
-                Set<String> n = new HashSet<String>();
-                for (Prefs.Album x : albums) n.add(x.url);
-                saveAlbums(n);
-            }
-        }));
         list.addView(item("Desmarcar todos", new Runnable() {
-            public void run() { saveAlbums(new HashSet<String>()); }
+            public void run() {
+                saveAlbums(new HashSet<String>());
+                ProjectivyService.sp(ProjectivyActivity.this).edit().putBoolean("pv_all", false).apply();
+            }
         }));
         for (final Prefs.Album a : albums) {
             String name = a.name;
@@ -127,7 +123,10 @@ public class ProjectivyActivity extends Activity {
                 public void run() {
                     Set<String> sel = ProjectivyService.sp(ProjectivyActivity.this).getStringSet("pv_albums", null);
                     Set<String> n = new HashSet<String>();
-                    if (sel != null) n.addAll(sel);
+                    if (ProjectivyService.allOn(ProjectivyActivity.this)) {   // se pasa de «Todas» a elegir uno a uno
+                        for (Prefs.Album x : albums) n.add(x.url);
+                        ProjectivyService.sp(ProjectivyActivity.this).edit().putBoolean("pv_all", false).apply();
+                    } else if (sel != null) n.addAll(sel);
                     if (!n.remove(a.url)) n.add(a.url);
                     saveAlbums(n);
                 }
