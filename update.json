@@ -1,6 +1,6 @@
 {
-  "version": "5.18.0",
+  "version": "5.18.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 355868,
-  "notes": "- Nuevo: FotosTV puede dar fotos (y opcionalmente vídeos) de tus álbumes como fondo de pantalla de Projectivy Launcher. Se eligen los álbumes en «Fondo para Projectivy»; solo se usan fotos horizontales.\n- Menú principal desplazable si los botones no caben."
+  "size": 359964,
+  "notes": "- Fondo para Projectivy: nombres de álbum en vez de enlaces, «Marcar todos / Desmarcar todos» (ninguno marcado por defecto), opción de vídeos arriba, ajuste de proporción (rellenar / originales / originales con fondo difuminado) y opción para incluir fotos verticales (con fondo difuminado o rellenando)."
 }

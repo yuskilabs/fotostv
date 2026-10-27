@@ -72,11 +72,17 @@ public class ProjectivyService extends Service {
     // ---- ajustes del fondo ----
     static SharedPreferences sp(Context c) { return Prefs.sp(c); }
 
-    /** Álbumes elegidos (todos si aún no se ha elegido). */
+    /** Álbumes elegidos (ninguno hasta que se marquen). */
     static boolean albumOn(Context c, String url) {
         Set<String> s = sp(c).getStringSet("pv_albums", null);
-        return s == null || s.contains(url);
+        return s != null && s.contains(url);
     }
+
+    /** Horizontales: auto/fill = rellenar; fit = original; blur = original con fondo difuminado. */
+    static String fit(Context c) { return sp(c).getString("pv_fit", "auto"); }
+
+    /** Verticales y cuadradas: no = fuera; blur = enteras sobre fondo difuminado; fill = rellenar (recorta). */
+    static String vert(Context c) { return sp(c).getString("pv_vert", "no"); }
 
     static boolean videos(Context c) { return sp(c).getBoolean("pv_videos", false); }
 
@@ -100,6 +106,7 @@ public class ProjectivyService extends Service {
     /** Devuelve {uri, tipo, modo, título}. Solo fotos (o vídeos) horizontales: el fondo tiene que encajar. */
     private static List<String[]> build(final Context c) {
         List<Item> pool = new ArrayList<Item>();
+        boolean anyVert = !"no".equals(vert(c));
         Set<String> hidden = Prefs.hidden(c);
         for (Prefs.Album a : Prefs.albums(c)) {
             if (!albumOn(c, a.url)) continue;
@@ -137,14 +144,15 @@ public class ProjectivyService extends Service {
             if (out.size() >= MAX_WALLPAPERS) break;
             try {
                 Cand k = f.get(Math.max(1, end - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
-                if (k.ratio < 1.2f) continue;                 // verticales y cuadradas fuera
+                boolean horiz = k.ratio >= 1.2f;
+                if (k.ratio <= 0f) continue;
+                if (!horiz && "no".equals(vert(c))) continue;
                 if (k.video) {
                     if (vids >= MAX_WALLPAPERS / 4) continue;
                     vids++;
-                    out.add(new String[]{k.it.url + "=m37", "4", "1", k.it.album});
+                    out.add(new String[]{k.it.url + "=m37", "4", String.valueOf(mode(c, horiz)), k.it.album});
                 } else {
-                    // casi 16:9 → se rellena; si no, se ve entera sobre su propio fondo difuminado
-                    out.add(new String[]{k.it.url + "=w1920-h1080", "0", k.ratio >= 1.6f ? "1" : "5", k.it.album});
+                    out.add(new String[]{k.it.url + "=w1920-h1080", "0", String.valueOf(mode(c, horiz)), k.it.album});
                 }
             } catch (Exception e) {
                 break;
@@ -152,6 +160,12 @@ public class ProjectivyService extends Service {
         }
         ex.shutdownNow();
         return out;
+    }
+
+    private static int mode(Context c, boolean horiz) {
+        if (!horiz) return "blur".equals(vert(c)) ? 5 : 1;
+        String f = fit(c);
+        return "fit".equals(f) ? 4 : "blur".equals(f) ? 5 : 1;
     }
 
     /** Proporción ancho/alto (se mira una miniatura minúscula y se recuerda). */

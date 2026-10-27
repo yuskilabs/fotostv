@@ -14,10 +14,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** Elegir qué álbumes (y si vídeos) se usan como fondo de Projectivy Launcher. */
+/** Elegir qué álbumes y cómo se usan como fondo de Projectivy Launcher. */
 public class ProjectivyActivity extends Activity {
     private LinearLayout list;
     private boolean changed;
+    private int focusIdx;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -33,7 +34,7 @@ public class ProjectivyActivity extends Activity {
         t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         root.addView(t);
         TextView s = new TextView(this);
-        s.setText("Elige los álbumes cuyas fotos saldrán de fondo. Solo se usan las horizontales.");
+        s.setText("Elige cómo se ven y de qué álbumes salen las fotos de fondo.");
         s.setTextColor(0xFFB8C7D9);
         s.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         s.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 12));
@@ -47,14 +48,18 @@ public class ProjectivyActivity extends Activity {
         fill();
     }
 
-    private Button toggle(final String label, boolean on, final Runnable flip) {
-        final Button bt = Ui.button(this, "", null);
+    private Button item(String label, final Runnable action) {
+        Button bt = Ui.button(this, label, null);
         bt.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         bt.setGravity(android.view.Gravity.START | android.view.Gravity.CENTER_VERTICAL);
-        bt.setTag(label);
-        bt.setText((on ? "☑  " : "☐  ") + label);
+        bt.setPadding(Ui.dp(this, 16), Ui.dp(this, 8), Ui.dp(this, 16), Ui.dp(this, 8));
         bt.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) { flip.run(); changed = true; fill(); }
+            public void onClick(View v) {
+                for (int i = 0; i < list.getChildCount(); i++) if (list.getChildAt(i) == v) focusIdx = i;
+                action.run();
+                changed = true;
+                fill();
+            }
         });
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
         lp.setMargins(0, 0, 0, Ui.dp(this, 6));
@@ -62,36 +67,68 @@ public class ProjectivyActivity extends Activity {
         return bt;
     }
 
+    private TextView head(String s) {
+        TextView t = new TextView(this);
+        t.setText(s);
+        t.setTextColor(0xFF7CC4FF);
+        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        t.setPadding(Ui.dp(this, 4), Ui.dp(this, 10), 0, Ui.dp(this, 4));
+        return t;
+    }
+
+    private static String next(String cur, String[] opts) {
+        for (int i = 0; i < opts.length; i++) if (opts[i].equals(cur)) return opts[(i + 1) % opts.length];
+        return opts[0];
+    }
+
+    private void put(String k, String v) { ProjectivyService.sp(this).edit().putString(k, v).apply(); }
+
+    private void saveAlbums(Set<String> s) { ProjectivyService.sp(this).edit().putStringSet("pv_albums", s).apply(); }
+
     private void fill() {
-        View f = getCurrentFocus();
-        CharSequence keep = f instanceof Button ? ((Button) f).getText() : null;
         list.removeAllViews();
+        final String fit = ProjectivyService.fit(this), vert = ProjectivyService.vert(this);
+        list.addView(item((ProjectivyService.videos(this) ? "\u2611  " : "\u2610  ") + "Incluir también vídeos", new Runnable() {
+            public void run() {
+                ProjectivyService.sp(ProjectivyActivity.this).edit().putBoolean("pv_videos", !ProjectivyService.videos(ProjectivyActivity.this)).apply();
+            }
+        }));
+        list.addView(item("Fotos horizontales: " + ("fit".equals(fit) ? "originales (con bandas)" : "blur".equals(fit) ? "originales sobre fondo difuminado" : "rellenar la pantalla (automático)"), new Runnable() {
+            public void run() { put("pv_fit", next(fit, new String[]{"auto", "fit", "blur"})); }
+        }));
+        list.addView(item("Fotos verticales y cuadradas: " + ("blur".equals(vert) ? "incluir, con fondo difuminado" : "fill".equals(vert) ? "incluir, rellenando (recorta)" : "no incluir"), new Runnable() {
+            public void run() { put("pv_vert", next(vert, new String[]{"no", "blur", "fill"})); }
+        }));
+        list.addView(head("ÁLBUMES"));
         final List<Prefs.Album> albums = Prefs.albums(this);
+        list.addView(item("Marcar todos", new Runnable() {
+            public void run() {
+                Set<String> n = new HashSet<String>();
+                for (Prefs.Album x : albums) n.add(x.url);
+                saveAlbums(n);
+            }
+        }));
+        list.addView(item("Desmarcar todos", new Runnable() {
+            public void run() { saveAlbums(new HashSet<String>()); }
+        }));
         for (final Prefs.Album a : albums) {
-            String name = a.name != null && a.name.length() > 0 ? a.name : a.url;
-            list.addView(toggle(name, ProjectivyService.albumOn(this, a.url), new Runnable() {
+            String name = a.name;
+            if (name == null || name.length() == 0) {
+                String[] inf = Prefs.albumInfo(this, a.url);
+                name = inf != null && inf[0].length() > 0 ? inf[0] : "Álbum sin nombre";
+            }
+            list.addView(item((ProjectivyService.albumOn(this, a.url) ? "\u2611  " : "\u2610  ") + name, new Runnable() {
                 public void run() {
                     Set<String> sel = ProjectivyService.sp(ProjectivyActivity.this).getStringSet("pv_albums", null);
                     Set<String> n = new HashSet<String>();
-                    if (sel == null) for (Prefs.Album x : albums) n.add(x.url); else n.addAll(sel);
+                    if (sel != null) n.addAll(sel);
                     if (!n.remove(a.url)) n.add(a.url);
-                    ProjectivyService.sp(ProjectivyActivity.this).edit().putStringSet("pv_albums", n).apply();
+                    saveAlbums(n);
                 }
             }));
         }
-        list.addView(toggle("Incluir también vídeos", ProjectivyService.videos(this), new Runnable() {
-            public void run() {
-                ProjectivyService.sp(ProjectivyActivity.this).edit()
-                    .putBoolean("pv_videos", !ProjectivyService.videos(ProjectivyActivity.this)).apply();
-            }
-        }));
-        if (keep != null) {
-            for (int i = 0; i < list.getChildCount(); i++) {
-                View c = list.getChildAt(i);
-                if (c instanceof Button && ((Button) c).getText().toString().substring(3).equals(keep.toString().substring(3))) { c.requestFocus(); return; }
-            }
-        }
-        if (list.getChildCount() > 0) list.getChildAt(0).requestFocus();
+        if (list.getChildCount() > 0) list.getChildAt(Math.min(focusIdx, list.getChildCount() - 1)).requestFocus();
     }
 
     @Override
