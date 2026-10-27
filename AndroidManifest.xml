@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.yuskilabs.fotostv" android:versionCode="78" android:versionName="5.17.6">
+    package="com.yuskilabs.fotostv" android:versionCode="79" android:versionName="5.18.0">
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="23" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
@@ -31,6 +31,21 @@
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/idle_service" />
+        </service>
+        <activity android:name=".ProjectivyActivity" android:exported="true"
+            android:label="@string/projectivy_name"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+        <service android:name=".ProjectivyService" android:exported="true"
+            android:label="@string/projectivy_name">
+            <intent-filter>
+                <action android:name="tv.projectivy.plugin.WALLPAPER_PROVIDER" />
+            </intent-filter>
+            <meta-data android:name="apiVersion" android:value="1" />
+            <meta-data android:name="uuid" android:value="de627aad-b6d8-4a17-a922-f809c81275b9" />
+            <meta-data android:name="name" android:value="@string/projectivy_name" />
+            <meta-data android:name="settingsActivity" android:value=".ProjectivyActivity" />
+            <meta-data android:name="itemsCacheDurationMillis" android:value="1800000" />
+            <meta-data android:name="updateMode" android:value="1" />
         </service>
         <receiver android:name=".InstallReceiver" android:exported="false" />
         <receiver android:name=".ReopenReceiver" android:exported="true">

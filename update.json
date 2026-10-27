@@ -1,6 +1,6 @@
 {
-  "version": "5.17.6",
+  "version": "5.18.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 351772,
-  "notes": "- El letrero de ayuda de arriba solo sale la primera vez que abres una foto (ya no cada vez)."
+  "size": 355868,
+  "notes": "- Nuevo: FotosTV puede dar fotos (y opcionalmente vídeos) de tus álbumes como fondo de pantalla de Projectivy Launcher. Se eligen los álbumes en «Fondo para Projectivy»; solo se usan fotos horizontales.\n- Menú principal desplazable si los botones no caben."
 }

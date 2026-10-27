@@ -4,4 +4,5 @@
     <string name="dream_name">FotosTV</string>
     <string name="idle_service_name">FotosTV: inicio automático</string>
     <string name="idle_description">Detecta cuándo no se usa el mando y abre el pase de fotos de FotosTV. No lee el contenido de la pantalla ni guarda las teclas pulsadas.</string>
+    <string name="projectivy_name">FotosTV (álbumes de Google Fotos)</string>
 </resources>

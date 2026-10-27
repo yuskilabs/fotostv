@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.18.0
+- Nuevo: FotosTV puede dar fotos (y opcionalmente vídeos) de tus álbumes como fondo de pantalla de Projectivy Launcher. Se eligen los álbumes en «Fondo para Projectivy»; solo se usan fotos horizontales.
+- Menú principal desplazable si los botones no caben.
+
 ## 5.17.6
 - El letrero de ayuda de arriba solo sale la primera vez que abres una foto (ya no cada vez).
 

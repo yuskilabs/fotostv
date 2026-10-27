@@ -21,6 +21,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import java.net.Inet4Address;
@@ -117,6 +118,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             public void onClick(View v) { cycleIdle(); }
         });
         left.addView(idleBtn);
+        left.addView(side("Fondo para Projectivy", R.drawable.ic_photo, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, ProjectivyActivity.class)); }
+        }));
         vqBtn = side(vqLabel(), R.drawable.ic_video, new View.OnClickListener() {
             public void onClick(View v) {
                 String q = Prefs.vq(SettingsActivity.this);
@@ -138,7 +142,13 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         left.addView(side("Actualizar", R.drawable.ic_download, new View.OnClickListener() {
             public void onClick(View v) { updateFlow(); }
         }));
-        row2.addView(left, new LinearLayout.LayoutParams(0, -1, 0.40f));
+        ScrollView leftSv = new ScrollView(this);   // por si los botones no caben a lo alto
+        leftSv.setFillViewport(true);
+        leftSv.setClipChildren(false);
+        leftSv.setClipToPadding(false);
+        leftSv.setVerticalScrollBarEnabled(false);
+        leftSv.addView(left, new FrameLayout.LayoutParams(-1, -2));
+        row2.addView(leftSv, new LinearLayout.LayoutParams(0, -1, 0.40f));
 
         LinearLayout c2 = card();
         c2.addView(cardTitle("Tus álbumes"));
