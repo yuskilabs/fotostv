@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.18.5
+- Inicio automático: si falta el permiso, se muestran en pantalla los pasos y los comandos (con la IP de la tele).
+
 ## 5.18.4
 - Inicio automático: nueva opción de 1 minuto.
 

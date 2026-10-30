@@ -558,13 +558,36 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     /** Para equipos sin salvapantallas estándar (Fire TV con FireOS 8): abre el pase tras unos minutos sin tocar el mando. */
+    /** Pasos para dar el permiso una sola vez (no se puede hacer desde la propia app). */
+    private void idleHelp() {
+        String ip = localIp();
+        String msg = "Para que arranque solo hace falta dar un permiso una vez, desde un ordenador:\n\n"
+            + "1. En la tele: Ajustes \u2192 Mi Fire TV (o Preferencias del dispositivo) \u2192 Opciones de desarrollador \u2192 activar «Depuración ADB».\n\n"
+            + "2. En el ordenador, con ADB instalado, escribe:\n"
+            + "   adb connect " + (ip != null ? ip : "IP-DE-LA-TELE") + ":5555\n\n"
+            + "3. Después:\n"
+            + "   adb shell pm grant " + getPackageName() + " android.permission.WRITE_SECURE_SETTINGS\n\n"
+            + "4. Vuelve a abrir FotosTV y pulsa otra vez «Inicio automático». Ya no hace falta repetirlo.\n\n"
+            + "Si ya tienes el permiso dado, activa el servicio a mano en Accesibilidad.";
+        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle("Falta un permiso")
+            .setMessage(msg)
+            .setPositiveButton("Abrir Accesibilidad", new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    try { startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); } catch (Throwable ignored) { }
+                }
+            })
+            .setNegativeButton("Cerrar", null)
+            .show();
+    }
+
     private void cycleIdle() {
         int cur = Prefs.idleMin(this), next = IDLE_OPTS[0];
         for (int i = 0; i < IDLE_OPTS.length; i++) if (IDLE_OPTS[i] == cur) next = IDLE_OPTS[(i + 1) % IDLE_OPTS.length];
         Prefs.sp(this).edit().putInt("idleMin", next).commit();
         idleBtn.setText(idleLabel());
         if (next > 0 && !idleServiceOn() && !reenableIdleService()) {
-            android.widget.Toast.makeText(this, "Falta activar el servicio por ADB (mira el léeme de GitHub).", android.widget.Toast.LENGTH_LONG).show();
+            idleHelp();
         }
     }
 

@@ -1,6 +1,6 @@
 {
-  "version": "5.18.4",
+  "version": "5.18.5",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 359964,
-  "notes": "- Inicio automático: nueva opción de 1 minuto."
+  "notes": "- Inicio automático: si falta el permiso, se muestran en pantalla los pasos y los comandos (con la IP de la tele)."
 }
