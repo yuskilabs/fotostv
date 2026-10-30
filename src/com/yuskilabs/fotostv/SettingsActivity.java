@@ -51,7 +51,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         // fondo con degradado. Arriba: logo + tarjeta del móvil. Abajo: botones | tus álbumes (misma altura)
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(44), dp(24), dp(44), dp(24));
+        root.setPadding(dp(44), dp(24), dp(44), dp(6));
         root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{0xFF0A1424, 0xFF14305A}));
         root.setClipChildren(false);
@@ -73,7 +73,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         ImageView yl = new ImageView(this);
         yl.setImageResource(R.drawable.yuski_logo);
         yl.setAdjustViewBounds(true);
-        vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(22)));
+        vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(20)));
         TextView by = text("yuskilabs", 13, 0xFF9FB3C8);
         by.setPadding(dp(6), 0, dp(10), 0);
         vrow.addView(by);
@@ -200,7 +200,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         r2p.setMargins(0, dp(14), 0, 0);
         root.addView(row2, r2p);
         LinearLayout.LayoutParams vp = new LinearLayout.LayoutParams(-1, -2);
-        vp.setMargins(0, dp(8), 0, 0);
+        vp.setMargins(0, dp(4), 0, 0);
         root.addView(vrow, vp);
 
         setContentView(root);

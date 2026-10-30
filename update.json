@@ -1,6 +1,6 @@
 {
-  "version": "5.20.2",
+  "version": "5.20.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 368156,
-  "notes": "- Pantalla principal: logo y versión abajo, centrados; los botones quedan alineados por abajo con la caja de álbumes."
+  "notes": "- Pantalla principal: todo el conjunto baja, con menos espacio libre en la parte inferior."
 }
