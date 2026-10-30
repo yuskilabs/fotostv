@@ -80,7 +80,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         by.setPadding(dp(6), 0, 0, 0);
         vrow.addView(by);
         top.addView(vrow);
-        row1.addView(top, new LinearLayout.LayoutParams(0, -2, 0.40f));
+        row1.addView(top, new LinearLayout.LayoutParams(0, -2, 0.60f));
 
         LinearLayout c1 = card();
         c1.setPadding(dp(18), dp(8), dp(18), dp(8));
@@ -96,7 +96,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         webInfo.setPadding(0, dp(1), 0, dp(1));
         c1.addView(webInfo);
         c1.addView(line("3. Pulsa «Elegir salvapantallas» y selecciona «FotosTV»."));
-        LinearLayout.LayoutParams c1p = new LinearLayout.LayoutParams(0, -1, 0.60f);
+        LinearLayout.LayoutParams c1p = new LinearLayout.LayoutParams(0, -1, 0.40f);
         c1p.setMargins(dp(32), 0, 0, 0);
         row1.addView(c1, c1p);
         root.addView(row1, new LinearLayout.LayoutParams(-1, -2));
@@ -110,25 +110,15 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         Button browse = side("Ver álbumes", R.drawable.ic_albums, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, BrowserActivity.class)); }
         });
-        left.addView(browse);
-        left.addView(side("Vista previa del salvapantallas", R.drawable.ic_preview, new View.OnClickListener() {
+        Button preview = side("Vista previa", R.drawable.ic_preview, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, PreviewActivity.class)); }
-        }));
+        });
+        Button dream = side("Elegir salvapantallas", R.drawable.ic_tv, new View.OnClickListener() {
+            public void onClick(View v) { openDreamSettings(); }
+        });
         idleBtn = side(idleLabel(), R.drawable.ic_timer, new View.OnClickListener() {
             public void onClick(View v) { cycleIdle(); }
         });
-        left.addView(idleBtn);
-        left.addView(side("Fondo para Projectivy", R.drawable.ic_photo, new View.OnClickListener() {
-            public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, ProjectivyActivity.class)); }
-        }));
-        vqBtn = side(vqLabel(), R.drawable.ic_video, new View.OnClickListener() {
-            public void onClick(View v) {
-                String q = Prefs.vq(SettingsActivity.this);
-                Prefs.sp(SettingsActivity.this).edit().putString("vq", "auto".equals(q) ? "hd" : "hd".equals(q) ? "sd" : "auto").commit();
-                vqBtn.setText(vqLabel());
-            }
-        });
-        left.addView(vqBtn);
         stopBtn = side(stopLabel(), R.drawable.ic_timer, new View.OnClickListener() {
             public void onClick(View v) {
                 int[] o = {5, 10, 15, 30, 60, 120, 0};
@@ -138,27 +128,32 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                 stopBtn.setText(stopLabel());
             }
         });
-        left.addView(stopBtn);
-        left.addView(side("Elegir salvapantallas", R.drawable.ic_tv, new View.OnClickListener() {
-            public void onClick(View v) { openDreamSettings(); }
-        }));
-        left.addView(side("Comprobar álbumes", R.drawable.ic_check, new View.OnClickListener() {
+        vqBtn = side(vqLabel(), R.drawable.ic_video, new View.OnClickListener() {
+            public void onClick(View v) {
+                String q = Prefs.vq(SettingsActivity.this);
+                Prefs.sp(SettingsActivity.this).edit().putString("vq", "auto".equals(q) ? "hd" : "hd".equals(q) ? "sd" : "auto").commit();
+                vqBtn.setText(vqLabel());
+            }
+        });
+        Button proj = side("Fondo para Projectivy", R.drawable.ic_photo, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, ProjectivyActivity.class)); }
+        });
+        Button check = side("Comprobar álbumes", R.drawable.ic_check, new View.OnClickListener() {
             public void onClick(View v) { checkAlbum(); }
-        }));
+        });
         cacheBtn = side("Vaciar caché", R.drawable.ic_delete, new View.OnClickListener() {
             public void onClick(View v) { clearCache(); }
         });
-        left.addView(cacheBtn);
-        left.addView(side("Actualizar", R.drawable.ic_download, new View.OnClickListener() {
+        Button upd = side("Actualizar", R.drawable.ic_download, new View.OnClickListener() {
             public void onClick(View v) { updateFlow(); }
-        }));
-        ScrollView leftSv = new ScrollView(this);   // por si los botones no caben a lo alto
-        leftSv.setFillViewport(true);
-        leftSv.setClipChildren(false);
-        leftSv.setClipToPadding(false);
-        leftSv.setVerticalScrollBarEnabled(false);
-        leftSv.addView(left, new FrameLayout.LayoutParams(-1, -2));
-        row2.addView(leftSv, new LinearLayout.LayoutParams(0, -1, 0.40f));
+        });
+        // dos columnas: ver y previsualizar · salvapantallas e inicio · tiempos y vídeo · extras · mantenimiento
+        left.addView(pair(browse, preview));
+        left.addView(pair(dream, idleBtn));
+        left.addView(pair(stopBtn, vqBtn));
+        left.addView(pair(proj, check));
+        left.addView(pair(cacheBtn, upd));
+        row2.addView(left, new LinearLayout.LayoutParams(0, -1, 0.60f));
 
         LinearLayout c2 = card();
         c2.addView(cardTitle("Tus álbumes"));
@@ -185,7 +180,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         sv.setPadding(dp(8), dp(4), dp(8), dp(4));
         sv.addView(status);
         c2.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
-        LinearLayout.LayoutParams c2p = new LinearLayout.LayoutParams(0, -1, 0.60f);
+        LinearLayout.LayoutParams c2p = new LinearLayout.LayoutParams(0, -1, 0.40f);
         c2p.setMargins(dp(32), 0, 0, 0);
         row2.addView(c2, c2p);
         LinearLayout.LayoutParams r2p = new LinearLayout.LayoutParams(-1, 0, 1f);
@@ -201,14 +196,29 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     private Button side(String label, int icon, View.OnClickListener l) {
         Button b = Ui.icon(Ui.button(this, label, l), icon);
         b.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         b.setMinHeight(0);
         b.setMinimumHeight(0);
-        b.setPadding(dp(16), dp(5), dp(16), dp(5));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, 0, 1f);
-        lp.setMargins(0, 0, 0, dp(4));
-        b.setLayoutParams(lp);
+        b.setPadding(dp(12), dp(4), dp(12), dp(4));
+        b.setLayoutParams(new LinearLayout.LayoutParams(0, -1, 1f));
         return b;
+    }
+
+    /** Dos botones lado a lado, ocupando la misma altura que el resto de filas. */
+    private LinearLayout pair(Button a, Button b) {
+        LinearLayout r = new LinearLayout(this);
+        r.setOrientation(LinearLayout.HORIZONTAL);
+        r.setClipChildren(false);
+        LinearLayout.LayoutParams la = new LinearLayout.LayoutParams(0, -1, 1f);
+        la.setMargins(0, 0, dp(6), 0);
+        LinearLayout.LayoutParams lb = new LinearLayout.LayoutParams(0, -1, 1f);
+        lb.setMargins(dp(6), 0, 0, 0);
+        r.addView(a, la);
+        r.addView(b, lb);
+        LinearLayout.LayoutParams lr = new LinearLayout.LayoutParams(-1, 0, 1f);
+        lr.setMargins(0, 0, 0, dp(6));
+        r.setLayoutParams(lr);
+        return r;
     }
 
     private LinearLayout card() {
@@ -530,17 +540,17 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private String stopLabel() {
         int m = Prefs.autoStopMin(this);
-        return "Cerrar el pase tras: " + (m == 0 ? "nunca" : m >= 60 ? (m / 60) + (m == 60 ? " hora" : " horas") : m + " min");
+        return "Cerrar el pase tras: " + (m == 0 ? "Nunca" : m >= 60 ? (m / 60) + (m == 60 ? " hora" : " horas") : m + " min");
     }
 
     private String vqLabel() {
         String q = Prefs.vq(this);
-        return "Vídeos: " + ("hd".equals(q) ? "calidad alta" : "sd".equals(q) ? "calidad media (más fluida)" : "calidad automática");
+        return "Vídeos: " + ("hd".equals(q) ? "Calidad alta" : "sd".equals(q) ? "Calidad media" : "Calidad automática");
     }
 
     private String idleLabel() {
         int m = Prefs.idleMin(this);
-        return m == 0 ? "Inicio automático: no" : "Inicio automático: " + m + " min";
+        return m == 0 ? "Inicio automático: No" : "Inicio automático: " + m + " min";
     }
 
     private boolean idleServiceOn() {

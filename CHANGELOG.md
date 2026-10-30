@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.19.1
+- Pantalla principal: botones en dos columnas (sin pasarse por abajo) y las dos cajas de la derecha más estrechas. Mayúscula después de los dos puntos.
+
 ## 5.19.0
 - Nuevo botón «Cerrar el pase tras: 5 / 10 / 15 / 30 min, 1 h, 2 h, nunca» (por defecto 10 min): el pase automático y el salvapantallas se cierran tras ese rato sin tocar el mando, por si la tele está apagada. Las flechas y OK reinician la cuenta.
 
