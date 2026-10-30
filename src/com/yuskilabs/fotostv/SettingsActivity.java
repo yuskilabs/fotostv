@@ -69,18 +69,17 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         top.addView(tag);
         LinearLayout vrow = new LinearLayout(this);
         vrow.setOrientation(LinearLayout.HORIZONTAL);
-        vrow.setGravity(Gravity.CENTER_VERTICAL);
+        vrow.setGravity(Gravity.CENTER);
         ImageView yl = new ImageView(this);
         yl.setImageResource(R.drawable.yuski_logo);
         yl.setAdjustViewBounds(true);
         vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(22)));
         TextView by = text("yuskilabs", 13, 0xFF9FB3C8);
-        by.setPadding(dp(6), 0, dp(12), 0);
+        by.setPadding(dp(6), 0, dp(10), 0);
         vrow.addView(by);
         verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
         verInfo.setPadding(0, dp(2), 0, 0);
-        vrow.addView(verInfo, new LinearLayout.LayoutParams(0, -2, 1f));
-        top.addView(vrow);
+        vrow.addView(verInfo, new LinearLayout.LayoutParams(-2, -2));
         row1.addView(top, new LinearLayout.LayoutParams(0, -2, 0.50f));
 
         LinearLayout c1 = card();
@@ -164,7 +163,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         left.addView(pair(idleBtn, check));
         left.addView(pair(stopBtn, vqBtn));
         left.addView(pair(proj, dream));
-        left.addView(pair(upd, cacheBtn));
+        LinearLayout lastRow = pair(upd, cacheBtn);
+        ((LinearLayout.LayoutParams) lastRow.getLayoutParams()).setMargins(0, 0, 0, 0);
+        left.addView(lastRow);
         row2.addView(left, new LinearLayout.LayoutParams(0, -1, 0.50f));
 
         LinearLayout c2 = card();
@@ -198,6 +199,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         LinearLayout.LayoutParams r2p = new LinearLayout.LayoutParams(-1, 0, 1f);
         r2p.setMargins(0, dp(14), 0, 0);
         root.addView(row2, r2p);
+        LinearLayout.LayoutParams vp = new LinearLayout.LayoutParams(-1, -2);
+        vp.setMargins(0, dp(8), 0, 0);
+        root.addView(vrow, vp);
 
         setContentView(root);
         preview.requestFocus();

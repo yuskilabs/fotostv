@@ -1,6 +1,6 @@
 {
-  "version": "5.20.1",
+  "version": "5.20.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 368156,
-  "notes": "- Pantalla principal: «Actualizar» y «Vaciar caché» intercambiados; el logo de yuskilabs va antes de la versión."
+  "notes": "- Pantalla principal: logo y versión abajo, centrados; los botones quedan alineados por abajo con la caja de álbumes."
 }
