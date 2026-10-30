@@ -19,6 +19,10 @@ public class IdleService extends AccessibilityService {
     private final Handler h = new Handler();
     private volatile long last;
     private volatile boolean showing;
+    /** Qué está pasando, para enseñarlo al pulsar «Inicio automático» (ayuda a saber por qué no salta). */
+    static volatile String diag = "servicio no arrancado";
+    static volatile long events, keys;
+    static volatile String lastBlock = "ninguno todavía";
 
     private final Runnable check = new Runnable() {
         public void run() {
@@ -30,17 +34,20 @@ public class IdleService extends AccessibilityService {
     @Override protected void onServiceConnected() {
         last = System.currentTimeMillis();
         showing = false;
+        diag = "servicio activo";
         h.removeCallbacks(check);
         h.postDelayed(check, CHECK_MS);
     }
 
     @Override public boolean onKeyEvent(KeyEvent e) {
         last = System.currentTimeMillis();
+        keys++;
         showing = false;   // si se pulsa algo, el pase (si estaba) se cierra; podrá volver a salir tras otro rato
         return false;      // la tecla sigue su camino normal
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent e) {
+        events++;
         last = System.currentTimeMillis();
     }
 
@@ -53,14 +60,17 @@ public class IdleService extends AccessibilityService {
 
     private void tick() {
         int min = Prefs.idleMin(this);
-        if (min <= 0 || showing) return;
+        if (min <= 0) { diag = "desactivado"; return; }
+        if (showing) { diag = "el pase ya está abierto"; return; }
         long idle = System.currentTimeMillis() - last;
+        diag = "sin tocar hace " + idle / 1000 + " s de " + min * 60 + " s (teclas " + keys + ", eventos " + events + ")";
         if (idle < min * 60000L) return;
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        if (pm != null && !pm.isInteractive()) return;               // pantalla apagada o en reposo
+        if (pm != null && !pm.isInteractive()) { diag = lastBlock = "pantalla apagada o en reposo"; return; }               // pantalla apagada o en reposo
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if (am != null && am.isMusicActive()) { last = System.currentTimeMillis(); return; }   // se está viendo algo
-        if (Prefs.activeAlbums(this).isEmpty()) return;
+        if (am != null && am.isMusicActive()) { diag = lastBlock = "suena audio (se reinicia la espera)"; last = System.currentTimeMillis(); return; }   // se está viendo algo
+        if (Prefs.activeAlbums(this).isEmpty()) { diag = lastBlock = "no hay álbumes que mostrar"; return; }
+        diag = lastBlock = "abrió el pase a las " + new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date());
         showing = true;
         last = System.currentTimeMillis();
         try {
@@ -69,6 +79,7 @@ public class IdleService extends AccessibilityService {
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(i);
         } catch (Throwable t) {
+            diag = lastBlock = "no se pudo abrir: " + t;
             showing = false;
         }
     }

@@ -1,6 +1,6 @@
 {
-  "version": "5.18.5",
+  "version": "5.18.6",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 359964,
-  "notes": "- Inicio automático: si falta el permiso, se muestran en pantalla los pasos y los comandos (con la IP de la tele)."
+  "notes": "- Inicio automático: al pulsar el botón se muestra el estado del servicio y el último motivo por el que no saltó (diagnóstico)."
 }
