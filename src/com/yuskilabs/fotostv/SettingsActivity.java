@@ -149,9 +149,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         });
         // dos columnas: ver y previsualizar · salvapantallas e inicio · tiempos y vídeo · extras · mantenimiento
         left.addView(pair(preview, browse));
-        left.addView(pair(dream, idleBtn));
+        left.addView(pair(idleBtn, check));
         left.addView(pair(stopBtn, vqBtn));
-        left.addView(pair(proj, check));
+        left.addView(pair(proj, dream));
         left.addView(pair(cacheBtn, upd));
         row2.addView(left, new LinearLayout.LayoutParams(0, -1, 0.50f));
 
