@@ -1,6 +1,6 @@
 {
-  "version": "5.20.0",
+  "version": "5.20.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 368156,
-  "notes": "- Código QR junto a la dirección de configuración: se escanea con el móvil para abrir la web. Caja de configuración reorganizada para que quepa. (QR generado con la librería QR Code generator de Nayuki, licencia MIT.)"
+  "notes": "- Pantalla principal: «Actualizar» y «Vaciar caché» intercambiados; el logo de yuskilabs va antes de la versión."
 }

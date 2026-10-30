@@ -70,16 +70,16 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         LinearLayout vrow = new LinearLayout(this);
         vrow.setOrientation(LinearLayout.HORIZONTAL);
         vrow.setGravity(Gravity.CENTER_VERTICAL);
-        verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
-        verInfo.setPadding(0, dp(2), 0, 0);
-        vrow.addView(verInfo, new LinearLayout.LayoutParams(0, -2, 1f));
         ImageView yl = new ImageView(this);
         yl.setImageResource(R.drawable.yuski_logo);
         yl.setAdjustViewBounds(true);
         vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(22)));
         TextView by = text("yuskilabs", 13, 0xFF9FB3C8);
-        by.setPadding(dp(6), 0, 0, 0);
+        by.setPadding(dp(6), 0, dp(12), 0);
         vrow.addView(by);
+        verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
+        verInfo.setPadding(0, dp(2), 0, 0);
+        vrow.addView(verInfo, new LinearLayout.LayoutParams(0, -2, 1f));
         top.addView(vrow);
         row1.addView(top, new LinearLayout.LayoutParams(0, -2, 0.50f));
 
@@ -164,7 +164,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         left.addView(pair(idleBtn, check));
         left.addView(pair(stopBtn, vqBtn));
         left.addView(pair(proj, dream));
-        left.addView(pair(cacheBtn, upd));
+        left.addView(pair(upd, cacheBtn));
         row2.addView(left, new LinearLayout.LayoutParams(0, -1, 0.50f));
 
         LinearLayout c2 = card();
