@@ -1,6 +1,6 @@
 {
-  "version": "5.19.2",
+  "version": "5.19.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 359964,
-  "notes": "- Pantalla principal: botones y cajas a partes iguales y caja de configuración con textos más cortos para que no se corten."
+  "notes": "- Pantalla principal: «Vista previa» pasa a ser el primer botón."
 }

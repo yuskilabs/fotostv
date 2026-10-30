@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.19.3
+- Pantalla principal: «Vista previa» pasa a ser el primer botón.
+
 ## 5.19.2
 - Pantalla principal: botones y cajas a partes iguales y caja de configuración con textos más cortos para que no se corten.
 

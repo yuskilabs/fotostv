@@ -110,7 +110,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         Button browse = side("Ver álbumes", R.drawable.ic_albums, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, BrowserActivity.class)); }
         });
-        Button preview = side("Vista previa", R.drawable.ic_preview, new View.OnClickListener() {
+        preview = side("Vista previa", R.drawable.ic_preview, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, PreviewActivity.class)); }
         });
         Button dream = side("Elegir salvapantallas", R.drawable.ic_tv, new View.OnClickListener() {
@@ -148,7 +148,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             public void onClick(View v) { updateFlow(); }
         });
         // dos columnas: ver y previsualizar · salvapantallas e inicio · tiempos y vídeo · extras · mantenimiento
-        left.addView(pair(browse, preview));
+        left.addView(pair(preview, browse));
         left.addView(pair(dream, idleBtn));
         left.addView(pair(stopBtn, vqBtn));
         left.addView(pair(proj, check));
@@ -188,7 +188,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         root.addView(row2, r2p);
 
         setContentView(root);
-        browse.requestFocus();
+        preview.requestFocus();
         updateStatus(null);
         if (Prefs.idleMin(this) > 0 && !idleServiceOn()) reenableIdleService();
     }
@@ -536,7 +536,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     private Button idleBtn;
     private static final int[] IDLE_OPTS = {0, 1, 2, 5, 10, 15, 30};
 
-    private Button vqBtn, stopBtn;
+    private Button vqBtn, stopBtn, preview;
 
     private String stopLabel() {
         int m = Prefs.autoStopMin(this);
