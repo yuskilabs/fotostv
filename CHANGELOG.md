@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.18.7
+- Nuevo botón «Inicio automático con audio: respetarlo / ignorarlo» para equipos donde alguna app deja el audio «activo» sin sonar.
+
 ## 5.18.6
 - Inicio automático: al pulsar el botón se muestra el estado del servicio y el último motivo por el que no saltó (diagnóstico).
 

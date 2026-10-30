@@ -68,7 +68,7 @@ public class IdleService extends AccessibilityService {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (pm != null && !pm.isInteractive()) { diag = lastBlock = "pantalla apagada o en reposo"; return; }               // pantalla apagada o en reposo
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if (am != null && am.isMusicActive()) { diag = lastBlock = "suena audio (se reinicia la espera)"; last = System.currentTimeMillis(); return; }   // se está viendo algo
+        if (am != null && !Prefs.idleIgnoreAudio(this) && am.isMusicActive()) { diag = lastBlock = "suena audio (se reinicia la espera)"; last = System.currentTimeMillis(); return; }   // se está viendo algo
         if (Prefs.activeAlbums(this).isEmpty()) { diag = lastBlock = "no hay álbumes que mostrar"; return; }
         diag = lastBlock = "abrió el pase a las " + new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date());
         showing = true;

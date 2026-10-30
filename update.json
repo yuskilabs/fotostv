@@ -1,6 +1,6 @@
 {
-  "version": "5.18.6",
+  "version": "5.18.7",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 359964,
-  "notes": "- Inicio automático: al pulsar el botón se muestra el estado del servicio y el último motivo por el que no saltó (diagnóstico)."
+  "notes": "- Nuevo botón «Inicio automático con audio: respetarlo / ignorarlo» para equipos donde alguna app deja el audio «activo» sin sonar."
 }

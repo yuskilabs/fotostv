@@ -129,6 +129,13 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             }
         });
         left.addView(vqBtn);
+        audBtn = side(audLabel(), R.drawable.ic_tune, new View.OnClickListener() {
+            public void onClick(View v) {
+                Prefs.sp(SettingsActivity.this).edit().putBoolean("idleIgnoreAudio", !Prefs.idleIgnoreAudio(SettingsActivity.this)).commit();
+                audBtn.setText(audLabel());
+            }
+        });
+        left.addView(audBtn);
         left.addView(side("Elegir salvapantallas", R.drawable.ic_tv, new View.OnClickListener() {
             public void onClick(View v) { openDreamSettings(); }
         }));
@@ -516,7 +523,11 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     private Button idleBtn;
     private static final int[] IDLE_OPTS = {0, 1, 2, 5, 10, 15, 30};
 
-    private Button vqBtn;
+    private Button vqBtn, audBtn;
+
+    private String audLabel() {
+        return "Inicio automático con audio: " + (Prefs.idleIgnoreAudio(this) ? "ignorarlo" : "respetarlo");
+    }
 
     private String vqLabel() {
         String q = Prefs.vq(this);

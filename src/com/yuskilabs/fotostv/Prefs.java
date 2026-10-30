@@ -55,6 +55,8 @@ class Prefs {
         if ("hd".equals(q)) return false;
         return "Amazon".equalsIgnoreCase(android.os.Build.MANUFACTURER);
     }
+    /** true = el inicio automático no se frena aunque el sistema diga que hay audio activo. */
+    static boolean idleIgnoreAudio(Context c) { return sp(c).getBoolean("idleIgnoreAudio", false); }
     static boolean video(Context c) { return sp(c).getBoolean("video", true); }
     static boolean sound(Context c) { return sp(c).getBoolean("sound", false); }
     static boolean clock(Context c) { return sp(c).getBoolean("clock", true); }
