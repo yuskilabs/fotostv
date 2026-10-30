@@ -586,7 +586,6 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         for (int i = 0; i < IDLE_OPTS.length; i++) if (IDLE_OPTS[i] == cur) next = IDLE_OPTS[(i + 1) % IDLE_OPTS.length];
         Prefs.sp(this).edit().putInt("idleMin", next).commit();
         idleBtn.setText(idleLabel());
-        if (next > 0 && idleServiceOn()) android.widget.Toast.makeText(this, "Estado: " + IdleService.describe(this) + "\nÚltimo aviso: " + IdleService.lastBlock, android.widget.Toast.LENGTH_LONG).show();
         if (next > 0 && !idleServiceOn() && !reenableIdleService()) {
             idleHelp();
         }

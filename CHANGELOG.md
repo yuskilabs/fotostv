@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.18.9
+- Quitado el aviso de depuración del inicio automático.
+
 ## 5.18.8
 - Quitado el botón de audio. El aviso del inicio automático ahora refleja al momento el ajuste elegido.
 
