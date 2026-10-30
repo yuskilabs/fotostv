@@ -32,6 +32,7 @@ import java.util.List;
 
 public class SettingsActivity extends Activity implements WebConfigServer.Listener {
     private TextView webInfo, status, verInfo, msgView;
+    private ImageView qrView;
     private Button cacheBtn;
     private boolean updating;
     private WebConfigServer server;
@@ -62,7 +63,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.logo_full);
         logo.setAdjustViewBounds(true);
-        top.addView(logo, new LinearLayout.LayoutParams(-2, dp(96)));
+        top.addView(logo, new LinearLayout.LayoutParams(-2, dp(84)));
         TextView tag = text("Tus álbumes de Google Fotos, en la tele y como salvapantallas", 13, 0xFF9FB3C8);
         tag.setPadding(0, dp(6), 0, 0);
         top.addView(tag);
@@ -83,19 +84,30 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         row1.addView(top, new LinearLayout.LayoutParams(0, -2, 0.50f));
 
         LinearLayout c1 = card();
-        c1.setPadding(dp(18), dp(8), dp(18), dp(8));
+        c1.setOrientation(LinearLayout.HORIZONTAL);
+        c1.setPadding(dp(16), dp(8), dp(16), dp(8));
         c1.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout c1l = new LinearLayout(this);
+        c1l.setOrientation(LinearLayout.VERTICAL);
+        c1l.setGravity(Gravity.CENTER_VERTICAL);
         TextView c1t = cardTitle("Configúralo desde el móvil");
         c1t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         c1t.setPadding(0, 0, 0, dp(2));
-        c1.addView(c1t);
-        c1.addView(line("1. En Google Fotos: álbum → Compartir → Crear enlace → copiar."));
-        c1.addView(line("2. Con el móvil en la misma wifi, abre esta dirección:"));
-        webInfo = text("", 17, 0xFF7CC4FF);
+        c1l.addView(c1t);
+        c1l.addView(line("1. En Google Fotos: álbum → Compartir → Crear enlace → copiar."));
+        c1l.addView(line("2. Con el móvil en la misma wifi, escanea el código o abre:"));
+        webInfo = text("", 16, 0xFF7CC4FF);
         webInfo.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         webInfo.setPadding(0, dp(1), 0, dp(1));
-        c1.addView(webInfo);
-        c1.addView(line("3. Pega los enlaces y elige «FotosTV» como salvapantallas."));
+        c1l.addView(webInfo);
+        c1l.addView(line("3. Pega los enlaces y elige «FotosTV» como salvapantallas."));
+        c1.addView(c1l, new LinearLayout.LayoutParams(0, -2, 1f));
+        qrView = new ImageView(this);
+        qrView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        qrView.setVisibility(View.GONE);
+        LinearLayout.LayoutParams qp = new LinearLayout.LayoutParams(dp(104), dp(104));
+        qp.setMargins(dp(12), 0, 0, 0);
+        c1.addView(qrView, qp);
         LinearLayout.LayoutParams c1p = new LinearLayout.LayoutParams(0, -1, 0.50f);
         c1p.setMargins(dp(32), 0, 0, 0);
         row1.addView(c1, c1p);
@@ -239,6 +251,27 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         return t;
     }
 
+    /** Dibuja el código QR de la dirección (blanco sobre fondo claro, con margen para que lo lea el móvil). */
+    private void showQr(String url, boolean ok) {
+        if (!ok) { qrView.setVisibility(View.GONE); return; }
+        try {
+            io.nayuki.qrcodegen.QrCode qr = io.nayuki.qrcodegen.QrCode.encodeText(url, io.nayuki.qrcodegen.QrCode.Ecc.MEDIUM);
+            int n = qr.size, q = 3, px = 8, dim = (n + 2 * q) * px;
+            int[] pix = new int[dim * dim];
+            java.util.Arrays.fill(pix, Color.WHITE);
+            for (int y = 0; y < n; y++) for (int x = 0; x < n; x++) {
+                if (!qr.getModule(x, y)) continue;
+                for (int dy = 0; dy < px; dy++) for (int dx = 0; dx < px; dx++)
+                    pix[((y + q) * px + dy) * dim + (x + q) * px + dx] = 0xFF0A1424;
+            }
+            android.graphics.Bitmap bm = android.graphics.Bitmap.createBitmap(pix, dim, dim, android.graphics.Bitmap.Config.ARGB_8888);
+            qrView.setImageBitmap(bm);
+            qrView.setVisibility(View.VISIBLE);
+        } catch (Throwable t) {
+            qrView.setVisibility(View.GONE);
+        }
+    }
+
     private TextView line(String s) {
         TextView t = text(s, 12, 0xFFBBCCDD);
         t.setPadding(0, dp(2), 0, dp(2));
@@ -263,6 +296,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                             srv.start();
                             String ip = localIp();
                             webInfo.setText("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + srv.port);
+                            showQr("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + srv.port, ip != null);
                         } else {
                             webInfo.setText("No se pudo abrir la web de configuración.");
                         }
