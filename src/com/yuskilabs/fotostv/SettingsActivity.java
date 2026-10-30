@@ -514,7 +514,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     private Button idleBtn;
-    private static final int[] IDLE_OPTS = {0, 2, 5, 10, 15, 30};
+    private static final int[] IDLE_OPTS = {0, 1, 2, 5, 10, 15, 30};
 
     private Button vqBtn;
 
