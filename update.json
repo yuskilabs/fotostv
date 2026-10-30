@@ -1,6 +1,6 @@
 {
-  "version": "5.18.7",
+  "version": "5.18.8",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 359964,
-  "notes": "- Nuevo botón «Inicio automático con audio: respetarlo / ignorarlo» para equipos donde alguna app deja el audio «activo» sin sonar."
+  "notes": "- Quitado el botón de audio. El aviso del inicio automático ahora refleja al momento el ajuste elegido."
 }

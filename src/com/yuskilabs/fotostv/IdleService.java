@@ -17,7 +17,8 @@ import android.view.accessibility.AccessibilityEvent;
 public class IdleService extends AccessibilityService {
     private static final long CHECK_MS = 5000;
     private final Handler h = new Handler();
-    private volatile long last;
+    private static volatile long last;
+    private static volatile boolean connected;
     private volatile boolean showing;
     /** Qué está pasando, para enseñarlo al pulsar «Inicio automático» (ayuda a saber por qué no salta). */
     static volatile String diag = "servicio no arrancado";
@@ -35,6 +36,7 @@ public class IdleService extends AccessibilityService {
         last = System.currentTimeMillis();
         showing = false;
         diag = "servicio activo";
+        connected = true;
         h.removeCallbacks(check);
         h.postDelayed(check, CHECK_MS);
     }
@@ -53,7 +55,17 @@ public class IdleService extends AccessibilityService {
 
     @Override public void onInterrupt() { }
 
+    /** Estado al momento (con el ajuste que se acaba de elegir), para enseñarlo en pantalla. */
+    static String describe(Context c) {
+        int min = Prefs.idleMin(c);
+        if (min <= 0) return "desactivado";
+        if (!connected) return "servicio no arrancado";
+        long idle = (System.currentTimeMillis() - last) / 1000;
+        return "sin tocar hace " + idle + " s de " + min * 60 + " s (teclas " + keys + ", eventos " + events + ")";
+    }
+
     @Override public boolean onUnbind(Intent i) {
+        connected = false;
         h.removeCallbacks(check);
         return super.onUnbind(i);
     }
@@ -68,7 +80,7 @@ public class IdleService extends AccessibilityService {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (pm != null && !pm.isInteractive()) { diag = lastBlock = "pantalla apagada o en reposo"; return; }               // pantalla apagada o en reposo
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if (am != null && !Prefs.idleIgnoreAudio(this) && am.isMusicActive()) { diag = lastBlock = "suena audio (se reinicia la espera)"; last = System.currentTimeMillis(); return; }   // se está viendo algo
+        if (am != null && am.isMusicActive()) { diag = lastBlock = "suena audio (se reinicia la espera)"; last = System.currentTimeMillis(); return; }   // se está viendo algo
         if (Prefs.activeAlbums(this).isEmpty()) { diag = lastBlock = "no hay álbumes que mostrar"; return; }
         diag = lastBlock = "abrió el pase a las " + new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date());
         showing = true;

@@ -129,13 +129,6 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             }
         });
         left.addView(vqBtn);
-        audBtn = side(audLabel(), R.drawable.ic_tune, new View.OnClickListener() {
-            public void onClick(View v) {
-                Prefs.sp(SettingsActivity.this).edit().putBoolean("idleIgnoreAudio", !Prefs.idleIgnoreAudio(SettingsActivity.this)).commit();
-                audBtn.setText(audLabel());
-            }
-        });
-        left.addView(audBtn);
         left.addView(side("Elegir salvapantallas", R.drawable.ic_tv, new View.OnClickListener() {
             public void onClick(View v) { openDreamSettings(); }
         }));
@@ -523,11 +516,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     private Button idleBtn;
     private static final int[] IDLE_OPTS = {0, 1, 2, 5, 10, 15, 30};
 
-    private Button vqBtn, audBtn;
-
-    private String audLabel() {
-        return "Inicio automático con audio: " + (Prefs.idleIgnoreAudio(this) ? "ignorarlo" : "respetarlo");
-    }
+    private Button vqBtn;
 
     private String vqLabel() {
         String q = Prefs.vq(this);
@@ -597,7 +586,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         for (int i = 0; i < IDLE_OPTS.length; i++) if (IDLE_OPTS[i] == cur) next = IDLE_OPTS[(i + 1) % IDLE_OPTS.length];
         Prefs.sp(this).edit().putInt("idleMin", next).commit();
         idleBtn.setText(idleLabel());
-        if (next > 0 && idleServiceOn()) android.widget.Toast.makeText(this, "Estado: " + IdleService.diag + "\nÚltimo aviso: " + IdleService.lastBlock, android.widget.Toast.LENGTH_LONG).show();
+        if (next > 0 && idleServiceOn()) android.widget.Toast.makeText(this, "Estado: " + IdleService.describe(this) + "\nÚltimo aviso: " + IdleService.lastBlock, android.widget.Toast.LENGTH_LONG).show();
         if (next > 0 && !idleServiceOn() && !reenableIdleService()) {
             idleHelp();
         }
