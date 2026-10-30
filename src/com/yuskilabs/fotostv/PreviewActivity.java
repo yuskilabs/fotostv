@@ -8,6 +8,15 @@ import android.widget.FrameLayout;
 
 public class PreviewActivity extends Activity {
     private Slideshow show;
+    private final android.os.Handler hh = new android.os.Handler();
+    private final Runnable stopper = new Runnable() { public void run() { finish(); } };
+
+    /** El pase abierto solo por inactividad se cierra tras un rato sin tocar el mando (por si la tele está apagada). */
+    private void armStop() {
+        hh.removeCallbacks(stopper);
+        int m = Prefs.autoStopMin(this);
+        if (m > 0 && getIntent().getBooleanExtra("auto", false)) hh.postDelayed(stopper, m * 60000L);
+    }
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -28,8 +37,8 @@ public class PreviewActivity extends Activity {
         overridePendingTransition(0, android.R.anim.fade_out);
     }
 
-    @Override protected void onResume() { super.onResume(); show.start(); }
-    @Override protected void onPause() { show.stop(); super.onPause(); }
+    @Override protected void onResume() { super.onResume(); show.start(); armStop(); }
+    @Override protected void onPause() { hh.removeCallbacks(stopper); show.stop(); super.onPause(); }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
         if (show.infoOpen()) {                       // cualquier botón cierra la información y sigue el pase
@@ -37,7 +46,7 @@ public class PreviewActivity extends Activity {
             return true;
         }
         if (Slideshow.isNavKey(e.getKeyCode())) {
-            if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) show.onKey(e.getKeyCode());
+            if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) { show.onKey(e.getKeyCode()); armStop(); }
             return true;
         }
         if (e.getAction() == KeyEvent.ACTION_UP) finish();

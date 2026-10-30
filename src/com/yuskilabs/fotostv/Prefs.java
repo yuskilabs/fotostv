@@ -55,6 +55,8 @@ class Prefs {
         if ("hd".equals(q)) return false;
         return "Amazon".equalsIgnoreCase(android.os.Build.MANUFACTURER);
     }
+    /** Minutos sin tocar el mando tras los que se cierra el pase automático (0 = nunca). */
+    static int autoStopMin(Context c) { return sp(c).getInt("autoStopMin", 10); }
     static boolean video(Context c) { return sp(c).getBoolean("video", true); }
     static boolean sound(Context c) { return sp(c).getBoolean("sound", false); }
     static boolean clock(Context c) { return sp(c).getBoolean("clock", true); }

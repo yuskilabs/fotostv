@@ -129,6 +129,16 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             }
         });
         left.addView(vqBtn);
+        stopBtn = side(stopLabel(), R.drawable.ic_timer, new View.OnClickListener() {
+            public void onClick(View v) {
+                int[] o = {5, 10, 15, 30, 60, 120, 0};
+                int cur = Prefs.autoStopMin(SettingsActivity.this), nx = o[0];
+                for (int i = 0; i < o.length; i++) if (o[i] == cur) nx = o[(i + 1) % o.length];
+                Prefs.sp(SettingsActivity.this).edit().putInt("autoStopMin", nx).commit();
+                stopBtn.setText(stopLabel());
+            }
+        });
+        left.addView(stopBtn);
         left.addView(side("Elegir salvapantallas", R.drawable.ic_tv, new View.OnClickListener() {
             public void onClick(View v) { openDreamSettings(); }
         }));
@@ -516,7 +526,12 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     private Button idleBtn;
     private static final int[] IDLE_OPTS = {0, 1, 2, 5, 10, 15, 30};
 
-    private Button vqBtn;
+    private Button vqBtn, stopBtn;
+
+    private String stopLabel() {
+        int m = Prefs.autoStopMin(this);
+        return "Cerrar el pase tras: " + (m == 0 ? "nunca" : m >= 60 ? (m / 60) + (m == 60 ? " hora" : " horas") : m + " min");
+    }
 
     private String vqLabel() {
         String q = Prefs.vq(this);
