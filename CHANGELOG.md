@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.19.2
+- Pantalla principal: botones y cajas a partes iguales y caja de configuración con textos más cortos para que no se corten.
+
 ## 5.19.1
 - Pantalla principal: botones en dos columnas (sin pasarse por abajo) y las dos cajas de la derecha más estrechas. Mayúscula después de los dos puntos.
 

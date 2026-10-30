@@ -1,6 +1,6 @@
 {
-  "version": "5.19.1",
+  "version": "5.19.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 359964,
-  "notes": "- Pantalla principal: botones en dos columnas (sin pasarse por abajo) y las dos cajas de la derecha más estrechas. Mayúscula después de los dos puntos."
+  "notes": "- Pantalla principal: botones y cajas a partes iguales y caja de configuración con textos más cortos para que no se corten."
 }

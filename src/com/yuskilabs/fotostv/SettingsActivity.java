@@ -80,7 +80,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         by.setPadding(dp(6), 0, 0, 0);
         vrow.addView(by);
         top.addView(vrow);
-        row1.addView(top, new LinearLayout.LayoutParams(0, -2, 0.60f));
+        row1.addView(top, new LinearLayout.LayoutParams(0, -2, 0.50f));
 
         LinearLayout c1 = card();
         c1.setPadding(dp(18), dp(8), dp(18), dp(8));
@@ -89,14 +89,14 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         c1t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         c1t.setPadding(0, 0, 0, dp(2));
         c1.addView(c1t);
-        c1.addView(line("1. En Google Fotos abre un álbum → Compartir → Crear enlace, y cópialo."));
-        c1.addView(line("2. Con el móvil en la misma wifi, abre esta dirección y pega los enlaces:"));
+        c1.addView(line("1. En Google Fotos: álbum → Compartir → Crear enlace → copiar."));
+        c1.addView(line("2. Con el móvil en la misma wifi, abre esta dirección:"));
         webInfo = text("", 17, 0xFF7CC4FF);
         webInfo.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
         webInfo.setPadding(0, dp(1), 0, dp(1));
         c1.addView(webInfo);
-        c1.addView(line("3. Pulsa «Elegir salvapantallas» y selecciona «FotosTV»."));
-        LinearLayout.LayoutParams c1p = new LinearLayout.LayoutParams(0, -1, 0.40f);
+        c1.addView(line("3. Pega los enlaces y elige «FotosTV» como salvapantallas."));
+        LinearLayout.LayoutParams c1p = new LinearLayout.LayoutParams(0, -1, 0.50f);
         c1p.setMargins(dp(32), 0, 0, 0);
         row1.addView(c1, c1p);
         root.addView(row1, new LinearLayout.LayoutParams(-1, -2));
@@ -153,7 +153,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         left.addView(pair(stopBtn, vqBtn));
         left.addView(pair(proj, check));
         left.addView(pair(cacheBtn, upd));
-        row2.addView(left, new LinearLayout.LayoutParams(0, -1, 0.60f));
+        row2.addView(left, new LinearLayout.LayoutParams(0, -1, 0.50f));
 
         LinearLayout c2 = card();
         c2.addView(cardTitle("Tus álbumes"));
@@ -180,7 +180,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         sv.setPadding(dp(8), dp(4), dp(8), dp(4));
         sv.addView(status);
         c2.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
-        LinearLayout.LayoutParams c2p = new LinearLayout.LayoutParams(0, -1, 0.40f);
+        LinearLayout.LayoutParams c2p = new LinearLayout.LayoutParams(0, -1, 0.50f);
         c2p.setMargins(dp(32), 0, 0, 0);
         row2.addView(c2, c2p);
         LinearLayout.LayoutParams r2p = new LinearLayout.LayoutParams(-1, 0, 1f);
