@@ -1,6 +1,6 @@
 {
-  "version": "5.20.3",
+  "version": "5.20.4",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 368156,
-  "notes": "- Pantalla principal: todo el conjunto baja, con menos espacio libre en la parte inferior."
+  "size": 482923,
+  "notes": "- Nuevo logo de yuskilabs en la pantalla principal (junto a la versión) y en la página de configuración."
 }

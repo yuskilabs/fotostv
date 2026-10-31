@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.20.4
+- Nuevo logo de yuskilabs en la pantalla principal (junto a la versión) y en la página de configuración.
+
 ## 5.20.3
 - Pantalla principal: todo el conjunto baja, con menos espacio libre en la parte inferior.
 

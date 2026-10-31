@@ -71,12 +71,11 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         vrow.setOrientation(LinearLayout.HORIZONTAL);
         vrow.setGravity(Gravity.CENTER);
         ImageView yl = new ImageView(this);
-        yl.setImageResource(R.drawable.yuski_logo);
+        yl.setImageResource(R.drawable.yuski_h);
         yl.setAdjustViewBounds(true);
-        vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(20)));
-        TextView by = text("yuskilabs", 13, 0xFF9FB3C8);
-        by.setPadding(dp(6), 0, dp(10), 0);
-        vrow.addView(by);
+        vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(24)));
+        View sp = new View(this);
+        vrow.addView(sp, new LinearLayout.LayoutParams(dp(14), 1));
         verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
         verInfo.setPadding(0, dp(2), 0, 0);
         vrow.addView(verInfo, new LinearLayout.LayoutParams(-2, -2));
