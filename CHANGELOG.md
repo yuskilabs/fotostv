@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.23.3
+- Versión de prueba del sistema de actualización: no cambia nada en la app.
+
 ## 5.23.2
 - El botón «Invitado» pasa a un botón pequeño justo debajo del código QR, en lugar de ocupar una fila entera de botones.
 

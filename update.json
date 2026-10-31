@@ -1,6 +1,6 @@
 {
-  "version": "5.23.2",
+  "version": "5.23.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 696582,
-  "notes": "- El botón «Invitado» pasa a un botón pequeño justo debajo del código QR, en lugar de ocupar una fila entera de botones."
+  "size": 692486,
+  "notes": "- Versión de prueba del sistema de actualización: no cambia nada en la app."
 }
