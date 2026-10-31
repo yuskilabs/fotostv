@@ -1,6 +1,6 @@
 {
-  "version": "5.27.3",
+  "version": "5.27.4",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 819535,
-  "notes": "- Logo con los tonos de siempre: la forma nueva, pero con el degradado naranja-rosa-violeta del logo anterior. El triángulo del play de la «o» de Fotos es blanco.\n- La web de ajustes ya muestra el logo nuevo (el navegador guardaba el anterior en memoria durante un día)."
+  "size": 807247,
+  "notes": "- Emisoras de música nuevas: SomaFM Lush (voces suaves), Seven Inch Soul (soul clásico), Groove Salad (chill) y Radio Swiss Jazz (jazz suave) sustituyen a las anteriores. Sigues pudiendo pegar la dirección de otra.\n- Logo con el naranja más rojizo y vivo, en todos los tamaños."
 }

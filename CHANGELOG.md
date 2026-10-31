@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.27.4
+
+- **Emisoras de música nuevas**: SomaFM Lush (voces suaves), Seven Inch Soul (soul clásico), Groove Salad (chill) y Radio Swiss Jazz (jazz suave) sustituyen a las anteriores. Sigues pudiendo pegar la dirección de otra.
+- **Logo con el naranja más rojizo y vivo**, en todos los tamaños.
+
 ## 5.27.3
 
 - **Logo con los tonos de siempre**: la forma nueva, pero con el degradado naranja-rosa-violeta del logo anterior. El triángulo del play de la «o» de Fotos es blanco.

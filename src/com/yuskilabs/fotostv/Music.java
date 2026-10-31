@@ -14,12 +14,10 @@ import java.util.List;
 class Music {
     /** Emisoras tranquilas y sin publicidad: {nombre, dirección}. */
     static final String[][] PRESETS = {
-        {"Radio Paradise · Main Mix (pop, rock y más)", "https://stream.radioparadise.com/mp3-192"},
-        {"Radio Paradise · Rock Mix", "https://stream.radioparadise.com/rock-192"},
-        {"SomaFM · Underground 80s (pop de los 80)", "https://ice1.somafm.com/u80s-128-mp3"},
-        {"SomaFM · Left Coast 70s (clásicos de los 70)", "https://ice1.somafm.com/seventies-128-mp3"},
-        {"SomaFM · Indie Pop Rocks", "https://ice1.somafm.com/indiepop-128-mp3"},
-        {"SomaFM · PopTron (pop electrónico)", "https://ice1.somafm.com/poptron-128-mp3"},
+        {"SomaFM · Lush (voces suaves, tipo Norah Jones)", "https://ice1.somafm.com/lush-128-mp3"},
+        {"SomaFM · Seven Inch Soul (soul clásico)", "https://ice1.somafm.com/7soul-128-mp3"},
+        {"SomaFM · Groove Salad (chill, tipo cafetería)", "https://ice1.somafm.com/groovesalad-128-mp3"},
+        {"Radio Swiss Jazz (jazz suave)", "https://stream.srg-ssr.ch/m/rsj/mp3_128"},
     };
 
     private static final Handler h = new Handler(Looper.getMainLooper());
