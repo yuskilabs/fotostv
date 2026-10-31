@@ -644,6 +644,7 @@ public class BrowserActivity extends Activity {
                 android.R.layout.simple_list_item_1, labels) {
             @Override public View getView(int i, View cv, ViewGroup parent) {
                 TextView tv = (TextView) super.getView(i, cv, parent);
+                tv.setTypeface(Ui.REG);
                 tv.setTextColor(Color.WHITE);
                 tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
                 android.graphics.drawable.Drawable d = getResources().getDrawable(icons[i]).mutate();
@@ -852,6 +853,7 @@ public class BrowserActivity extends Activity {
 
     private TextView text(String s, int sp, int color) {
         TextView t = new TextView(this);
+        t.setTypeface(Ui.REG);
         t.setText(s);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTextColor(color);

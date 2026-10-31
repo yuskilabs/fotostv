@@ -703,6 +703,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private TextView text(String s, int sp, int color) {
         TextView t = new TextView(this);
+        t.setTypeface(Ui.REG);
         t.setText(s);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTextColor(color);

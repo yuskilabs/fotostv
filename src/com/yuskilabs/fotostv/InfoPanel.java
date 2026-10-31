@@ -214,6 +214,7 @@ class InfoPanel extends FrameLayout {
 
     private TextView text(String s, int sp, int color) {
         TextView t = new TextView(getContext());
+        t.setTypeface(Ui.REG);
         t.setText(s);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTextColor(color);

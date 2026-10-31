@@ -35,6 +35,7 @@ public class ProjectivyActivity extends Activity {
         t.setTypeface(Ui.BLACK);
         root.addView(t);
         TextView s = new TextView(this);
+        s.setTypeface(Ui.REG);
         s.setText("Elige cómo se ven y de qué álbumes salen las fotos de fondo.");
         s.setTextColor(0xFFB8C7D9);
         s.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);

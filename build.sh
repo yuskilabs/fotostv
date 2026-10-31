@@ -3,7 +3,7 @@ set -e
 cd "$(dirname "$0")"
 SDK=/usr/lib/android-sdk/platforms/android-23/android.jar
 rm -rf build && mkdir -p build/gen build/classes
-aapt package -f -m -J build/gen -M AndroidManifest.xml -S res -I $SDK -F build/app.unsigned.apk
+aapt package -f -m -J build/gen -M AndroidManifest.xml -S res -A appassets -I $SDK -F build/app.unsigned.apk
 javac -source 8 -target 8 -bootclasspath $SDK -encoding UTF-8 -nowarn -Xlint:-options \
   -d build/classes $(find src build/gen -name '*.java')
 dalvik-exchange --dex --output=build/classes.dex build/classes

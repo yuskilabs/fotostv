@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.yuskilabs.fotostv" android:versionCode="110" android:versionName="5.21.2">
+    package="com.yuskilabs.fotostv" android:versionCode="111" android:versionName="5.21.3">
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="23" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-    <application android:label="@string/app_name" android:icon="@drawable/icon"
+    <application android:name=".App" android:label="@string/app_name" android:icon="@drawable/icon"
         android:banner="@drawable/banner" android:largeHeap="true"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
         <activity android:name=".SettingsActivity" android:exported="true">

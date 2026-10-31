@@ -12,8 +12,9 @@ import android.widget.LinearLayout;
 
 /** Elementos de interfaz compartidos. */
 class Ui {
-    /** Fuente de títulos y botones (prueba: «casual» = Coming Soon de Android). */
-    static final android.graphics.Typeface BLACK = android.graphics.Typeface.create("casual", android.graphics.Typeface.NORMAL);
+    /** Fuente de títulos y botones (Outfit ExtraBold; la carga App al arrancar) y de textos normales (Outfit Regular). */
+    static android.graphics.Typeface BLACK = android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL);
+    static android.graphics.Typeface REG = android.graphics.Typeface.DEFAULT;
 
     static int dp(Context c, int v) {
         return (int) (v * c.getResources().getDisplayMetrics().density);

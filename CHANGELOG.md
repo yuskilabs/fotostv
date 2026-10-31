@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.21.3
+- Tipografía Outfit (licencia SIL OFL) en toda la app: ExtraBold en botones, títulos y nombres de álbum, y Regular en el resto.
+
 ## 5.21.2
 - Prueba de tipografía: botones, títulos y nombres de álbum en Coming Soon (la fuente «casual» de Android); el resto en Roboto normal.
 
