@@ -51,7 +51,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         // fondo con degradado. Arriba: logo + tarjeta del móvil. Abajo: botones | tus álbumes (misma altura)
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(44), dp(24), dp(44), dp(3));
+        root.setPadding(dp(44), dp(24), dp(44), dp(10));
         root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{0xFF0A1424, 0xFF14305A}));
         root.setClipChildren(false);
