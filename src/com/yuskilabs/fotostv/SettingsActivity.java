@@ -79,7 +79,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
         verInfo.setPadding(0, dp(2), 0, 0);
         vrow.addView(verInfo, new LinearLayout.LayoutParams(-2, -2));
-        row1.addView(top, new LinearLayout.LayoutParams(0, -2, 0.50f));
+        LinearLayout.LayoutParams topP = new LinearLayout.LayoutParams(0, -2, 0.50f);
+        topP.setMargins(0, 0, dp(7), 0);
+        row1.addView(top, topP);
 
         LinearLayout c1 = card();
         c1.setOrientation(LinearLayout.HORIZONTAL);
@@ -107,7 +109,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         qp.setMargins(dp(12), 0, 0, 0);
         c1.addView(qrView, qp);
         LinearLayout.LayoutParams c1p = new LinearLayout.LayoutParams(0, -1, 0.50f);
-        c1p.setMargins(dp(32), 0, 0, 0);
+        c1p.setMargins(dp(7), 0, 0, 0);
         row1.addView(c1, c1p);
         root.addView(row1, new LinearLayout.LayoutParams(-1, -2));
 
@@ -165,7 +167,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         LinearLayout lastRow = pair(upd, cacheBtn);
         ((LinearLayout.LayoutParams) lastRow.getLayoutParams()).setMargins(0, 0, 0, 0);
         left.addView(lastRow);
-        row2.addView(left, new LinearLayout.LayoutParams(0, -1, 0.50f));
+        LinearLayout.LayoutParams leftP = new LinearLayout.LayoutParams(0, -1, 0.50f);
+        leftP.setMargins(0, 0, dp(7), 0);
+        row2.addView(left, leftP);
 
         LinearLayout c2 = card();
         c2.addView(cardTitle("Tus álbumes"));
@@ -193,10 +197,10 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         sv.addView(status);
         c2.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
         LinearLayout.LayoutParams c2p = new LinearLayout.LayoutParams(0, -1, 0.50f);
-        c2p.setMargins(dp(32), 0, 0, 0);
+        c2p.setMargins(dp(7), 0, 0, 0);
         row2.addView(c2, c2p);
         LinearLayout.LayoutParams r2p = new LinearLayout.LayoutParams(-1, 0, 1f);
-        r2p.setMargins(0, dp(14), 0, 0);
+        r2p.setMargins(0, dp(14), 0, 0); // mismo hueco (14 dp) que entre las dos columnas
         root.addView(row2, r2p);
         LinearLayout.LayoutParams vp = new LinearLayout.LayoutParams(-1, -2);
         vp.setMargins(0, dp(4), 0, 0);

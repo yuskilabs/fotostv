@@ -1,6 +1,6 @@
 {
-  "version": "5.20.7",
+  "version": "5.20.8",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 482923,
-  "notes": "- Pantalla principal: logo de yuskilabs más pequeño."
+  "notes": "- Pantalla principal: el hueco entre la columna de botones y las cajas de la derecha es menor, queda justo en el centro y es igual al hueco entre la caja del QR y «Tus álbumes»."
 }
