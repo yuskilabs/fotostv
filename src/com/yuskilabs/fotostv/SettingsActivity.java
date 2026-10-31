@@ -51,7 +51,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         // fondo con degradado. Arriba: logo + tarjeta del móvil. Abajo: botones | tus álbumes (misma altura)
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(44), dp(24), dp(44), dp(6));
+        root.setPadding(dp(44), dp(24), dp(44), dp(3));
         root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{0xFF0A1424, 0xFF14305A}));
         root.setClipChildren(false);
@@ -69,26 +69,24 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         top.addView(tag);
         LinearLayout vrow = new LinearLayout(this);
         vrow.setOrientation(LinearLayout.HORIZONTAL);
+        vrow.setBaselineAligned(true);
         vrow.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         ImageView yl = new ImageView(this);
         yl.setImageResource(R.drawable.yuski_h);
         yl.setAdjustViewBounds(true);
-        LinearLayout.LayoutParams yp = new LinearLayout.LayoutParams(-2, dp(16));
-        verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
-        verInfo.setIncludeFontPadding(false);
-        // la línea base del texto del logo está al 68,6 % de su altura: se alinea con la de «Versión»
-        int imgBase = Math.round(dp(16) * 0.686f);
-        int txtBase = Math.round(-verInfo.getPaint().getFontMetrics().ascent);
-        LinearLayout.LayoutParams vl = new LinearLayout.LayoutParams(-2, -2);
-        int diff = imgBase - txtBase;
-        if (diff >= 0) vl.setMargins(dp(10), diff, 0, 0); else { vl.setMargins(dp(10), 0, 0, 0); yp.setMargins(0, -diff, 0, 0); }
-        vrow.addView(yl, yp);
+        // la línea base de las letras del logo está al 68,6 % de su altura: Android alinea con la de «Versión»
+        yl.setBaselineAlignBottom(false);
+        yl.setBaseline(Math.round(dp(16) * 0.686f));
+        vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(16)));
         View bar = new View(this);
         bar.setBackgroundColor(0xFF6B7F96);
         LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(dp(1) + 1, dp(16));
-        bp.setMargins(dp(10), diff < 0 ? -diff : 0, 0, 0);
+        bp.setMargins(dp(10), 0, dp(10), 0);
         vrow.addView(bar, bp);
-        vrow.addView(verInfo, vl);
+        verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
+        verInfo.setIncludeFontPadding(false);
+        verInfo.setPadding(0, 0, 0, 0);
+        vrow.addView(verInfo, new LinearLayout.LayoutParams(-2, -2));
         LinearLayout.LayoutParams topP = new LinearLayout.LayoutParams(0, -2, 0.50f);
         topP.setMargins(0, 0, dp(7), 0);
         row1.addView(top, topP);
