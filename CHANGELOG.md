@@ -5,7 +5,7 @@ El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/
 
 ## 5.27.1
 
-- **Logo nuevo de FotosTV** en todas partes (icono, banner, cabecera de la app, página web de ajustes y GitHub): colores vivos con el degradado más suave, anillo totalmente transparente y hueco blanco entre las dos tarjetas de atrás. El banner de la tele es algo más grande.
+- **Logo nuevo de FotosTV** en todas partes (icono, banner, cabecera de la app, página web de ajustes y GitHub): colores vivos con el degradado más suave, anillo totalmente transparente y hueco blanco entre las dos tarjetas de atrás. El banner de la tele es algo más grande, con un pequeño margen a los lados.
 - **Emisoras de música más normales**: Radio Paradise (Main Mix y Rock Mix) y SomaFM (80s, 70s, Indie Pop y PopTron) sustituyen a las ambientales.
 
 ## 5.27.0
