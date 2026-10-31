@@ -1,6 +1,6 @@
 {
-  "version": "5.27.2",
+  "version": "5.27.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 852303,
-  "notes": "- Islas en el nombre del lugar: en Baleares y Canarias ahora sale la isla en vez de la provincia («Santa Eulària des Riu, Ibiza», «Adeje, Tenerife»). Si no se encuentra el pueblo, sale solo la isla."
+  "size": 819535,
+  "notes": "- Logo con los tonos de siempre: la forma nueva, pero con el degradado naranja-rosa-violeta del logo anterior. El triángulo del play de la «o» de Fotos es blanco.\n- La web de ajustes ya muestra el logo nuevo (el navegador guardaba el anterior en memoria durante un día)."
 }

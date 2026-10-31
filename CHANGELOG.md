@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.27.3
+
+- **Logo con los tonos de siempre**: la forma nueva, pero con el degradado naranja-rosa-violeta del logo anterior. El triángulo del play de la «o» de Fotos es blanco.
+- **La web de ajustes ya muestra el logo nuevo** (el navegador guardaba el anterior en memoria durante un día).
+
 ## 5.27.2
 
 - **Islas en el nombre del lugar**: en Baleares y Canarias ahora sale la isla en vez de la provincia («Santa Eulària des Riu, Ibiza», «Adeje, Tenerife»). Si no se encuentra el pueblo, sale solo la isla.

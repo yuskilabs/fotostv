@@ -650,7 +650,7 @@ class WebConfigServer extends Thread {
             + "input{width:100%;box-sizing:border-box;font-size:17px;padding:12px;border-radius:10px;border:1px solid #456;background:#1b2d44;color:#fff}"
             + "button{margin-top:22px;width:100%;font-size:18px;padding:14px;border:0;border-radius:12px;background:#3d8bfd;color:#fff;font-weight:600}"
             + "button:disabled{opacity:.5}.ok{font-size:17px;line-height:1.4}</style></head><body>"
-            + "<img class='logo' src='/img/logo.png' alt='FotosTV'>" + content + "</body></html>";
+            + "<img class='logo' src='/img/logo2.png' alt='FotosTV'>" + content + "</body></html>";
     }
 
     private static String page(String content) {
@@ -668,7 +668,7 @@ class WebConfigServer extends Thread {
             + "button.sec{margin-top:10px;background:#2a4a6e;font-size:16px;padding:12px}button:disabled{opacity:.5}"
             + "button.danger{background:#7a2b36}.row2{display:flex;gap:10px}.row2 button{width:auto;flex:1}"
             + "button{margin-top:26px;width:100%;font-size:18px;padding:14px;border:0;border-radius:12px;background:#3d8bfd;color:#fff;font-weight:600}"
-            + ".ok{font-size:19px}a{color:#8cf}</style></head><body><img class='logo' src='/img/logo.png' alt='FotosTV'>"
+            + ".ok{font-size:19px}a{color:#8cf}</style></head><body><img class='logo' src='/img/logo2.png' alt='FotosTV'>"
             + content + "<div class='by'><a href='https://github.com/yuskilabs/fotostv#readme' target='_blank'><img src='/img/yuski.png' alt=''>yuskilabs</a></div>" + SCRIPT + "</body></html>";
     }
 }
