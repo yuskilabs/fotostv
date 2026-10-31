@@ -181,4 +181,4 @@ Por ahora sin licencia: el código es visible, pero no se concede permiso para r
 
 ## Créditos
 
-La tipografía es [Figtree](https://github.com/erikdkennedy/figtree) (licencia SIL OFL). El código QR se genera con [QR Code generator](https://github.com/nayuki/QR-Code-generator) de Project Nayuki (licencia MIT).
+Las tipografías son [Figtree](https://github.com/erikdkennedy/figtree) y [Caveat](https://github.com/googlefonts/caveat) (licencia SIL OFL); los iconos, [Material Symbols](https://github.com/google/material-design-icons) de Google (licencia Apache 2.0). El código QR se genera con [QR Code generator](https://github.com/nayuki/QR-Code-generator) de Project Nayuki (licencia MIT).

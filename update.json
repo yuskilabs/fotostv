@@ -1,6 +1,6 @@
 {
-  "version": "5.21.5",
+  "version": "5.22.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 532233,
-  "notes": "- Tipografía Figtree (licencia SIL OFL) en toda la app: ExtraBold en títulos, nombres de álbum y hora; Regular en botones y el resto de textos. Sustituye a Quicksand."
+  "size": 684228,
+  "notes": "- Iconos nuevos (Material Symbols, estilo redondeado) en toda la app. «Inicio automático» y «Cerrar el pase tras» tienen ahora iconos distintos, y también «Calidad de vídeo», «Fondo para Projectivy» y «Vaciar caché».\n- El lugar de la foto (en el pase y en el mapa de información) va en letra manuscrita Caveat."
 }

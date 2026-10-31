@@ -136,10 +136,10 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         Button dream = side("Elegir salvapantallas", R.drawable.ic_tv, new View.OnClickListener() {
             public void onClick(View v) { openDreamSettings(); }
         });
-        idleBtn = side(idleLabel(), R.drawable.ic_timer, new View.OnClickListener() {
+        idleBtn = side(idleLabel(), R.drawable.ic_idle_start, new View.OnClickListener() {
             public void onClick(View v) { cycleIdle(); }
         });
-        stopBtn = side(stopLabel(), R.drawable.ic_timer, new View.OnClickListener() {
+        stopBtn = side(stopLabel(), R.drawable.ic_idle_stop, new View.OnClickListener() {
             public void onClick(View v) {
                 int[] o = {5, 10, 15, 30, 60, 120, 0};
                 int cur = Prefs.autoStopMin(SettingsActivity.this), nx = o[0];
@@ -148,20 +148,20 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                 stopBtn.setText(stopLabel());
             }
         });
-        vqBtn = side(vqLabel(), R.drawable.ic_video, new View.OnClickListener() {
+        vqBtn = side(vqLabel(), R.drawable.ic_hd, new View.OnClickListener() {
             public void onClick(View v) {
                 String q = Prefs.vq(SettingsActivity.this);
                 Prefs.sp(SettingsActivity.this).edit().putString("vq", "auto".equals(q) ? "hd" : "hd".equals(q) ? "sd" : "auto").commit();
                 vqBtn.setText(vqLabel());
             }
         });
-        Button proj = side("Fondo para Projectivy", R.drawable.ic_photo, new View.OnClickListener() {
+        Button proj = side("Fondo para Projectivy", R.drawable.ic_wallpaper, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, ProjectivyActivity.class)); }
         });
         Button check = side("Comprobar álbumes", R.drawable.ic_check, new View.OnClickListener() {
             public void onClick(View v) { checkAlbum(); }
         });
-        cacheBtn = side("Vaciar caché", R.drawable.ic_delete, new View.OnClickListener() {
+        cacheBtn = side("Vaciar caché", R.drawable.ic_sweep, new View.OnClickListener() {
             public void onClick(View v) { clearCache(); }
         });
         Button upd = side("Actualizar", R.drawable.ic_download, new View.OnClickListener() {

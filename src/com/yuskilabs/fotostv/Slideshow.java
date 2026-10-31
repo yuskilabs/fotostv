@@ -260,7 +260,8 @@ class Slideshow {
         tvAlbum.setTypeface(Ui.BLACK);
         tvAlbum.setAlpha(0.8f);
         tvDate = text(24, Gravity.START);
-        tvPlace = text(21, Gravity.START);
+        tvPlace = text(27, Gravity.START);
+        tvPlace.setTypeface(Ui.HAND);
         // una sola línea cada una: así una fecha larga nunca se parte ni se corta («18 de diciembre de»)
         TextView[] lines = {tvAlbum, tvDate, tvPlace};
         for (TextView t : lines) {

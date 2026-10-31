@@ -164,8 +164,8 @@ class InfoPanel extends FrameLayout {
         cap.setPadding(dp(14), dp(8), dp(14), dp(8));
         cap.setBackgroundColor(0xCC0A1424);
         if (place != null) {
-            TextView p = text(place, 18, Color.WHITE);
-            p.setTypeface(Ui.BLACK);
+            TextView p = text(place, 24, Color.WHITE);
+            p.setTypeface(Ui.HAND);
             cap.addView(p);
         }
         cap.addView(text("© colaboradores de OpenStreetMap", 11, 0xFF9FB3C8));

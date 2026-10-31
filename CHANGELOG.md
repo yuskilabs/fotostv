@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.22.0
+- Iconos nuevos (Material Symbols, estilo redondeado) en toda la app. «Inicio automático» y «Cerrar el pase tras» tienen ahora iconos distintos, y también «Calidad de vídeo», «Fondo para Projectivy» y «Vaciar caché».
+- El lugar de la foto (en el pase y en el mapa de información) va en letra manuscrita Caveat.
+
 ## 5.21.5
 - Tipografía Figtree (licencia SIL OFL) en toda la app: ExtraBold en títulos, nombres de álbum y hora; Regular en botones y el resto de textos. Sustituye a Quicksand.
 
