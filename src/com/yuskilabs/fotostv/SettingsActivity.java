@@ -182,7 +182,6 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         LinearLayout c2 = card();
         c2.addView(cardTitle("Tus álbumes"));
         msgView = text("", 15, Color.WHITE);
-        msgView.setTypeface(Ui.BLACK);
         msgView.setPadding(dp(8), dp(2), dp(8), dp(2));
         msgView.setVisibility(View.GONE);
         c2.addView(msgView);
@@ -704,7 +703,6 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private TextView text(String s, int sp, int color) {
         TextView t = new TextView(this);
-        t.setTypeface(Ui.BLACK);
         t.setText(s);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTextColor(color);

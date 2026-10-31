@@ -257,6 +257,7 @@ class Slideshow {
         info = new LinearLayout(ctx);
         info.setOrientation(LinearLayout.VERTICAL);
         tvAlbum = text(18, Gravity.START);
+        tvAlbum.setTypeface(Ui.BLACK);
         tvAlbum.setAlpha(0.8f);
         tvDate = text(24, Gravity.START);
         tvPlace = text(21, Gravity.START);
@@ -275,6 +276,7 @@ class Slideshow {
         root.addView(info, ip);
 
         clock = text(46, Gravity.END);
+        clock.setTypeface(Ui.BLACK);
         FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
         cp.setMargins(0, 0, dp(48), dp(28));
         root.addView(clock, cp);
@@ -284,6 +286,7 @@ class Slideshow {
         root.addView(status, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
 
         pauseBadge = text(22, Gravity.CENTER);
+        pauseBadge.setTypeface(Ui.BLACK);
         pauseBadge.setText("\u275A\u275A  En pausa");
         pauseBadge.setPadding(dp(18), dp(8), dp(18), dp(8));
         pauseBadge.setBackground(pill());
@@ -401,7 +404,6 @@ class Slideshow {
 
     private TextView text(int sp, int gravity) {
         TextView t = new TextView(ctx);
-        t.setTypeface(Ui.BLACK);
         t.setTextColor(Color.WHITE);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setGravity(gravity);

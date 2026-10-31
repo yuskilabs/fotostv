@@ -645,7 +645,6 @@ public class BrowserActivity extends Activity {
             @Override public View getView(int i, View cv, ViewGroup parent) {
                 TextView tv = (TextView) super.getView(i, cv, parent);
                 tv.setTextColor(Color.WHITE);
-                tv.setTypeface(Ui.BLACK);
                 tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
                 android.graphics.drawable.Drawable d = getResources().getDrawable(icons[i]).mutate();
                 int sz = Ui.dp(BrowserActivity.this, 22);
@@ -853,7 +852,6 @@ public class BrowserActivity extends Activity {
 
     private TextView text(String s, int sp, int color) {
         TextView t = new TextView(this);
-        t.setTypeface(Ui.BLACK);
         t.setText(s);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTextColor(color);
