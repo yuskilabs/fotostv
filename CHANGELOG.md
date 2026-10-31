@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.20.9
+- Pantalla principal: el texto «yuskilabs» del logo queda alineado con «Versión …» (misma línea base).
+
 ## 5.20.8
 - Pantalla principal: el hueco entre la columna de botones y las cajas de la derecha es menor, queda justo en el centro y es igual al hueco entre la caja del QR y «Tus álbumes».
 

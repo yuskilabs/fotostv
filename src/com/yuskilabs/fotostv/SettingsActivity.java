@@ -69,16 +69,21 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         top.addView(tag);
         LinearLayout vrow = new LinearLayout(this);
         vrow.setOrientation(LinearLayout.HORIZONTAL);
-        vrow.setGravity(Gravity.CENTER);
+        vrow.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         ImageView yl = new ImageView(this);
         yl.setImageResource(R.drawable.yuski_h);
         yl.setAdjustViewBounds(true);
-        vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(16)));
-        View sp = new View(this);
-        vrow.addView(sp, new LinearLayout.LayoutParams(dp(14), 1));
+        LinearLayout.LayoutParams yp = new LinearLayout.LayoutParams(-2, dp(16));
         verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
-        verInfo.setPadding(0, dp(2), 0, 0);
-        vrow.addView(verInfo, new LinearLayout.LayoutParams(-2, -2));
+        verInfo.setIncludeFontPadding(false);
+        // la línea base del texto del logo está al 68,6 % de su altura: se alinea con la de «Versión»
+        int imgBase = Math.round(dp(16) * 0.686f);
+        int txtBase = Math.round(-verInfo.getPaint().getFontMetrics().ascent);
+        LinearLayout.LayoutParams vl = new LinearLayout.LayoutParams(-2, -2);
+        int diff = imgBase - txtBase;
+        if (diff >= 0) vl.setMargins(dp(14), diff, 0, 0); else { vl.setMargins(dp(14), 0, 0, 0); yp.setMargins(0, -diff, 0, 0); }
+        vrow.addView(yl, yp);
+        vrow.addView(verInfo, vl);
         LinearLayout.LayoutParams topP = new LinearLayout.LayoutParams(0, -2, 0.50f);
         topP.setMargins(0, 0, dp(7), 0);
         row1.addView(top, topP);
