@@ -435,7 +435,7 @@ class WebConfigServer extends Thread {
               .append("<input name='url").append(i).append("' type='url' value='").append(esc(al.url)).append("'>")
               .append("<div class='row'>")
               .append(chk("show" + i, "Mostrar", al.show))
-              .append("<span class='muted'>").append(count > 0 ? count + " elementos" : "sin comprobar")
+              .append("<span class='muted'>").append(count > 0 ? count + " elementos" : "sin cargar")
               .append(!al.show && "selected".equals(Prefs.albumMode(ctx)) ? " \u00B7 oculto" : "").append("</span>")
               .append(chk("del" + i, "Quitar", false))
               .append("</div><div class='row2'>")
@@ -544,7 +544,7 @@ class WebConfigServer extends Thread {
         + "function addAlbum(){var u=document.getElementById('nu'),n=document.getElementById('nn'),"
         + "m=document.getElementById('msg'),b=document.getElementById('addb');"
         + "if(!u.value.trim()){m.textContent='Pega primero el enlace del álbum.';return;}"
-        + "b.disabled=true;m.textContent='Comprobando álbum…';"
+        + "b.disabled=true;m.textContent='Recargando álbum…';"
         + "var x=new XMLHttpRequest();x.open('POST','/add');"
         + "x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');"
         + "x.onload=function(){var t=x.responseText,i=t.indexOf('\\n'),j=t.indexOf('\\n',i+1);"

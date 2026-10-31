@@ -565,10 +565,20 @@ public class BrowserActivity extends Activity {
         refocus = null;
     }
 
-    /** Pulsación larga en un álbum temporal: quitarlo ahora mismo. */
+    /** Pulsación larga en un álbum: recargarlo (o, si es temporal, quitarlo ahora mismo). */
     private boolean albumMenu(int pos) {
         if (pos < 0 || pos >= entries.size()) return false;
         final Entry e = entries.get(pos);
+        if (e.kind == 0) {
+            new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+                .setTitle(e.title)
+                .setItems(new String[]{"Recargar álbum"}, new android.content.DialogInterface.OnClickListener() {
+                    public void onClick(android.content.DialogInterface d, int w) { reloadAlbum(e); }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+            return true;
+        }
         if (e.kind != 4) return false;
         new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle(e.title)
@@ -583,6 +593,56 @@ public class BrowserActivity extends Activity {
             .setNegativeButton("Cancelar", null)
             .show();
         return true;
+    }
+
+    private boolean reloading;
+
+    /** Vuelve a leer un solo álbum: fotos nuevas, título y ubicaciones que faltaban. */
+    private void reloadAlbum(final Entry e) {
+        if (e == null || e.kind != 0 || reloading) return;
+        reloading = true;
+        showToast("Recargando «" + e.title + "»…");
+        final List<Item> old = new ArrayList<Item>(e.src);
+        bg.submit(new Runnable() {
+            public void run() {
+                String msg;
+                AlbumFetcher.AlbumData d = null;
+                int regps = 0;
+                try {
+                    d = AlbumFetcher.fetchAlbum(e.url);
+                    if (d.partial) { d = null; msg = "No se ha podido leer el álbum completo. Inténtalo de nuevo."; }
+                    else {
+                        Prefs.saveAlbumCache(BrowserActivity.this, e.url, d);
+                        regps = MetaFetcher.forgetMissingGps(BrowserActivity.this, d.items);
+                        msg = "\u2714 «" + e.title + "» recargado: " + d.items.size() + " elementos"
+                                + (regps > 0 ? ". Se vuelve a buscar la ubicación de " + regps + "." : ".");
+                    }
+                } catch (Exception ex) {
+                    msg = "No se ha podido recargar (¿hay conexión?).";
+                }
+                final AlbumFetcher.AlbumData fd = d;
+                final String fm = msg;
+                h.post(new Runnable() {
+                    public void run() {
+                        reloading = false;
+                        if (destroyed) return;
+                        if (fd != null) {
+                            for (Item it : fd.items) {
+                                it.album = e.title;
+                                if (it.akey.length() == 0) it.akey = fd.key;
+                            }
+                            e.src = fd.items;
+                            refreshAfterChange(photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
+                        }
+                        showToast(fm);
+                    }
+                });
+            }
+        });
+    }
+
+    private void showToast(String s) {
+        android.widget.Toast.makeText(this, s, android.widget.Toast.LENGTH_LONG).show();
     }
 
     /** Cada medio minuto: retira los temporales caducados y refresca los tiempos que quedan. */
@@ -667,6 +727,11 @@ public class BrowserActivity extends Activity {
             }
         });
         row.addView(fitBtn);
+        if (current.kind == 0) {
+            row.addView(sbtn("Recargar álbum", R.drawable.ic_check, new View.OnClickListener() {
+                public void onClick(View v) { reloadAlbum(current); }
+            }));
+        }
         row.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
         refreshOrderButtons();
         android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);

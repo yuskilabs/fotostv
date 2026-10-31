@@ -104,6 +104,102 @@ class MetaFetcher {
         return n;
     }
 
+    /** Cuántos bytes del principio del archivo original se leen para el EXIF. */
+    private static final int HEAD_BYTES = 1024 * 1024;
+
+    /** Si la descarga es un ZIP (Live Photo empaquetada), devuelve la imagen que lleva dentro; si no, los mismos bytes. */
+    private static byte[] imageBytes(byte[] head) {
+        byte[][] z = unzip(head);
+        return z[0] != null ? z[0] : head;
+    }
+
+    /** {imagen, vídeo} dentro de un ZIP (alguno puede ser null); si no es ZIP, ambos null. */
+    private static byte[][] unzip(byte[] b) {
+        byte[][] r = new byte[2][];
+        if (b == null || b.length < 4 || b[0] != 'P' || b[1] != 'K') return r;
+        java.util.zip.ZipInputStream zi = new java.util.zip.ZipInputStream(new ByteArrayInputStream(b));
+        try {
+            java.util.zip.ZipEntry en;
+            while ((en = zi.getNextEntry()) != null) {
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                byte[] buf = new byte[16384];
+                int n;
+                try { while ((n = zi.read(buf)) > 0 && out.size() < 4 * 1024 * 1024) out.write(buf, 0, n); }
+                catch (Exception ignored) { }
+                int i = isVideoName(en.getName()) ? 1 : 0;
+                if (r[i] == null && out.size() > 0) r[i] = out.toByteArray();
+            }
+        } catch (Exception ignored) {
+        } finally {
+            try { zi.close(); } catch (Exception ignored) { }
+        }
+        return r;
+    }
+
+    private static final java.util.regex.Pattern ISO6709 =
+            java.util.regex.Pattern.compile("([+-]\\d{1,2}\\.\\d{2,})([+-]\\d{1,3}\\.\\d{2,})(?=[+/\\-])");
+
+    /** Busca una ubicación «+23.1346-082.3588+048.000/» (formato ISO 6709 de los vídeos de iPhone). */
+    private static double[] scanIso6709(byte[] b) {
+        if (b == null || b.length < 10) return null;
+        try {
+            java.util.regex.Matcher m = ISO6709.matcher(new String(b, "ISO-8859-1"));
+            while (m.find()) {
+                double la = Double.parseDouble(m.group(1)), lo = Double.parseDouble(m.group(2));
+                if (Math.abs(la) <= 90 && Math.abs(lo) <= 180 && !(la == 0 && lo == 0)) return new double[]{la, lo};
+            }
+        } catch (Exception ignored) { }
+        return null;
+    }
+
+    /** Ubicación de la parte de vídeo: dentro de lo ya leído, dentro del ZIP o en el final de «=dv» (donde el iPhone guarda los metadatos). */
+    private static double[] videoGps(Item it, byte[] head) {
+        try {
+            byte[][] z = unzip(head);
+            double[] g = scanIso6709(z[1] != null ? z[1] : null);
+            if (g != null) return g;
+            if (z[0] == null && z[1] == null) {
+                g = scanIso6709(head);          // el propio archivo es un vídeo con los metadatos al principio
+                if (g != null) return g;
+            }
+        } catch (Throwable ignored) { }
+        try {
+            java.net.HttpURLConnection c = AlbumFetcher.open(it.url + "=dv", null, 15000, "bytes=-400000");
+            InputStream in = c.getInputStream();
+            try {
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                byte[] buf = new byte[16384];
+                int n;
+                while (out.size() < 2 * 1024 * 1024 && (n = in.read(buf)) > 0) out.write(buf, 0, n);
+                byte[] all = out.toByteArray();
+                double[] g = scanIso6709(all);
+                if (g == null && c.getResponseCode() == 200) {
+                    // el servidor ignoró el rango: solo tenemos el principio; no hay más que hacer
+                    g = null;
+                }
+                return g;
+            } finally {
+                try { in.close(); } catch (Exception ignored) { }
+                c.disconnect();
+            }
+        } catch (Throwable ignored) { return null; }
+    }
+
+    /** Igual, pero solo para las fotos de la lista (un álbum). */
+    static int forgetMissingGps(Context c, List<Item> items) {
+        SharedPreferences m = Prefs.meta(c);
+        SharedPreferences.Editor e = m.edit();
+        int n = 0;
+        for (Item it : items) {
+            String xk = "x_" + it.key(), dk = "d1_" + it.key();
+            String xv = m.getString(xk, null), dv = m.getString(dk, null);
+            if (xv != null && xv.startsWith("NaN;")) { e.remove(xk); n++; }
+            if (dv != null && !dv.contains("\"lat\"")) e.remove(dk);
+        }
+        e.apply();
+        return n;
+    }
+
     /** Tiempo tras el cual se vuelve a buscar el GPS de una foto que no lo tenía. */
     private static final long RECHECK_MS = 6L * 60 * 60 * 1000;
 
@@ -121,11 +217,15 @@ class MetaFetcher {
             if (!Double.isNaN(r[0]) || System.currentTimeMillis() - checked < RECHECK_MS) return r;
         }
         try {
-            byte[] head = AlbumFetcher.get(it.url + "=d", 512 * 1024);
+            byte[] head = AlbumFetcher.get(it.url + "=d", HEAD_BYTES);
             ExifInterface ex = (ExifInterface) ExifInterface.class
-                    .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(head));
+                    .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(imageBytes(head)));
             float[] ll = new float[2];
             if (ex.getLatLong(ll) && !(ll[0] == 0f && ll[1] == 0f)) { r[0] = ll[0]; r[1] = ll[1]; }
+            else {
+                double[] g = videoGps(it, head);       // Live Photo / vídeo: la ubicación va en la parte de vídeo
+                if (g != null) { r[0] = g[0]; r[1] = g[1]; }
+            }
             String dt = ex.getAttribute("DateTimeOriginal");
             if (dt == null) dt = ex.getAttribute("DateTime");
             if (dt != null) {
@@ -145,6 +245,7 @@ class MetaFetcher {
         String make = "", model = "", exposure = "", fnum = "", iso = "", focal = "";
         int w, h;
         String file = "";
+        String note = "";          // cómo se ha leído (para diagnóstico cuando no hay ubicación)
     }
 
     private static String tag(Object ex, String name) {
@@ -183,11 +284,16 @@ class MetaFetcher {
             }
         } catch (Throwable ignored) { }
         try {
-            byte[] head = AlbumFetcher.get(it.url + "=d", 512 * 1024);
+            byte[] head = AlbumFetcher.get(it.url + "=d", HEAD_BYTES);
+            d.note = (head.length > 1 && head[0] == 'P' && head[1] == 'K' ? "ZIP, " : "") + (head.length / 1024) + " KB leídos";
             ExifInterface ex = (ExifInterface) ExifInterface.class
-                    .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(head));
+                    .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(imageBytes(head)));
             float[] ll = new float[2];
             if (ex.getLatLong(ll) && !(ll[0] == 0f && ll[1] == 0f)) { d.lat = ll[0]; d.lon = ll[1]; }
+            else {
+                double[] g = videoGps(it, head);
+                if (g != null) { d.lat = g[0]; d.lon = g[1]; d.note += ", ubicación del vídeo"; }
+            }
             try { d.alt = ex.getAltitude(Double.NaN); } catch (Throwable ignored) { }
             String dt = tag(ex, "DateTimeOriginal");
             if (dt.length() == 0) dt = tag(ex, "DateTime");
@@ -220,54 +326,145 @@ class MetaFetcher {
 
     /**
      * Nombre del lugar. En España: «Localidad, Provincia» (o solo la ciudad si es capital de su provincia).
-     * Fuera de España: «Localidad, País», sin condados ni comarcas.
+     * Fuera de España: «Localidad, País» (en español y con letras latinas), sin condados ni comarcas; siempre con localidad.
      */
     static String place(Context c, double lat, double lon) {
         if (Double.isNaN(lat)) return null;
         SharedPreferences m = Prefs.meta(c);
-        // «p2_»: formato nuevo; los nombres guardados con el anterior (con región en el extranjero) no se reutilizan
-        String k = String.format(Locale.US, "p2_%.2f,%.2f", lat, lon);
-        if (m.contains(k)) return m.getString(k, null);
+        String k = String.format(Locale.US, "p3_%.2f,%.2f", lat, lon);
+        if (m.contains(k)) {
+            long t = m.getLong(k + "_t", 0);
+            if (t == 0 || System.currentTimeMillis() - t < 24L * 60 * 60 * 1000) return m.getString(k, null);
+        }
         String name = null;
+        String cc = null, country = null, town = null, region = null;
         try {
             if (Geocoder.isPresent()) {
-                List<Address> l = new Geocoder(c, ES).getFromLocation(lat, lon, 1);
+                List<Address> l = new Geocoder(c, ES).getFromLocation(lat, lon, 5);
                 if (l != null && !l.isEmpty()) {
                     Address a = l.get(0);
-                    String cc = a.getCountryCode();
-                    if (cc != null && cc.length() > 0 && !"ES".equalsIgnoreCase(cc)) {
-                        name = join(first(a.getLocality(), a.getSubLocality(), a.getAdminArea()), a.getCountryName());
+                    for (Address x : l) if (cc == null && x.getCountryCode() != null && x.getCountryCode().length() > 0) cc = x.getCountryCode();
+                    if (cc != null && !"ES".equalsIgnoreCase(cc)) {
+                        for (Address x : l) {
+                            if (town == null) town = firstLatin(x.getLocality(), x.getSubLocality());
+                            if (region == null) region = firstLatin(x.getAdminArea());
+                        }
                     } else {
-                        String town = first(a.getLocality(), a.getSubLocality(), a.getFeatureName());
-                        String region = first(a.getSubAdminArea(), a.getAdminArea(), a.getCountryName());
-                        name = join(town, region);
+                        String tn = first(a.getLocality(), a.getSubLocality(), a.getFeatureName());
+                        String rg = first(a.getSubAdminArea(), a.getAdminArea(), a.getCountryName());
+                        name = join(tn, rg);
                     }
                 }
             }
         } catch (Exception ignored) { }
-        if (name == null) {
-            try {
-                String url = String.format(Locale.US,
-                        "https://nominatim.openstreetmap.org/reverse?format=json&zoom=12&lat=%.5f&lon=%.5f&accept-language=",
-                        lat, lon) + URLEncoder.encode("es", "UTF-8");
-                JSONObject a = new JSONObject(new String(AlbumFetcher.get(url), "UTF-8")).getJSONObject("address");
-                String cc = a.optString("country_code", "");
-                if (cc.length() > 0 && !"es".equalsIgnoreCase(cc)) {
-                    String town = first(a.optString("city", null), a.optString("town", null),
-                            a.optString("village", null), a.optString("municipality", null),
-                            a.optString("hamlet", null), a.optString("suburb", null), a.optString("state", null));
-                    name = join(town, a.optString("country", null));
-                } else {
-                    String town = first(a.optString("city", null), a.optString("town", null),
-                            a.optString("village", null), a.optString("municipality", null));
-                    String region = first(a.optString("province", null), a.optString("county", null),
-                            a.optString("state", null), a.optString("country", null));
-                    name = join(town, region);
+        if (name == null && (cc == null || !"ES".equalsIgnoreCase(cc))) {
+            if (town == null) {
+                try {
+                    String url = String.format(Locale.US,
+                            "https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&lat=%.5f&lon=%.5f&accept-language=",
+                            lat, lon) + URLEncoder.encode("es,en", "UTF-8");
+                    JSONObject a = new JSONObject(new String(AlbumFetcher.get(url), "UTF-8")).getJSONObject("address");
+                    String ncc = a.optString("country_code", "");
+                    if (ncc.length() > 0) cc = ncc;
+                    if ("es".equalsIgnoreCase(cc)) {
+                        String tn = first(a.optString("city", null), a.optString("town", null),
+                                a.optString("village", null), a.optString("municipality", null));
+                        String rg = first(a.optString("province", null), a.optString("county", null),
+                                a.optString("state", null), a.optString("country", null));
+                        name = join(tn, rg);
+                    } else {
+                        town = firstLatin(a.optString("city", null), a.optString("town", null),
+                                a.optString("village", null), a.optString("municipality", null),
+                                a.optString("hamlet", null), a.optString("suburb", null),
+                                a.optString("city_district", null), a.optString("neighbourhood", null));
+                        if (region == null) region = firstLatin(a.optString("state", null));
+                    }
+                } catch (Exception ignored) { }
+            }
+            if (name == null && town == null) town = nearestPlace(lat, lon);   // mar abierto, campo: el núcleo más cercano
+            if (name == null) {
+                country = countryName(cc);
+                if (country == null) country = "";
+                boolean complete = town != null;
+                String t2 = town != null ? town : region;
+                name = join(t2, country.length() > 0 ? country : null);
+                if (name != null && name.length() == 0) name = null;
+                if (name != null) {
+                    SharedPreferences.Editor ed = m.edit().putString(k, name);
+                    if (complete) ed.remove(k + "_t"); else ed.putLong(k + "_t", System.currentTimeMillis());
+                    ed.apply();
                 }
+                return name;
+            }
+        }
+        if (name != null) m.edit().putString(k, name).remove(k + "_t").apply();
+        return name;
+    }
+
+    /** País en español a partir de su código («CU» → «Cuba»). */
+    private static String countryName(String cc) {
+        if (cc == null || cc.length() != 2) return null;
+        String n = new Locale("", cc.toUpperCase(Locale.US)).getDisplayCountry(ES);
+        return n == null || n.length() == 0 || n.equalsIgnoreCase(cc) ? null : n;
+    }
+
+    /** Núcleo habitado más cercano (OpenStreetMap, Overpass) con nombre en letras latinas; null si no hay o no hay red. */
+    private static String nearestPlace(double lat, double lon) {
+        int[] radii = {20000, 60000};
+        for (int r : radii) {
+            try {
+                String q = String.format(Locale.US,
+                        "[out:json][timeout:8];node(around:%d,%.5f,%.5f)[place~\"^(city|town|village|hamlet|suburb)$\"];out 150;", r, lat, lon);
+                String url = "https://overpass-api.de/api/interpreter?data=" + URLEncoder.encode(q, "UTF-8");
+                java.net.HttpURLConnection con = AlbumFetcher.open(url, null, 9000);
+                InputStream in = con.getInputStream();
+                String body;
+                try {
+                    java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                    byte[] buf = new byte[16384];
+                    int n;
+                    while (out.size() < 1024 * 1024 && (n = in.read(buf)) > 0) out.write(buf, 0, n);
+                    body = new String(out.toByteArray(), "UTF-8");
+                } finally {
+                    try { in.close(); } catch (Exception ignored) { }
+                    con.disconnect();
+                }
+                org.json.JSONArray els = new JSONObject(body).getJSONArray("elements");
+                String best = null;
+                double bd = Double.MAX_VALUE, cl = Math.cos(Math.toRadians(lat));
+                for (int i = 0; i < els.length(); i++) {
+                    JSONObject e = els.getJSONObject(i);
+                    JSONObject t = e.optJSONObject("tags");
+                    if (t == null) continue;
+                    String nm = firstLatin(t.optString("name:es", null), t.optString("name", null), t.optString("name:en", null));
+                    if (nm == null) continue;
+                    double dy = e.optDouble("lat") - lat, dx = (e.optDouble("lon") - lon) * cl;
+                    double dd = dx * dx + dy * dy;
+                    if (dd < bd) { bd = dd; best = nm; }
+                }
+                if (best != null) return best;
             } catch (Exception ignored) { }
         }
-        if (name != null) m.edit().putString(k, name).apply();
-        return name;
+        return null;
+    }
+
+    /** true si el texto solo lleva letras latinas (sin japonés, árabe, cirílico…). */
+    private static boolean latin(String s) {
+        if (s == null || s.length() == 0) return false;
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            if (!Character.isLetter(ch)) continue;
+            Character.UnicodeBlock b = Character.UnicodeBlock.of(ch);
+            if (b != Character.UnicodeBlock.BASIC_LATIN && b != Character.UnicodeBlock.LATIN_1_SUPPLEMENT
+                    && b != Character.UnicodeBlock.LATIN_EXTENDED_A && b != Character.UnicodeBlock.LATIN_EXTENDED_B
+                    && b != Character.UnicodeBlock.LATIN_EXTENDED_ADDITIONAL) return false;
+        }
+        return true;
+    }
+
+    private static String firstLatin(String... s) {
+        for (String x : s) if (x != null && x.length() > 0 && latin(x)) return x;
+        return null;
     }
 
     static String formatDate(long ms) {

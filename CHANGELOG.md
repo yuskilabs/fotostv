@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.26.0
+- **Recargar álbum:** nuevo botón en el mosaico de un álbum (antes de «Columnas») y en el menú de pulsación larga del mosaico de álbumes. Recarga solo ese álbum (fotos nuevas, título y ubicaciones que faltaban), así que tarda mucho menos.
+- «Comprobar álbumes» pasa a llamarse **«Recargar álbumes»**.
+- **Ubicación en más fotos:** si el archivo es una Live Photo o un vídeo, la ubicación se busca también en la parte de vídeo (donde el iPhone la guarda) y dentro de los ZIP; además se lee más cabecera de la foto. Si aun así no hay, el panel de información lo indica.
+- **Lugar:** siempre sale una localidad. Se descartan nombres en otros alfabetos (La Habana, no «キューバ»), se prueban varias fuentes y, en el mar o el campo, se usa el núcleo habitado más cercano. El país va siempre en español.
+
 ## 5.25.0
 - **PIN** de la web de ajustes de vuelta, ahora **a la vista**: sale en su propia línea en la zona del QR y en el QR ampliado. El QR ya lo lleva puesto (escaneándolo se entra directo); si abres la dirección a mano, la web lo pide una vez por móvil. La página de invitado no lo necesita.
 - **Invitados:** arreglado el «Este código ya no vale» que salía al escanear el QR nada más mostrarlo.

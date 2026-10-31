@@ -287,6 +287,11 @@ class AlbumFetcher {
     }
 
     static HttpURLConnection open(String url, String[] finalUrl, int readMs) throws IOException {
+        return open(url, finalUrl, readMs, null);
+    }
+
+    /** Como open, pero con cabecera Range opcional (p. ej. «bytes=-300000» para el final del archivo); acepta 200 y 206. */
+    static HttpURLConnection open(String url, String[] finalUrl, int readMs, String range) throws IOException {
         String u = url;
         for (int hop = 0; hop < 8; hop++) {
             HttpURLConnection c = (HttpURLConnection) new URL(u).openConnection();
@@ -296,6 +301,7 @@ class AlbumFetcher {
             c.setRequestProperty("User-Agent", UA);
             c.setRequestProperty("Accept-Language", "es-ES,es;q=0.9");
             c.setRequestProperty("Cookie", "CONSENT=YES+cb; SOCS=CAI");
+            if (range != null) c.setRequestProperty("Range", range);
             int code = c.getResponseCode();
             if (code >= 300 && code < 400) {
                 String loc = c.getHeaderField("Location");
@@ -304,7 +310,7 @@ class AlbumFetcher {
                 u = new URL(new URL(u), loc).toString();
                 continue;
             }
-            if (code != 200) { c.disconnect(); throw new IOException("Error HTTP " + code); }
+            if (code != 200 && !(range != null && code == 206)) { c.disconnect(); throw new IOException("Error HTTP " + code); }
             if (finalUrl != null) finalUrl[0] = u;
             return c;
         }

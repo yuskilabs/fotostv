@@ -206,7 +206,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         Button proj = side("Fondo para Projectivy", R.drawable.ic_wallpaper, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, ProjectivyActivity.class)); }
         });
-        Button check = side("Comprobar álbumes", R.drawable.ic_check, new View.OnClickListener() {
+        Button check = side("Recargar álbumes", R.drawable.ic_check, new View.OnClickListener() {
             public void onClick(View v) { checkAlbum(); }
         });
         cacheBtn = side("Vaciar caché", R.drawable.ic_sweep, new View.OnClickListener() {
@@ -647,7 +647,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private void checkAlbum() {
         final List<Prefs.Album> albums = Prefs.albums(this);
-        updateStatus("Comprobando álbumes…");
+        updateStatus("Recargando álbumes…");
         new Thread(new Runnable() {
             public void run() {
                 int ok = 0;
@@ -663,7 +663,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                     }
                 }
                 final String m = albums.isEmpty() ? null
-                        : err == null ? "\u2714 Álbumes correctos (" + ok + ")."
+                        : err == null ? "\u2714 Álbumes recargados (" + ok + ")."
                             + (regps > 0 ? " Se vuelve a buscar la ubicación de " + regps + " fotos." : "")
                         : "\u2716 " + err;
                 h.post(new Runnable() { public void run() { updateStatus(m); } });
