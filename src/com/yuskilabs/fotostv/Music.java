@@ -14,12 +14,12 @@ import java.util.List;
 class Music {
     /** Emisoras tranquilas y sin publicidad: {nombre, dirección}. */
     static final String[][] PRESETS = {
-        {"SomaFM · Drone Zone (ambiental, muy tranquila)", "https://ice1.somafm.com/dronezone-128-mp3"},
-        {"SomaFM · Deep Space One (ambiental profunda)", "https://ice1.somafm.com/deepspaceone-128-mp3"},
-        {"SomaFM · Space Station (ambiental suave)", "https://ice1.somafm.com/spacestation-128-mp3"},
-        {"SomaFM · Groove Salad (suave, con ritmo tranquilo)", "https://ice1.somafm.com/groovesalad-128-mp3"},
-        {"Radio Paradise · Mellow Mix (suave)", "https://stream.radioparadise.com/mellow-192"},
-        {"Radio Swiss Classic (clásica)", "https://stream.srg-ssr.ch/m/rsc_de/mp3_128"},
+        {"Radio Paradise · Main Mix (pop, rock y más)", "https://stream.radioparadise.com/mp3-192"},
+        {"Radio Paradise · Rock Mix", "https://stream.radioparadise.com/rock-192"},
+        {"SomaFM · Underground 80s (pop de los 80)", "https://ice1.somafm.com/u80s-128-mp3"},
+        {"SomaFM · Left Coast 70s (clásicos de los 70)", "https://ice1.somafm.com/seventies-128-mp3"},
+        {"SomaFM · Indie Pop Rocks", "https://ice1.somafm.com/indiepop-128-mp3"},
+        {"SomaFM · PopTron (pop electrónico)", "https://ice1.somafm.com/poptron-128-mp3"},
     };
 
     private static final Handler h = new Handler(Looper.getMainLooper());

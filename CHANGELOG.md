@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.27.1
+
+- **Logo nuevo de FotosTV** en todas partes (icono, banner, cabecera de la app, página web de ajustes y GitHub): colores vivos con el degradado más suave, anillo totalmente transparente y hueco blanco entre las dos tarjetas de atrás. El banner de la tele es algo más grande.
+- **Emisoras de música más normales**: Radio Paradise (Main Mix y Rock Mix) y SomaFM (80s, 70s, Indie Pop y PopTron) sustituyen a las ambientales.
+
 ## 5.27.0
 - **Música del pase** (nueva): en la web de ajustes, «Música del pase» permite elegir una **emisora de internet** (SomaFM Drone Zone, Deep Space One, Space Station, Groove Salad, Radio Paradise Mellow Mix, Radio Swiss Classic, o la dirección que pegues) o una **carpeta con canciones** de la tele o de un USB (se reproducen al azar). Volumen propio y casilla para que suene también en el salvapantallas y en la vista previa. Si un vídeo se oye, la música se calla mientras dura. Si la emisora se corta, reintenta sola. Con carpeta, la tele pide permiso para leer archivos la primera vez.
 - **Logo nuevo de FotosTV** en todas sus versiones, con fondo transparente: icono de la app, banner de Android TV, cabecera de la app y de la web de ajustes, y las imágenes del léeme (claro/oscuro).
