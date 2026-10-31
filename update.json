@@ -1,6 +1,6 @@
 {
-  "version": "5.20.13",
+  "version": "5.21.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 482923,
-  "notes": "- Pantalla principal: margen inferior ajustado (6 dp)."
+  "notes": "- Nueva tipografía: todos los textos de la app (menús, botones, títulos de álbum, información y pase de diapositivas) usan Roboto Black, mucho más marcada. Los cuadros de diálogo del sistema (avisos, ayudas) conservan la fuente de Android."
 }

@@ -12,6 +12,9 @@ import android.widget.LinearLayout;
 
 /** Elementos de interfaz compartidos. */
 class Ui {
+    /** Roboto Black (sans-serif-black) para todos los textos de la app. */
+    static final android.graphics.Typeface BLACK = android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL);
+
     static int dp(Context c, int v) {
         return (int) (v * c.getResources().getDisplayMetrics().density);
     }
@@ -19,6 +22,7 @@ class Ui {
     /** Botón para mando: el seleccionado se ve azul intenso con borde blanco. */
     static Button button(Context c, String label, View.OnClickListener l) {
         Button btn = new Button(c);
+        btn.setTypeface(Ui.BLACK);
         btn.setText(label);
         btn.setAllCaps(false);
         btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);

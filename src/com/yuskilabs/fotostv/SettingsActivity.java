@@ -105,7 +105,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         c1l.addView(line("1. En Google Fotos: álbum → Compartir → Crear enlace → copiar."));
         c1l.addView(line("2. Con el móvil en la misma wifi, escanea el código o abre:"));
         webInfo = text("", 16, 0xFF7CC4FF);
-        webInfo.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        webInfo.setTypeface(Ui.BLACK);
         webInfo.setPadding(0, dp(1), 0, dp(1));
         c1l.addView(webInfo);
         c1l.addView(line("3. Pega los enlaces y elige «FotosTV» como salvapantallas."));
@@ -182,7 +182,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         LinearLayout c2 = card();
         c2.addView(cardTitle("Tus álbumes"));
         msgView = text("", 15, Color.WHITE);
-        msgView.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        msgView.setTypeface(Ui.BLACK);
         msgView.setPadding(dp(8), dp(2), dp(8), dp(2));
         msgView.setVisibility(View.GONE);
         c2.addView(msgView);
@@ -262,7 +262,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private TextView cardTitle(String s) {
         TextView t = text(s, 18, Color.WHITE);
-        t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        t.setTypeface(Ui.BLACK);
         return t;
     }
 
@@ -704,6 +704,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private TextView text(String s, int sp, int color) {
         TextView t = new TextView(this);
+        t.setTypeface(Ui.BLACK);
         t.setText(s);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTextColor(color);

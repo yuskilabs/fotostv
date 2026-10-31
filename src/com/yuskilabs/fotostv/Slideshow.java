@@ -401,6 +401,7 @@ class Slideshow {
 
     private TextView text(int sp, int gravity) {
         TextView t = new TextView(ctx);
+        t.setTypeface(Ui.BLACK);
         t.setTextColor(Color.WHITE);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setGravity(gravity);

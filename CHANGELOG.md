@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.21.0
+- Nueva tipografía: todos los textos de la app (menús, botones, títulos de álbum, información y pase de diapositivas) usan Roboto Black, mucho más marcada. Los cuadros de diálogo del sistema (avisos, ayudas) conservan la fuente de Android.
+
 ## 5.20.13
 - Pantalla principal: margen inferior ajustado (6 dp).
 

@@ -44,7 +44,7 @@ class InfoPanel extends FrameLayout {
         head.setGravity(Gravity.CENTER_VERTICAL);
         head.addView(icon(R.drawable.ic_info, 28, 0xFFFFFFFF));
         TextView t = text("Información", 22, Color.WHITE);
-        t.setTypeface(Typeface.DEFAULT_BOLD);
+        t.setTypeface(Ui.BLACK);
         t.setPadding(dp(12), 0, 0, 0);
         head.addView(t);
         left.addView(head);
@@ -165,7 +165,7 @@ class InfoPanel extends FrameLayout {
         cap.setBackgroundColor(0xCC0A1424);
         if (place != null) {
             TextView p = text(place, 18, Color.WHITE);
-            p.setTypeface(Typeface.DEFAULT_BOLD);
+            p.setTypeface(Ui.BLACK);
             cap.addView(p);
         }
         cap.addView(text("© colaboradores de OpenStreetMap", 11, 0xFF9FB3C8));

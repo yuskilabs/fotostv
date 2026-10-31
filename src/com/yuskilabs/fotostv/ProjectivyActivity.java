@@ -28,12 +28,14 @@ public class ProjectivyActivity extends Activity {
         root.setBackgroundColor(0xFF0F1D2E);
         root.setPadding(Ui.dp(this, 48), Ui.dp(this, 24), Ui.dp(this, 48), Ui.dp(this, 16));
         TextView t = new TextView(this);
+        t.setTypeface(Ui.BLACK);
         t.setText("Fondo para Projectivy");
         t.setTextColor(Color.WHITE);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
-        t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        t.setTypeface(Ui.BLACK);
         root.addView(t);
         TextView s = new TextView(this);
+        s.setTypeface(Ui.BLACK);
         s.setText("Elige cómo se ven y de qué álbumes salen las fotos de fondo.");
         s.setTextColor(0xFFB8C7D9);
         s.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
@@ -69,10 +71,11 @@ public class ProjectivyActivity extends Activity {
 
     private TextView head(String s) {
         TextView t = new TextView(this);
+        t.setTypeface(Ui.BLACK);
         t.setText(s);
         t.setTextColor(0xFF7CC4FF);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        t.setTypeface(Ui.BLACK);
         t.setPadding(Ui.dp(this, 4), Ui.dp(this, 10), 0, Ui.dp(this, 4));
         return t;
     }

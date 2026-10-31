@@ -506,7 +506,7 @@ public class BrowserActivity extends Activity {
         col.setOrientation(LinearLayout.VERTICAL);
         LinearLayout head = header();
         TextView title = text("Álbumes", 26, Color.WHITE);
-        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        title.setTypeface(Ui.BLACK);
         title.setPadding(0, 0, 0, 0);
         head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
         head.addView(colsControl("album", ALBUM_COLS_RANGE, albumCols, "albumCols", true));
@@ -547,7 +547,7 @@ public class BrowserActivity extends Activity {
         col.setOrientation(LinearLayout.VERTICAL);
         LinearLayout head = header();
         TextView nm = text(current.title, 26, TITLE_COLOR);
-        nm.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        nm.setTypeface(Ui.BLACK);
         nm.setPadding(0, 0, 0, 0);
         nm.setSingleLine(true);
         nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -645,6 +645,7 @@ public class BrowserActivity extends Activity {
             @Override public View getView(int i, View cv, ViewGroup parent) {
                 TextView tv = (TextView) super.getView(i, cv, parent);
                 tv.setTextColor(Color.WHITE);
+                tv.setTypeface(Ui.BLACK);
                 tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
                 android.graphics.drawable.Drawable d = getResources().getDrawable(icons[i]).mutate();
                 int sz = Ui.dp(BrowserActivity.this, 22);
@@ -852,6 +853,7 @@ public class BrowserActivity extends Activity {
 
     private TextView text(String s, int sp, int color) {
         TextView t = new TextView(this);
+        t.setTypeface(Ui.BLACK);
         t.setText(s);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         t.setTextColor(color);
@@ -905,7 +907,7 @@ public class BrowserActivity extends Activity {
         t.name.setPadding(0, 0, 0, 0);
         t.name.setSingleLine(true);
         t.name.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        t.name.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        t.name.setTypeface(Ui.BLACK);
         t.name.setShadowLayer(6f, 0f, 2f, 0xCC000000);
         t.count = text("", 13, 0xFFD0DBE8);
         t.count.setPadding(0, 0, 0, 0);
@@ -950,6 +952,7 @@ public class BrowserActivity extends Activity {
         t.addView(t.img, new FrameLayout.LayoutParams(-1, -1));
         // marca de vídeo: círculo oscuro con ▶ abajo a la izquierda
         t.badge = new TextView(this);
+        t.badge.setTypeface(Ui.BLACK);
         t.badge.setText("▶");
         t.badge.setTextColor(Color.WHITE);
         t.badge.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
