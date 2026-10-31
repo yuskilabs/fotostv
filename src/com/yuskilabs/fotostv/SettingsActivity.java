@@ -73,7 +73,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         ImageView yl = new ImageView(this);
         yl.setImageResource(R.drawable.yuski_h);
         yl.setAdjustViewBounds(true);
-        vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(24)));
+        vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(16)));
         View sp = new View(this);
         vrow.addView(sp, new LinearLayout.LayoutParams(dp(14), 1));
         verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
