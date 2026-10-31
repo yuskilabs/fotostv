@@ -394,7 +394,7 @@ class MetaFetcher {
     static String place(Context c, double lat, double lon) {
         if (Double.isNaN(lat)) return null;
         SharedPreferences m = Prefs.meta(c);
-        String k = String.format(Locale.US, "p3_%.2f,%.2f", lat, lon);
+        String k = String.format(Locale.US, "p4_%.2f,%.2f", lat, lon);
         if (m.contains(k)) {
             long t = m.getLong(k + "_t", 0);
             if (t == 0 || System.currentTimeMillis() - t < 24L * 60 * 60 * 1000) return m.getString(k, null);
@@ -421,7 +421,7 @@ class MetaFetcher {
             }
         } catch (Exception ignored) { }
         if (name == null && (cc == null || !"ES".equalsIgnoreCase(cc))) {
-            if (town == null) {
+            {   // OpenStreetMap primero fuera de España: da el nombre en castellano si existe, si no en inglés, si no el local
                 try {
                     String url = String.format(Locale.US,
                             "https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&lat=%.5f&lon=%.5f&accept-language=",
@@ -436,10 +436,11 @@ class MetaFetcher {
                                 a.optString("state", null), a.optString("country", null));
                         name = join(tn, rg);
                     } else {
-                        town = firstLatin(a.optString("city", null), a.optString("town", null),
+                        String nt = firstLatin(a.optString("city", null), a.optString("town", null),
                                 a.optString("village", null), a.optString("municipality", null),
                                 a.optString("hamlet", null), a.optString("suburb", null),
                                 a.optString("city_district", null), a.optString("neighbourhood", null));
+                        if (nt != null) town = nt;
                         if (region == null) region = firstLatin(a.optString("state", null));
                     }
                 } catch (Exception ignored) { }

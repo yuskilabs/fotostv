@@ -620,7 +620,6 @@ public class BrowserActivity extends Activity {
 
     private void startSpin() {
         if (reloadBtn == null || reloadSpin == null) return;
-        reloadBtn.setText("Recargando…");
         if (spinAnim != null) spinAnim.cancel();
         spinAnim = android.animation.ValueAnimator.ofFloat(0f, 360f);
         spinAnim.setDuration(900);
@@ -639,7 +638,7 @@ public class BrowserActivity extends Activity {
     private void stopSpin() {
         if (spinAnim != null) { spinAnim.cancel(); spinAnim = null; }
         if (reloadSpin != null) { reloadSpin.angle = 0; reloadSpin.invalidateSelf(); }
-        if (reloadBtn != null) { reloadBtn.setText("Recargar"); reloadBtn.invalidate(); }
+        if (reloadBtn != null) reloadBtn.invalidate();
     }
 
     /** Vuelve a leer un solo álbum: fotos nuevas, título y ubicaciones que faltaban. */

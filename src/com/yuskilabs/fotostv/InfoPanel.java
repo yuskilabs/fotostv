@@ -124,8 +124,6 @@ class InfoPanel extends FrameLayout {
             if (d.hasTime) addRow(R.drawable.ic_schedule, "Hora", new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(d.date)));
         }
         if (place != null) addRow(R.drawable.ic_place, "Lugar", place);
-        if (Double.isNaN(d.lat) && d.note.length() > 0) addRow(R.drawable.ic_place, "Ubicación", "No consta en el archivo (" + d.note + ")");
-        if (Double.isNaN(d.lat) && d.dump.length() > 0) addRow(R.drawable.ic_info, "Ficha de Google", d.dump);
         if (!Double.isNaN(d.lat)) {
             String c = String.format(Locale.US, "%.5f, %.5f", d.lat, d.lon);
             if (!Double.isNaN(d.alt) && d.alt != 0) c += "  \u00B7  " + Math.round(d.alt) + " m";

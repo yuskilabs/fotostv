@@ -87,6 +87,7 @@ class Slideshow {
     private int histPos = -1, gen;
     private TextView pauseBadge, toast, tvPos, tvRem;
     private LinearLayout progRow;
+    private TextView vidCaption;   // álbum, fecha y lugar, pequeños y translúcidos, sobre la barra de un vídeo
     private FrameLayout progTrack;
     private View progFill;
     private GradientDrawable progFillBg;
@@ -334,6 +335,16 @@ class Slideshow {
         prp.setMargins(dp(48), 0, dp(48), dp(12));
         root.addView(progRow, prp);
 
+        vidCaption = text(13, Gravity.START);
+        vidCaption.setAlpha(0.7f);
+        vidCaption.setLineSpacing(0f, 1.05f);
+        vidCaption.setMaxLines(3);
+        vidCaption.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        vidCaption.setVisibility(View.GONE);
+        FrameLayout.LayoutParams vcp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.START);
+        vcp.setMargins(dp(48), 0, dp(48), dp(44));   // justo encima de la barra, a la izquierda
+        root.addView(vidCaption, vcp);
+
         boolean anyText = Prefs.clock(ctx) || Prefs.showAlbum(ctx) || Prefs.showDate(ctx) || Prefs.showPlace(ctx);
         shade.setVisibility(anyText ? View.VISIBLE : View.GONE);
         info.setVisibility(View.INVISIBLE);
@@ -347,6 +358,7 @@ class Slideshow {
         pauseBadge.bringToFront();
         toast.bringToFront();
         progRow.bringToFront();
+        vidCaption.bringToFront();
     }
 
     private static String mmss(int ms) {
@@ -356,11 +368,12 @@ class Slideshow {
 
     private final Runnable progTick = new Runnable() {
         public void run() {
-            if (!running || !playingVideo || player == null) { progRow.setVisibility(View.GONE); return; }
+            if (!running || !playingVideo || player == null) { progRow.setVisibility(View.GONE); vidCaption.setVisibility(View.GONE); return; }
             try {
                 int d = player.getDuration(), c = player.getCurrentPosition();
                 if (d > 0) {
                     progRow.setVisibility(View.VISIBLE);
+                    vidCaption.setVisibility(vidCaption.getText().length() > 0 ? View.VISIBLE : View.GONE);
                     tvPos.setText(mmss(c));
                     tvRem.setText("-" + mmss(d - c));
                     FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) progFill.getLayoutParams();
@@ -852,6 +865,13 @@ class Slideshow {
                 java.util.concurrent.Future<java.io.File> fut = null;
                 final VideoProxy.Prog pr = new VideoProxy.Prog();
                 t.prog = pr;
+                try {   // fecha y lugar del vídeo (de sus metadatos) para mostrarlos sobre la barra
+                    if (Prefs.showPlace(ctx) || Prefs.showDate(ctx)) {
+                        double[] e = MetaFetcher.exif(ctx, t.item);
+                        t.date = MetaFetcher.formatDate(e[2] > 0 ? (long) e[2] : t.item.ts);
+                        if (Prefs.showPlace(ctx)) t.place = MetaFetcher.place(ctx, e[0], e[1]);
+                    }
+                } catch (Throwable ignored) { }
                 try {
                     if (ready(hdFile(t.item))) f = hdFile(t.item);
                     else fut = hdEx.submit(new java.util.concurrent.Callable<java.io.File>() {
@@ -1530,7 +1550,18 @@ class Slideshow {
             .setInterpolator(new AccelerateDecelerateInterpolator()).withLayer().start();
     }
 
+    /** Álbum, fecha y lugar del vídeo (la hora no), según lo que se tenga activado en los ajustes. */
+    private void setVidCaption(Slide s) {
+        StringBuilder b = new StringBuilder();
+        String al = Prefs.showAlbum(ctx) ? Ui.albumName(s.album) : null;
+        if (al != null && al.length() > 0) b.append(al);
+        if (Prefs.showDate(ctx) && s.date != null && s.date.length() > 0) { if (b.length() > 0) b.append('\n'); b.append(s.date); }
+        if (Prefs.showPlace(ctx) && s.place != null && s.place.length() > 0) { if (b.length() > 0) b.append('\n'); b.append(s.place); }
+        vidCaption.setText(b.toString());
+    }
+
     private void playVideo(final Slide s) {
+        setVidCaption(s);
         playingVideo = true;
         revealed = false;
         frameRendered = false;
@@ -1700,6 +1731,7 @@ class Slideshow {
         if (revealed) videoUi(false);
         h.removeCallbacks(progTick);
         if (progRow != null) progRow.setVisibility(View.GONE);
+        if (vidCaption != null) vidCaption.setVisibility(View.GONE);
         if (player != null) {
             MediaPlayer p = player;
             player = null;
