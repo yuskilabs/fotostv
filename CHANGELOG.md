@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.21.2
+- Prueba de tipografía: botones, títulos y nombres de álbum en Coming Soon (la fuente «casual» de Android); el resto en Roboto normal.
+
 ## 5.21.1
 - Tipografía combinada: Roboto Black solo en botones, títulos, nombres de álbum, hora y nombre del álbum en el pase; el resto de textos (listas, fechas, lugar, información, versión) en Roboto normal.
 

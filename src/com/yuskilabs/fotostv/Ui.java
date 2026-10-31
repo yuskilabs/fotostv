@@ -12,8 +12,8 @@ import android.widget.LinearLayout;
 
 /** Elementos de interfaz compartidos. */
 class Ui {
-    /** Roboto Black (sans-serif-black) para todos los textos de la app. */
-    static final android.graphics.Typeface BLACK = android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL);
+    /** Fuente de títulos y botones (prueba: «casual» = Coming Soon de Android). */
+    static final android.graphics.Typeface BLACK = android.graphics.Typeface.create("casual", android.graphics.Typeface.NORMAL);
 
     static int dp(Context c, int v) {
         return (int) (v * c.getResources().getDisplayMetrics().density);
