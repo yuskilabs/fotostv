@@ -394,7 +394,7 @@ class MetaFetcher {
     static String place(Context c, double lat, double lon) {
         if (Double.isNaN(lat)) return null;
         SharedPreferences m = Prefs.meta(c);
-        String k = String.format(Locale.US, "p5_%.2f,%.2f", lat, lon);
+        String k = String.format(Locale.US, "p6_%.2f,%.2f", lat, lon);
         if (m.contains(k)) {
             long t = m.getLong(k + "_t", 0);
             if (t == 0 || System.currentTimeMillis() - t < 24L * 60 * 60 * 1000) return m.getString(k, null);
@@ -437,7 +437,8 @@ class MetaFetcher {
         boolean complete = town != null;
         String name;
         if (es) {
-            name = join(town, rgEs != null ? rgEs : region);
+            String isla = isla(lat, lon);   // Baleares y Canarias: la isla, no la provincia
+            name = join(town, isla != null ? isla : (rgEs != null ? rgEs : region));
         } else {
             String country = countryName(cc);
             name = join(castellano(town != null ? town : region), country);
@@ -449,6 +450,23 @@ class MetaFetcher {
             ed.apply();
         }
         return name;
+    }
+
+    /** Isla de Baleares o Canarias (recuadros aproximados) o null. {sur, norte, oeste, este}. */
+    private static final Object[][] ISLAS = {
+        {"Mallorca", 39.25, 39.97, 2.30, 3.50}, {"Menorca", 39.80, 40.10, 3.78, 4.35},
+        {"Ibiza", 38.82, 39.15, 1.15, 1.65}, {"Formentera", 38.62, 38.82, 1.30, 1.65},
+        {"Tenerife", 28.00, 28.60, -16.95, -16.10}, {"Gran Canaria", 27.70, 28.20, -15.85, -15.35},
+        {"Lanzarote", 28.80, 29.25, -13.95, -13.40}, {"Fuerteventura", 28.05, 28.75, -14.55, -13.80},
+        {"La Palma", 28.40, 28.90, -18.05, -17.70}, {"La Gomera", 27.95, 28.25, -17.40, -17.10},
+        {"El Hierro", 27.60, 27.90, -18.20, -17.85},
+    };
+
+    private static String isla(double lat, double lon) {
+        for (Object[] i : ISLAS) {
+            if (lat >= (Double) i[1] && lat <= (Double) i[2] && lon >= (Double) i[3] && lon <= (Double) i[4]) return (String) i[0];
+        }
+        return null;
     }
 
     /** Palabras genéricas de lugar en inglés a castellano («Malcapuya Island» → «Isla Malcapuya»). */
