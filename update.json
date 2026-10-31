@@ -1,6 +1,6 @@
 {
-  "version": "5.26.1",
+  "version": "5.26.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 733446,
-  "notes": "- El botón del mosaico pasa a llamarse solo «Recargar», para que quepa el control de columnas entero (− y +).\n- PIN nuevo cada vez que arranca la app (antes era siempre el mismo). Va ahora en su propia línea, grande, justo debajo del título de la caja del QR.\n- Ubicación en vídeos: ahora también se busca en sus metadatos (antes se abandonaba al no ser una foto). Al instalar una versión nueva se vuelven a mirar las fotos guardadas como «sin ubicación» (en la anterior seguían usándose datos viejos).\n- Logo de yuskilabs completo (la «y» salía cortada por abajo) en la app, la web y el léeme, con un pequeño margen para que no se recorte."
+  "size": 737615,
+  "notes": "- Ubicación: si ni el archivo ni su vídeo la llevan, se usa la que Google Fotos tiene guardada en su ficha de la foto (es la que ves en la app de Google). Y si tampoco está ahí, el panel de información muestra un resumen de esa ficha para poder averiguar dónde la guarda Google.\n- Sin ubicación, el panel de información ya no usa datos guardados: lo vuelve a leer cada vez.\n- Lugares en castellano: las palabras genéricas inglesas pasan a castellano («Malcapuya Island» → «Isla Malcapuya», «Mount X» → «Monte X», playa, bahía, lago…). El país ya salía siempre en castellano.\n- Recargar: el icono del botón gira y pone «Recargando…» mientras trabaja."
 }

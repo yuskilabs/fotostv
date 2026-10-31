@@ -104,6 +104,55 @@ class MetaFetcher {
         return n;
     }
 
+    /** Ubicación según la ficha de Google (la que muestra Google Fotos, aunque el archivo no la lleve). */
+    private static double[] googleGps(Item it, StringBuilder dump) {
+        if (it.id.length() == 0 || it.akey.length() == 0) return null;
+        try {
+            org.json.JSONArray info = AlbumFetcher.photoInfo(it.id, it.akey);
+            if (dump != null) { abbrev(info, dump, 0); }
+            return findGeo(info, 0);
+        } catch (Throwable t) {
+            if (dump != null) dump.append("sin ficha de Google");
+            return null;
+        }
+    }
+
+    /** Busca una pareja [lat, lon] en grados por 10 millones (o en decimales) dentro de la ficha. */
+    private static double[] findGeo(Object o, int depth) {
+        if (depth > 8 || !(o instanceof org.json.JSONArray)) return null;
+        org.json.JSONArray a = (org.json.JSONArray) o;
+        if (a.length() == 2 && a.opt(0) instanceof Number && a.opt(1) instanceof Number) {
+            double x = ((Number) a.opt(0)).doubleValue(), y = ((Number) a.opt(1)).doubleValue();
+            boolean e7 = Math.abs(x) >= 1e6 && Math.abs(x) <= 9e8 && Math.abs(y) >= 1e6 && Math.abs(y) <= 1.8e9
+                    && x == Math.rint(x) && y == Math.rint(y);
+            if (e7) return new double[]{x / 1e7, y / 1e7};
+            if (x != Math.rint(x) && y != Math.rint(y) && Math.abs(x) <= 90 && Math.abs(y) <= 180
+                    && Math.abs(x) > 0.01 && Math.abs(y) > 0.01) return new double[]{x, y};
+        }
+        for (int i = 0; i < a.length(); i++) {
+            double[] r = findGeo(a.opt(i), depth + 1);
+            if (r != null) return r;
+        }
+        return null;
+    }
+
+    /** Resumen corto de la ficha (cadenas largas recortadas) para el diagnóstico. */
+    private static void abbrev(Object o, StringBuilder b, int depth) {
+        if (b.length() > 900) return;
+        if (o instanceof org.json.JSONArray) {
+            org.json.JSONArray a = (org.json.JSONArray) o;
+            b.append('[');
+            for (int i = 0; i < a.length() && b.length() <= 900; i++) {
+                if (i > 0) b.append(',');
+                abbrev(a.opt(i), b, depth + 1);
+            }
+            b.append(']');
+        } else if (o instanceof String) {
+            String s = (String) o;
+            b.append('"').append(s.length() > 14 ? s.substring(0, 12) + "…" : s).append('"');
+        } else b.append(o == null || o == JSONObject.NULL ? "n" : o.toString());
+    }
+
     /** Cuántos bytes del principio del archivo original se leen para el EXIF. */
     private static final int HEAD_BYTES = 1024 * 1024;
 
@@ -227,6 +276,7 @@ class MetaFetcher {
             if (ex != null && ex.getLatLong(ll) && !(ll[0] == 0f && ll[1] == 0f)) { r[0] = ll[0]; r[1] = ll[1]; }
             else {
                 double[] g = videoGps(it, head);       // Live Photo / vídeo: la ubicación va en la parte de vídeo
+                if (g == null) g = googleGps(it, null);  // la que tiene Google en su ficha
                 if (g != null) { r[0] = g[0]; r[1] = g[1]; }
             }
             String dt = ex == null ? null : ex.getAttribute("DateTimeOriginal");
@@ -248,6 +298,7 @@ class MetaFetcher {
         String make = "", model = "", exposure = "", fnum = "", iso = "", focal = "";
         int w, h;
         String file = "";
+        String dump = "";          // ficha de Google resumida (solo si no se encontró ubicación)
         String note = "";          // cómo se ha leído (para diagnóstico cuando no hay ubicación)
     }
 
@@ -275,7 +326,7 @@ class MetaFetcher {
             String cached = m.getString(k, null);
             JSONObject o = cached == null ? null : new JSONObject(cached);
             // sin GPS guardado hace tiempo se vuelve a mirar
-            if (o != null && (o.has("lat") || System.currentTimeMillis() - o.optLong("chk", 0) < RECHECK_MS)) {
+            if (o != null && o.has("lat")) {
                 d.lat = o.optDouble("lat", Double.NaN); d.lon = o.optDouble("lon", Double.NaN);
                 d.alt = o.optDouble("alt", Double.NaN);
                 if (o.optLong("date", 0) > 0) { d.date = o.optLong("date"); d.hasTime = true; }
@@ -299,6 +350,12 @@ class MetaFetcher {
             else {
                 double[] g = videoGps(it, head);
                 if (g != null) { d.lat = g[0]; d.lon = g[1]; d.note += ", ubicación del vídeo"; }
+                else {
+                    StringBuilder dump = new StringBuilder();
+                    g = googleGps(it, dump);
+                    if (g != null) { d.lat = g[0]; d.lon = g[1]; d.note += ", ubicación de la ficha de Google"; }
+                    else d.dump = dump.toString();
+                }
             }
             try { d.alt = ex.getAltitude(Double.NaN); } catch (Throwable ignored) { }
             String dt = tag(ex, "DateTimeOriginal");
@@ -392,7 +449,7 @@ class MetaFetcher {
                 country = countryName(cc);
                 if (country == null) country = "";
                 boolean complete = town != null;
-                String t2 = town != null ? town : region;
+                String t2 = castellano(town != null ? town : region);
                 name = join(t2, country.length() > 0 ? country : null);
                 if (name != null && name.length() == 0) name = null;
                 if (name != null) {
@@ -405,6 +462,19 @@ class MetaFetcher {
         }
         if (name != null) m.edit().putString(k, name).remove(k + "_t").apply();
         return name;
+    }
+
+    /** Palabras genéricas de lugar en inglés a castellano («Malcapuya Island» → «Isla Malcapuya»). */
+    private static String castellano(String n) {
+        if (n == null) return null;
+        String[][] sufijos = {{" Islands", "Islas"}, {" Island", "Isla"}, {" Beach", "Playa"}, {" Bay", "Bahía"},
+                {" Lake", "Lago"}, {" Mountain", "Monte"}, {" Falls", "Cascada"}, {" Peninsula", "Península"}};
+        for (String[] x : sufijos) {
+            if (n.endsWith(x[0]) && n.length() > x[0].length()) return x[1] + " " + n.substring(0, n.length() - x[0].length());
+        }
+        String[][] prefijos = {{"Mount ", "Monte "}, {"Lake ", "Lago "}, {"Isle of ", "Isla de "}, {"Port ", "Puerto "}, {"Saint ", "San "}};
+        for (String[] x : prefijos) if (n.startsWith(x[0])) return x[1] + n.substring(x[0].length());
+        return n;
     }
 
     /** País en español a partir de su código («CU» → «Cuba»). */

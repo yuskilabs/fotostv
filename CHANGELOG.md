@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.26.2
+- **Ubicación:** si ni el archivo ni su vídeo la llevan, se usa la que Google Fotos tiene guardada en su ficha de la foto (es la que ves en la app de Google). Y si tampoco está ahí, el panel de información muestra un resumen de esa ficha para poder averiguar dónde la guarda Google.
+- Sin ubicación, el panel de información ya no usa datos guardados: lo vuelve a leer cada vez.
+- **Lugares en castellano:** las palabras genéricas inglesas pasan a castellano («Malcapuya Island» → «Isla Malcapuya», «Mount X» → «Monte X», playa, bahía, lago…). El país ya salía siempre en castellano.
+- **Recargar:** el icono del botón gira y pone «Recargando…» mientras trabaja.
+
 ## 5.26.1
 - El botón del mosaico pasa a llamarse solo **«Recargar»**, para que quepa el control de columnas entero (− y +).
 - **PIN nuevo cada vez que arranca la app** (antes era siempre el mismo). Va ahora en su propia línea, grande, justo debajo del título de la caja del QR.

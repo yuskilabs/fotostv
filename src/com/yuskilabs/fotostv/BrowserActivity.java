@@ -596,12 +596,58 @@ public class BrowserActivity extends Activity {
     }
 
     private boolean reloading;
+    private android.widget.Button reloadBtn;
+    private Spin reloadSpin;
+    private android.animation.ValueAnimator spinAnim;
+
+    /** Icono que gira mientras se recarga. */
+    private static class Spin extends android.graphics.drawable.Drawable {
+        final android.graphics.drawable.Drawable d;
+        float angle;
+        Spin(android.graphics.drawable.Drawable d) { this.d = d; }
+        @Override public void draw(android.graphics.Canvas c) {
+            android.graphics.Rect b = getBounds();
+            c.save();
+            c.rotate(angle, b.exactCenterX(), b.exactCenterY());
+            d.setBounds(b);
+            d.draw(c);
+            c.restore();
+        }
+        @Override public void setAlpha(int a) { d.setAlpha(a); }
+        @Override public void setColorFilter(android.graphics.ColorFilter f) { d.setColorFilter(f); }
+        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
+    }
+
+    private void startSpin() {
+        if (reloadBtn == null || reloadSpin == null) return;
+        reloadBtn.setText("Recargando…");
+        if (spinAnim != null) spinAnim.cancel();
+        spinAnim = android.animation.ValueAnimator.ofFloat(0f, 360f);
+        spinAnim.setDuration(900);
+        spinAnim.setInterpolator(new android.view.animation.LinearInterpolator());
+        spinAnim.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+        spinAnim.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
+            public void onAnimationUpdate(android.animation.ValueAnimator a) {
+                reloadSpin.angle = ((Float) a.getAnimatedValue()).floatValue();
+                reloadSpin.invalidateSelf();
+                if (reloadBtn != null) reloadBtn.invalidate();
+            }
+        });
+        spinAnim.start();
+    }
+
+    private void stopSpin() {
+        if (spinAnim != null) { spinAnim.cancel(); spinAnim = null; }
+        if (reloadSpin != null) { reloadSpin.angle = 0; reloadSpin.invalidateSelf(); }
+        if (reloadBtn != null) { reloadBtn.setText("Recargar"); reloadBtn.invalidate(); }
+    }
 
     /** Vuelve a leer un solo álbum: fotos nuevas, título y ubicaciones que faltaban. */
     private void reloadAlbum(final Entry e) {
         if (e == null || e.kind != 0 || reloading) return;
         reloading = true;
         showToast("Recargando «" + e.title + "»…");
+        startSpin();
         final List<Item> old = new ArrayList<Item>(e.src);
         bg.submit(new Runnable() {
             public void run() {
@@ -625,6 +671,7 @@ public class BrowserActivity extends Activity {
                 h.post(new Runnable() {
                     public void run() {
                         reloading = false;
+                        stopSpin();
                         if (destroyed) return;
                         if (fd != null) {
                             for (Item it : fd.items) {
@@ -728,9 +775,17 @@ public class BrowserActivity extends Activity {
         });
         row.addView(fitBtn);
         if (current.kind == 0) {
-            row.addView(sbtn("Recargar", R.drawable.ic_check, new View.OnClickListener() {
+            reloadBtn = sbtn("Recargar", R.drawable.ic_refresh, new View.OnClickListener() {
                 public void onClick(View v) { reloadAlbum(current); }
-            }));
+            });
+            android.graphics.drawable.Drawable ic = reloadBtn.getCompoundDrawables()[0];
+            if (ic != null) {
+                reloadSpin = new Spin(ic);
+                reloadSpin.setBounds(ic.getBounds());
+                reloadBtn.setCompoundDrawables(reloadSpin, null, null, null);
+            }
+            row.addView(reloadBtn);
+            if (reloading) startSpin();
         }
         row.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
         refreshOrderButtons();

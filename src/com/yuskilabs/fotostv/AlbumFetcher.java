@@ -130,6 +130,11 @@ class AlbumFetcher {
         return rpc(RPC, args);
     }
 
+    /** Ficha completa que Google tiene de un elemento (nombre, fecha, y a veces la ubicación). */
+    static JSONArray photoInfo(String id, String key) throws Exception {
+        return rpc("fDcn4b", new JSONArray().put(id).put(JSONObject.NULL).put(key)).getJSONArray(0);
+    }
+
     /** Nombre del archivo original de un elemento (para saber si es vídeo). */
     static String fileName(String id, String key) throws Exception {
         JSONArray r = rpc("fDcn4b", new JSONArray().put(id).put(JSONObject.NULL).put(key));
