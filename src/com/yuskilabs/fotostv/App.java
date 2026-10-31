@@ -14,6 +14,20 @@ public class App extends Application {
             Ui.REG = Typeface.createFromAsset(getAssets(), "fonts/Figtree-Regular.ttf");
         } catch (RuntimeException e) { /* si falla, se queda la fuente de Android */ }
         sweepGuests();
+        try { Prefs.renewWebPin(this); } catch (Throwable ignored) { }
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    // al actualizar la app se vuelven a mirar las fotos guardadas como «sin ubicación» (cambia la forma de leerla)
+                    String v = Updater.installed(App.this);
+                    android.content.SharedPreferences m = Prefs.meta(App.this);
+                    if (!v.equals(m.getString("gpsReset", ""))) {
+                        MetaFetcher.forgetMissingGps(App.this);
+                        m.edit().putString("gpsReset", v).apply();
+                    }
+                } catch (Throwable ignored) { }
+            }
+        }, "gps-reset").start();
     }
 
     /** Álbumes temporales de invitados: al arrancar y cada 5 minutos mientras viva la app, se borra lo caducado. */

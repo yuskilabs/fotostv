@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.26.1
+- El botón del mosaico pasa a llamarse solo **«Recargar»**, para que quepa el control de columnas entero (− y +).
+- **PIN nuevo cada vez que arranca la app** (antes era siempre el mismo). Va ahora en su propia línea, grande, justo debajo del título de la caja del QR.
+- **Ubicación en vídeos:** ahora también se busca en sus metadatos (antes se abandonaba al no ser una foto). Al instalar una versión nueva se vuelven a mirar las fotos guardadas como «sin ubicación» (en la anterior seguían usándose datos viejos).
+- **Logo de yuskilabs** completo (la «y» salía cortada por abajo) en la app, la web y el léeme, con un pequeño margen para que no se recorte.
+
 ## 5.26.0
 - **Recargar álbum:** nuevo botón en el mosaico de un álbum (antes de «Columnas») y en el menú de pulsación larga del mosaico de álbumes. Recarga solo ese álbum (fotos nuevas, título y ubicaciones que faltaban), así que tarda mucho menos.
 - «Comprobar álbumes» pasa a llamarse **«Recargar álbumes»**.

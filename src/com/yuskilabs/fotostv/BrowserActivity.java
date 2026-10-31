@@ -728,7 +728,7 @@ public class BrowserActivity extends Activity {
         });
         row.addView(fitBtn);
         if (current.kind == 0) {
-            row.addView(sbtn("Recargar álbum", R.drawable.ic_check, new View.OnClickListener() {
+            row.addView(sbtn("Recargar", R.drawable.ic_check, new View.OnClickListener() {
                 public void onClick(View v) { reloadAlbum(current); }
             }));
         }

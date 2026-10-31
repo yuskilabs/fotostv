@@ -218,16 +218,19 @@ class MetaFetcher {
         }
         try {
             byte[] head = AlbumFetcher.get(it.url + "=d", HEAD_BYTES);
-            ExifInterface ex = (ExifInterface) ExifInterface.class
-                    .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(imageBytes(head)));
+            ExifInterface ex = null;       // en un vídeo no hay EXIF: se sigue igualmente con la búsqueda en sus metadatos
+            try {
+                ex = (ExifInterface) ExifInterface.class
+                        .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(imageBytes(head)));
+            } catch (Throwable ignored) { }
             float[] ll = new float[2];
-            if (ex.getLatLong(ll) && !(ll[0] == 0f && ll[1] == 0f)) { r[0] = ll[0]; r[1] = ll[1]; }
+            if (ex != null && ex.getLatLong(ll) && !(ll[0] == 0f && ll[1] == 0f)) { r[0] = ll[0]; r[1] = ll[1]; }
             else {
                 double[] g = videoGps(it, head);       // Live Photo / vídeo: la ubicación va en la parte de vídeo
                 if (g != null) { r[0] = g[0]; r[1] = g[1]; }
             }
-            String dt = ex.getAttribute("DateTimeOriginal");
-            if (dt == null) dt = ex.getAttribute("DateTime");
+            String dt = ex == null ? null : ex.getAttribute("DateTimeOriginal");
+            if (dt == null && ex != null) dt = ex.getAttribute("DateTime");
             if (dt != null) {
                 try { r[2] = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.US).parse(dt).getTime(); }
                 catch (Exception ignored) { }
@@ -286,10 +289,13 @@ class MetaFetcher {
         try {
             byte[] head = AlbumFetcher.get(it.url + "=d", HEAD_BYTES);
             d.note = (head.length > 1 && head[0] == 'P' && head[1] == 'K' ? "ZIP, " : "") + (head.length / 1024) + " KB leídos";
-            ExifInterface ex = (ExifInterface) ExifInterface.class
-                    .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(imageBytes(head)));
+            ExifInterface ex = null;       // en un vídeo no hay EXIF: se sigue igualmente con la búsqueda en sus metadatos
+            try {
+                ex = (ExifInterface) ExifInterface.class
+                        .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(imageBytes(head)));
+            } catch (Throwable ignored) { }
             float[] ll = new float[2];
-            if (ex.getLatLong(ll) && !(ll[0] == 0f && ll[1] == 0f)) { d.lat = ll[0]; d.lon = ll[1]; }
+            if (ex != null && ex.getLatLong(ll) && !(ll[0] == 0f && ll[1] == 0f)) { d.lat = ll[0]; d.lon = ll[1]; }
             else {
                 double[] g = videoGps(it, head);
                 if (g != null) { d.lat = g[0]; d.lon = g[1]; d.note += ", ubicación del vídeo"; }

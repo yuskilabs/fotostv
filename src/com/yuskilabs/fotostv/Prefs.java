@@ -65,6 +65,11 @@ class Prefs {
     static boolean showPlace(Context c) { return sp(c).getBoolean("showPlace", true); }
 
     /** PIN de 4 cifras de la web de ajustes (se crea la primera vez). */
+    /** PIN nuevo: se cambia cada vez que arranca la app (los móviles que entraron antes vuelven a pedirlo). */
+    static void renewWebPin(Context c) {
+        sp(c).edit().putString("webPin", String.format("%04d", new java.security.SecureRandom().nextInt(10000))).commit();
+    }
+
     static String webPin(Context c) {
         String p = sp(c).getString("webPin", "");
         if (p.length() != 4) {

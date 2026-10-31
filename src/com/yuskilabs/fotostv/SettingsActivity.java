@@ -83,10 +83,10 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         ImageView yl = new ImageView(this);
         yl.setImageResource(R.drawable.yuski_h);
         yl.setAdjustViewBounds(true);
-        // la línea base de las letras del logo está al 68,6 % de su altura: Android alinea con la de «Versión»
+        // la línea base de las letras del logo está al 66,2 % de su altura: Android alinea con la de «Versión»
         yl.setBaselineAlignBottom(false);
-        yl.setBaseline(Math.round(dp(16) * 0.686f));
-        vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(16)));
+        yl.setBaseline(Math.round(dp(18) * 0.662f));
+        vrow.addView(yl, new LinearLayout.LayoutParams(-2, dp(18)));
         View bar = new View(this);
         bar.setBackgroundColor(0xFF6B7F96);
         LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(dp(1) + 1, dp(16));
@@ -112,15 +112,14 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         c1t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         c1t.setPadding(0, 0, 0, dp(2));
         c1l.addView(c1t);
-        c1l.addView(line("Escanea el código (misma wifi) o abre:"));
-        webInfo = text("", 15, 0xFF7CC4FF);
+        pinInfo = text("", 20, Color.WHITE);
+        pinInfo.setTypeface(Ui.BLACK);
+        pinInfo.setPadding(0, dp(1), 0, dp(1));
+        c1l.addView(pinInfo);
+        webInfo = text("", 14, 0xFF7CC4FF);
         webInfo.setTypeface(Ui.BLACK);
         webInfo.setPadding(0, dp(1), 0, dp(1));
         c1l.addView(webInfo);
-        pinInfo = text("", 16, Color.WHITE);
-        pinInfo.setTypeface(Ui.BLACK);
-        pinInfo.setPadding(0, dp(1), 0, 0);
-        c1l.addView(pinInfo);
         zoneQr.addView(c1l, new LinearLayout.LayoutParams(0, -2, 1f));
         qrView = new ImageView(this);
         qrView.setScaleType(ImageView.ScaleType.FIT_CENTER);
