@@ -12,7 +12,7 @@ import android.widget.LinearLayout;
 
 /** Elementos de interfaz compartidos. */
 class Ui {
-    /** Fuente de títulos y botones (Quicksand Bold; la carga App al arrancar), de botones (Medium) y de textos normales (Regular). */
+    /** Fuente de títulos (Figtree ExtraBold; la carga App al arrancar), de botones (Regular) y de textos normales (Regular). */
     static android.graphics.Typeface BLACK = android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL);
     static android.graphics.Typeface BTN = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL);
     static android.graphics.Typeface REG = android.graphics.Typeface.DEFAULT;
