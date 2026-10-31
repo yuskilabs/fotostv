@@ -1,6 +1,6 @@
 {
-  "version": "5.22.1",
+  "version": "5.22.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 688319,
-  "notes": "- Pase de diapositivas: el nombre del álbum más grande y la fecha más pequeña.\n- Los textos destacados pasan de ExtraBold a Bold (Figtree Bold)."
+  "notes": "- Pase de diapositivas: el nombre del álbum se muestra sin la fecha («Tenerife 2026» → «Tenerife», «Roma (3-10 mayo)» → «Roma»), porque la fecha de cada foto ya sale abajo. En los mosaicos y la configuración el nombre sigue completo."
 }

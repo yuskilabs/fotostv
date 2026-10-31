@@ -12,6 +12,34 @@ import android.widget.LinearLayout;
 
 /** Elementos de interfaz compartidos. */
 class Ui {
+    private static final java.util.regex.Pattern DATE_TOKEN = java.util.regex.Pattern.compile("^[\\d.,/\\-\u2013\u2014:\u00ba\u00aa]+$");
+    private static final java.util.regex.Pattern MONTHS = java.util.regex.Pattern.compile(
+            "^(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre|"
+            + "ene|feb|mar|abr|may|jun|jul|ago|sep|sept|oct|nov|dic|january|february|march|april|june|july|august|"
+            + "september|october|november|december|jan|apr|aug|dec)$");
+    private static final java.util.regex.Pattern LINKS = java.util.regex.Pattern.compile(
+            "^(de|del|al|a|y|e|desde|hasta|entre|el|los|-|\u2013|\u2014|\u00b7|\\||/)$");
+
+    /** Nombre del \u00e1lbum sin fechas al final («Tenerife 2026» \u2192 «Tenerife», «Roma (3-10 mayo)» \u2192 «Roma»). */
+    static String albumName(String name) {
+        if (name == null) return null;
+        String s = name.trim();
+        String t = s.replaceAll("\\s*[\\(\\[][^\\)\\]]*\\d[^\\)\\]]*[\\)\\]]", "").trim();
+        String[] w = t.split("\\s+");
+        int end = w.length;
+        while (end > 1) {
+            String k = w[end - 1].toLowerCase(java.util.Locale.ROOT).replaceAll("[,;.:]+$", "");
+            if (k.length() == 0 || DATE_TOKEN.matcher(k).matches() || MONTHS.matcher(k).matches() || LINKS.matcher(k).matches()) end--;
+            else break;
+        }
+        int start = 0;
+        while (start < end - 1 && w[start].matches("^\\d{4}([\\-/.]\\d{1,2}){0,2}[:,.\\-]?$")) start++;
+        StringBuilder b = new StringBuilder();
+        for (int i = start; i < end; i++) { if (b.length() > 0) b.append(' '); b.append(w[i]); }
+        String r = b.toString().replaceAll("[\\s:,;.\\-\u2013\u2014\u00b7|/]+$", "").trim();
+        return r.length() == 0 ? s : r;
+    }
+
     /** Fuente de títulos (Figtree Bold; la carga App al arrancar), de botones (Regular) y de textos normales (Regular). */
     static android.graphics.Typeface BLACK = android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL);
     static android.graphics.Typeface BTN = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL);

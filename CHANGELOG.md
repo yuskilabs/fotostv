@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.22.2
+- Pase de diapositivas: el nombre del álbum se muestra sin la fecha («Tenerife 2026» → «Tenerife», «Roma (3-10 mayo)» → «Roma»), porque la fecha de cada foto ya sale abajo. En los mosaicos y la configuración el nombre sigue completo.
+
 ## 5.22.1
 - Pase de diapositivas: el nombre del álbum más grande y la fecha más pequeña.
 - Los textos destacados pasan de ExtraBold a Bold (Figtree Bold).

@@ -421,7 +421,7 @@ class Slideshow {
         info.animate().cancel();
         final Runnable apply = new Runnable() {
             public void run() {
-                set(tvAlbum, Prefs.showAlbum(ctx) ? s.album : null);
+                set(tvAlbum, Prefs.showAlbum(ctx) ? Ui.albumName(s.album) : null);
                 set(tvDate, Prefs.showDate(ctx) ? s.date : null);
                 setPlace(Prefs.showPlace(ctx) ? s.place : null);
                 info.setVisibility(View.VISIBLE);
@@ -1433,7 +1433,7 @@ class Slideshow {
                 videoHolder.setVisibility(View.INVISIBLE);
             }
             info.animate().cancel();
-            set(tvAlbum, Prefs.showAlbum(ctx) ? s.album : null);
+            set(tvAlbum, Prefs.showAlbum(ctx) ? Ui.albumName(s.album) : null);
             set(tvDate, Prefs.showDate(ctx) ? s.date : null);
             setPlace(Prefs.showPlace(ctx) ? s.place : null);
             info.setVisibility(View.VISIBLE);
