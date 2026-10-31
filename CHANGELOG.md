@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.23.1
+- La web de ajustes pide ahora un **PIN** de 4 cifras (sale en la tele junto a la dirección). El código QR ya lo lleva puesto, así que escaneándolo se entra directo; en cada móvil se pide una sola vez. La página de invitado no lo necesita, de modo que una visita solo ve esa página.
+
 ## 5.23.0
 - **Invitados: álbumes temporales.** Nuevo botón «Invitado» en la pantalla principal: muestra un código QR (vale 15 minutos) que abre en el móvil de la visita una página con solo un campo para pegar el enlace de su álbum compartido y un botón «Mostrar ahora». Al pulsarlo, la tele empieza al momento un pase aleatorio de ese álbum.
 - Los temporales duran **2 horas** (o hasta «Quitar ahora», con pulsación larga sobre el álbum) y puede haber varios a la vez, cada uno con su cuenta atrás. Salen **al principio** de «Ver álbumes» con la etiqueta «Temporal · quedan…» y como línea en la caja «Tus álbumes».

@@ -322,8 +322,8 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                         if (ok) {
                             srv.start();
                             String ip = localIp();
-                            webInfo.setText("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + srv.port);
-                            showQr("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + srv.port, ip != null);
+                            webInfo.setText("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + srv.port + "    PIN " + Prefs.webPin(SettingsActivity.this));
+                            showQr("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + srv.port + "/?pin=" + Prefs.webPin(SettingsActivity.this), ip != null);
                         } else {
                             webInfo.setText("No se pudo abrir la web de configuración.");
                         }
