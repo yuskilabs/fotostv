@@ -74,6 +74,7 @@ public class IdleService extends AccessibilityService {
         int min = Prefs.idleMin(this);
         if (min <= 0) { diag = "desactivado"; return; }
         if (showing) { diag = "el pase ya está abierto"; return; }
+        if (Session.playerOn) { diag = lastBlock = "hay un pase abierto (se reinicia la espera)"; last = System.currentTimeMillis(); return; }
         long idle = System.currentTimeMillis() - last;
         diag = "sin tocar hace " + idle / 1000 + " s de " + min * 60 + " s (teclas " + keys + ", eventos " + events + ")";
         if (idle < min * 60000L) return;

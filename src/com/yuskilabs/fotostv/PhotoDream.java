@@ -52,10 +52,12 @@ public class PhotoDream extends DreamService {
         super.onDreamingStarted();
         if (show != null) show.start();
         armStop();
+        if (Music.enabled(this, true)) Music.start(this);
     }
 
     @Override public void onDreamingStopped() {
         hh.removeCallbacks(stopper);
+        Music.stop();
         if (show != null) show.stop();
         super.onDreamingStopped();
     }

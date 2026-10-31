@@ -3,6 +3,14 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.27.0
+- **Música del pase** (nueva): en la web de ajustes, «Música del pase» permite elegir una **emisora de internet** (SomaFM Drone Zone, Deep Space One, Space Station, Groove Salad, Radio Paradise Mellow Mix, Radio Swiss Classic, o la dirección que pegues) o una **carpeta con canciones** de la tele o de un USB (se reproducen al azar). Volumen propio y casilla para que suene también en el salvapantallas y en la vista previa. Si un vídeo se oye, la música se calla mientras dura. Si la emisora se corta, reintenta sola. Con carpeta, la tele pide permiso para leer archivos la primera vez.
+- **Logo nuevo de FotosTV** en todas sus versiones, con fondo transparente: icono de la app, banner de Android TV, cabecera de la app y de la web de ajustes, y las imágenes del léeme (claro/oscuro).
+- **Pase manual:** mientras hay un pase abierto desde «Ver álbumes», el inicio automático ya no lo tapa con el pase de salvapantallas pasados los minutos configurados.
+
+## 5.26.4
+- **Lugar:** arreglado el caso en que salía un número en vez de la localidad («129, Illes Balears»): era el número de portal o carretera que a veces devuelve el servicio de direcciones. Ahora nunca se usa; si no hay localidad, se busca en OpenStreetMap y, si tampoco, el núcleo habitado más cercano. Se vuelven a calcular los lugares guardados.
+
 ## 5.26.3
 - **Recargar:** el texto del botón ya no cambia a «Recargando…» (ensanchaba la barra y el control de columnas se salía); solo gira el icono.
 - **Vídeos:** mientras se reproduce un vídeo, el álbum, la fecha y la ubicación salen en pequeño y con transparencia, a la izquierda y justo encima de la barra de progreso (según lo que tengas activado en los ajustes; la hora no).

@@ -394,74 +394,60 @@ class MetaFetcher {
     static String place(Context c, double lat, double lon) {
         if (Double.isNaN(lat)) return null;
         SharedPreferences m = Prefs.meta(c);
-        String k = String.format(Locale.US, "p4_%.2f,%.2f", lat, lon);
+        String k = String.format(Locale.US, "p5_%.2f,%.2f", lat, lon);
         if (m.contains(k)) {
             long t = m.getLong(k + "_t", 0);
             if (t == 0 || System.currentTimeMillis() - t < 24L * 60 * 60 * 1000) return m.getString(k, null);
         }
-        String name = null;
-        String cc = null, country = null, town = null, region = null;
+        String cc = null, town = null, region = null, rgEs = null;
         try {
             if (Geocoder.isPresent()) {
                 List<Address> l = new Geocoder(c, ES).getFromLocation(lat, lon, 5);
                 if (l != null && !l.isEmpty()) {
-                    Address a = l.get(0);
-                    for (Address x : l) if (cc == null && x.getCountryCode() != null && x.getCountryCode().length() > 0) cc = x.getCountryCode();
-                    if (cc != null && !"ES".equalsIgnoreCase(cc)) {
-                        for (Address x : l) {
-                            if (town == null) town = firstLatin(x.getLocality(), x.getSubLocality());
-                            if (region == null) region = firstLatin(x.getAdminArea());
-                        }
-                    } else {
-                        String tn = first(a.getLocality(), a.getSubLocality(), a.getFeatureName());
-                        String rg = first(a.getSubAdminArea(), a.getAdminArea(), a.getCountryName());
-                        name = join(tn, rg);
+                    for (Address x : l) {
+                        if (cc == null && x.getCountryCode() != null && x.getCountryCode().length() > 0) cc = x.getCountryCode();
+                        // nunca featureName: en la costa o el campo suele ser solo un número de portal o de carretera
+                        if (town == null) town = firstLatin(x.getLocality(), x.getSubLocality());
+                        if (region == null) region = firstLatin(x.getAdminArea());
                     }
+                    Address a = l.get(0);
+                    rgEs = first(a.getSubAdminArea(), a.getAdminArea());
                 }
             }
         } catch (Exception ignored) { }
-        if (name == null && (cc == null || !"ES".equalsIgnoreCase(cc))) {
-            {   // OpenStreetMap primero fuera de España: da el nombre en castellano si existe, si no en inglés, si no el local
-                try {
-                    String url = String.format(Locale.US,
-                            "https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&lat=%.5f&lon=%.5f&accept-language=",
-                            lat, lon) + URLEncoder.encode("es,en", "UTF-8");
-                    JSONObject a = new JSONObject(new String(AlbumFetcher.get(url), "UTF-8")).getJSONObject("address");
-                    String ncc = a.optString("country_code", "");
-                    if (ncc.length() > 0) cc = ncc;
-                    if ("es".equalsIgnoreCase(cc)) {
-                        String tn = first(a.optString("city", null), a.optString("town", null),
-                                a.optString("village", null), a.optString("municipality", null));
-                        String rg = first(a.optString("province", null), a.optString("county", null),
-                                a.optString("state", null), a.optString("country", null));
-                        name = join(tn, rg);
-                    } else {
-                        String nt = firstLatin(a.optString("city", null), a.optString("town", null),
-                                a.optString("village", null), a.optString("municipality", null),
-                                a.optString("hamlet", null), a.optString("suburb", null),
-                                a.optString("city_district", null), a.optString("neighbourhood", null));
-                        if (nt != null) town = nt;
-                        if (region == null) region = firstLatin(a.optString("state", null));
-                    }
-                } catch (Exception ignored) { }
-            }
-            if (name == null && town == null) town = nearestPlace(lat, lon);   // mar abierto, campo: el núcleo más cercano
-            if (name == null) {
-                country = countryName(cc);
-                if (country == null) country = "";
-                boolean complete = town != null;
-                String t2 = castellano(town != null ? town : region);
-                name = join(t2, country.length() > 0 ? country : null);
-                if (name != null && name.length() == 0) name = null;
-                if (name != null) {
-                    SharedPreferences.Editor ed = m.edit().putString(k, name);
-                    if (complete) ed.remove(k + "_t"); else ed.putLong(k + "_t", System.currentTimeMillis());
-                    ed.apply();
-                }
-                return name;
-            }
+        boolean es = cc != null && "ES".equalsIgnoreCase(cc);
+        if (town == null) {
+            // OpenStreetMap: nombre en castellano si existe, si no en inglés, si no el local
+            try {
+                String url = String.format(Locale.US,
+                        "https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&lat=%.5f&lon=%.5f&accept-language=",
+                        lat, lon) + URLEncoder.encode("es,en", "UTF-8");
+                JSONObject a = new JSONObject(new String(AlbumFetcher.get(url), "UTF-8")).getJSONObject("address");
+                String ncc = a.optString("country_code", "");
+                if (ncc.length() > 0) { cc = ncc; es = "es".equalsIgnoreCase(ncc); }
+                town = firstLatin(a.optString("city", null), a.optString("town", null),
+                        a.optString("village", null), a.optString("municipality", null),
+                        a.optString("hamlet", null), a.optString("suburb", null),
+                        a.optString("city_district", null), a.optString("neighbourhood", null));
+                if (es && rgEs == null) rgEs = first(a.optString("province", null), a.optString("county", null), a.optString("state", null));
+                if (region == null) region = firstLatin(a.optString("state", null));
+            } catch (Exception ignored) { }
         }
-        if (name != null) m.edit().putString(k, name).remove(k + "_t").apply();
+        if (town == null) town = nearestPlace(lat, lon);   // mar abierto, campo: el núcleo habitado más cercano
+        boolean complete = town != null;
+        String name;
+        if (es) {
+            name = join(town, rgEs != null ? rgEs : region);
+        } else {
+            String country = countryName(cc);
+            name = join(castellano(town != null ? town : region), country);
+        }
+        if (name != null && name.length() == 0) name = null;
+        if (name != null) {
+            SharedPreferences.Editor ed = m.edit().putString(k, name);
+            if (complete) ed.remove(k + "_t"); else ed.putLong(k + "_t", System.currentTimeMillis());
+            ed.apply();
+        }
         return name;
     }
 

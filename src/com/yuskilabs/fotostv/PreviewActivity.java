@@ -37,8 +37,8 @@ public class PreviewActivity extends Activity {
         overridePendingTransition(0, android.R.anim.fade_out);
     }
 
-    @Override protected void onResume() { super.onResume(); show.start(); armStop(); }
-    @Override protected void onPause() { hh.removeCallbacks(stopper); show.stop(); super.onPause(); }
+    @Override protected void onResume() { super.onResume(); show.start(); armStop(); if (Music.enabled(this, true)) Music.start(this); }
+    @Override protected void onPause() { hh.removeCallbacks(stopper); show.stop(); Music.stop(); super.onPause(); }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
         if (show.infoOpen()) {                       // cualquier botón cierra la información y sigue el pase

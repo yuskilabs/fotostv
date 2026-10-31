@@ -1588,7 +1588,7 @@ class Slideshow {
                 public void onPrepared(MediaPlayer p) {
                     if (p != player) return;
                     h.removeCallbacks(videoTimeout);
-                    if (!Prefs.sound(ctx)) p.setVolume(0f, 0f);
+                    if (!Prefs.sound(ctx)) p.setVolume(0f, 0f); else Music.duck(true);   // con el sonido del vídeo, la música se calla
                     if (s.startMs > 0) { try { p.seekTo(s.startMs); } catch (Exception ignored) { } }
                     h.removeCallbacks(progTick);
                     h.post(progTick);
@@ -1732,6 +1732,7 @@ class Slideshow {
         h.removeCallbacks(progTick);
         if (progRow != null) progRow.setVisibility(View.GONE);
         if (vidCaption != null) vidCaption.setVisibility(View.GONE);
+        Music.duck(false);
         if (player != null) {
             MediaPlayer p = player;
             player = null;

@@ -1,6 +1,6 @@
 {
-  "version": "5.26.3",
+  "version": "5.27.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 737615,
-  "notes": "- Recargar: el texto del botón ya no cambia a «Recargando…» (ensanchaba la barra y el control de columnas se salía); solo gira el icono.\n- Vídeos: mientras se reproduce un vídeo, el álbum, la fecha y la ubicación salen en pequeño y con transparencia, a la izquierda y justo encima de la barra de progreso (según lo que tengas activado en los ajustes; la hora no).\n- Lugar en castellano: fuera de España se pide primero a OpenStreetMap, que da el nombre en castellano si existe, si no en inglés, y si no el local. Se vuelven a calcular los lugares guardados.\n- Quitados del panel de información el aviso «No consta en el archivo» y la ficha de Google (solo servían para diagnosticar)."
+  "size": 852303,
+  "notes": "- Música del pase (nueva): en la web de ajustes, «Música del pase» permite elegir una emisora de internet (SomaFM Drone Zone, Deep Space One, Space Station, Groove Salad, Radio Paradise Mellow Mix, Radio Swiss Classic, o la dirección que pegues) o una carpeta con canciones de la tele o de un USB (se reproducen al azar). Volumen propio y casilla para que suene también en el salvapantallas y en la vista previa. Si un vídeo se oye, la música se calla mientras dura. Si la emisora se corta, reintenta sola. Con carpeta, la tele pide permiso para leer archivos la primera vez.\n- Logo nuevo de FotosTV en todas sus versiones, con fondo transparente: icono de la app, banner de Android TV, cabecera de la app y de la web de ajustes, y las imágenes del léeme (claro/oscuro).\n- Pase manual: mientras hay un pase abierto desde «Ver álbumes», el inicio automático ya no lo tapa con el pase de salvapantallas pasados los minutos configurados."
 }

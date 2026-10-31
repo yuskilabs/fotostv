@@ -34,6 +34,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     private TextView webInfo, pinInfo, status, verInfo, msgView;
     private ImageView qrView;
     private LinearLayout zoneQr, zoneGuest;
+    private boolean askedStorage;
     private String webUrl;   // dirección de la web de ajustes (sin PIN), o null si aún no está lista
     private Button cacheBtn;
     private boolean updating;
@@ -379,6 +380,12 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     @Override protected void onStart() {
         super.onStart();
         Guest.purgeExpired(this);
+        if ("folder".equals(Prefs.musicMode(this)) && android.os.Build.VERSION.SDK_INT >= 23
+                && checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                && !askedStorage) {
+            askedStorage = true;
+            try { requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 8); } catch (Throwable ignored) { }
+        }
         h.removeCallbacks(guestTick);
         h.postDelayed(guestTick, 60000);
         refreshCache();

@@ -251,6 +251,11 @@ class WebConfigServer extends Thread {
             .putBoolean("showAlbum", f.containsKey("showAlbum"))
             .putBoolean("showDate", f.containsKey("showDate"))
             .putBoolean("showPlace", f.containsKey("showPlace"))
+            .putString("musicMode", f.containsKey("musicMode") ? f.get("musicMode") : "off")
+            .putString("musicRadio", val(f, "musicRadio"))
+            .putString("musicFolder", val(f, "musicFolder"))
+            .putInt("musicVol", Math.max(0, Math.min(100, intOf(f.get("musicVol"), Prefs.musicVol(ctx)))))
+            .putBoolean("musicDream", f.containsKey("musicDream"))
             .apply();
     }
 
@@ -273,7 +278,10 @@ class WebConfigServer extends Thread {
              .put("video", Prefs.video(ctx)).put("sound", Prefs.sound(ctx)).put("clock", Prefs.clock(ctx))
              .put("showAlbum", Prefs.showAlbum(ctx)).put("showDate", Prefs.showDate(ctx))
              .put("showPlace", Prefs.showPlace(ctx)).put("thumbMB", Prefs.thumbMB(ctx))
-             .put("videoMB", Prefs.videoMB(ctx));
+             .put("videoMB", Prefs.videoMB(ctx))
+             .put("musicMode", Prefs.musicMode(ctx)).put("musicRadio", Prefs.musicRadio(ctx))
+             .put("musicFolder", Prefs.musicFolder(ctx)).put("musicVol", Prefs.musicVol(ctx))
+             .put("musicDream", Prefs.musicDream(ctx));
             o.put("settings", s);
             org.json.JSONArray hid = new org.json.JSONArray();
             for (String k : Prefs.hidden(ctx)) hid.put(k);
@@ -299,9 +307,9 @@ class WebConfigServer extends Thread {
             org.json.JSONObject s = o.optJSONObject("settings");
             if (s != null) {
                 android.content.SharedPreferences.Editor e = Prefs.sp(ctx).edit();
-                String[] ints = {"interval", "thumbMB", "videoMB"};
-                String[] strs = {"fit", "order", "albumMode"};
-                String[] bools = {"resume", "video", "sound", "clock", "showAlbum", "showDate", "showPlace"};
+                String[] ints = {"interval", "thumbMB", "videoMB", "musicVol"};
+                String[] strs = {"fit", "order", "albumMode", "musicMode", "musicRadio", "musicFolder"};
+                String[] bools = {"resume", "video", "sound", "clock", "showAlbum", "showDate", "showPlace", "musicDream"};
                 for (String k : ints) if (s.has(k)) e.putInt(k, s.optInt(k));
                 for (String k : strs) if (s.has(k)) e.putString(k, s.optString(k));
                 for (String k : bools) if (s.has(k)) e.putBoolean(k, s.optBoolean(k));
@@ -477,6 +485,24 @@ class WebConfigServer extends Thread {
           .append(opt("300", "300 MB", vm)).append(opt("500", "500 MB", vm)).append(opt("1000", "1 GB", vm))
           .append(opt("1500", "1,5 GB", vm)).append(opt("3000", "3 GB", vm))
           .append("</select><p class='muted'>Al llenarse, se borra lo menos usado. En dispositivos con poco espacio (Fire Stick) conviene dejarlo bajo.</p>");
+        String mm = Prefs.musicMode(ctx), mr = Prefs.musicRadio(ctx);
+        sb.append("<h2>Música del pase</h2><label>Fuente</label><select name='musicMode'>")
+          .append(opt("off", "Sin música", mm)).append(opt("radio", "Emisora de internet", mm))
+          .append(opt("folder", "Carpeta con canciones (en la tele o en un USB)", mm))
+          .append("</select><label>Emisora (tranquila y sin anuncios)</label><select onchange=\"if(this.value)document.getElementById('mr').value=this.value\">")
+          .append("<option value=''>Elegir una…</option>");
+        for (String[] pr : Music.PRESETS) sb.append("<option value='").append(pr[1]).append("'>").append(esc(pr[0])).append("</option>");
+        sb.append("</select><input id='mr' name='musicRadio' type='url' placeholder='o pega aquí la dirección de otra emisora' value='")
+          .append(esc(mr)).append("'>")
+          .append("<label>Carpeta de canciones</label><input name='musicFolder' list='mfl' placeholder='/storage/emulated/0/Music' value='")
+          .append(esc(Prefs.musicFolder(ctx))).append("'><datalist id='mfl'>");
+        try { for (String d : Music.suggestFolders()) sb.append("<option value='").append(esc(d)).append("'>"); } catch (Throwable ignored) { }
+        sb.append("</datalist><label>Volumen de la música</label><input type='range' name='musicVol' min='0' max='100' value='")
+          .append(Prefs.musicVol(ctx)).append("'>")
+          .append(chk("musicDream", "Que suene también en el salvapantallas y en la vista previa", Prefs.musicDream(ctx)))
+          .append("<p class='muted'>Suena en los pases que abres tú. Si un vídeo tiene sonido, la música se calla mientras dura. "
+                + "Las emisoras necesitan internet; con carpeta, la tele pedirá permiso para leer los archivos la primera vez. "
+                + "Si una emisora deja de funcionar, pega otra dirección.</p>");
         sb.append("<h2>Información en pantalla</h2>")
           .append(chk("showAlbum", "Nombre del álbum", Prefs.showAlbum(ctx)))
           .append(chk("showDate", "Fecha de captura", Prefs.showDate(ctx)))

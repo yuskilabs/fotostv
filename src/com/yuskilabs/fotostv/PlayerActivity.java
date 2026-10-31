@@ -46,9 +46,21 @@ public class PlayerActivity extends Activity {
         super.onResume();
         if (guestId != null) { gh.removeCallbacks(guestCheck); guestCheck.run(); if (isFinishing()) return; }
         if (show != null) show.start();
+        Session.playerOn = true;
+        if (Music.enabled(this, false)) {
+            if ("folder".equals(Prefs.musicMode(this)) && android.os.Build.VERSION.SDK_INT >= 23 && checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 7);
+            } else Music.start(this);
+        }
+    }
+
+    @Override public void onRequestPermissionsResult(int code, String[] perms, int[] res) {
+        if (code == 7 && Music.enabled(this, false)) Music.start(this);
     }
 
     @Override protected void onPause() {
+        Session.playerOn = false;
+        Music.stop();
         gh.removeCallbacks(guestCheck);
         if (show != null) {
             String k = show.currentKey();

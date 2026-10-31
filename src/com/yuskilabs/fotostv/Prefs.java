@@ -59,6 +59,12 @@ class Prefs {
     static int autoStopMin(Context c) { return sp(c).getInt("autoStopMin", 10); }
     static boolean video(Context c) { return sp(c).getBoolean("video", true); }
     static boolean sound(Context c) { return sp(c).getBoolean("sound", false); }
+    /** Música del pase: off | radio | folder. */
+    static String musicMode(Context c) { return sp(c).getString("musicMode", "off"); }
+    static String musicRadio(Context c) { return sp(c).getString("musicRadio", ""); }
+    static String musicFolder(Context c) { return sp(c).getString("musicFolder", ""); }
+    static int musicVol(Context c) { return sp(c).getInt("musicVol", 40); }
+    static boolean musicDream(Context c) { return sp(c).getBoolean("musicDream", false); }
     static boolean clock(Context c) { return sp(c).getBoolean("clock", true); }
     static boolean showAlbum(Context c) { return sp(c).getBoolean("showAlbum", true); }
     static boolean showDate(Context c) { return sp(c).getBoolean("showDate", true); }
