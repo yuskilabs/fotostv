@@ -24,7 +24,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Información en pantalla**: nombre del álbum, fecha de captura, lugar (si la foto tiene GPS) y hora. Con ▼ se abre la ficha completa (archivo, cámara, exposición, resolución…) y un **mapa** con el punto exacto.
 - **Invitados**: botón «Invitado» con un código QR para que una visita enseñe su álbum de Google Fotos en tu tele al momento, sin tocar tu cuenta ni tus álbumes. Dura 2 horas (puede haber varios a la vez), sale al principio de «Ver álbumes» y, al caducar, se borra todo rastro.
 - **Fotos favoritas y ocultas**: se marcan desde el mando y quedan guardadas en sus álbumes.
-- **Configuración desde el móvil** mediante una página web local que sirve la propia tele, con **código QR** para abrirla al instante: añadir enlaces (uno a uno o en lote), ajustes, copia de seguridad.
+- **Configuración desde el móvil** mediante una página web local que sirve la propia tele, con **código QR** para abrirla al instante (con OK sobre el código se ve en grande): añadir enlaces (uno a uno o en lote), ajustes, copia de seguridad.
 - **Inicio automático** del pase tras 1, 2, 5, 10, 15 o 30 minutos sin tocar el mando (pensado sobre todo para Fire TV) y **cierre automático** del pase pasado un rato (5 min a 2 h, o nunca) por si la tele se apaga.
 - **Fondo de pantalla para Projectivy Launcher** con fotos (y opcionalmente vídeos) de tus álbumes.
 - **Precarga**: las siguientes fotos y vídeos se preparan por adelantado para que el pase no se pare.

@@ -64,16 +64,6 @@ class Prefs {
     static boolean showDate(Context c) { return sp(c).getBoolean("showDate", true); }
     static boolean showPlace(Context c) { return sp(c).getBoolean("showPlace", true); }
 
-    /** PIN de 4 cifras de la web de ajustes (se crea la primera vez). */
-    static String webPin(Context c) {
-        String p = sp(c).getString("webPin", "");
-        if (p.length() != 4) {
-            p = String.format("%04d", new java.security.SecureRandom().nextInt(10000));
-            sp(c).edit().putString("webPin", p).commit();
-        }
-        return p;
-    }
-
     static class Album {
         String url, name;
         boolean show;

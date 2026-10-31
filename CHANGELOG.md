@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.24.0
+- Pantalla principal: la caja de arriba a la derecha se divide en **dos zonas** que se ven enteras y se eligen con el mando: el código QR de configuración (OK lo muestra en grande, con su dirección y los pasos) y «Invitado». Se ha quitado el texto de pasos de esa caja para hacer sitio; ahora está en el código ampliado.
+- Quitado el **PIN** de la web de ajustes: ya no se pide ni sale en la tele, y el QR vuelve a abrir la web directamente.
+- Pase de diapositivas: el nombre del álbum conserva las edades como «(0-1 año)», «3 meses» o «1 año»; solo se quitan las fechas.
+
 ## 5.23.3
 - Versión de prueba del sistema de actualización: no cambia nada en la app.
 

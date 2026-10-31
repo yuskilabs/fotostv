@@ -20,11 +20,24 @@ class Ui {
     private static final java.util.regex.Pattern LINKS = java.util.regex.Pattern.compile(
             "^(de|del|al|a|y|e|desde|hasta|entre|el|los|-|\u2013|\u2014|\u00b7|\\||/)$");
 
-    /** Nombre del \u00e1lbum sin fechas al final («Tenerife 2026» \u2192 «Tenerife», «Roma (3-10 mayo)» \u2192 «Roma»). */
+    private static final java.util.regex.Pattern PAREN = java.util.regex.Pattern.compile("\\s*[\\(\\[][^\\)\\]]*\\d[^\\)\\]]*[\\)\\]]");
+    /** Edades entre paréntesis («0-1 año», «3 meses»): no son fechas y se conservan. */
+    private static final java.util.regex.Pattern AGE = java.util.regex.Pattern.compile(
+            "(?<!\\p{L})(años?|anos?|mes(es)?|semanas?|years?|months?|weeks?)(?!\\p{L})",
+            java.util.regex.Pattern.CASE_INSENSITIVE | java.util.regex.Pattern.UNICODE_CASE);
+
+    /** Nombre del álbum sin fechas al final («Tenerife 2026» → «Tenerife», «Roma (3-10 mayo)» → «Roma»); las edades como «(0-1 año)» o «1 año» se mantienen. */
     static String albumName(String name) {
         if (name == null) return null;
         String s = name.trim();
-        String t = s.replaceAll("\\s*[\\(\\[][^\\)\\]]*\\d[^\\)\\]]*[\\)\\]]", "").trim();
+        java.util.regex.Matcher pm = PAREN.matcher(s);
+        StringBuffer pb = new StringBuffer();
+        while (pm.find()) {
+            String g = pm.group();
+            pm.appendReplacement(pb, AGE.matcher(g).find() ? java.util.regex.Matcher.quoteReplacement(g) : "");
+        }
+        pm.appendTail(pb);
+        String t = pb.toString().trim();
         String[] w = t.split("\\s+");
         int end = w.length;
         while (end > 1) {

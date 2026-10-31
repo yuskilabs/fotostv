@@ -33,6 +33,8 @@ import java.util.List;
 public class SettingsActivity extends Activity implements WebConfigServer.Listener {
     private TextView webInfo, status, verInfo, msgView;
     private ImageView qrView;
+    private LinearLayout zoneQr, zoneGuest;
+    private String webUrl;   // dirección de la web de ajustes (sin PIN), o null si aún no está lista
     private Button cacheBtn;
     private boolean updating;
     private WebConfigServer server;
@@ -91,10 +93,11 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         topP.setMargins(0, 0, dp(7), 0);
         row1.addView(top, topP);
 
-        LinearLayout c1 = card();
-        c1.setOrientation(LinearLayout.HORIZONTAL);
-        c1.setPadding(dp(16), dp(8), dp(16), dp(8));
-        c1.setGravity(Gravity.CENTER_VERTICAL);
+        // arriba a la derecha, dos zonas separadas: el QR de la configuración (OK lo agranda) y el botón «Invitado»
+        zoneQr = zone();
+        zoneQr.setOrientation(LinearLayout.HORIZONTAL);
+        zoneQr.setGravity(Gravity.CENTER_VERTICAL);
+        zoneQr.setPadding(dp(16), dp(8), dp(10), dp(8));
         LinearLayout c1l = new LinearLayout(this);
         c1l.setOrientation(LinearLayout.VERTICAL);
         c1l.setGravity(Gravity.CENTER_VERTICAL);
@@ -102,38 +105,49 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         c1t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         c1t.setPadding(0, 0, 0, dp(2));
         c1l.addView(c1t);
-        c1l.addView(line("1. En Google Fotos: álbum → Compartir → Crear enlace → copiar."));
-        c1l.addView(line("2. Con el móvil en la misma wifi, escanea el código o abre:"));
-        webInfo = text("", 16, 0xFF7CC4FF);
+        c1l.addView(line("Escanea el código (misma wifi) o abre:"));
+        webInfo = text("", 15, 0xFF7CC4FF);
         webInfo.setTypeface(Ui.BLACK);
         webInfo.setPadding(0, dp(1), 0, dp(1));
         c1l.addView(webInfo);
-        c1l.addView(line("3. Pega los enlaces y elige «FotosTV» como salvapantallas."));
-        c1.addView(c1l, new LinearLayout.LayoutParams(0, -2, 1f));
+        zoneQr.addView(c1l, new LinearLayout.LayoutParams(0, -2, 1f));
         qrView = new ImageView(this);
         qrView.setScaleType(ImageView.ScaleType.FIT_CENTER);
         qrView.setVisibility(View.GONE);
-        // QR y, justo debajo, el botón «Invitado» (más pequeño que los demás)
-        LinearLayout qcol = new LinearLayout(this);
-        qcol.setOrientation(LinearLayout.VERTICAL);
-        qcol.setGravity(Gravity.CENTER_HORIZONTAL);
-        qcol.addView(qrView, new LinearLayout.LayoutParams(dp(104), dp(104)));
-        Button guestBtn = Ui.icon(Ui.button(this, "Invitado", new View.OnClickListener() {
-            public void onClick(View v) { guestDialog(); }
-        }), R.drawable.ic_guest);
-        guestBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
-        guestBtn.setMinHeight(0);
-        guestBtn.setMinimumHeight(0);
-        guestBtn.setPadding(dp(8), dp(2), dp(8), dp(2));
-        LinearLayout.LayoutParams gbp = new LinearLayout.LayoutParams(dp(104), dp(30));
-        gbp.setMargins(0, dp(6), 0, 0);
-        qcol.addView(guestBtn, gbp);
-        LinearLayout.LayoutParams qp = new LinearLayout.LayoutParams(-2, -2);
+        LinearLayout.LayoutParams qp = new LinearLayout.LayoutParams(dp(84), dp(84));
         qp.setMargins(dp(12), 0, 0, 0);
-        c1.addView(qcol, qp);
-        LinearLayout.LayoutParams c1p = new LinearLayout.LayoutParams(0, -1, 0.50f);
+        zoneQr.addView(qrView, qp);
+        zoneQr.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) { qrDialog(); }
+        });
+
+        zoneGuest = zone();
+        zoneGuest.setOrientation(LinearLayout.HORIZONTAL);
+        zoneGuest.setGravity(Gravity.CENTER_VERTICAL);
+        zoneGuest.setPadding(dp(16), dp(4), dp(16), dp(4));
+        ImageView gi = new ImageView(this);
+        gi.setImageResource(R.drawable.ic_guest);
+        zoneGuest.addView(gi, new LinearLayout.LayoutParams(dp(22), dp(22)));
+        TextView gt = text("Invitado", 15, Color.WHITE);
+        gt.setTypeface(Ui.BLACK);
+        gt.setPadding(dp(10), 0, dp(12), 0);
+        zoneGuest.addView(gt);
+        TextView gs = text("Enseña en la tele el álbum de una visita", 12, 0xFFBBCCDD);
+        gs.setSingleLine(true);
+        zoneGuest.addView(gs, new LinearLayout.LayoutParams(0, -2, 1f));
+        zoneGuest.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) { guestDialog(); }
+        });
+
+        LinearLayout rightTop = new LinearLayout(this);
+        rightTop.setOrientation(LinearLayout.VERTICAL);
+        rightTop.addView(zoneQr, new LinearLayout.LayoutParams(-1, -2));
+        LinearLayout.LayoutParams zgp = new LinearLayout.LayoutParams(-1, dp(44));
+        zgp.setMargins(0, dp(8), 0, 0);
+        rightTop.addView(zoneGuest, zgp);
+        LinearLayout.LayoutParams c1p = new LinearLayout.LayoutParams(0, -2, 0.50f);
         c1p.setMargins(dp(7), 0, 0, 0);
-        row1.addView(c1, c1p);
+        row1.addView(rightTop, c1p);
         root.addView(row1, new LinearLayout.LayoutParams(-1, -2));
 
         LinearLayout row2 = new LinearLayout(this);
@@ -228,6 +242,22 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         vp.setMargins(0, dp(4), 0, 0);
         root.addView(vrow, vp);
 
+        // recorrido del mando por las dos zonas de arriba (no se deja a la geometría):
+        // desde los botones, ↑ llega a «Invitado» y otro ↑ al QR; desde la lista de álbumes, ↑ también a «Invitado»
+        zoneQr.setId(View.generateViewId());
+        zoneGuest.setId(View.generateViewId());
+        sv.setId(View.generateViewId());
+        browse.setId(View.generateViewId());
+        preview.setId(View.generateViewId());
+        zoneQr.setNextFocusDownId(zoneGuest.getId());
+        zoneQr.setNextFocusLeftId(browse.getId());
+        zoneGuest.setNextFocusUpId(zoneQr.getId());
+        zoneGuest.setNextFocusDownId(sv.getId());
+        zoneGuest.setNextFocusLeftId(browse.getId());
+        sv.setNextFocusUpId(zoneGuest.getId());
+        browse.setNextFocusUpId(zoneGuest.getId());
+        preview.setNextFocusUpId(zoneGuest.getId());
+
         setContentView(root);
         preview.requestFocus();
         updateStatus(null);
@@ -260,6 +290,27 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         lr.setMargins(0, 0, 0, dp(6));
         r.setLayoutParams(lr);
         return r;
+    }
+
+    /** Zona de la pantalla principal que se puede elegir con el mando: caja como las tarjetas, con borde azul al seleccionarla. */
+    private LinearLayout zone() {
+        LinearLayout z = new LinearLayout(this);
+        GradientDrawable off = new GradientDrawable();
+        off.setColor(0x99162A40);
+        off.setCornerRadius(dp(8));
+        off.setStroke(dp(1), 0xFF2C4766);
+        GradientDrawable on = new GradientDrawable();
+        on.setColor(0xCC1B3558);
+        on.setCornerRadius(dp(8));
+        on.setStroke(dp(3), 0xFF3D8BFD);
+        StateListDrawable bg = new StateListDrawable();
+        bg.addState(new int[]{android.R.attr.state_focused}, on);
+        bg.addState(new int[]{android.R.attr.state_pressed}, on);
+        bg.addState(new int[]{}, off);
+        z.setBackground(bg);
+        z.setFocusable(true);
+        z.setClickable(true);
+        return z;
     }
 
     private LinearLayout card() {
@@ -317,6 +368,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         if (msgView.getVisibility() == View.VISIBLE && msgView.getText().toString().endsWith("\u2026")) startPulse();
         final WebConfigServer srv = new WebConfigServer(this, this);
         server = srv;
+        webUrl = null;
         webInfo.setText("Abriendo la web de configuración…");
         new Thread(new Runnable() {
             public void run() {
@@ -327,8 +379,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                         if (ok) {
                             srv.start();
                             String ip = localIp();
-                            webInfo.setText("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + srv.port + "    PIN " + Prefs.webPin(SettingsActivity.this));
-                            showQr("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + srv.port + "/?pin=" + Prefs.webPin(SettingsActivity.this), ip != null);
+                            webUrl = ip == null ? null : "http://" + ip + ":" + srv.port;
+                            webInfo.setText("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + srv.port);
+                            showQr(webUrl, ip != null);
                         } else {
                             webInfo.setText("No se pudo abrir la web de configuración.");
                         }
@@ -339,6 +392,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     @Override protected void onStop() {
+        webUrl = null;
         h.removeCallbacks(guestTick);
         stopPulse();
         if (server != null) { server.close(); server = null; }
@@ -379,6 +433,36 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                 pix[((y + q) * px + dy) * dim + (x + q) * px + dx] = 0xFF0A1424;
         }
         return android.graphics.Bitmap.createBitmap(pix, dim, dim, android.graphics.Bitmap.Config.ARGB_8888);
+    }
+
+    /** Zona del QR: lo enseña en grande, con la dirección y los pasos, para escanearlo desde el sofá. */
+    private void qrDialog() {
+        if (webUrl == null) {
+            updateStatus("La web todavía no está lista. Prueba en unos segundos.");
+            return;
+        }
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setGravity(Gravity.CENTER_HORIZONTAL);
+        box.setPadding(dp(24), dp(8), dp(24), dp(8));
+        ImageView qv = new ImageView(this);
+        try { qv.setImageBitmap(qrBitmap(webUrl)); } catch (Throwable ignored) { }
+        box.addView(qv, new LinearLayout.LayoutParams(dp(210), dp(210)));
+        TextView addr = text(webUrl, 20, 0xFF7CC4FF);
+        addr.setTypeface(Ui.BLACK);
+        addr.setPadding(0, dp(8), 0, dp(6));
+        box.addView(addr);
+        TextView steps = text("1. En Google Fotos: álbum → Compartir → Crear enlace → copiar.\n"
+                + "2. Con el móvil en la misma wifi, escanea el código o abre la dirección.\n"
+                + "3. Pega los enlaces y elige «FotosTV» como salvapantallas.", 13, 0xFFD0DBE8);
+        box.addView(steps);
+        ScrollView sc = new ScrollView(this);
+        sc.addView(box);
+        new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle("Configúralo desde el móvil")
+            .setView(sc)
+            .setPositiveButton("Cerrar", null)
+            .show();
     }
 
     /** Botón «Invitado»: código QR de corta duración para que alguien enseñe su álbum en la tele. */
