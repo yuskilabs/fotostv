@@ -1,6 +1,6 @@
 {
-  "version": "5.20.9",
+  "version": "5.20.10",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 482923,
-  "notes": "- Pantalla principal: el texto «yuskilabs» del logo queda alineado con «Versión …» (misma línea base)."
+  "notes": "- Pantalla principal: barra vertical gris entre el logo de yuskilabs y la versión."
 }

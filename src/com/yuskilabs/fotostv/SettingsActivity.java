@@ -81,8 +81,13 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         int txtBase = Math.round(-verInfo.getPaint().getFontMetrics().ascent);
         LinearLayout.LayoutParams vl = new LinearLayout.LayoutParams(-2, -2);
         int diff = imgBase - txtBase;
-        if (diff >= 0) vl.setMargins(dp(14), diff, 0, 0); else { vl.setMargins(dp(14), 0, 0, 0); yp.setMargins(0, -diff, 0, 0); }
+        if (diff >= 0) vl.setMargins(dp(10), diff, 0, 0); else { vl.setMargins(dp(10), 0, 0, 0); yp.setMargins(0, -diff, 0, 0); }
         vrow.addView(yl, yp);
+        View bar = new View(this);
+        bar.setBackgroundColor(0xFF6B7F96);
+        LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(dp(1) + 1, dp(16));
+        bp.setMargins(dp(10), diff < 0 ? -diff : 0, 0, 0);
+        vrow.addView(bar, bp);
         vrow.addView(verInfo, vl);
         LinearLayout.LayoutParams topP = new LinearLayout.LayoutParams(0, -2, 0.50f);
         topP.setMargins(0, 0, dp(7), 0);
