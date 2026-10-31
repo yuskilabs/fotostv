@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class SettingsActivity extends Activity implements WebConfigServer.Listener {
-    private TextView webInfo, status, verInfo, msgView;
+    private TextView webInfo, pinInfo, status, verInfo, msgView;
     private ImageView qrView;
     private LinearLayout zoneQr, zoneGuest;
     private String webUrl;   // dirección de la web de ajustes (sin PIN), o null si aún no está lista
@@ -62,10 +62,17 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         row1.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.VERTICAL);
-        ImageView logo = new ImageView(this);
+        // el logo ocupa todo el alto que deja libre la frase de abajo: la altura de la fila la marca la caja de la derecha
+        ImageView logo = new ImageView(this) {
+            @Override protected void onMeasure(int w, int h) {
+                if (View.MeasureSpec.getMode(h) == View.MeasureSpec.EXACTLY) super.onMeasure(w, h);
+                else setMeasuredDimension(0, 0);   // no empuja la altura de la fila
+            }
+        };
         logo.setImageResource(R.drawable.logo_full);
         logo.setAdjustViewBounds(true);
-        top.addView(logo, new LinearLayout.LayoutParams(-2, dp(84)));
+        logo.setScaleType(ImageView.ScaleType.FIT_START);
+        top.addView(logo, new LinearLayout.LayoutParams(-2, 0, 1f));
         TextView tag = text("Tus álbumes de Google Fotos, en la tele y como salvapantallas", 13, 0xFF9FB3C8);
         tag.setPadding(0, dp(6), 0, 0);
         top.addView(tag);
@@ -89,7 +96,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         verInfo.setIncludeFontPadding(false);
         verInfo.setPadding(0, 0, 0, 0);
         vrow.addView(verInfo, new LinearLayout.LayoutParams(-2, -2));
-        LinearLayout.LayoutParams topP = new LinearLayout.LayoutParams(0, -2, 0.50f);
+        LinearLayout.LayoutParams topP = new LinearLayout.LayoutParams(0, -1, 0.50f);
         topP.setMargins(0, 0, dp(7), 0);
         row1.addView(top, topP);
 
@@ -110,6 +117,10 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         webInfo.setTypeface(Ui.BLACK);
         webInfo.setPadding(0, dp(1), 0, dp(1));
         c1l.addView(webInfo);
+        pinInfo = text("", 16, Color.WHITE);
+        pinInfo.setTypeface(Ui.BLACK);
+        pinInfo.setPadding(0, dp(1), 0, 0);
+        c1l.addView(pinInfo);
         zoneQr.addView(c1l, new LinearLayout.LayoutParams(0, -2, 1f));
         qrView = new ImageView(this);
         qrView.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -128,13 +139,21 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         ImageView gi = new ImageView(this);
         gi.setImageResource(R.drawable.ic_guest);
         zoneGuest.addView(gi, new LinearLayout.LayoutParams(dp(22), dp(22)));
+        // «Invitado» y su frase, en una fila aparte alineada por la línea base de las letras (la zona la centra en vertical)
+        LinearLayout gtxt = new LinearLayout(this);
+        gtxt.setOrientation(LinearLayout.HORIZONTAL);
+        gtxt.setBaselineAligned(true);
         TextView gt = text("Invitado", 15, Color.WHITE);
         gt.setTypeface(Ui.BLACK);
+        gt.setIncludeFontPadding(false);
         gt.setPadding(dp(10), 0, dp(12), 0);
-        zoneGuest.addView(gt);
+        gtxt.addView(gt, new LinearLayout.LayoutParams(-2, -2));
         TextView gs = text("Enseña en la tele el álbum de una visita", 12, 0xFFBBCCDD);
         gs.setSingleLine(true);
-        zoneGuest.addView(gs, new LinearLayout.LayoutParams(0, -2, 1f));
+        gs.setIncludeFontPadding(false);
+        gs.setPadding(0, 0, 0, 0);
+        gtxt.addView(gs, new LinearLayout.LayoutParams(0, -2, 1f));
+        zoneGuest.addView(gtxt, new LinearLayout.LayoutParams(0, -2, 1f));
         zoneGuest.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { guestDialog(); }
         });
@@ -143,7 +162,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         rightTop.setOrientation(LinearLayout.VERTICAL);
         rightTop.addView(zoneQr, new LinearLayout.LayoutParams(-1, -2));
         LinearLayout.LayoutParams zgp = new LinearLayout.LayoutParams(-1, dp(44));
-        zgp.setMargins(0, dp(8), 0, 0);
+        zgp.setMargins(0, dp(14), 0, 0);   // mismo hueco de 14 dp que entre columnas y hasta «Tus álbumes»
         rightTop.addView(zoneGuest, zgp);
         LinearLayout.LayoutParams c1p = new LinearLayout.LayoutParams(0, -2, 0.50f);
         c1p.setMargins(dp(7), 0, 0, 0);
@@ -369,6 +388,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         final WebConfigServer srv = new WebConfigServer(this, this);
         server = srv;
         webUrl = null;
+        pinInfo.setText("");
         webInfo.setText("Abriendo la web de configuración…");
         new Thread(new Runnable() {
             public void run() {
@@ -381,7 +401,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                             String ip = localIp();
                             webUrl = ip == null ? null : "http://" + ip + ":" + srv.port;
                             webInfo.setText("http://" + (ip == null ? "IP-de-la-Shield" : ip) + ":" + srv.port);
-                            showQr(webUrl, ip != null);
+                            pinInfo.setText("PIN  " + Prefs.webPin(SettingsActivity.this));
+                            // el QR lleva el PIN puesto: escaneándolo se entra directo
+                            showQr(webUrl + "/?pin=" + Prefs.webPin(SettingsActivity.this), ip != null);
                         } else {
                             webInfo.setText("No se pudo abrir la web de configuración.");
                         }
@@ -446,14 +468,18 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         box.setGravity(Gravity.CENTER_HORIZONTAL);
         box.setPadding(dp(24), dp(8), dp(24), dp(8));
         ImageView qv = new ImageView(this);
-        try { qv.setImageBitmap(qrBitmap(webUrl)); } catch (Throwable ignored) { }
+        try { qv.setImageBitmap(qrBitmap(webUrl + "/?pin=" + Prefs.webPin(this))); } catch (Throwable ignored) { }
         box.addView(qv, new LinearLayout.LayoutParams(dp(210), dp(210)));
         TextView addr = text(webUrl, 20, 0xFF7CC4FF);
         addr.setTypeface(Ui.BLACK);
-        addr.setPadding(0, dp(8), 0, dp(6));
+        addr.setPadding(0, dp(8), 0, dp(2));
         box.addView(addr);
+        TextView pinv = text("PIN  " + Prefs.webPin(this), 20, Color.WHITE);
+        pinv.setTypeface(Ui.BLACK);
+        pinv.setPadding(0, 0, 0, dp(6));
+        box.addView(pinv);
         TextView steps = text("1. En Google Fotos: álbum → Compartir → Crear enlace → copiar.\n"
-                + "2. Con el móvil en la misma wifi, escanea el código o abre la dirección.\n"
+                + "2. Con el móvil en la misma wifi, escanea el código (entra solo) o abre la dirección y escribe el PIN.\n"
                 + "3. Pega los enlaces y elige «FotosTV» como salvapantallas.", 13, 0xFFD0DBE8);
         box.addView(steps);
         ScrollView sc = new ScrollView(this);
@@ -496,6 +522,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             b.setNeutralButton("Quitar todos ahora", new android.content.DialogInterface.OnClickListener() {
                 public void onClick(android.content.DialogInterface d, int w) {
                     for (Guest.G g : Guest.list(SettingsActivity.this)) Guest.remove(SettingsActivity.this, g.id);
+                    Guest.revokeToken(SettingsActivity.this);
                     updateStatus(null);
                 }
             });
@@ -625,6 +652,8 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             public void run() {
                 int ok = 0;
                 String err = null;
+                // también se vuelve a buscar la ubicación de las fotos que estaban guardadas sin ella
+                final int regps = MetaFetcher.forgetMissingGps(SettingsActivity.this);
                 for (Prefs.Album al : albums) {
                     try {
                         Prefs.saveAlbumCache(SettingsActivity.this, al.url, AlbumFetcher.fetchAlbum(al.url));
@@ -634,7 +663,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                     }
                 }
                 final String m = albums.isEmpty() ? null
-                        : err == null ? "\u2714 Álbumes correctos (" + ok + ")." : "\u2716 " + err;
+                        : err == null ? "\u2714 Álbumes correctos (" + ok + ")."
+                            + (regps > 0 ? " Se vuelve a buscar la ubicación de " + regps + " fotos." : "")
+                        : "\u2716 " + err;
                 h.post(new Runnable() { public void run() { updateStatus(m); } });
             }
         }).start();

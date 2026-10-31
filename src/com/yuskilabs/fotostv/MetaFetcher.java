@@ -87,16 +87,39 @@ class MetaFetcher {
         }
     }
 
+    /** Olvida las fotos guardadas como «sin GPS»: se vuelven a mirar la próxima vez que se muestren. Devuelve cuántas eran. */
+    static int forgetMissingGps(Context c) {
+        SharedPreferences m = Prefs.meta(c);
+        SharedPreferences.Editor e = m.edit();
+        int n = 0;
+        for (java.util.Map.Entry<String, ?> en : m.getAll().entrySet()) {
+            if (!(en.getValue() instanceof String)) continue;
+            String k = en.getKey(), v = (String) en.getValue();
+            if ((k.startsWith("x_") && v.startsWith("NaN;")) || (k.startsWith("d1_") && !v.contains("\"lat\""))) {
+                e.remove(k);
+                n++;
+            }
+        }
+        e.apply();
+        return n;
+    }
+
+    /** Tiempo tras el cual se vuelve a buscar el GPS de una foto que no lo tenía. */
+    private static final long RECHECK_MS = 6L * 60 * 60 * 1000;
+
     /** Devuelve {lat, lon, fecha_ms}; lat/lon NaN si no hay GPS, fecha 0 si no hay. */
     static double[] exif(Context c, Item it) {
         SharedPreferences m = Prefs.meta(c);
         String k = "x_" + it.key();
         String cached = m.getString(k, null);
+        double[] r = new double[]{Double.NaN, Double.NaN, 0};
         if (cached != null) {
             String[] p = cached.split(";");
-            return new double[]{Double.parseDouble(p[0]), Double.parseDouble(p[1]), Double.parseDouble(p[2])};
+            r = new double[]{Double.parseDouble(p[0]), Double.parseDouble(p[1]), Double.parseDouble(p[2])};
+            long checked = p.length > 3 ? Long.parseLong(p[3]) : 0;
+            // con GPS guardado, vale siempre; sin GPS solo si se miró hace poco (puede que después se activase la ubicación al compartir)
+            if (!Double.isNaN(r[0]) || System.currentTimeMillis() - checked < RECHECK_MS) return r;
         }
-        double[] r = new double[]{Double.NaN, Double.NaN, 0};
         try {
             byte[] head = AlbumFetcher.get(it.url + "=d", 512 * 1024);
             ExifInterface ex = (ExifInterface) ExifInterface.class
@@ -109,7 +132,7 @@ class MetaFetcher {
                 try { r[2] = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.US).parse(dt).getTime(); }
                 catch (Exception ignored) { }
             }
-            m.edit().putString(k, r[0] + ";" + r[1] + ";" + r[2]).apply();
+            m.edit().putString(k, r[0] + ";" + r[1] + ";" + r[2] + ";" + System.currentTimeMillis()).apply();
         } catch (Throwable ignored) { }
         return r;
     }
@@ -146,8 +169,9 @@ class MetaFetcher {
         String k = "d1_" + it.key();
         try {
             String cached = m.getString(k, null);
-            if (cached != null) {
-                JSONObject o = new JSONObject(cached);
+            JSONObject o = cached == null ? null : new JSONObject(cached);
+            // sin GPS guardado hace tiempo se vuelve a mirar
+            if (o != null && (o.has("lat") || System.currentTimeMillis() - o.optLong("chk", 0) < RECHECK_MS)) {
                 d.lat = o.optDouble("lat", Double.NaN); d.lon = o.optDouble("lon", Double.NaN);
                 d.alt = o.optDouble("alt", Double.NaN);
                 if (o.optLong("date", 0) > 0) { d.date = o.optLong("date"); d.hasTime = true; }
@@ -183,6 +207,7 @@ class MetaFetcher {
             try { d.w = Integer.parseInt(tag(ex, "ImageWidth")); d.h = Integer.parseInt(tag(ex, "ImageLength")); }
             catch (Exception ignored) { }
             JSONObject o = new JSONObject();
+            o.put("chk", System.currentTimeMillis());
             if (!Double.isNaN(d.lat)) { o.put("lat", d.lat); o.put("lon", d.lon); }
             if (!Double.isNaN(d.alt)) o.put("alt", d.alt);
             o.put("date", d.hasTime ? d.date : 0);
@@ -193,10 +218,15 @@ class MetaFetcher {
         return d;
     }
 
+    /**
+     * Nombre del lugar. En España: «Localidad, Provincia» (o solo la ciudad si es capital de su provincia).
+     * Fuera de España: «Localidad, País», sin condados ni comarcas.
+     */
     static String place(Context c, double lat, double lon) {
         if (Double.isNaN(lat)) return null;
         SharedPreferences m = Prefs.meta(c);
-        String k = String.format(Locale.US, "p_%.2f,%.2f", lat, lon);
+        // «p2_»: formato nuevo; los nombres guardados con el anterior (con región en el extranjero) no se reutilizan
+        String k = String.format(Locale.US, "p2_%.2f,%.2f", lat, lon);
         if (m.contains(k)) return m.getString(k, null);
         String name = null;
         try {
@@ -204,9 +234,14 @@ class MetaFetcher {
                 List<Address> l = new Geocoder(c, ES).getFromLocation(lat, lon, 1);
                 if (l != null && !l.isEmpty()) {
                     Address a = l.get(0);
-                    String town = first(a.getLocality(), a.getSubLocality(), a.getFeatureName());
-                    String region = first(a.getSubAdminArea(), a.getAdminArea(), a.getCountryName());
-                    name = join(town, region);
+                    String cc = a.getCountryCode();
+                    if (cc != null && cc.length() > 0 && !"ES".equalsIgnoreCase(cc)) {
+                        name = join(first(a.getLocality(), a.getSubLocality(), a.getAdminArea()), a.getCountryName());
+                    } else {
+                        String town = first(a.getLocality(), a.getSubLocality(), a.getFeatureName());
+                        String region = first(a.getSubAdminArea(), a.getAdminArea(), a.getCountryName());
+                        name = join(town, region);
+                    }
                 }
             }
         } catch (Exception ignored) { }
@@ -216,11 +251,19 @@ class MetaFetcher {
                         "https://nominatim.openstreetmap.org/reverse?format=json&zoom=12&lat=%.5f&lon=%.5f&accept-language=",
                         lat, lon) + URLEncoder.encode("es", "UTF-8");
                 JSONObject a = new JSONObject(new String(AlbumFetcher.get(url), "UTF-8")).getJSONObject("address");
-                String town = first(a.optString("city", null), a.optString("town", null),
-                        a.optString("village", null), a.optString("municipality", null));
-                String region = first(a.optString("province", null), a.optString("county", null),
-                        a.optString("state", null), a.optString("country", null));
-                name = join(town, region);
+                String cc = a.optString("country_code", "");
+                if (cc.length() > 0 && !"es".equalsIgnoreCase(cc)) {
+                    String town = first(a.optString("city", null), a.optString("town", null),
+                            a.optString("village", null), a.optString("municipality", null),
+                            a.optString("hamlet", null), a.optString("suburb", null), a.optString("state", null));
+                    name = join(town, a.optString("country", null));
+                } else {
+                    String town = first(a.optString("city", null), a.optString("town", null),
+                            a.optString("village", null), a.optString("municipality", null));
+                    String region = first(a.optString("province", null), a.optString("county", null),
+                            a.optString("state", null), a.optString("country", null));
+                    name = join(town, region);
+                }
             } catch (Exception ignored) { }
         }
         if (name != null) m.edit().putString(k, name).apply();

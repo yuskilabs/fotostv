@@ -96,15 +96,41 @@ class WebConfigServer extends Thread {
         String req = readLine(in);
         if (req.length() == 0) return;
         int len = 0;
+        String cookie = "";
         String line;
         while ((line = readLine(in)).length() > 0) {
             if (line.toLowerCase().startsWith("content-length:"))
                 len = Integer.parseInt(line.substring(15).trim());
+            else if (line.toLowerCase().startsWith("cookie:"))
+                cookie = line.substring(7);
         }
         String[] parts = req.split(" ");
         String method = parts[0], path = parts.length > 1 ? parts[1] : "/";
         String body;
         String ctype = "text/html; charset=utf-8";
+        // la página de invitado y las imágenes son libres; todo lo demás pide el PIN que sale en la tele
+        if (!path.startsWith("/g/") && !path.equals("/g") && !path.startsWith("/img/")) {
+            String pin = Prefs.webPin(ctx);
+            boolean ok = (";" + cookie.replace(" ", "")).contains(";fp=" + pin);
+            if (!ok) {
+                int q = path.indexOf("pin=");
+                boolean given = q >= 0 && path.substring(q + 4).startsWith(pin);
+                OutputStream o = s.getOutputStream();
+                if (given) {
+                    o.write(("HTTP/1.1 302 Found\r\nLocation: /\r\nSet-Cookie: fp=" + pin
+                            + "; Path=/; Max-Age=2592000\r\nContent-Length: 0\r\nConnection: close\r\n\r\n").getBytes("UTF-8"));
+                } else {
+                    byte[] pb = page("<h2>Escribe el PIN</h2><p class='muted'>Es el número de 4 cifras que sale en la tele, en la pantalla principal de FotosTV.</p>"
+                            + "<form method='get' action='/'><input name='pin' inputmode='numeric' maxlength='4' autocomplete='off' placeholder='PIN'>"
+                            + "<button>Entrar</button></form>").getBytes("UTF-8");
+                    o.write(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: " + pb.length
+                            + "\r\nConnection: close\r\n\r\n").getBytes("UTF-8"));
+                    o.write(pb);
+                }
+                o.flush();
+                return;
+            }
+        }
         if (path.startsWith("/img/")) {
             int id = path.startsWith("/img/yuski") ? R.drawable.yuski_logo : R.drawable.logo_full;
             java.io.InputStream ri = ctx.getResources().openRawResource(id);

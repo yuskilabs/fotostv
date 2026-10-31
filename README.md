@@ -21,7 +21,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Orden** de cada álbum desde el propio mosaico: aleatorio, más antiguas primero o más recientes primero, y un botón de **pase de diapositivas**.
 - **Vídeos en directo, sin esperas**: empiezan al momento mientras se descargan, con búfer (como en YouTube) y línea de tiempo con el tiempo transcurrido y el que queda. Calidad automática, alta o media (en Fire TV la automática usa 720p). Con la barra azul (▼) se pausa y se salta ±5 s. Los vídeos se guardan en una caché con límite.
 - **Fundidos suaves** entre fotos horizontales, verticales y vídeos, con sonido opcional. En el pase, un vídeo solo entra cuando ya tiene unos segundos listos, para que no se pare.
-- **Información en pantalla**: nombre del álbum, fecha de captura, lugar (si la foto tiene GPS) y hora. Con ▼ se abre la ficha completa (archivo, cámara, exposición, resolución…) y un **mapa** con el punto exacto.
+- **Información en pantalla**: nombre del álbum, fecha de captura, lugar (si la foto tiene GPS; en España «Localidad, Provincia» y en el extranjero «Localidad, País») y hora. Con ▼ se abre la ficha completa (archivo, cámara, exposición, resolución…) y un **mapa** con el punto exacto.
 - **Invitados**: botón «Invitado» con un código QR para que una visita enseñe su álbum de Google Fotos en tu tele al momento, sin tocar tu cuenta ni tus álbumes. Dura 2 horas (puede haber varios a la vez), sale al principio de «Ver álbumes» y, al caducar, se borra todo rastro.
 - **Fotos favoritas y ocultas**: se marcan desde el mando y quedan guardadas en sus álbumes.
 - **Configuración desde el móvil** mediante una página web local que sirve la propia tele, con **código QR** para abrirla al instante (con OK sobre el código se ve en grande): añadir enlaces (uno a uno o en lote), ajustes, copia de seguridad.
@@ -124,7 +124,7 @@ Todas las APK deben ir firmadas con la misma clave para que Android acepte la ac
 
 - Los enlaces de los álbumes y los ajustes se guardan **solo en el dispositivo**.
 - La app se conecta a: Google Fotos (para leer los álbumes compartidos), GitHub (para buscar actualizaciones) y, si la foto tiene GPS y el dispositivo no resuelve el lugar, a OpenStreetMap Nominatim (se le envían las coordenadas de esa foto).
-- La página de configuración es accesible desde cualquier dispositivo de tu red local mientras la pantalla principal está abierta. No uses la app en redes que no sean de confianza.
+- La página de configuración es accesible desde cualquier dispositivo de tu red local mientras la pantalla principal está abierta, y pide un **PIN** de 4 cifras que sale en la tele (el código QR ya lo lleva). No uses la app en redes que no sean de confianza.
 - Quien tenga el enlace de un álbum puede verlo: no compartas enlaces de álbumes privados.
 
 ## Limitaciones conocidas

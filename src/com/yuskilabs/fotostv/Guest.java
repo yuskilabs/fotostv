@@ -151,7 +151,13 @@ class Guest {
             for (G g : keep) ids.add(g.id);
             for (File f : gd) if (!ids.contains(f.getName())) deleteTree(f);
         }
-        if (keep.isEmpty()) sp(c).edit().remove("token").remove("tokenExp").commit();
+        // el enlace del QR se crea justo antes de que haya ningún invitado: solo se borra cuando caduca
+        if (sp(c).contains("token") && sp(c).getLong("tokenExp", 0) <= now) revokeToken(c);
+    }
+
+    /** Anula el enlace del QR que haya en pantalla (caducado, o al quitar a todos los invitados). */
+    static void revokeToken(Context c) {
+        sp(c).edit().remove("token").remove("tokenExp").commit();
     }
 
     private static void wipe(Context c, G g) {

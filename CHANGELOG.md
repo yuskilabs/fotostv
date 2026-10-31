@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.25.0
+- **PIN** de la web de ajustes de vuelta, ahora **a la vista**: sale en su propia línea en la zona del QR y en el QR ampliado. El QR ya lo lleva puesto (escaneándolo se entra directo); si abres la dirección a mano, la web lo pide una vez por móvil. La página de invitado no lo necesita.
+- **Invitados:** arreglado el «Este código ya no vale» que salía al escanear el QR nada más mostrarlo.
+- Pantalla principal: el logo crece para ocupar todo el alto de la fila; «Invitado» y su frase quedan alineados por la línea base; y el hueco entre las cajas es el mismo (14 dp) en todas partes.
+- **Ubicación:** fuera de España el lugar sale como «Localidad, País» (sin condados ni comarcas); en España queda igual. Las fotos guardadas como «sin GPS» se vuelven a mirar pasadas 6 horas (antes se daba por bueno para siempre), y «Comprobar álbumes» las reinicia al momento, además de leer de nuevo fotos nuevas y títulos.
+
 ## 5.24.0
 - Pantalla principal: la caja de arriba a la derecha se divide en **dos zonas** que se ven enteras y se eligen con el mando: el código QR de configuración (OK lo muestra en grande, con su dirección y los pasos) y «Invitado». Se ha quitado el texto de pasos de esa caja para hacer sitio; ahora está en el código ampliado.
 - Quitado el **PIN** de la web de ajustes: ya no se pide ni sale en la tele, y el QR vuelve a abrir la web directamente.
