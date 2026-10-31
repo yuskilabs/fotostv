@@ -168,6 +168,16 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             public void onClick(View v) { updateFlow(); }
         });
         // dos columnas: ver y previsualizar · salvapantallas e inicio · tiempos y vídeo · extras · mantenimiento
+        Button guestBtn = side("Invitado: álbum temporal", R.drawable.ic_guest, new View.OnClickListener() {
+            public void onClick(View v) { guestDialog(); }
+        });
+        LinearLayout gRow = new LinearLayout(this);
+        gRow.setOrientation(LinearLayout.HORIZONTAL);
+        gRow.setClipChildren(false);
+        gRow.addView(guestBtn, new LinearLayout.LayoutParams(-1, -1));
+        LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(-1, 0, 1f);
+        gp.setMargins(0, 0, 0, dp(6));
+        left.addView(gRow, gp);
         left.addView(pair(preview, browse));
         left.addView(pair(idleBtn, check));
         left.addView(pair(stopBtn, vqBtn));
@@ -294,6 +304,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     @Override protected void onStart() {
         super.onStart();
+        Guest.purgeExpired(this);
+        h.removeCallbacks(guestTick);
+        h.postDelayed(guestTick, 60000);
         refreshCache();
         silentCheck();
         if (msgView.getVisibility() == View.VISIBLE && msgView.getText().toString().endsWith("\u2026")) startPulse();
@@ -321,10 +334,97 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     @Override protected void onStop() {
+        h.removeCallbacks(guestTick);
         stopPulse();
         if (server != null) { server.close(); server = null; }
         super.onStop();
     }
+
+    @Override public void onGuest(final String id) {
+        h.post(new Runnable() {
+            public void run() {
+                if (guestDlg != null) { try { guestDlg.dismiss(); } catch (Throwable ignored) { } guestDlg = null; }
+                Guest.G g = Guest.find(SettingsActivity.this, id);
+                AlbumFetcher.AlbumData d = g == null ? null : Guest.data(SettingsActivity.this, g);
+                updateStatus(null);
+                if (g == null || d == null || d.items.isEmpty()) return;
+                for (Item it : d.items) { it.album = g.title(); if (it.akey.length() == 0) it.akey = d.key; }
+                Session.items = d.items;
+                Session.order = "random";
+                Session.manual = false;
+                Session.guest = true;
+                Session.guestId = g.id;
+                Session.startKey = null;
+                Session.lastKey = null;
+                startActivity(new Intent(SettingsActivity.this, PlayerActivity.class));
+            }
+        });
+    }
+
+    private android.app.AlertDialog guestDlg;
+
+    private android.graphics.Bitmap qrBitmap(String url) {
+        io.nayuki.qrcodegen.QrCode qr = io.nayuki.qrcodegen.QrCode.encodeText(url, io.nayuki.qrcodegen.QrCode.Ecc.MEDIUM);
+        int n = qr.size, q = 3, px = 8, dim = (n + 2 * q) * px;
+        int[] pix = new int[dim * dim];
+        java.util.Arrays.fill(pix, Color.WHITE);
+        for (int y = 0; y < n; y++) for (int x = 0; x < n; x++) {
+            if (!qr.getModule(x, y)) continue;
+            for (int dy = 0; dy < px; dy++) for (int dx = 0; dx < px; dx++)
+                pix[((y + q) * px + dy) * dim + (x + q) * px + dx] = 0xFF0A1424;
+        }
+        return android.graphics.Bitmap.createBitmap(pix, dim, dim, android.graphics.Bitmap.Config.ARGB_8888);
+    }
+
+    /** Botón «Invitado»: código QR de corta duración para que alguien enseñe su álbum en la tele. */
+    private void guestDialog() {
+        String ip = localIp();
+        if (server == null || server.port == 0 || ip == null) {
+            updateStatus("La web todavía no está lista. Prueba en unos segundos.");
+            return;
+        }
+        String tok = Guest.newToken(this);
+        String url = "http://" + ip + ":" + server.port + "/g/" + tok;
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setGravity(Gravity.CENTER_HORIZONTAL);
+        box.setPadding(dp(24), dp(8), dp(24), dp(8));
+        TextView t1 = text("Escanea el código con el móvil y pega el enlace de tu álbum compartido de Google Fotos. "
+                + "Se verá aquí 2 horas y luego desaparece solo, sin dejar rastro.", 14, 0xFFD0DBE8);
+        t1.setPadding(0, 0, 0, dp(10));
+        box.addView(t1);
+        ImageView qv = new ImageView(this);
+        try { qv.setImageBitmap(qrBitmap(url)); } catch (Throwable ignored) { }
+        box.addView(qv, new LinearLayout.LayoutParams(dp(190), dp(190)));
+        TextView t2 = text("El código vale 15 minutos.", 12, 0xFF9FB3C8);
+        t2.setPadding(0, dp(8), 0, 0);
+        box.addView(t2);
+        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle("Invitado")
+            .setView(box)
+            .setPositiveButton("Cerrar", null);
+        if (Guest.any(this)) {
+            b.setNeutralButton("Quitar todos ahora", new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    for (Guest.G g : Guest.list(SettingsActivity.this)) Guest.remove(SettingsActivity.this, g.id);
+                    updateStatus(null);
+                }
+            });
+        }
+        guestDlg = b.create();
+        guestDlg.setOnDismissListener(new android.content.DialogInterface.OnDismissListener() {
+            public void onDismiss(android.content.DialogInterface d) { guestDlg = null; }
+        });
+        guestDlg.show();
+    }
+
+    private final Runnable guestTick = new Runnable() {
+        public void run() {
+            Guest.purgeExpired(SettingsActivity.this);
+            if (msgView.getVisibility() != View.VISIBLE) updateStatus(null);
+            h.postDelayed(this, 60000);
+        }
+    };
 
     @Override public void onSaved() {
         h.post(new Runnable() {
@@ -351,6 +451,13 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         new Thread(new Runnable() {
             public void run() {
                 SpannableStringBuilder sb = new SpannableStringBuilder();
+                List<Guest.G> guests = Guest.list(SettingsActivity.this);
+                for (Guest.G g : guests) {
+                    int gs = sb.length();
+                    sb.append("\u25F7 " + g.title() + "  \u2014  temporal, quedan " + Guest.left(g.left()) + "\n");
+                    sb.setSpan(new ForegroundColorSpan(0xFFFFB454), gs, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+                if (!guests.isEmpty()) sb.append("\n");
                 List<Prefs.Album> albums = Prefs.albums(SettingsActivity.this);
                 if (albums.isEmpty()) sb.append("Todavía no hay ningún álbum.");
                 boolean all = "all".equals(Prefs.albumMode(SettingsActivity.this));

@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.23.0
+- **Invitados: álbumes temporales.** Nuevo botón «Invitado» en la pantalla principal: muestra un código QR (vale 15 minutos) que abre en el móvil de la visita una página con solo un campo para pegar el enlace de su álbum compartido y un botón «Mostrar ahora». Al pulsarlo, la tele empieza al momento un pase aleatorio de ese álbum.
+- Los temporales duran **2 horas** (o hasta «Quitar ahora», con pulsación larga sobre el álbum) y puede haber varios a la vez, cada uno con su cuenta atrás. Salen **al principio** de «Ver álbumes» con la etiqueta «Temporal · quedan…» y como línea en la caja «Tus álbumes».
+- No se mezclan con lo tuyo: no entran en el salvapantallas, ni en «Todas», Favoritos u Ocultas, ni en Projectivy, ni en la copia de seguridad; sus fotos no se pueden marcar como favoritas ni ocultar.
+- Al caducar (o al quitarlos) se borra todo: el enlace, la lista de fotos, las miniaturas, los vídeos descargados y los datos guardados de cada foto (vídeo, GPS, lugar). La limpieza se hace al abrir la app, al volver a ella y cada pocos minutos mientras esté en marcha.
+
 ## 5.22.2
 - Pase de diapositivas: el nombre del álbum se muestra sin la fecha («Tenerife 2026» → «Tenerife», «Roma (3-10 mayo)» → «Roma»), porque la fecha de cada foto ya sale abajo. En los mosaicos y la configuración el nombre sigue completo.
 

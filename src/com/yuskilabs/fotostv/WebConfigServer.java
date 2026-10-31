@@ -16,7 +16,7 @@ import java.util.Map;
 
 /** Pequeña web local para configurar el álbum desde el móvil. */
 class WebConfigServer extends Thread {
-    interface Listener { void onSaved(); }
+    interface Listener { void onSaved(); void onGuest(String id); }
 
     private final Context ctx;
     private final Listener listener;
@@ -120,7 +120,25 @@ class WebConfigServer extends Thread {
             o2.flush();
             return;
         }
-        if (path.startsWith("/export")) {
+        if (path.startsWith("/g/") || path.equals("/g")) {
+            byte[] gb = new byte[0];
+            if ("POST".equals(method) && len > 0) {
+                gb = new byte[len];
+                int off = 0;
+                while (off < len) { int n = in.read(gb, off, len - off); if (n < 0) break; off += n; }
+            }
+            String[] gp = path.split("\\?")[0].split("/");          // "", "g", token, [add]
+            String tok = gp.length > 2 ? gp[2] : "";
+            boolean add = gp.length > 3 && "add".equals(gp[3]);
+            if (!Guest.tokenOk(ctx, tok)) {
+                body = guestPage("<h2>Este código ya no vale</h2><p class='muted'>Pide que vuelvan a mostrar el código QR de invitado en la tele y escanéalo de nuevo.</p>");
+            } else if (add && "POST".equals(method)) {
+                body = guestAdd(parseForm(new String(gb, 0, gb.length, "UTF-8")));
+                ctype = "text/plain; charset=utf-8";
+            } else {
+                body = guestForm(tok);
+            }
+        } else if (path.startsWith("/export")) {
             body = exportJson();
             ctype = "text/plain; charset=utf-8";
         } else if ("POST".equals(method) && path.startsWith("/import")) {
@@ -538,6 +556,50 @@ class WebConfigServer extends Thread {
         + "x.send('urls='+encodeURIComponent(a.value));}"
         + "document.addEventListener('keydown',function(e){if(e.key=='Enter'&&(e.target.id=='nu'||e.target.id=='nn')){e.preventDefault();addAlbum();}});"
         + "</script>";
+
+    // ---- invitados: álbum temporal
+    private String guestForm(String tok) {
+        return guestPage("<h2>Enseña tu álbum en esta tele</h2>"
+            + "<p class='muted'>Pega el enlace de tu álbum compartido de Google Fotos. Se verá en la tele durante 2 horas y después desaparece solo, sin dejar nada guardado.</p>"
+            + "<label>Enlace del álbum</label><input id='u' type='url' placeholder='https://photos.app.goo.gl/…' autocomplete='off'>"
+            + "<button id='go'>Mostrar ahora</button><p id='msg' class='ok'></p>"
+            + "<script>var go=document.getElementById('go'),u=document.getElementById('u'),m=document.getElementById('msg');"
+            + "go.onclick=function(){var v=u.value.trim();if(!v){m.textContent='Pega primero el enlace.';return;}"
+            + "go.disabled=true;m.textContent='Preparando tu álbum…';"
+            + "var x=new XMLHttpRequest();x.open('POST','/g/" + tok + "/add');"
+            + "x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');"
+            + "x.onload=function(){go.disabled=false;var t=x.responseText.split('\\n');m.textContent=t.slice(1).join(' ');if(t[0]==='OK')u.value='';};"
+            + "x.onerror=function(){go.disabled=false;m.textContent='No se pudo conectar con la tele.';};"
+            + "x.send('url='+encodeURIComponent(v));};</script>");
+    }
+
+    private String guestAdd(Map<String, String> f) {
+        String url = val(f, "url");
+        if (url.length() == 0) return "ER\nPega primero el enlace del álbum.";
+        if (!url.startsWith("http")) return "ER\nEso no parece un enlace de Google Fotos.";
+        try {
+            // si ya es un álbum de la casa, no hace falta copiarlo: se enseña igualmente como temporal
+            AlbumFetcher.AlbumData d = AlbumFetcher.fetchAlbum(url);
+            if (d.items.isEmpty()) return "ER\nEse álbum no tiene fotos o el enlace no es público.";
+            Guest.G g = Guest.add(ctx, url, "", d);
+            if (listener != null) listener.onGuest(g.id);
+            return "OK\n\u2714 Listo: «" + g.title() + "» (" + d.items.size() + " elementos) ya se está viendo en la tele. Desaparecerá en 2 horas.";
+        } catch (Exception e) {
+            return "ER\n\u2716 No se pudo leer ese álbum: " + String.valueOf(e.getMessage());
+        }
+    }
+
+    private static String guestPage(String content) {
+        return "<!doctype html><html lang='es'><head><meta charset='utf-8'>"
+            + "<meta name='viewport' content='width=device-width,initial-scale=1'><title>FotosTV · Invitado</title><style>"
+            + "body{font-family:-apple-system,system-ui,sans-serif;background:#0f1d2e;color:#eef;margin:0;padding:24px 16px}"
+            + "img.logo{height:72px;max-width:100%;display:block;margin:0 0 4px}h2{font-size:20px;margin:24px 0 8px;color:#8cf}"
+            + ".muted{color:#9ab;font-size:15px;line-height:1.4}label{display:block;margin:22px 0 6px;font-size:15px;color:#bcd}"
+            + "input{width:100%;box-sizing:border-box;font-size:17px;padding:12px;border-radius:10px;border:1px solid #456;background:#1b2d44;color:#fff}"
+            + "button{margin-top:22px;width:100%;font-size:18px;padding:14px;border:0;border-radius:12px;background:#3d8bfd;color:#fff;font-weight:600}"
+            + "button:disabled{opacity:.5}.ok{font-size:17px;line-height:1.4}</style></head><body>"
+            + "<img class='logo' src='/img/logo.png' alt='FotosTV'>" + content + "</body></html>";
+    }
 
     private static String page(String content) {
         return "<!doctype html><html lang='es'><head><meta charset='utf-8'>"

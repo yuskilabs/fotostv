@@ -9,6 +9,16 @@ import android.widget.FrameLayout;
 /** Pantalla completa desde el explorador: visor manual o pase automático de un álbum. */
 public class PlayerActivity extends Activity {
     private Slideshow show;
+    private String guestId;
+    private final android.os.Handler gh = new android.os.Handler();
+    private final Runnable guestCheck = new Runnable() {
+        public void run() {
+            if (guestId == null) return;
+            Guest.purgeExpired(PlayerActivity.this);
+            if (Guest.find(PlayerActivity.this, guestId) == null) { finish(); return; }
+            gh.postDelayed(this, 20000);
+        }
+    };
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -19,9 +29,14 @@ public class PlayerActivity extends Activity {
         cfg.order = Session.order;
         cfg.manual = Session.manual;
         cfg.startKey = Session.startKey;
+        cfg.guest = Session.guest;
+        guestId = Session.guest ? Session.guestId : null;
         cfg.hint = cfg.manual
                 ? "\u25C0 \u25B6 cambiar foto    OK pase automático    \u25B2 ocultar    \u25BC información    Atrás: mosaico"
                 : "\u25C0 \u25B6 cambiar foto    OK pausa    \u25B2 ocultar    \u25BC información    Atrás: mosaico";
+        if (cfg.guest) cfg.hint = cfg.manual
+                ? "\u25C0 \u25B6 cambiar foto    OK pase automático    \u25BC información    Atrás: mosaico"
+                : "\u25C0 \u25B6 cambiar foto    OK pausa    \u25BC información    Atrás: mosaico";
         FrameLayout root = new FrameLayout(this);
         setContentView(root);
         show = new Slideshow(this, root, true, cfg);
@@ -29,10 +44,12 @@ public class PlayerActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        if (guestId != null) { gh.removeCallbacks(guestCheck); guestCheck.run(); if (isFinishing()) return; }
         if (show != null) show.start();
     }
 
     @Override protected void onPause() {
+        gh.removeCallbacks(guestCheck);
         if (show != null) {
             String k = show.currentKey();
             if (k != null) Session.lastKey = k;

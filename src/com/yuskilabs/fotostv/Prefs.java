@@ -214,6 +214,14 @@ class Prefs {
         migrated = true;
     }
 
+    static void deleteAlbumCache(Context c, String url) {
+        synchronized (Prefs.class) {
+            java.io.File f = cacheFile(c, url);
+            f.delete();
+            new java.io.File(f.getPath() + ".tmp").delete();
+        }
+    }
+
     static void saveAlbumCache(Context c, String url, AlbumFetcher.AlbumData d) {
         try {
             migrate(c);

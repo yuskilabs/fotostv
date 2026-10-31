@@ -34,7 +34,9 @@ public class BrowserActivity extends Activity {
     private static class Entry {
         String title = "";
         String url = "";
-        int kind;                 // 0 álbum normal, 1 Todas, 2 Favoritos, 3 Ocultas
+        int kind;                 // 0 álbum normal, 1 Todas, 2 Favoritos, 3 Ocultas, 4 temporal de invitado
+        String gid = "";          // (temporal) identificador
+        long expires;             // (temporal) cuándo caduca
         List<Item> src = new ArrayList<Item>();     // todo lo del álbum
         List<Item> items = new ArrayList<Item>();   // lo que se ve (sin las ocultas, salvo en «Ocultas»)
         List<Item> view;          // lista ordenada (null = tal cual la da Google)
@@ -217,6 +219,9 @@ public class BrowserActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        h.removeCallbacks(guestTick);
+        h.postDelayed(guestTick, 30000);
+        Guest.purgeExpired(this);
         if (loaded) {
             int fp = photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0;
             refreshAfterChange(fp);       // por si se ha ocultado o marcado algo en el visor
@@ -231,6 +236,11 @@ public class BrowserActivity extends Activity {
             }
         }
         Session.lastKey = null;
+    }
+
+    @Override protected void onPause() {
+        h.removeCallbacks(guestTick);
+        super.onPause();
     }
 
     @Override protected void onDestroy() {
@@ -390,6 +400,8 @@ public class BrowserActivity extends Activity {
     }
 
     /** Rehace las listas que se ven: quita las ocultas, y arma Todas, Favoritos y Ocultas. */
+    private final java.util.Map<String, Entry> guestMap = new java.util.HashMap<String, Entry>();
+
     private void compose() {
         java.util.Set<String> hid = Prefs.hidden(this);
         favSet = Prefs.favs(this);
@@ -427,6 +439,30 @@ public class BrowserActivity extends Activity {
             if (hidE.cover == null || !hid.contains(hidE.cover.key())) pickCover(hidE);
         }
         entries.clear();
+        // temporales de invitado: siempre al principio y aparte de todo lo demás
+        java.util.Set<String> live = new HashSet<String>();
+        for (Guest.G g : Guest.list(this)) {
+            live.add(g.id);
+            Entry ge = guestMap.get(g.id);
+            if (ge == null) {
+                AlbumFetcher.AlbumData d = Guest.data(this, g);
+                if (d == null) continue;
+                ge = new Entry();
+                ge.kind = 4;
+                ge.gid = g.id;
+                ge.url = g.url;
+                for (Item it : d.items) { if (it.akey.length() == 0) it.akey = d.key; }
+                ge.src = d.items;
+                ge.items = d.items;
+                pickCover(ge);
+                guestMap.put(g.id, ge);
+            }
+            ge.title = g.title();
+            ge.expires = g.expires;
+            for (Item it : ge.src) it.album = ge.title;
+            entries.add(ge);
+        }
+        guestMap.keySet().retainAll(live);
         if (real.size() > 1) entries.add(allE);
         if (favE != null) entries.add(favE);
         entries.addAll(real);
@@ -517,6 +553,9 @@ public class BrowserActivity extends Activity {
         albumGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> p, View v, int pos, long id) { openEntry(pos); }
         });
+        albumGrid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) { return albumMenu(pos); }
+        });
         col.addView(albumGrid, new LinearLayout.LayoutParams(-1, 0, 1f));
         root.addView(col, new FrameLayout.LayoutParams(-1, -1));
         albumGrid.setSelection(Math.min(albumPos, Math.max(0, entries.size() - 1)));
@@ -525,6 +564,42 @@ public class BrowserActivity extends Activity {
         else albumGrid.requestFocus();
         refocus = null;
     }
+
+    /** Pulsación larga en un álbum temporal: quitarlo ahora mismo. */
+    private boolean albumMenu(int pos) {
+        if (pos < 0 || pos >= entries.size()) return false;
+        final Entry e = entries.get(pos);
+        if (e.kind != 4) return false;
+        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle(e.title)
+            .setMessage("Se borrará ahora mismo del televisor, con todas sus miniaturas y vídeos descargados.")
+            .setPositiveButton("Quitar ahora", new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    Guest.remove(BrowserActivity.this, e.gid);
+                    if (current == e) current = null;
+                    refreshAfterChange(0);
+                }
+            })
+            .setNegativeButton("Cancelar", null)
+            .show();
+        return true;
+    }
+
+    /** Cada medio minuto: retira los temporales caducados y refresca los tiempos que quedan. */
+    private final Runnable guestTick = new Runnable() {
+        public void run() {
+            if (destroyed) return;
+            boolean had = !guestMap.isEmpty();
+            if (had && loaded) {
+                int before = guestMap.size();
+                Guest.purgeExpired(BrowserActivity.this);
+                int fp = photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0;
+                refreshAfterChange(fp);
+                if (guestMap.size() < before && level == 1 && current != null && !entries.contains(current)) showAlbums();
+            }
+            h.postDelayed(this, 30000);
+        }
+    };
 
     private void openEntry(int pos) {
         if (pos < 0 || pos >= entries.size()) return;
@@ -634,6 +709,7 @@ public class BrowserActivity extends Activity {
     private void itemMenu(final int pos) {
         if (current == null || pos < 0 || pos >= current.shown().size()) return;
         final Item it = current.shown().get(pos);
+        if (current.kind == 4) { showInfo(it); return; }       // los temporales no se ocultan ni se marcan
         final boolean isHid = Prefs.hidden(this).contains(it.key());
         final boolean isFav = Prefs.favs(this).contains(it.key());
         final String[] labels = {isHid ? "Mostrar" : "Ocultar", "Ver información",
@@ -804,6 +880,8 @@ public class BrowserActivity extends Activity {
                 Session.items = current.shown();
                 Session.order = current.order.length() == 0 && current.kind != 3 ? "random" : "keep";   // sin ordenar: aleatorio
                 Session.manual = false;
+                Session.guest = current.kind == 4;
+                Session.guestId = current.kind == 4 ? current.gid : null;
                 Session.startKey = null;
                 Session.lastKey = null;
                 startActivity(new Intent(BrowserActivity.this, PlayerActivity.class));
@@ -816,6 +894,8 @@ public class BrowserActivity extends Activity {
         Session.items = current.shown();
         Session.order = "keep";
         Session.manual = true;
+        Session.guest = current.kind == 4;
+        Session.guestId = current.kind == 4 ? current.gid : null;
         Session.startKey = current.shown().get(pos).key();
         Session.lastKey = null;
         startActivity(new Intent(this, PlayerActivity.class));
@@ -873,16 +953,23 @@ public class BrowserActivity extends Activity {
             Entry e = entries.get(pos);
             t.name.setText(e.title);
             int ic = e.kind == 1 ? R.drawable.ic_albums : e.kind == 2 ? R.drawable.ic_star
-                    : e.kind == 3 ? R.drawable.ic_visibility_off : 0;
+                    : e.kind == 3 ? R.drawable.ic_visibility_off : e.kind == 4 ? R.drawable.ic_schedule : 0;
             if (ic != 0) {
                 android.graphics.drawable.Drawable d = getResources().getDrawable(ic).mutate();
                 if (e.kind == 2) d.setColorFilter(0xFFFFC83D, android.graphics.PorterDuff.Mode.SRC_IN);
+                if (e.kind == 4) d.setColorFilter(0xFFFFB454, android.graphics.PorterDuff.Mode.SRC_IN);
                 int sz = Ui.dp(BrowserActivity.this, 17);
                 d.setBounds(0, 0, sz, sz);
                 t.name.setCompoundDrawables(d, null, null, null);
                 t.name.setCompoundDrawablePadding(Ui.dp(BrowserActivity.this, 7));
             } else t.name.setCompoundDrawables(null, null, null, null);
-            t.count.setText(e.items.size() + " elementos");
+            if (e.kind == 4) {
+                t.count.setText("Temporal \u00B7 quedan " + Guest.left(e.expires - System.currentTimeMillis()));
+                t.count.setTextColor(0xFFFFB454);
+            } else {
+                t.count.setText(e.items.size() + " elementos");
+                t.count.setTextColor(0xFFD0DBE8);
+            }
             if (e.items.isEmpty()) thumbs.clearView(t.img);
             else if (e.kind == 3) thumbs.loadBlur(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));
             else thumbs.load(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));

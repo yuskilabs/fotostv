@@ -107,6 +107,7 @@ class Slideshow {
         boolean manual;            // visor: empieza parado y las flechas no lo ponen en marcha
         String startKey;           // foto por la que empezar
         String hint;               // texto de ayuda al empezar
+        boolean guest;             // álbum temporal de invitado: no se puede ocultar nada
     }
 
     private static boolean hintShown;
@@ -1357,6 +1358,7 @@ class Slideshow {
 
     private void hideCurrent() {
         if (cur == null) return;
+        if (cfg != null && cfg.guest) { flash("Las fotos temporales no se pueden ocultar", 2000); return; }
         Item it = cur.item;
         int hideAt = manual() ? indexOfKey(it.key()) : -1;
         Prefs.hide(ctx, it.key());

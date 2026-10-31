@@ -308,8 +308,18 @@ class Thumbs {
     }
 
     private File fileFor(String url) {
+        int i = url.lastIndexOf("=w");
+        String gid = i > 0 ? Guest.idOfBase(app, url.substring(0, i)) : null;
+        if (gid != null) {                       // fotos de un álbum de invitado: carpeta aparte, que se borra entera
+            File gd = new File(Guest.guestThumbRoot(app), gid);
+            gd.mkdirs();
+            return new File(gd, sha1(url) + ".img");
+        }
         return new File(dir, sha1(url) + ".img");
     }
+
+    /** Vacía la memoria de miniaturas (al borrar un álbum de invitado). */
+    void dropMemory() { mem.evictAll(); }
 
     private static String sha1(String s) {
         try {
