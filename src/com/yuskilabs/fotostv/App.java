@@ -8,7 +8,7 @@ public class App extends Application {
     @Override public void onCreate() {
         super.onCreate();
         try {
-            Ui.BLACK = Typeface.createFromAsset(getAssets(), "fonts/Figtree-ExtraBold.ttf");
+            Ui.BLACK = Typeface.createFromAsset(getAssets(), "fonts/Figtree-Bold.ttf");
             Ui.BTN = Typeface.createFromAsset(getAssets(), "fonts/Figtree-Regular.ttf");
             Ui.HAND = Typeface.createFromAsset(getAssets(), "fonts/Caveat-SemiBold.ttf");
             Ui.REG = Typeface.createFromAsset(getAssets(), "fonts/Figtree-Regular.ttf");

@@ -256,10 +256,10 @@ class Slideshow {
 
         info = new LinearLayout(ctx);
         info.setOrientation(LinearLayout.VERTICAL);
-        tvAlbum = text(18, Gravity.START);
+        tvAlbum = text(28, Gravity.START);
         tvAlbum.setTypeface(Ui.BLACK);
         tvAlbum.setAlpha(0.8f);
-        tvDate = text(24, Gravity.START);
+        tvDate = text(19, Gravity.START);
         tvPlace = text(27, Gravity.START);
         tvPlace.setTypeface(Ui.HAND);
         // una sola línea cada una: así una fecha larga nunca se parte ni se corta («18 de diciembre de»)
