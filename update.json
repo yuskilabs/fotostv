@@ -1,6 +1,6 @@
 {
-  "version": "5.20.5",
+  "version": "5.20.6",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 491115,
-  "notes": "- Logo de yuskilabs corregido (degradado del icono) en la app, la página de configuración y GitHub. README actualizado con todas las novedades."
+  "size": 482923,
+  "notes": "- Logo de yuskilabs: «labs» en un azul más claro, en la app, la web y GitHub."
 }

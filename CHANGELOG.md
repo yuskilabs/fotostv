@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.20.6
+- Logo de yuskilabs: «labs» en un azul más claro, en la app, la web y GitHub.
+
 ## 5.20.5
 - Logo de yuskilabs corregido (degradado del icono) en la app, la página de configuración y GitHub. README actualizado con todas las novedades.
 
