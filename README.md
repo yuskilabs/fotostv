@@ -1,8 +1,7 @@
 <p align="center">
-  <img src="assets/fotostv-icon.png" alt="FotosTV" width="140"><br>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/fotostv-wordmark.png">
-    <img src="assets/fotostv-wordmark-claro.png" alt="FotosTV" width="280">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/fotostv-logo.png">
+    <img src="assets/fotostv-logo-claro.png" alt="FotosTV" width="420">
   </picture>
 </p>
 
