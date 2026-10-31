@@ -113,9 +113,24 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         qrView = new ImageView(this);
         qrView.setScaleType(ImageView.ScaleType.FIT_CENTER);
         qrView.setVisibility(View.GONE);
-        LinearLayout.LayoutParams qp = new LinearLayout.LayoutParams(dp(104), dp(104));
+        // QR y, justo debajo, el botón «Invitado» (más pequeño que los demás)
+        LinearLayout qcol = new LinearLayout(this);
+        qcol.setOrientation(LinearLayout.VERTICAL);
+        qcol.setGravity(Gravity.CENTER_HORIZONTAL);
+        qcol.addView(qrView, new LinearLayout.LayoutParams(dp(104), dp(104)));
+        Button guestBtn = Ui.icon(Ui.button(this, "Invitado", new View.OnClickListener() {
+            public void onClick(View v) { guestDialog(); }
+        }), R.drawable.ic_guest);
+        guestBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        guestBtn.setMinHeight(0);
+        guestBtn.setMinimumHeight(0);
+        guestBtn.setPadding(dp(8), dp(2), dp(8), dp(2));
+        LinearLayout.LayoutParams gbp = new LinearLayout.LayoutParams(dp(104), dp(30));
+        gbp.setMargins(0, dp(6), 0, 0);
+        qcol.addView(guestBtn, gbp);
+        LinearLayout.LayoutParams qp = new LinearLayout.LayoutParams(-2, -2);
         qp.setMargins(dp(12), 0, 0, 0);
-        c1.addView(qrView, qp);
+        c1.addView(qcol, qp);
         LinearLayout.LayoutParams c1p = new LinearLayout.LayoutParams(0, -1, 0.50f);
         c1p.setMargins(dp(7), 0, 0, 0);
         row1.addView(c1, c1p);
@@ -168,16 +183,6 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             public void onClick(View v) { updateFlow(); }
         });
         // dos columnas: ver y previsualizar · salvapantallas e inicio · tiempos y vídeo · extras · mantenimiento
-        Button guestBtn = side("Invitado: álbum temporal", R.drawable.ic_guest, new View.OnClickListener() {
-            public void onClick(View v) { guestDialog(); }
-        });
-        LinearLayout gRow = new LinearLayout(this);
-        gRow.setOrientation(LinearLayout.HORIZONTAL);
-        gRow.setClipChildren(false);
-        gRow.addView(guestBtn, new LinearLayout.LayoutParams(-1, -1));
-        LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(-1, 0, 1f);
-        gp.setMargins(0, 0, 0, dp(6));
-        left.addView(gRow, gp);
         left.addView(pair(preview, browse));
         left.addView(pair(idleBtn, check));
         left.addView(pair(stopBtn, vqBtn));

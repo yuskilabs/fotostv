@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.23.2
+- El botón «Invitado» pasa a un botón pequeño justo debajo del código QR, en lugar de ocupar una fila entera de botones.
+
 ## 5.23.1
 - La web de ajustes pide ahora un **PIN** de 4 cifras (sale en la tele junto a la dirección). El código QR ya lo lleva puesto, así que escaneándolo se entra directo; en cada móvil se pide una sola vez. La página de invitado no lo necesita, de modo que una visita solo ve esa página.
 
