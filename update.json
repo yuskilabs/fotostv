@@ -1,6 +1,6 @@
 {
-  "version": "5.21.3",
+  "version": "5.21.4",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 544519,
-  "notes": "- Tipografía Outfit (licencia SIL OFL) en toda la app: ExtraBold en botones, títulos y nombres de álbum, y Regular en el resto."
+  "size": 626519,
+  "notes": "- Tipografía Quicksand (licencia SIL OFL) en toda la app: Bold en títulos y nombres de álbum, Medium en botones y Regular en el resto. Sustituye a Outfit."
 }

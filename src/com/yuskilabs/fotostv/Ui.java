@@ -12,8 +12,9 @@ import android.widget.LinearLayout;
 
 /** Elementos de interfaz compartidos. */
 class Ui {
-    /** Fuente de títulos y botones (Outfit ExtraBold; la carga App al arrancar) y de textos normales (Outfit Regular). */
+    /** Fuente de títulos y botones (Quicksand Bold; la carga App al arrancar), de botones (Medium) y de textos normales (Regular). */
     static android.graphics.Typeface BLACK = android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL);
+    static android.graphics.Typeface BTN = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL);
     static android.graphics.Typeface REG = android.graphics.Typeface.DEFAULT;
 
     static int dp(Context c, int v) {
@@ -23,7 +24,7 @@ class Ui {
     /** Botón para mando: el seleccionado se ve azul intenso con borde blanco. */
     static Button button(Context c, String label, View.OnClickListener l) {
         Button btn = new Button(c);
-        btn.setTypeface(Ui.BLACK);
+        btn.setTypeface(Ui.BTN);
         btn.setText(label);
         btn.setAllCaps(false);
         btn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);

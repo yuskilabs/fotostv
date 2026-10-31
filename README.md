@@ -181,4 +181,4 @@ Por ahora sin licencia: el código es visible, pero no se concede permiso para r
 
 ## Créditos
 
-La tipografía es [Outfit](https://github.com/Outfitio/Outfit-Fonts) (licencia SIL OFL). El código QR se genera con [QR Code generator](https://github.com/nayuki/QR-Code-generator) de Project Nayuki (licencia MIT).
+La tipografía es [Quicksand](https://github.com/andrew-paglinawan/QuicksandFamily) (licencia SIL OFL). El código QR se genera con [QR Code generator](https://github.com/nayuki/QR-Code-generator) de Project Nayuki (licencia MIT).
