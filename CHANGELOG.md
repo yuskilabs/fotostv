@@ -6,7 +6,7 @@ El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/
 ## 5.27.4
 
 - **Emisoras de música nuevas**: SomaFM Lush (voces suaves), Seven Inch Soul (soul clásico), Groove Salad (chill) y Radio Swiss Jazz (jazz suave) sustituyen a las anteriores. Sigues pudiendo pegar la dirección de otra.
-- **Logo con el naranja más rojizo y vivo**, en todos los tamaños.
+- **Logo con el degradado del anterior** (naranja vivo en la esquina, la T y la «o»; rosa y violeta) y limpio de manchas y sombras, en todos los tamaños.
 
 ## 5.27.3
 
