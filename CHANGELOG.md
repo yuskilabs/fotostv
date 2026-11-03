@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.29.1
+
+- **Londres**: ya no sale «Gran Londres», sino «Londres».
+
 ## 5.29.0
 
 - **Selección dentro de un álbum**: al dejar pulsada una foto o vídeo, «Seleccionar» permite marcar varios (con «Todas») y ocultarlos o mostrarlos, o añadirlos y quitarlos de favoritos de una vez. «Atrás» sale de la selección.
