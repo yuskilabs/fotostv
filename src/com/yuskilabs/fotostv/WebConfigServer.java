@@ -449,6 +449,7 @@ class WebConfigServer extends Thread {
               .append("</div><div class='row2'>")
               .append("<button type='button' class='sec' onclick='mv(this,-1)'>\u2191 Subir</button>")
               .append("<button type='button' class='sec' onclick='mv(this,1)'>\u2193 Bajar</button>")
+              .append("<button type='button' class='sec danger' style='background:#c62839;flex:0 0 58px' title='Borrar álbum' aria-label='Borrar álbum' onclick='delOne(this)'>\uD83D\uDDD1</button>")
               .append("</div></div>");
         }
         return sb.toString();
@@ -489,9 +490,17 @@ class WebConfigServer extends Thread {
         sb.append("<h2>Música del pase</h2><label>Fuente</label><select name='musicMode'>")
           .append(opt("off", "Sin música", mm)).append(opt("radio", "Emisora de internet", mm))
           .append(opt("folder", "Carpeta con canciones (en la tele o en un USB)", mm))
-          .append("</select><label>Emisora (tranquila y sin anuncios)</label><select onchange=\"if(this.value)document.getElementById('mr').value=this.value\">")
+          .append("</select><label>Emisora</label><select onchange=\"if(this.value)document.getElementById('mr').value=this.value\">")
           .append("<option value=''>Elegir una…</option>");
-        for (String[] pr : Music.PRESETS) sb.append("<option value='").append(pr[1]).append("'>").append(esc(pr[0])).append("</option>");
+        boolean og = false;
+        for (String[] pr : Music.PRESETS) {
+            if (pr[1] == null) {
+                if (og) sb.append("</optgroup>");
+                sb.append("<optgroup label='").append(esc(pr[0])).append("'>");
+                og = true;
+            } else sb.append("<option value='").append(pr[1]).append("'>").append(esc(pr[0])).append("</option>");
+        }
+        if (og) sb.append("</optgroup>");
         sb.append("</select><input id='mr' name='musicRadio' type='url' placeholder='o pega aquí la dirección de otra emisora' value='")
           .append(esc(mr)).append("'>")
           .append("<label>Carpeta de canciones</label><input name='musicFolder' list='mfl' placeholder='/storage/emulated/0/Music' value='")
@@ -552,6 +561,10 @@ class WebConfigServer extends Thread {
     }
 
     private static final String SCRIPT = "<script>"
+        + "function delOne(b){var c=b;while(c&&!(c.className||'').match(/(^| )card( |$)/))c=c.parentNode;if(!c)return;"
+        + "var k=c.querySelector('input[type=checkbox][name^=del]');if(!k)return;"
+        + "if(!confirm('¿Borrar este álbum de la lista?\\n\\nLas fotos NO se borran de Google Fotos. Se guardarán también los demás cambios.'))return;"
+        + "k.checked=true;document.querySelector('form').submit();}"
         + "function delAll(){var c=document.querySelectorAll('#albums input[type=checkbox][name^=del]');"
         + "if(!c.length){alert('No hay álbumes que quitar.');return;}"
         + "if(!confirm('\u26A0 Se quitarán los '+c.length+' álbumes de la lista.\\n\\n'"

@@ -11,5 +11,6 @@ class Session {
     static boolean guest;             // el pase es de un álbum temporal de invitado
     static String guestId;            // cuál (para cerrar el pase cuando caduque)
     static volatile boolean playerOn;  // hay un pase abierto (el inicio automático no debe tapar un pase manual)
+    static int music;                 // 0 = según los ajustes, 1 = con música aunque esté desactivada (menú «Pase con música»)
     static String lastKey;            // última foto vista, para volver al mosaico en ella
 }

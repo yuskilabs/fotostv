@@ -394,12 +394,12 @@ class MetaFetcher {
     static String place(Context c, double lat, double lon) {
         if (Double.isNaN(lat)) return null;
         SharedPreferences m = Prefs.meta(c);
-        String k = String.format(Locale.US, "p6_%.2f,%.2f", lat, lon);
+        String k = String.format(Locale.US, "p7_%.2f,%.2f", lat, lon);
         if (m.contains(k)) {
             long t = m.getLong(k + "_t", 0);
             if (t == 0 || System.currentTimeMillis() - t < 24L * 60 * 60 * 1000) return m.getString(k, null);
         }
-        String cc = null, town = null, region = null, rgEs = null;
+        String cc = null, town = null, region = null, rgEs = null, loc = null, sub = null, subAdm = null;
         try {
             if (Geocoder.isPresent()) {
                 List<Address> l = new Geocoder(c, ES).getFromLocation(lat, lon, 5);
@@ -407,33 +407,45 @@ class MetaFetcher {
                     for (Address x : l) {
                         if (cc == null && x.getCountryCode() != null && x.getCountryCode().length() > 0) cc = x.getCountryCode();
                         // nunca featureName: en la costa o el campo suele ser solo un número de portal o de carretera
-                        if (town == null) town = firstLatin(x.getLocality(), x.getSubLocality());
+                        if (loc == null) { String q = firstLatin(x.getLocality()); if (q != null && !distrito(q)) loc = q; }
+                        if (sub == null) { String q = firstLatin(x.getSubLocality()); if (q != null && !distrito(q)) sub = q; }
+                        if (subAdm == null) { String q = firstLatin(x.getSubAdminArea()); if (q != null && !distrito(q)) subAdm = q; }
                         if (region == null) region = firstLatin(x.getAdminArea());
                     }
-                    Address a = l.get(0);
-                    rgEs = first(a.getSubAdminArea(), a.getAdminArea());
+                    Address a0 = l.get(0);
+                    rgEs = first(a0.getSubAdminArea(), a0.getAdminArea());
                 }
             }
         } catch (Exception ignored) { }
+        town = loc;
         boolean es = cc != null && "ES".equalsIgnoreCase(cc);
+        if (!es) {
+            // fuera de España: la ciudad (no el barrio ni el distrito), con el nombre en castellano si OpenStreetMap lo tiene
+            JSONObject a10 = osm(lat, lon, 10);
+            if (a10 != null) {
+                String ncc = a10.optString("country_code", "");
+                if (ncc.length() > 0) { cc = ncc; es = "es".equalsIgnoreCase(ncc); }
+                String q = firstLatin(a10.optString("city", null), a10.optString("town", null), a10.optString("village", null),
+                        a10.optString("municipality", null));
+                if (q != null && !distrito(q)) town = q;
+            }
+        }
         if (town == null) {
             // OpenStreetMap: nombre en castellano si existe, si no en inglés, si no el local
-            try {
-                String url = String.format(Locale.US,
-                        "https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&lat=%.5f&lon=%.5f&accept-language=",
-                        lat, lon) + URLEncoder.encode("es,en", "UTF-8");
-                JSONObject a = new JSONObject(new String(AlbumFetcher.get(url), "UTF-8")).getJSONObject("address");
+            JSONObject a = osm(lat, lon, 14);
+            if (a != null) {
                 String ncc = a.optString("country_code", "");
                 if (ncc.length() > 0) { cc = ncc; es = "es".equalsIgnoreCase(ncc); }
-                town = firstLatin(a.optString("city", null), a.optString("town", null),
+                String q = firstLatin(a.optString("city", null), a.optString("town", null),
                         a.optString("village", null), a.optString("municipality", null),
-                        a.optString("hamlet", null), a.optString("suburb", null),
-                        a.optString("city_district", null), a.optString("neighbourhood", null));
+                        a.optString("hamlet", null));
+                if (q != null && !distrito(q)) town = q;
                 if (es && rgEs == null) rgEs = first(a.optString("province", null), a.optString("county", null), a.optString("state", null));
                 if (region == null) region = firstLatin(a.optString("state", null));
-            } catch (Exception ignored) { }
+            }
         }
         if (town == null) town = nearestPlace(lat, lon);   // mar abierto, campo: el núcleo habitado más cercano
+        if (town == null) town = sub != null ? sub : subAdm;
         boolean complete = town != null;
         String name;
         if (es) {
@@ -469,9 +481,60 @@ class MetaFetcher {
         return null;
     }
 
+    /** Respuesta «address» de Nominatim (nivel de detalle zoom) en castellano o inglés; null si falla. */
+    private static JSONObject osm(double lat, double lon, int zoom) {
+        try {
+            String url = String.format(Locale.US,
+                    "https://nominatim.openstreetmap.org/reverse?format=json&zoom=%d&lat=%.5f&lon=%.5f&accept-language=", zoom, lat, lon)
+                    + URLEncoder.encode("es,en", "UTF-8");
+            return new JSONObject(new String(AlbumFetcher.get(url), "UTF-8")).getJSONObject("address");
+        } catch (Exception e) { return null; }
+    }
+
+    /** Nombre de distrito, barrio o municipio-contenedor que no sirve como «ciudad». */
+    private static boolean distrito(String n) {
+        String l = n.toLowerCase(Locale.ROOT);
+        return l.startsWith("city of ") || l.startsWith("borough of ") || l.startsWith("london borough") || l.startsWith("royal borough")
+            || l.startsWith("kecamatan") || l.startsWith("kelurahan") || l.startsWith("distrito ") || l.startsWith("district ")
+            || l.startsWith("arrondissement") || l.startsWith("quartier ") || l.startsWith("barrio ") || l.startsWith("ward ")
+            || l.endsWith(" mh.") || l.endsWith(" mahallesi") || l.endsWith(" district") || l.endsWith(" borough")
+            || l.endsWith(" ward") || l.endsWith(" county") || l.endsWith(" ilçesi") || l.endsWith(" ilcesi");
+    }
+
+    private static final String[][] EXONIMOS = {
+        {"london", "Londres"}, {"istanbul", "Estambul"}, {"jakarta", "Yakarta"}, {"kobenhavn", "Copenhague"}, {"copenhagen", "Copenhague"},
+        {"roma", "Roma"}, {"wien", "Viena"}, {"vienna", "Viena"}, {"praha", "Praga"}, {"prague", "Praga"}, {"firenze", "Florencia"},
+        {"florence", "Florencia"}, {"venezia", "Venecia"}, {"venice", "Venecia"}, {"napoli", "Nápoles"}, {"naples", "Nápoles"},
+        {"milano", "Milán"}, {"milan", "Milán"}, {"torino", "Turín"}, {"turin", "Turín"}, {"genova", "Génova"}, {"genoa", "Génova"},
+        {"munchen", "Múnich"}, {"munich", "Múnich"}, {"koln", "Colonia"}, {"cologne", "Colonia"}, {"nurnberg", "Núremberg"},
+        {"nuremberg", "Núremberg"}, {"bruxelles", "Bruselas"}, {"brussel", "Bruselas"}, {"brussels", "Bruselas"}, {"antwerpen", "Amberes"},
+        {"antwerp", "Amberes"}, {"athina", "Atenas"}, {"athens", "Atenas"}, {"moskva", "Moscú"}, {"moscow", "Moscú"},
+        {"warszawa", "Varsovia"}, {"warsaw", "Varsovia"}, {"krakow", "Cracovia"}, {"beograd", "Belgrado"}, {"belgrade", "Belgrado"},
+        {"bucuresti", "Bucarest"}, {"bucharest", "Bucarest"}, {"zurich", "Zúrich"}, {"geneve", "Ginebra"}, {"geneva", "Ginebra"},
+        {"bern", "Berna"}, {"edinburgh", "Edimburgo"}, {"kyoto", "Kioto"}, {"tokyo", "Tokio"}, {"beijing", "Pekín"}, {"new york", "Nueva York"},
+        {"new york city", "Nueva York"}, {"rio de janeiro", "Río de Janeiro"}, {"cairo", "El Cairo"}, {"al qahirah", "El Cairo"},
+        {"marrakesh", "Marrakech"}, {"singapore", "Singapur"}, {"seoul", "Seúl"}, {"phnom penh", "Nom Pen"}, {"havana", "La Habana"},
+        {"lisbon", "Lisboa"}, {"gothenburg", "Gotemburgo"}, {"goteborg", "Gotemburgo"}, {"brugge", "Brujas"}, {"bruges", "Brujas"},
+        {"den haag", "La Haya"}, {"the hague", "La Haya"}, {"sankt peterburg", "San Petersburgo"}, {"saint petersburg", "San Petersburgo"},
+        {"kyiv", "Kiev"}, {"kiev", "Kiev"}, {"tbilisi", "Tiflis"}, {"yerevan", "Ereván"}, {"baku", "Bakú"}, {"dubai", "Dubái"},
+        {"abu dhabi", "Abu Dabi"}, {"doha", "Doha"}, {"muscat", "Mascate"}, {"kolkata", "Calcuta"}, {"mumbai", "Bombay"},
+        {"ho chi minh city", "Ciudad Ho Chi Minh"}, {"yangon", "Rangún"}, {"colombo", "Colombo"}, {"kathmandu", "Katmandú"},
+        {"hanoi", "Hanói"}, {"nairobi", "Nairobi"}, {"cape town", "Ciudad del Cabo"}, {"mexico city", "Ciudad de México"},
+        {"naha", "Naha"}, {"osaka", "Osaka"}, {"vilnius", "Vilna"}, {"tallinn", "Tallín"}, {"riga", "Riga"}, {"helsingfors", "Helsinki"},
+        {"stockholm", "Estocolmo"}, {"oslo", "Oslo"}, {"reykjavik", "Reikiavik"}, {"dublin", "Dublín"}, {"baile atha cliath", "Dublín"},
+        {"valletta", "La Valeta"}, {"la valletta", "La Valeta"}, {"sevastopol", "Sebastopol"}, {"thessaloniki", "Salónica"}
+    };
+
+    private static String sinTildes(String n) {
+        String d = java.text.Normalizer.normalize(n, java.text.Normalizer.Form.NFD);
+        return d.replaceAll("\\p{M}", "").replace('ı', 'i').replace('ø', 'o').replace('ł', 'l').toLowerCase(Locale.ROOT).trim();
+    }
+
     /** Palabras genéricas de lugar en inglés a castellano («Malcapuya Island» → «Isla Malcapuya»). */
     private static String castellano(String n) {
         if (n == null) return null;
+        String sn = sinTildes(n);
+        for (String[] x : EXONIMOS) if (x[0].equals(sn)) return x[1];
         String[][] sufijos = {{" Islands", "Islas"}, {" Island", "Isla"}, {" Beach", "Playa"}, {" Bay", "Bahía"},
                 {" Lake", "Lago"}, {" Mountain", "Monte"}, {" Falls", "Cascada"}, {" Peninsula", "Península"}};
         for (String[] x : sufijos) {

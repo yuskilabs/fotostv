@@ -263,6 +263,7 @@ public class BrowserActivity extends Activity {
     }
 
     @Override public void onBackPressed() {
+        if (selMode && level == 0) { exitSel(); return; }
         if (level == 1) {
             // primer «atrás»: sube a los botones; segundo: vuelve a los álbumes
             if (photoGrid != null && photoGrid.hasFocus() && playBtn != null) playBtn.requestFocus();
@@ -293,6 +294,7 @@ public class BrowserActivity extends Activity {
                     public void run() {
                         if (destroyed) return;
                         real = new ArrayList<Entry>(fin);
+                        refreshOff();
                         compose();
                         loaded = true;
                         if (entries.isEmpty()) {
@@ -541,17 +543,36 @@ public class BrowserActivity extends Activity {
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
         LinearLayout head = header();
-        TextView title = text("Álbumes", 26, Color.WHITE);
+        TextView title = text(selMode ? sel.size() + (sel.size() == 1 ? " álbum seleccionado" : " álbumes seleccionados") : "Álbumes", selMode ? 20 : 26, Color.WHITE);
         title.setTypeface(Ui.BLACK);
         title.setPadding(0, 0, 0, 0);
+        selTitle = selMode ? title : null;
         head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
-        head.addView(colsControl("album", ALBUM_COLS_RANGE, albumCols, "albumCols", true));
+        if (selMode) {
+            head.addView(sbtn("Pase", R.drawable.ic_play, new View.OnClickListener() {
+                public void onClick(View v) { if (!sel.isEmpty()) startPase(selected(), false); }
+            }));
+            head.addView(sbtn("Con música", R.drawable.ic_play, new View.OnClickListener() {
+                public void onClick(View v) { if (!sel.isEmpty()) startPase(selected(), true); }
+            }));
+            head.addView(sbtn("Ocultar", R.drawable.ic_visibility_off, new View.OnClickListener() {
+                public void onClick(View v) { if (!sel.isEmpty()) hideEntries(selected(), false); }
+            }));
+            head.addView(sbtn("Borrar", R.drawable.ic_delete, new View.OnClickListener() {
+                public void onClick(View v) { if (!sel.isEmpty()) confirmDelete(selected()); }
+            }));
+            head.addView(sbtn("Cancelar", R.drawable.ic_close, new View.OnClickListener() {
+                public void onClick(View v) { exitSel(); }
+            }));
+        } else head.addView(colsControl("album", ALBUM_COLS_RANGE, albumCols, "albumCols", true));
         col.addView(head, headParams());
 
         albumGrid = makeGrid(albumCols);
         albumGrid.setAdapter(new AlbumAdapter());
         albumGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> p, View v, int pos, long id) { openEntry(pos); }
+            public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
+                if (selMode) { if (pos >= 0 && pos < entries.size()) toggleSel(entries.get(pos)); } else openEntry(pos);
+            }
         });
         albumGrid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) { return albumMenu(pos); }
@@ -565,15 +586,50 @@ public class BrowserActivity extends Activity {
         refocus = null;
     }
 
-    /** Pulsación larga en un álbum: recargarlo (o, si es temporal, quitarlo ahora mismo). */
+    private boolean selMode;
+    private final java.util.HashSet<Entry> sel = new java.util.HashSet<Entry>();
+    private java.util.Set<String> offUrls = new java.util.HashSet<String>();
+
+    private void refreshOff() {
+        java.util.Set<String> o = new java.util.HashSet<String>();
+        for (Prefs.Album al : Prefs.albums(this)) if (!al.show) o.add(al.url);
+        offUrls = o;
+    }
+
+    private void exitSel() {
+        selMode = false;
+        sel.clear();
+        if (level == 0) showAlbums();
+    }
+
+    private List<Entry> selected() {
+        List<Entry> l = new ArrayList<Entry>();
+        for (Entry e : entries) if (sel.contains(e)) l.add(e);
+        return l;
+    }
+
+    /** Pulsación larga en un álbum: pase, pase con música, recargar, ocultar, borrar o empezar a seleccionar. */
     private boolean albumMenu(int pos) {
         if (pos < 0 || pos >= entries.size()) return false;
         final Entry e = entries.get(pos);
+        if (selMode) { toggleSel(e); return true; }
         if (e.kind == 0) {
+            final boolean off = offUrls.contains(e.url);
+            final List<Entry> one = new ArrayList<Entry>();
+            one.add(e);
             new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                 .setTitle(e.title)
-                .setItems(new String[]{"Recargar álbum"}, new android.content.DialogInterface.OnClickListener() {
-                    public void onClick(android.content.DialogInterface d, int w) { reloadAlbum(e); }
+                .setItems(new String[]{"Seleccionar", "Pase", "Pase con música", "Recargar álbum",
+                        off ? "Mostrar álbum" : "Ocultar álbum", "Borrar álbum"},
+                    new android.content.DialogInterface.OnClickListener() {
+                    public void onClick(android.content.DialogInterface d, int w) {
+                        if (w == 0) { selMode = true; sel.clear(); sel.add(e); showAlbums(); }
+                        else if (w == 1) startPase(one, false);
+                        else if (w == 2) startPase(one, true);
+                        else if (w == 3) reloadAlbum(e);
+                        else if (w == 4) hideEntries(one, off);
+                        else confirmDelete(one);
+                    }
                 })
                 .setNegativeButton("Cancelar", null)
                 .show();
@@ -593,6 +649,86 @@ public class BrowserActivity extends Activity {
             .setNegativeButton("Cancelar", null)
             .show();
         return true;
+    }
+
+    private void toggleSel(Entry e) {
+        if (e.kind != 0) return;
+        if (!sel.remove(e)) sel.add(e);
+        if (albumGrid != null) {
+            int p = albumGrid.getFirstVisiblePosition();
+            ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
+            albumGrid.setSelection(p);
+        }
+        if (selTitle != null) selTitle.setText(sel.size() + (sel.size() == 1 ? " álbum seleccionado" : " álbumes seleccionados"));
+    }
+
+    private android.widget.TextView selTitle;
+
+    /** Abre un pase con las fotos de los álbumes dados (mezclados), con música o según los ajustes. */
+    private void startPase(List<Entry> es, boolean music) {
+        List<Item> all = new ArrayList<Item>();
+        java.util.HashSet<String> seen = new java.util.HashSet<String>();
+        for (Entry x : es) for (Item it : x.items) if (seen.add(it.key())) all.add(it);
+        if (all.isEmpty()) { showToast("No hay nada que mostrar en esos álbumes."); return; }
+        if (music && Prefs.musicRadio(this).length() == 0 && Prefs.musicFolder(this).length() == 0) {
+            showToast("Elige antes una emisora o una carpeta de música.");
+            music = false;
+        }
+        Session.items = all;
+        Session.order = "random";
+        Session.manual = false;
+        Session.guest = false;
+        Session.guestId = null;
+        Session.startKey = null;
+        Session.lastKey = null;
+        Session.music = music ? 1 : 0;
+        selMode = false;
+        sel.clear();
+        startActivity(new Intent(this, PlayerActivity.class));
+    }
+
+    /** Oculta (o vuelve a mostrar) los álbumes en el salvapantallas. */
+    private void hideEntries(List<Entry> es, boolean show) {
+        List<Prefs.Album> l = Prefs.albums(this);
+        for (Prefs.Album al : l) for (Entry x : es) if (al.url.equals(x.url)) al.show = show;
+        Prefs.saveAlbums(this, l);
+        if (!show && "all".equals(Prefs.albumMode(this))) Prefs.sp(this).edit().putString("albumMode", "selected").apply();
+        refreshOff();
+        showToast(show ? "Se mostrará en el salvapantallas." : "Oculto del salvapantallas (sigue en esta lista).");
+        exitSel();
+        if (level == 0 && albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
+    }
+
+    private void confirmDelete(final List<Entry> es) {
+        String m = es.size() == 1 ? "Se quitará «" + es.get(0).title + "» de la lista."
+                : "Se quitarán " + es.size() + " álbumes de la lista.";
+        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Borrar álbum")
+            .setMessage(m + "\n\nLas fotos NO se borran de Google Fotos; si lo quieres de vuelta tendrás que añadir el enlace otra vez.")
+            .setPositiveButton("Borrar", new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) { deleteEntries(es); }
+            })
+            .setNegativeButton("Cancelar", null)
+            .show();
+    }
+
+    private void deleteEntries(List<Entry> es) {
+        java.util.HashSet<String> urls = new java.util.HashSet<String>();
+        for (Entry x : es) urls.add(x.url);
+        List<Prefs.Album> keep = new ArrayList<Prefs.Album>();
+        for (Prefs.Album al : Prefs.albums(this)) {
+            if (urls.contains(al.url)) Prefs.deleteAlbumCache(this, al.url); else keep.add(al);
+        }
+        Prefs.saveAlbums(this, keep);
+        List<Entry> nr = new ArrayList<Entry>();
+        for (Entry x : real) if (!urls.contains(x.url)) nr.add(x);
+        real = nr;
+        selMode = false;
+        sel.clear();
+        refreshOff();
+        compose();
+        if (entries.isEmpty()) showMessage("No hay álbumes.\nAñádelos desde la web de ajustes de FotosTV.");
+        else showAlbums();
     }
 
     private boolean reloading;
@@ -1003,6 +1139,7 @@ public class BrowserActivity extends Activity {
                 Session.guestId = current.kind == 4 ? current.gid : null;
                 Session.startKey = null;
                 Session.lastKey = null;
+                Session.music = 0;
                 startActivity(new Intent(BrowserActivity.this, PlayerActivity.class));
             }
         };
@@ -1017,6 +1154,7 @@ public class BrowserActivity extends Activity {
         Session.guestId = current.kind == 4 ? current.gid : null;
         Session.startKey = current.shown().get(pos).key();
         Session.lastKey = null;
+        Session.music = 0;
         startActivity(new Intent(this, PlayerActivity.class));
     }
 
@@ -1070,7 +1208,9 @@ public class BrowserActivity extends Activity {
         public View getView(int pos, View cv, ViewGroup parent) {
             Tile t = cv instanceof Tile ? (Tile) cv : newAlbumTile();
             Entry e = entries.get(pos);
-            t.name.setText(e.title);
+            boolean isSel = selMode && sel.contains(e);
+            t.name.setText(isSel ? "\u2713 " + e.title : e.title);
+            t.setAlpha(selMode && !isSel ? 0.5f : 1f);
             int ic = e.kind == 1 ? R.drawable.ic_albums : e.kind == 2 ? R.drawable.ic_star
                     : e.kind == 3 ? R.drawable.ic_visibility_off : e.kind == 4 ? R.drawable.ic_schedule : 0;
             if (ic != 0) {
@@ -1086,8 +1226,9 @@ public class BrowserActivity extends Activity {
                 t.count.setText("Temporal \u00B7 quedan " + Guest.left(e.expires - System.currentTimeMillis()));
                 t.count.setTextColor(0xFFFFB454);
             } else {
-                t.count.setText(e.items.size() + " elementos");
-                t.count.setTextColor(0xFFD0DBE8);
+                boolean off = e.kind == 0 && offUrls.contains(e.url);
+                t.count.setText(e.items.size() + " elementos" + (off ? " \u00B7 oculto en el salvapantallas" : ""));
+                t.count.setTextColor(off ? 0xFFFFB454 : 0xFFD0DBE8);
             }
             if (e.items.isEmpty()) thumbs.clearView(t.img);
             else if (e.kind == 3) thumbs.loadBlur(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));

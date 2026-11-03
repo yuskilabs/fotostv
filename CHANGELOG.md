@@ -3,6 +3,13 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.28.0
+
+- **Álbumes con pulsación larga**: ahora ofrece Seleccionar, Pase, Pase con música, Recargar, Ocultar (del salvapantallas) y Borrar. Con «Seleccionar» marcas varios álbumes y aplicas Pase, Con música, Ocultar o Borrar a todos a la vez; «Atrás» sale de la selección.
+- **Web**: cada álbum tiene un botón rojo con la papelera para borrarlo al momento (además de «Quitar»).
+- **Emisoras**: nueva lista organizada por secciones (Relax y baladas, Pop actual, Éxitos y años 2000, Años 90, Años 80, Rock…). Las emisoras de SomaFM salen de la lista.
+- **Lugares en el extranjero**: ahora sale la ciudad y no el barrio o el distrito (Londres, Estambul, Yakarta, Copenhague…), y en castellano cuando el nombre existe.
+
 ## 5.27.4
 
 - **Emisoras de música nuevas**: SomaFM Lush (voces suaves), Seven Inch Soul (soul clásico), Groove Salad (chill) y Radio Swiss Jazz (jazz suave) sustituyen a las anteriores. Sigues pudiendo pegar la dirección de otra.

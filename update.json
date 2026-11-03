@@ -1,6 +1,6 @@
 {
-  "version": "5.27.4",
+  "version": "5.28.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 774479,
-  "notes": "- Emisoras de música nuevas: SomaFM Lush (voces suaves), Seven Inch Soul (soul clásico), Groove Salad (chill) y Radio Swiss Jazz (jazz suave) sustituyen a las anteriores. Sigues pudiendo pegar la dirección de otra.\n- Logo con el degradado del anterior (naranja vivo en la esquina, la T y la «o»; rosa y violeta) y limpio de manchas y sombras, en todos los tamaños."
+  "size": 786767,
+  "notes": "- Álbumes con pulsación larga: ahora ofrece Seleccionar, Pase, Pase con música, Recargar, Ocultar (del salvapantallas) y Borrar. Con «Seleccionar» marcas varios álbumes y aplicas Pase, Con música, Ocultar o Borrar a todos a la vez; «Atrás» sale de la selección.\n- Web: cada álbum tiene un botón rojo con la papelera para borrarlo al momento (además de «Quitar»).\n- Emisoras: nueva lista organizada por secciones (Relax y baladas, Pop actual, Éxitos y años 2000, Años 90, Años 80, Rock…). Las emisoras de SomaFM salen de la lista.\n- Lugares en el extranjero: ahora sale la ciudad y no el barrio o el distrito (Londres, Estambul, Yakarta, Copenhague…), y en castellano cuando el nombre existe."
 }

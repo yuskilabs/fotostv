@@ -48,7 +48,7 @@ public class PlayerActivity extends Activity {
         if (show != null) show.start();
         Session.playerOn = true;
         if (Music.enabled(this, false)) {
-            if ("folder".equals(Prefs.musicMode(this)) && android.os.Build.VERSION.SDK_INT >= 23 && checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            if ("folder".equals(Music.mode(this)) && android.os.Build.VERSION.SDK_INT >= 23 && checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 7);
             } else Music.start(this);
         }
