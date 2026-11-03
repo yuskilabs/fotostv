@@ -241,8 +241,8 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         });
         Button geoBtn = side("Revisar ubicaciones", R.drawable.ic_refresh, new View.OnClickListener() {
             public void onClick(View v) {
-                new Thread(new Runnable() { public void run() { GeoIndex.forceRecheck(SettingsActivity.this); } }).start();
-                android.widget.Toast.makeText(SettingsActivity.this, "Vuelvo a buscar las ubicaciones que faltan, en segundo plano.", android.widget.Toast.LENGTH_LONG).show();
+                new Thread(new Runnable() { public void run() { GeoIndex.recheckPending(SettingsActivity.this); } }).start();
+                android.widget.Toast.makeText(SettingsActivity.this, "Reviso en segundo plano lo que falta (las fotos sin ubicación y los sitios sin nombre).", android.widget.Toast.LENGTH_LONG).show();
                 h.removeCallbacks(geoTick);
                 h.postDelayed(geoTick, 1500);
             }
@@ -271,6 +271,22 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                 GeoIndex.setPaused(SettingsActivity.this, !GeoIndex.paused(SettingsActivity.this));
                 h.removeCallbacks(geoTick);
                 h.post(geoTick);
+            }
+        });
+        geoView.setOnLongClickListener(new View.OnLongClickListener() {
+            public boolean onLongClick(View v) {
+                new android.app.AlertDialog.Builder(SettingsActivity.this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+                    .setTitle("Rehacer los nombres de lugar")
+                    .setMessage("Se olvidan todos los nombres y se vuelven a calcular con las reglas actuales, en segundo plano. Puede tardar un buen rato (más de un segundo por cada sitio distinto).")
+                    .setPositiveButton("Rehacer", new android.content.DialogInterface.OnClickListener() {
+                        public void onClick(android.content.DialogInterface d, int w) {
+                            new Thread(new Runnable() { public void run() { GeoIndex.rebuildNames(SettingsActivity.this); } }).start();
+                            h.removeCallbacks(geoTick);
+                            h.postDelayed(geoTick, 1500);
+                        }
+                    })
+                    .setNegativeButton("Cancelar", null).show();
+                return true;
             }
         });
         c2.addView(geoView);

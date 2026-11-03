@@ -646,7 +646,7 @@ public class BrowserActivity extends Activity {
             new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                 .setTitle(e.title)
                 .setItems(new String[]{"Seleccionar", "Pase", "Pase con música", "Recargar álbum",
-                        off ? "Mostrar álbum" : "Ocultar álbum", "Borrar álbum"},
+                        off ? "Mostrar álbum" : "Ocultar álbum", "Revisar ubicaciones", "Borrar álbum"},
                     new android.content.DialogInterface.OnClickListener() {
                     public void onClick(android.content.DialogInterface d, int w) {
                         if (w == 0) { selMode = true; sel.clear(); sel.add(e); albumPos = Math.max(0, entries.indexOf(e)); showAlbums(); }
@@ -654,6 +654,7 @@ public class BrowserActivity extends Activity {
                         else if (w == 2) startPase(one, true);
                         else if (w == 3) reloadAlbum(e);
                         else if (w == 4) hideEntries(one, off);
+                        else if (w == 5) recheckPlaces(one);
                         else confirmDelete(one);
                     }
                 })
@@ -970,6 +971,15 @@ public class BrowserActivity extends Activity {
             row.addView(sbtn("Quitar de favoritos", R.drawable.ic_star_border, new View.OnClickListener() {
                 public void onClick(View v) { applyPhotoSel(2); }
             }));
+            row.addView(sbtn("Revisar ubicación", R.drawable.ic_place, new View.OnClickListener() {
+                public void onClick(View v) {
+                    if (pKeys.isEmpty()) { showToast("Marca primero alguna foto o vídeo."); return; }
+                    List<Item> l = new ArrayList<Item>();
+                    for (Item it : current.shown()) if (pKeys.contains(it.key())) l.add(it);
+                    exitPSel();
+                    recheckItems(l);
+                }
+            }));
             row.addView(sbtn("Cancelar", R.drawable.ic_close, new View.OnClickListener() {
                 public void onClick(View v) { exitPSel(); }
             }));
@@ -1024,9 +1034,9 @@ public class BrowserActivity extends Activity {
         final boolean isHid = Prefs.hidden(this).contains(it.key());
         final boolean isFav = Prefs.favs(this).contains(it.key());
         final String[] labels = {"Seleccionar", isHid ? "Mostrar" : "Ocultar", "Ver información",
-                isFav ? "Quitar de favoritos" : "Añadir a favoritos"};
+                isFav ? "Quitar de favoritos" : "Añadir a favoritos", "Revisar ubicación"};
         final int[] icons = {R.drawable.ic_check, isHid ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_info,
-                isFav ? R.drawable.ic_star_border : R.drawable.ic_star};
+                isFav ? R.drawable.ic_star_border : R.drawable.ic_star, R.drawable.ic_place};
         android.widget.ListAdapter ad = new android.widget.ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, labels) {
             @Override public View getView(int i, View cv, ViewGroup parent) {
@@ -1056,6 +1066,10 @@ public class BrowserActivity extends Activity {
                         refreshAfterChange(pos);
                     } else if (which == 2) {
                         showInfo(it);
+                    } else if (which == 4) {
+                        List<Item> l = new ArrayList<Item>();
+                        l.add(it);
+                        recheckItems(l);
                     } else {
                         Prefs.toggleFav(BrowserActivity.this, it.key());
                         refreshAfterChange(pos);
@@ -1089,6 +1103,20 @@ public class BrowserActivity extends Activity {
         pSel = false;
         pKeys.clear();
         showPhotos(fp);
+    }
+
+    /** Vuelve a leer la ubicación y el nombre del lugar de estas fotos (en segundo plano). */
+    private void recheckItems(final List<Item> l) {
+        showToast(l.size() == 1 ? "Reviso la ubicación de esta foto en segundo plano." : "Reviso la ubicación de " + l.size() + " fotos en segundo plano.");
+        new Thread(new Runnable() {
+            public void run() { try { GeoIndex.recheck(BrowserActivity.this, l); } catch (Throwable ignored) { } }
+        }).start();
+    }
+
+    private void recheckPlaces(List<Entry> es) {
+        List<Item> l = new ArrayList<Item>();
+        for (Entry e : es) l.addAll(e.src);
+        recheckItems(l);
     }
 
     /** 0 = ocultar o mostrar, 1 = añadir a favoritas, 2 = quitar de favoritas, para todas las seleccionadas. */

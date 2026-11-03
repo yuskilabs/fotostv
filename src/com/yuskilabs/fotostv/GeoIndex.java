@@ -2,6 +2,7 @@ package com.yuskilabs.fotostv;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -105,10 +106,38 @@ class GeoIndex extends SQLiteOpenHelper {
         if (!p) GeoService.start(c);
     }
 
-    /** Vuelve a mirar las fotos sin ubicación y arranca el servicio. */
-    static void forceRecheck(Context c) {
+    /** Solo lo pendiente: fotos sin ubicación (se vuelven a mirar) y zonas sin nombre. No toca lo que ya está bien. */
+    static void recheckPending(Context c) {
         try { MetaFetcher.forgetMissingGps(c); } catch (Throwable ignored) { }
         get(c).getWritableDatabase().delete("photos", "st=?", new String[]{"" + NO_GPS});
+        Prefs.meta(c).edit().putBoolean("geoPause", false).apply();
+        GeoService.start(c);
+    }
+
+    /** Rehace todos los nombres de lugar (cuando cambian las reglas de nombres). */
+    static void rebuildNames(Context c) {
+        MetaFetcher.forgetPlaceNames(c);
+        get(c).getWritableDatabase().execSQL("UPDATE photos SET place=NULL");
+        Prefs.meta(c).edit().putBoolean("geoPause", false).apply();
+        GeoService.start(c);
+    }
+
+    /** Vuelve a leer la ubicación y el nombre del lugar de estas fotos (y su zona). Llamar fuera del hilo de pantalla. */
+    static void recheck(Context c, List<Item> items) {
+        SQLiteDatabase db = get(c).getWritableDatabase();
+        SharedPreferences.Editor e = Prefs.meta(c).edit();
+        try { MetaFetcher.forgetMissingGps(c, items); } catch (Throwable ignored) { }
+        for (Item it : items) {
+            double[] g = MetaFetcher.cachedGps(c, it);
+            if (g != null) {
+                e.remove(String.format(Locale.US, "p8_%.2f,%.2f", g[0], g[1]));
+                e.remove(String.format(Locale.US, "p8_%.2f,%.2f_t", g[0], g[1]));
+                db.execSQL("UPDATE photos SET place=NULL WHERE cell=?", new Object[]{cell(g[0], g[1])});
+            }
+            e.remove("d1_" + it.key());
+            db.delete("photos", "k=?", new String[]{it.key()});
+        }
+        e.commit();
         Prefs.meta(c).edit().putBoolean("geoPause", false).apply();
         GeoService.start(c);
     }

@@ -25,6 +25,10 @@ public class App extends Application {
                         MetaFetcher.forgetMissingGps(App.this);
                         m.edit().putString("gpsReset", v).apply();
                     }
+                    if (!"5.31.1".equals(m.getString("geoNames", ""))) {   // nombres de lugar con las reglas nuevas
+                        try { GeoIndex.get(App.this).getWritableDatabase().execSQL("UPDATE photos SET place=NULL"); } catch (Throwable ignored) { }
+                        m.edit().putString("geoNames", "5.31.1").apply();
+                    }
                     GeoService.start(App.this);
                 } catch (Throwable ignored) { }
             }

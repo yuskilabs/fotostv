@@ -420,10 +420,18 @@ class MetaFetcher {
         return null;
     }
 
+    /** Olvida todos los nombres de lugar guardados (se vuelven a pedir con las reglas actuales). */
+    static void forgetPlaceNames(Context c) {
+        SharedPreferences m = Prefs.meta(c);
+        SharedPreferences.Editor e = m.edit();
+        for (String k : new java.util.ArrayList<String>(m.getAll().keySet())) if (k.startsWith("p8_") || k.startsWith("p7_")) e.remove(k);
+        e.commit();
+    }
+
     /** Nombre del lugar solo si ya estaba guardado (sin red). */
     static String placeCached(Context c, double lat, double lon) {
         SharedPreferences m = Prefs.meta(c);
-        String k = String.format(Locale.US, "p7_%.2f,%.2f", lat, lon);
+        String k = String.format(Locale.US, "p8_%.2f,%.2f", lat, lon);
         return m.contains(k) ? m.getString(k, null) : null;
     }
 
@@ -434,7 +442,7 @@ class MetaFetcher {
     static String place(Context c, double lat, double lon) {
         if (Double.isNaN(lat)) return null;
         SharedPreferences m = Prefs.meta(c);
-        String k = String.format(Locale.US, "p7_%.2f,%.2f", lat, lon);
+        String k = String.format(Locale.US, "p8_%.2f,%.2f", lat, lon);
         if (m.contains(k)) {
             long t = m.getLong(k + "_t", 0);
             if (t == 0 || System.currentTimeMillis() - t < 24L * 60 * 60 * 1000) return m.getString(k, null);

@@ -1,5 +1,8 @@
 package com.yuskilabs.fotostv;
 
+import java.util.List;
+import java.util.ArrayList;
+import android.widget.Toast;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -138,6 +141,19 @@ class InfoPanel extends FrameLayout {
                 public void onClick(View v) { Nav.run(c, Nav.PLACE_REGION, item, pl); }
             }));
         }
+        if (pl != null && pl.length() > 0) bar.addView(barBtn("Recalcular lugar", R.drawable.ic_refresh, new View.OnClickListener() {
+            public void onClick(View v) {
+                Toast.makeText(c, "Recalculando el lugar…", Toast.LENGTH_SHORT).show();
+                new Thread(new Runnable() {
+                    public void run() {
+                        List<Item> l = new ArrayList<Item>();
+                        l.add(item);
+                        try { GeoIndex.recheck(c, l); } catch (Throwable ignored) { }
+                        post(new Runnable() { public void run() { if (!dead) load(); } });
+                    }
+                }).start();
+            }
+        }));
         bar.addView(barBtn("Volver", R.drawable.ic_close, new View.OnClickListener() {
             public void onClick(View v) { if (closer != null) closer.run(); }
         }));

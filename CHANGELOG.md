@@ -3,6 +3,13 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.31.1
+- **Nombres de lugar renovados**: al actualizar se olvidan los nombres guardados («Gran Londres», etc.) y se recalculan con las reglas actuales, en segundo plano.
+- «Revisar ubicaciones» (Ajustes) ahora solo revisa lo pendiente: fotos sin ubicación y sitios sin nombre; no toca lo que ya está bien.
+- Pulsación larga sobre el contador de ubicaciones (Ajustes): «Rehacer los nombres de lugar» (solo si cambian las reglas).
+- «Revisar ubicaciones» en el menú largo de un álbum; «Revisar ubicación» en el menú de una foto y en la selección de fotos.
+- Ficha de la foto: botón «Recalcular lugar».
+
 ## 5.31.0
 - **Lugares**: nueva pantalla (botón «Lugares» en Ajustes) con los países, provincias e islas donde has hecho fotos, con el número de fotos de cada uno. Al elegir uno ves sus localidades; al elegir una localidad o «Todas las fotos de…» arranca un pase con ellas.
 - Botón «Revisar ubicaciones» (fila inferior de Ajustes): vuelve a mirar las fotos sin ubicación, como «Recargar álbumes» hace con los álbumes.
