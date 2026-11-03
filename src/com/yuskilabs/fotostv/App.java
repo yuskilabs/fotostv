@@ -25,6 +25,7 @@ public class App extends Application {
                         MetaFetcher.forgetMissingGps(App.this);
                         m.edit().putString("gpsReset", v).apply();
                     }
+                    GeoService.start(App.this);
                 } catch (Throwable ignored) { }
             }
         }, "gps-reset").start();

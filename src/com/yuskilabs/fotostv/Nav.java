@@ -40,28 +40,9 @@ class Nav {
     }
 
     private static List<Item> placeItems(Context c, String place, boolean region) {
-        List<Item> res = new ArrayList<Item>();
-        HashSet<String> seen = new HashSet<String>();
         String want = region ? regionOf(place) : place;
-        if (want == null) return res;
-        for (Prefs.Album al : Prefs.albums(c)) {
-            AlbumFetcher.AlbumData d = Prefs.albumCache(c, al.url);
-            if (d == null) continue;
-            String title = al.name.length() > 0 ? al.name : d.title;
-            for (Item x : d.items) {
-                double[] g = MetaFetcher.cachedGps(c, x);
-                if (g == null) continue;
-                String pn = MetaFetcher.placeCached(c, g[0], g[1]);
-                if (pn == null) continue;
-                String got = region ? regionOf(pn) : pn;
-                if (want.equals(got) && seen.add(x.key())) {
-                    x.album = title;
-                    if (x.akey.length() == 0) x.akey = d.key;
-                    res.add(x);
-                }
-            }
-        }
-        return res;
+        if (want == null) return new ArrayList<Item>();
+        return GeoIndex.items(c, want, region);
     }
 
     /** Ejecuta la acción en segundo plano y luego abre lo que toque. «place» es el nombre de lugar de la foto. */
@@ -100,7 +81,7 @@ class Nav {
         }
         if (list == null || list.isEmpty()) {
             Toast.makeText(ctx, action == ALBUM_PASE ? "No encuentro el álbum de esta foto."
-                    : "Solo conozco el lugar de las fotos que ya se han abierto o leído; aún no hay más de este sitio.",
+                    : "Aún no conozco más fotos de este sitio (la app las va revisando en segundo plano; mira el contador en Ajustes).",
                     Toast.LENGTH_LONG).show();
             return;
         }

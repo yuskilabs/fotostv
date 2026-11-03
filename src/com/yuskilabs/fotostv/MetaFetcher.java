@@ -387,6 +387,19 @@ class MetaFetcher {
         return d;
     }
 
+    /** Lectura rápida del GPS (solo ~160 KB de la foto). null = no se pudo decidir; {NaN,NaN} = sin GPS en el EXIF. */
+    static double[] quickGps(Item it) {
+        try {
+            byte[] head = AlbumFetcher.get(it.url + "=d", 160 * 1024);
+            if (head.length < 4 || (head[0] & 0xFF) != 0xFF || (head[1] & 0xFF) != 0xD8) return null;
+            ExifInterface ex = (ExifInterface) ExifInterface.class
+                    .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(head));
+            float[] ll = new float[2];
+            if (ex.getLatLong(ll) && !(ll[0] == 0f && ll[1] == 0f)) return new double[]{ll[0], ll[1]};
+            return new double[]{Double.NaN, Double.NaN};
+        } catch (Throwable t) { return null; }
+    }
+
     /** {lat, lon} solo si ya se leyeron antes (sin red); null si no se sabe o no tiene GPS. */
     static double[] cachedGps(Context c, Item it) {
         SharedPreferences m = Prefs.meta(c);

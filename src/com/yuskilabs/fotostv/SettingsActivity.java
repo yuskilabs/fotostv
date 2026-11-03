@@ -31,6 +31,22 @@ import java.util.Collections;
 import java.util.List;
 
 public class SettingsActivity extends Activity implements WebConfigServer.Listener {
+    private TextView geoView;
+    private final Runnable geoTick = new Runnable() {
+        public void run() {
+            if (geoView == null) return;
+            new Thread(new Runnable() {
+                public void run() {
+                    final String st;
+                    String x;
+                    try { x = GeoIndex.status(SettingsActivity.this); } catch (Throwable e) { x = ""; }
+                    st = x;
+                    h.post(new Runnable() { public void run() { if (geoView != null) geoView.setText(st + (GeoIndex.paused(SettingsActivity.this) ? "  [OK: reanudar]" : "  [OK: pausar]")); } });
+                }
+            }).start();
+            h.postDelayed(this, 4000);
+        }
+    };
     private TextView webInfo, pinInfo, status, verInfo, msgView;
     private ImageView qrView;
     private LinearLayout zoneQr, zoneGuest;
@@ -233,6 +249,19 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         msgView.setPadding(dp(8), dp(2), dp(8), dp(2));
         msgView.setVisibility(View.GONE);
         c2.addView(msgView);
+        geoView = text("", 13, 0xFF9FB3C8);
+        geoView.setPadding(dp(8), dp(4), dp(8), dp(4));
+        geoView.setFocusable(true);
+        geoView.setClickable(true);
+        geoView.setBackground(svBgFocus());
+        geoView.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                GeoIndex.setPaused(SettingsActivity.this, !GeoIndex.paused(SettingsActivity.this));
+                h.removeCallbacks(geoTick);
+                h.post(geoTick);
+            }
+        });
+        c2.addView(geoView);
         status = text("", 15, Color.WHITE);
         ScrollView sv = new ScrollView(this);
         // se puede entrar con el mando (derecha) y desplazar con arriba/abajo cuando la lista es larga
@@ -389,6 +418,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         h.removeCallbacks(guestTick);
         h.postDelayed(guestTick, 60000);
         refreshCache();
+        GeoService.start(this);
+        h.removeCallbacks(geoTick);
+        h.post(geoTick);
         silentCheck();
         if (msgView.getVisibility() == View.VISIBLE && msgView.getText().toString().endsWith("\u2026")) startPulse();
         final WebConfigServer srv = new WebConfigServer(this, this);
@@ -420,6 +452,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     @Override protected void onStop() {
+        h.removeCallbacks(geoTick);
         webUrl = null;
         h.removeCallbacks(guestTick);
         stopPulse();
@@ -932,6 +965,17 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             }
         } catch (Exception ignored) { }
         return null;
+    }
+
+    private android.graphics.drawable.Drawable svBgFocus() {
+        GradientDrawable on = new GradientDrawable();
+        on.setColor(0x00000000);
+        on.setCornerRadius(dp(5));
+        on.setStroke(dp(3), 0xFF3D8BFD);
+        StateListDrawable bg = new StateListDrawable();
+        bg.addState(new int[]{android.R.attr.state_focused}, on);
+        bg.addState(new int[]{}, new android.graphics.drawable.ColorDrawable(0x00000000));
+        return bg;
     }
 
     private TextView text(String s, int sp, int color) {

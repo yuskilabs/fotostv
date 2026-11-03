@@ -1,6 +1,6 @@
 {
-  "version": "5.29.1",
+  "version": "5.30.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 790863,
-  "notes": "- Londres: ya no sale «Gran Londres», sino «Londres»."
+  "size": 794959,
+  "notes": "- Índice de ubicaciones en segundo plano: la app va leyendo dónde se hizo cada foto de todos tus álbumes y le pone nombre al lugar, sin que tengas que abrirlas. Funciona con un servicio en primer plano (con aviso en la barra), mantiene la CPU y el wifi despiertos y continúa donde se quedó si se interrumpe.\n- En Ajustes, bajo «Tus álbumes», un contador («Ubicaciones: X de Y fotos revisadas») que se puede pausar o reanudar con OK.\n- Los botones «ver todas las fotos de este lugar / provincia / país» de la ficha usan ya este índice.\n- Solo se indexan las fotos cuya ubicación entrega Google (el álbum debe haberse compartido con ubicación)."
 }

@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.30.0
+- **Índice de ubicaciones en segundo plano**: la app va leyendo dónde se hizo cada foto de todos tus álbumes y le pone nombre al lugar, sin que tengas que abrirlas. Funciona con un servicio en primer plano (con aviso en la barra), mantiene la CPU y el wifi despiertos y continúa donde se quedó si se interrumpe.
+- En Ajustes, bajo «Tus álbumes», un contador («Ubicaciones: X de Y fotos revisadas») que se puede pausar o reanudar con OK.
+- Los botones «ver todas las fotos de este lugar / provincia / país» de la ficha usan ya este índice.
+- Solo se indexan las fotos cuya ubicación entrega Google (el álbum debe haberse compartido con ubicación).
+
 ## 5.29.1
 
 - **Londres**: ya no sale «Gran Londres», sino «Londres».
