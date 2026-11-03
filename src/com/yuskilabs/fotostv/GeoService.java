@@ -74,56 +74,64 @@ public class GeoService extends Service {
             final List<Item> todo = new ArrayList<Item>();
             for (Item x : all) if (!known.contains(x.key())) todo.add(x);
 
-            // fase 1: coordenadas de cada foto (3 hilos)
-            if (!todo.isEmpty()) {
-                final AtomicInteger next = new AtomicInteger(), fails = new AtomicInteger();
-                Thread[] ts = new Thread[3];
-                for (int t = 0; t < ts.length; t++) {
-                    ts[t] = new Thread(new Runnable() {
-                        public void run() {
-                            int i;
-                            while (!stop() && (i = next.getAndIncrement()) < todo.size()) {
-                                Item it = todo.get(i);
-                                try {
-                                    double[] r = MetaFetcher.cachedGps(c, it);
-                                    if (r == null) r = MetaFetcher.quickGps(it);
-                                    if (r == null || Double.isNaN(r[0])) {
-                                        double[] f = MetaFetcher.exif(c, it);     // lectura completa (vídeos, Live Photos…)
-                                        r = Double.isNaN(f[0]) ? new double[]{Double.NaN, Double.NaN} : new double[]{f[0], f[1]};
-                                    }
-                                    g.put(it.key(), r[0], r[1], !Double.isNaN(r[0]));
-                                    fails.set(0);
-                                } catch (Throwable e) {
-                                    if (fails.incrementAndGet() > 5) {      // sin red: espera un poco
-                                        try { Thread.sleep(60000); } catch (InterruptedException ignored) { }
-                                        fails.set(0);
-                                    }
-                                }
-                            }
-                        }
-                    }, "geo-gps-" + t);
-                    ts[t].start();
-                }
-                for (Thread t : ts) t.join();
-                idle = 0;
-            }
-
-            // fase 2: nombre del lugar de cada casilla de 0,01°
+            // por tandas de 400 fotos: primero las coordenadas (3 hilos) y luego el nombre de los sitios nuevos,
+            // así «Lugares» se va llenando desde el principio
             HashSet<String> skip = new HashSet<String>();
-            String[] cell;
-            while (!stop() && (cell = g.nextCell(skip)) != null) {
-                double lat = Double.parseDouble(cell[1]), lon = Double.parseDouble(cell[2]);
-                boolean cached = MetaFetcher.placeCached(c, lat, lon) != null;
-                String p = MetaFetcher.place(c, lat, lon);
-                if (p != null && p.length() > 0) g.setPlace(cell[0], p); else skip.add(cell[0]);
-                if (!cached) Thread.sleep(1100);        // educación con el servidor de nombres
+            for (int from = 0; from < todo.size() && !stop(); from += 400) {
+                readGps(c, g, todo.subList(from, Math.min(todo.size(), from + 400)));
+                nameCells(c, g, skip);
                 idle = 0;
             }
+            if (todo.isEmpty()) nameCells(c, g, skip);
             if (stop()) break;
             // todo al día: se vuelve a mirar cada hora por si hay fotos nuevas; tras unas pasadas sin novedades, se acaba
             if (!todo.isEmpty() || !skip.isEmpty()) { Thread.sleep(skip.isEmpty() ? 1000 : 120000); continue; }
             if (++idle >= 2) break;
             Thread.sleep(1000);
+        }
+    }
+
+    private void readGps(final Context c, final GeoIndex g, final List<Item> todo) throws InterruptedException {
+        final AtomicInteger next = new AtomicInteger(), fails = new AtomicInteger();
+        Thread[] ts = new Thread[3];
+        for (int t = 0; t < ts.length; t++) {
+            ts[t] = new Thread(new Runnable() {
+                public void run() {
+                    int i;
+                    while (!stop() && (i = next.getAndIncrement()) < todo.size()) {
+                        Item it = todo.get(i);
+                        try {
+                            double[] r = MetaFetcher.cachedGps(c, it);
+                            if (r == null) r = MetaFetcher.quickGps(it);
+                            if (r == null || Double.isNaN(r[0])) {
+                                double[] f = MetaFetcher.exif(c, it);     // lectura completa (vídeos, Live Photos…)
+                                r = Double.isNaN(f[0]) ? new double[]{Double.NaN, Double.NaN} : new double[]{f[0], f[1]};
+                            }
+                            g.put(it.key(), r[0], r[1], !Double.isNaN(r[0]));
+                            fails.set(0);
+                        } catch (Throwable e) {
+                            if (fails.incrementAndGet() > 5) {      // sin red: espera un poco
+                                try { Thread.sleep(60000); } catch (InterruptedException ignored) { }
+                                fails.set(0);
+                            }
+                        }
+                    }
+                }
+            }, "geo-gps-" + t);
+            ts[t].start();
+        }
+        for (Thread t : ts) t.join();
+    }
+
+    /** Pone nombre a las casillas de 0,01° que aún no lo tienen; las que fallan se anotan en skip. */
+    private void nameCells(Context c, GeoIndex g, HashSet<String> skip) throws InterruptedException {
+        String[] cell;
+        while (!stop() && (cell = g.nextCell(skip)) != null) {
+            double lat = Double.parseDouble(cell[1]), lon = Double.parseDouble(cell[2]);
+            boolean cached = MetaFetcher.placeCached(c, lat, lon) != null;
+            String p = MetaFetcher.place(c, lat, lon);
+            if (p != null && p.length() > 0) g.setPlace(cell[0], p); else skip.add(cell[0]);
+            if (!cached) Thread.sleep(1100);        // educación con el servidor de nombres
         }
     }
 

@@ -1,6 +1,6 @@
 {
-  "version": "5.31.1",
+  "version": "5.31.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 803151,
-  "notes": "- Nombres de lugar renovados: al actualizar se olvidan los nombres guardados («Gran Londres», etc.) y se recalculan con las reglas actuales, en segundo plano.\n- «Revisar ubicaciones» (Ajustes) ahora solo revisa lo pendiente: fotos sin ubicación y sitios sin nombre; no toca lo que ya está bien.\n- Pulsación larga sobre el contador de ubicaciones (Ajustes): «Rehacer los nombres de lugar» (solo si cambian las reglas).\n- «Revisar ubicaciones» en el menú largo de un álbum; «Revisar ubicación» en el menú de una foto y en la selección de fotos.\n- Ficha de la foto: botón «Recalcular lugar»."
+  "notes": "- El índice de ubicaciones trabaja por tandas: tras leer las coordenadas de cada 400 fotos, pone nombre a los sitios nuevos. «Lugares» y «Más de…» se van llenando desde el principio, sin esperar a que acabe de revisar todas las fotos."
 }

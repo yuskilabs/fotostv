@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.31.2
+- El índice de ubicaciones trabaja por tandas: tras leer las coordenadas de cada 400 fotos, pone nombre a los sitios nuevos. «Lugares» y «Más de…» se van llenando desde el principio, sin esperar a que acabe de revisar todas las fotos.
+
 ## 5.31.1
 - **Nombres de lugar renovados**: al actualizar se olvidan los nombres guardados («Gran Londres», etc.) y se recalculan con las reglas actuales, en segundo plano.
 - «Revisar ubicaciones» (Ajustes) ahora solo revisa lo pendiente: fotos sin ubicación y sitios sin nombre; no toca lo que ya está bien.
