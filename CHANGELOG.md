@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.29.0
+
+- **Selección dentro de un álbum**: al dejar pulsada una foto o vídeo, «Seleccionar» permite marcar varios (con «Todas») y ocultarlos o mostrarlos, o añadirlos y quitarlos de favoritos de una vez. «Atrás» sale de la selección.
+- **Ficha del pase con botones** (al pulsar ▼ en el pase o en el salvapantallas): «Ir al álbum» (abre el álbum en esa foto), «Pase de este álbum», «Más de [localidad]» y «Más de [provincia, isla o país]», y «Volver». Con «Atrás» del mando también se vuelve al pase. «Más de…» usa las fotos cuya ubicación ya se ha leído, así que va completándose con el uso.
+- **Corregido**: al marcar álbumes, el cursor ya no salta al primero.
+
 ## 5.28.0
 
 - **Álbumes con pulsación larga**: ahora ofrece Seleccionar, Pase, Pase con música, Recargar, Ocultar (del salvapantallas) y Borrar. Con «Seleccionar» marcas varios álbumes y aplicas Pase, Con música, Ocultar o Borrar a todos a la vez; «Atrás» sale de la selección.

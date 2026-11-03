@@ -1324,7 +1324,8 @@ class Slideshow {
         if (cur == null || cur.item == null || panel != null) return;
         resumeAfterInfo = !paused;
         setPaused(true, false);
-        panel = new InfoPanel(ctx, cur.item, cur.album != null && cur.album.length() > 0 ? cur.album : cur.item.album);
+        panel = new InfoPanel(ctx, cur.item, cur.album != null && cur.album.length() > 0 ? cur.album : cur.item.album,
+                new Runnable() { public void run() { closeInfo(); } });
         root.addView(panel, new FrameLayout.LayoutParams(-1, -1));
         panel.bringToFront();
     }

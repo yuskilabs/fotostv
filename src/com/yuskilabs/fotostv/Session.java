@@ -12,5 +12,6 @@ class Session {
     static String guestId;            // cuál (para cerrar el pase cuando caduque)
     static volatile boolean playerOn;  // hay un pase abierto (el inicio automático no debe tapar un pase manual)
     static int music;                 // 0 = según los ajustes, 1 = con música aunque esté desactivada (menú «Pase con música»)
+    static String gotoUrl, gotoKey;   // «Ir al álbum» desde la ficha: álbum y foto donde abrir el explorador
     static String lastKey;            // última foto vista, para volver al mosaico en ella
 }

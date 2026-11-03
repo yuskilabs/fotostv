@@ -387,6 +387,33 @@ class MetaFetcher {
         return d;
     }
 
+    /** {lat, lon} solo si ya se leyeron antes (sin red); null si no se sabe o no tiene GPS. */
+    static double[] cachedGps(Context c, Item it) {
+        SharedPreferences m = Prefs.meta(c);
+        try {
+            String x = m.getString("x_" + it.key(), null);
+            if (x != null) {
+                String[] p = x.split(";");
+                double la = Double.parseDouble(p[0]), lo = Double.parseDouble(p[1]);
+                if (!Double.isNaN(la) && !Double.isNaN(lo)) return new double[]{la, lo};
+            }
+            String d = m.getString("d1_" + it.key(), null);
+            if (d != null) {
+                JSONObject o = new JSONObject(d);
+                double la = o.optDouble("lat", Double.NaN), lo = o.optDouble("lon", Double.NaN);
+                if (!Double.isNaN(la) && !Double.isNaN(lo)) return new double[]{la, lo};
+            }
+        } catch (Exception ignored) { }
+        return null;
+    }
+
+    /** Nombre del lugar solo si ya estaba guardado (sin red). */
+    static String placeCached(Context c, double lat, double lon) {
+        SharedPreferences m = Prefs.meta(c);
+        String k = String.format(Locale.US, "p7_%.2f,%.2f", lat, lon);
+        return m.contains(k) ? m.getString(k, null) : null;
+    }
+
     /**
      * Nombre del lugar. En España: «Localidad, Provincia» (o solo la ciudad si es capital de su provincia).
      * Fuera de España: «Localidad, País» (en español y con letras latinas), sin condados ni comarcas; siempre con localidad.

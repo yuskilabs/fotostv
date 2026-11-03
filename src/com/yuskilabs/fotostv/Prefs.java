@@ -136,6 +136,20 @@ class Prefs {
         sp(c).edit().putStringSet("hidden", h).apply();
     }
 
+    /** Oculta o muestra de golpe varias fotos. */
+    static void hideAll(Context c, java.util.Collection<String> keys, boolean hide) {
+        java.util.Set<String> h = hidden(c);
+        if (hide) h.addAll(keys); else h.removeAll(keys);
+        sp(c).edit().putStringSet("hidden", h).apply();
+    }
+
+    /** Añade o quita de favoritas varias fotos de golpe. */
+    static void favAll(Context c, java.util.Collection<String> keys, boolean add) {
+        java.util.Set<String> f = favs(c);
+        if (add) f.addAll(keys); else f.removeAll(keys);
+        sp(c).edit().putStringSet("favs", f).apply();
+    }
+
     // ---- favoritas ----
     static java.util.Set<String> favs(Context c) {
         return new java.util.HashSet<String>(sp(c).getStringSet("favs", new java.util.HashSet<String>()));

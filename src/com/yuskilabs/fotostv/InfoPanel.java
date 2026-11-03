@@ -27,15 +27,39 @@ class InfoPanel extends FrameLayout {
     private final FrameLayout mapBox;
     private boolean dead;
 
-    InfoPanel(Context c, Item it, String album) {
+    private final boolean actions;
+    private final Runnable closer;
+    private LinearLayout bar;
+    private String placeName;
+
+    InfoPanel(Context c, Item it, String album) { this(c, it, album, null); }
+
+    /** Con «closer» la ficha lleva botones (ir al álbum, pase del álbum o del lugar, volver); sin él, cualquier botón la cierra. */
+    InfoPanel(Context c, Item it, String album, Runnable closer) {
         super(c);
         this.item = it;
+        this.closer = closer;
+        this.actions = closer != null;
         setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{0xFA0A1424, 0xFA14305A}));
         setClickable(true);
         LinearLayout main = new LinearLayout(c);
         main.setOrientation(LinearLayout.HORIZONTAL);
         main.setPadding(dp(44), dp(18), dp(44), dp(12));
-        addView(main, new FrameLayout.LayoutParams(-1, -1));
+        LinearLayout wrap = new LinearLayout(c);
+        wrap.setOrientation(LinearLayout.VERTICAL);
+        wrap.addView(main, new LinearLayout.LayoutParams(-1, 0, 1f));
+        if (actions) {
+            bar = new LinearLayout(c);
+            bar.setOrientation(LinearLayout.HORIZONTAL);
+            bar.setGravity(Gravity.CENTER_VERTICAL);
+            android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(c);
+            hs.setHorizontalScrollBarEnabled(false);
+            hs.setFillViewport(true);
+            hs.addView(bar);
+            hs.setPadding(dp(44), 0, dp(44), dp(14));
+            wrap.addView(hs, new LinearLayout.LayoutParams(-1, -2));
+        }
+        addView(wrap, new FrameLayout.LayoutParams(-1, -1));
 
         LinearLayout left = new LinearLayout(c);
         left.setOrientation(LinearLayout.VERTICAL);
@@ -59,7 +83,7 @@ class InfoPanel extends FrameLayout {
         rows.setOrientation(LinearLayout.VERTICAL);
         sv.addView(rows);
         left.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
-        TextView hint = text("Pulsa cualquier botón para volver", 12, 0xFF7C93AD);
+        TextView hint = text(closer != null ? "Atrás: volver al pase" : "Pulsa cualquier botón para volver", 12, 0xFF7C93AD);
         left.addView(hint);
         main.addView(left, new LinearLayout.LayoutParams(0, -1, 0.45f));
 
@@ -80,7 +104,45 @@ class InfoPanel extends FrameLayout {
         }
         if (album != null && album.length() > 0) addRow(R.drawable.ic_albums, "Álbum", album);
         mapMessage("Cargando información…");
+        if (actions) buildBar();
         load();
+    }
+
+    private android.widget.Button barBtn(String label, int icon, View.OnClickListener l) {
+        android.widget.Button b = Ui.button(getContext(), label, l);
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        if (icon != 0) Ui.icon(b, icon);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
+        lp.setMargins(0, 0, dp(10), 0);
+        b.setLayoutParams(lp);
+        return b;
+    }
+
+    private void buildBar() {
+        bar.removeAllViews();
+        final Context c = getContext();
+        android.widget.Button first = barBtn("Ir al álbum", R.drawable.ic_albums, new View.OnClickListener() {
+            public void onClick(View v) { Nav.run(c, Nav.ALBUM, item, null); }
+        });
+        bar.addView(first);
+        bar.addView(barBtn("Pase de este álbum", R.drawable.ic_play, new View.OnClickListener() {
+            public void onClick(View v) { Nav.run(c, Nav.ALBUM_PASE, item, null); }
+        }));
+        final String pl = placeName;
+        if (pl != null && pl.length() > 0) {
+            bar.addView(barBtn("Más de " + Nav.townOf(pl), R.drawable.ic_place, new View.OnClickListener() {
+                public void onClick(View v) { Nav.run(c, Nav.PLACE_TOWN, item, pl); }
+            }));
+            final String rg = Nav.regionOf(pl);
+            if (rg != null) bar.addView(barBtn("Más de " + rg, R.drawable.ic_place, new View.OnClickListener() {
+                public void onClick(View v) { Nav.run(c, Nav.PLACE_REGION, item, pl); }
+            }));
+        }
+        bar.addView(barBtn("Volver", R.drawable.ic_close, new View.OnClickListener() {
+            public void onClick(View v) { if (closer != null) closer.run(); }
+        }));
+        final android.widget.Button f = first;
+        post(new Runnable() { public void run() { if (!dead) f.requestFocus(); } });
     }
 
     void detach() {
@@ -124,6 +186,7 @@ class InfoPanel extends FrameLayout {
             if (d.hasTime) addRow(R.drawable.ic_schedule, "Hora", new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(d.date)));
         }
         if (place != null) addRow(R.drawable.ic_place, "Lugar", place);
+        if (actions && place != null && !place.equals(placeName)) { placeName = place; buildBar(); }
         if (!Double.isNaN(d.lat)) {
             String c = String.format(Locale.US, "%.5f, %.5f", d.lat, d.lon);
             if (!Double.isNaN(d.alt) && d.alt != 0) c += "  \u00B7  " + Math.round(d.alt) + " m";

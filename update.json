@@ -1,6 +1,6 @@
 {
-  "version": "5.28.0",
+  "version": "5.29.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 786767,
-  "notes": "- Álbumes con pulsación larga: ahora ofrece Seleccionar, Pase, Pase con música, Recargar, Ocultar (del salvapantallas) y Borrar. Con «Seleccionar» marcas varios álbumes y aplicas Pase, Con música, Ocultar o Borrar a todos a la vez; «Atrás» sale de la selección.\n- Web: cada álbum tiene un botón rojo con la papelera para borrarlo al momento (además de «Quitar»).\n- Emisoras: nueva lista organizada por secciones (Relax y baladas, Pop actual, Éxitos y años 2000, Años 90, Años 80, Rock…). Las emisoras de SomaFM salen de la lista.\n- Lugares en el extranjero: ahora sale la ciudad y no el barrio o el distrito (Londres, Estambul, Yakarta, Copenhague…), y en castellano cuando el nombre existe."
+  "size": 790863,
+  "notes": "- Selección dentro de un álbum: al dejar pulsada una foto o vídeo, «Seleccionar» permite marcar varios (con «Todas») y ocultarlos o mostrarlos, o añadirlos y quitarlos de favoritos de una vez. «Atrás» sale de la selección.\n- Ficha del pase con botones (al pulsar ▼ en el pase o en el salvapantallas): «Ir al álbum» (abre el álbum en esa foto), «Pase de este álbum», «Más de [localidad]» y «Más de [provincia, isla o país]», y «Volver». Con «Atrás» del mando también se vuelve al pase. «Más de…» usa las fotos cuya ubicación ya se ha leído, así que va completándose con el uso.\n- Corregido: al marcar álbumes, el cursor ya no salta al primero."
 }

@@ -41,9 +41,13 @@ public class PreviewActivity extends Activity {
     @Override protected void onPause() { hh.removeCallbacks(stopper); show.stop(); Music.stop(); super.onPause(); }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
-        if (show.infoOpen()) {                       // cualquier botón cierra la información y sigue el pase
-            if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
-            return true;
+        if (show.infoOpen()) {                                      // ficha abierta: Atrás vuelve al pase; las flechas y OK mueven y pulsan sus botones
+            int kc = e.getKeyCode();
+            if (kc == KeyEvent.KEYCODE_BACK || kc == KeyEvent.KEYCODE_ESCAPE) {
+                if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
+                return true;
+            }
+            return super.dispatchKeyEvent(e);
         }
         if (Slideshow.isNavKey(e.getKeyCode())) {
             if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) { show.onKey(e.getKeyCode()); armStop(); }

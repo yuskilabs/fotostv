@@ -74,9 +74,13 @@ public class PlayerActivity extends Activity {
         if (show == null) return super.dispatchKeyEvent(e);
         int k = e.getKeyCode();
         boolean down = e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0;
-        if (show.infoOpen()) {                       // con la información abierta, cualquier botón la cierra y continúa
-            if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
-            return true;
+        if (show.infoOpen()) {                                      // ficha abierta: Atrás vuelve al pase; las flechas y OK mueven y pulsan sus botones
+            int kc = e.getKeyCode();
+            if (kc == KeyEvent.KEYCODE_BACK || kc == KeyEvent.KEYCODE_ESCAPE) {
+                if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
+                return true;
+            }
+            return super.dispatchKeyEvent(e);
         }
         if (Slideshow.isNavKey(k)) {
             if (down) show.onKey(k);

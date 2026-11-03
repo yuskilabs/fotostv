@@ -26,9 +26,13 @@ public class PhotoDream extends DreamService {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
-        if (show != null && show.infoOpen()) {
-            if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
-            return true;
+        if (show != null && show.infoOpen()) {                                      // ficha abierta: Atrás vuelve al pase; las flechas y OK mueven y pulsan sus botones
+            int kc = e.getKeyCode();
+            if (kc == KeyEvent.KEYCODE_BACK || kc == KeyEvent.KEYCODE_ESCAPE) {
+                if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
+                return true;
+            }
+            return super.dispatchKeyEvent(e);
         }
         if (show != null && Slideshow.isNavKey(e.getKeyCode())) {
             if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) { show.onKey(e.getKeyCode()); armStop(); }

@@ -20,7 +20,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Orden** de cada álbum desde el propio mosaico: aleatorio, más antiguas primero o más recientes primero, y un botón de **pase de diapositivas**.
 - **Vídeos en directo, sin esperas**: empiezan al momento mientras se descargan, con búfer (como en YouTube) y línea de tiempo con el tiempo transcurrido y el que queda. Calidad automática, alta o media (en Fire TV la automática usa 720p). Con la barra azul (▼) se pausa y se salta ±5 s. Los vídeos se guardan en una caché con límite.
 - **Fundidos suaves** entre fotos horizontales, verticales y vídeos, con sonido opcional. En el pase, un vídeo solo entra cuando ya tiene unos segundos listos, para que no se pare.
-- **Información en pantalla**: nombre del álbum, fecha de captura, lugar (si la foto tiene GPS; en España «Localidad, Provincia» y en el extranjero «Localidad, País») y hora. Con ▼ se abre la ficha completa (archivo, cámara, exposición, resolución…) y un **mapa** con el punto exacto.
+- **Información en pantalla**: nombre del álbum, fecha de captura, lugar (si la foto tiene GPS; en España «Localidad, Provincia» y en el extranjero «Localidad, País») y hora. Con ▼ se abre la ficha completa (archivo, cámara, exposición, resolución…) y un **mapa** con el punto exacto. Desde la ficha puedes ir al álbum de la foto, abrir un pase solo de ese álbum o de su localidad, provincia, isla o país.
 - **Invitados**: botón «Invitado» con un código QR para que una visita enseñe su álbum de Google Fotos en tu tele al momento, sin tocar tu cuenta ni tus álbumes. Dura 2 horas (puede haber varios a la vez), sale al principio de «Ver álbumes» y, al caducar, se borra todo rastro.
 - **Música del pase** (opcional): una emisora de internet de una lista por estilos y épocas (relax, pop, años 80 y 90, rock…) o la que pegues, o las canciones de una carpeta de la tele o de un USB, con volumen propio. Suena en los pases que abres tú (y, si quieres, en el salvapantallas); se calla mientras suena el audio de un vídeo. Se configura desde la web de ajustes.
 - **Fotos favoritas y ocultas**: se marcan desde el mando y quedan guardadas en sus álbumes.
@@ -150,7 +150,8 @@ src/com/yuskilabs/fotostv/
   Music                      música de fondo (emisora o carpeta)
   Slideshow                  motor del pase: precarga, fundidos, vídeo, mando
   VideoProxy                 servidor local para ver vídeos mientras se descargan
-  InfoPanel                  ficha de información con mapa
+  InfoPanel                  ficha de información con mapa y botones
+  Nav                        saltos desde la ficha (álbum, pase del álbum o del lugar)
   IdleService                inicio automático (servicio de accesibilidad)
   ProjectivyService, ProjectivyActivity   fondo de pantalla para Projectivy
   AlbumFetcher, MetaFetcher  lectura de álbumes y metadatos (EXIF, vídeo, lugar)

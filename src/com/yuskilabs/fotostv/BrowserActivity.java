@@ -236,6 +236,7 @@ public class BrowserActivity extends Activity {
             }
         }
         Session.lastKey = null;
+        applyGoto();
     }
 
     @Override protected void onPause() {
@@ -264,6 +265,7 @@ public class BrowserActivity extends Activity {
 
     @Override public void onBackPressed() {
         if (selMode && level == 0) { exitSel(); return; }
+        if (pSel && level == 1) { exitPSel(); return; }
         if (level == 1) {
             // primer «atrás»: sube a los botones; segundo: vuelve a los álbumes
             if (photoGrid != null && photoGrid.hasFocus() && playBtn != null) playBtn.requestFocus();
@@ -272,6 +274,25 @@ public class BrowserActivity extends Activity {
     }
 
     // ------------------------------------------------------------ datos
+    /** «Ir al álbum» desde la ficha del pase: abre ese álbum y se coloca en la foto. */
+    private void applyGoto() {
+        if (Session.gotoUrl == null || !loaded) return;
+        String u = Session.gotoUrl, k = Session.gotoKey;
+        Session.gotoUrl = null;
+        Session.gotoKey = null;
+        for (int i = 0; i < entries.size(); i++) {
+            Entry e = entries.get(i);
+            if (e.kind == 0 && u.equals(e.url)) {
+                openEntry(i);
+                if (k != null && photoGrid != null) {
+                    List<Item> l = current.shown();
+                    for (int j = 0; j < l.size(); j++) if (l.get(j).key().equals(k)) { photoGrid.setSelection(j); break; }
+                }
+                return;
+            }
+        }
+    }
+
     private void loadEntries() {
         bg.submit(new Runnable() {
             public void run() {
@@ -302,6 +323,7 @@ public class BrowserActivity extends Activity {
                         } else {
                             showAlbums();
                             refreshInBackground();
+                            applyGoto();
                         }
                     }
                 });
@@ -536,6 +558,8 @@ public class BrowserActivity extends Activity {
     }
 
     private void showAlbums() {
+        pSel = false;
+        pKeys.clear();
         level = 0;
         photoGrid = null;
         computeLayout();
@@ -587,6 +611,8 @@ public class BrowserActivity extends Activity {
     }
 
     private boolean selMode;
+    private boolean pSel;
+    private final java.util.HashSet<String> pKeys = new java.util.HashSet<String>();
     private final java.util.HashSet<Entry> sel = new java.util.HashSet<Entry>();
     private java.util.Set<String> offUrls = new java.util.HashSet<String>();
 
@@ -623,7 +649,7 @@ public class BrowserActivity extends Activity {
                         off ? "Mostrar álbum" : "Ocultar álbum", "Borrar álbum"},
                     new android.content.DialogInterface.OnClickListener() {
                     public void onClick(android.content.DialogInterface d, int w) {
-                        if (w == 0) { selMode = true; sel.clear(); sel.add(e); showAlbums(); }
+                        if (w == 0) { selMode = true; sel.clear(); sel.add(e); albumPos = Math.max(0, entries.indexOf(e)); showAlbums(); }
                         else if (w == 1) startPase(one, false);
                         else if (w == 2) startPase(one, true);
                         else if (w == 3) reloadAlbum(e);
@@ -655,9 +681,9 @@ public class BrowserActivity extends Activity {
         if (e.kind != 0) return;
         if (!sel.remove(e)) sel.add(e);
         if (albumGrid != null) {
-            int p = albumGrid.getFirstVisiblePosition();
+            int pos = entries.indexOf(e);
             ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
-            albumGrid.setSelection(p);
+            if (pos >= 0) albumGrid.setSelection(pos);
         }
         if (selTitle != null) selTitle.setText(sel.size() + (sel.size() == 1 ? " álbum seleccionado" : " álbumes seleccionados"));
     }
@@ -845,6 +871,8 @@ public class BrowserActivity extends Activity {
 
     private void openEntry(int pos) {
         if (pos < 0 || pos >= entries.size()) return;
+        pSel = false;
+        pKeys.clear();
         albumPos = pos;
         current = entries.get(pos);
         current.onlyVideos = false;
@@ -924,6 +952,28 @@ public class BrowserActivity extends Activity {
         }
         row.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
         refreshOrderButtons();
+        if (pSel) {
+            row.removeAllViews();
+            row.addView(sbtn("Todas", R.drawable.ic_check, new View.OnClickListener() {
+                public void onClick(View v) {
+                    for (Item it : current.shown()) pKeys.add(it.key());
+                    refreshPhotoSel();
+                }
+            }));
+            row.addView(sbtn(current.kind == 3 ? "Mostrar" : "Ocultar", current.kind == 3 ? R.drawable.ic_visibility : R.drawable.ic_visibility_off,
+                    new View.OnClickListener() {
+                public void onClick(View v) { applyPhotoSel(0); }
+            }));
+            row.addView(sbtn("A favoritos", R.drawable.ic_star, new View.OnClickListener() {
+                public void onClick(View v) { applyPhotoSel(1); }
+            }));
+            row.addView(sbtn("Quitar de favoritos", R.drawable.ic_star_border, new View.OnClickListener() {
+                public void onClick(View v) { applyPhotoSel(2); }
+            }));
+            row.addView(sbtn("Cancelar", R.drawable.ic_close, new View.OnClickListener() {
+                public void onClick(View v) { exitPSel(); }
+            }));
+        }
         android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
         hs.setHorizontalScrollBarEnabled(false);
         hs.setClipToPadding(false);
@@ -935,10 +985,15 @@ public class BrowserActivity extends Activity {
         photoGrid = makeGrid(photoCols);
         photoGrid.setAdapter(new PhotoAdapter());
         photoGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> p, View v, int pos, long id) { openViewer(pos); }
+            public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
+                if (pSel) togglePhoto(pos); else openViewer(pos);
+            }
         });
         photoGrid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) { itemMenu(pos); return true; }
+            public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) {
+                if (pSel) togglePhoto(pos); else itemMenu(pos);
+                return true;
+            }
         });
         photoGrid.setOnScrollListener(new android.widget.AbsListView.OnScrollListener() {
             public void onScrollStateChanged(android.widget.AbsListView v, int st) { }
@@ -954,7 +1009,8 @@ public class BrowserActivity extends Activity {
             root.addView(t, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
         }
         if (sel > 0) photoGrid.setSelection(sel);
-        if ("minus".equals(refocus)) colsMinus.requestFocus();
+        if (pSel) photoGrid.requestFocus();
+        else if ("minus".equals(refocus)) colsMinus.requestFocus();
         else if ("plus".equals(refocus)) colsPlus.requestFocus();
         else if ("shape".equals(refocus)) shapeBtn.requestFocus();
         else photoGrid.requestFocus();
@@ -967,9 +1023,9 @@ public class BrowserActivity extends Activity {
         if (current.kind == 4) { showInfo(it); return; }       // los temporales no se ocultan ni se marcan
         final boolean isHid = Prefs.hidden(this).contains(it.key());
         final boolean isFav = Prefs.favs(this).contains(it.key());
-        final String[] labels = {isHid ? "Mostrar" : "Ocultar", "Ver información",
+        final String[] labels = {"Seleccionar", isHid ? "Mostrar" : "Ocultar", "Ver información",
                 isFav ? "Quitar de favoritos" : "Añadir a favoritos"};
-        final int[] icons = {isHid ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_info,
+        final int[] icons = {R.drawable.ic_check, isHid ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_info,
                 isFav ? R.drawable.ic_star_border : R.drawable.ic_star};
         android.widget.ListAdapter ad = new android.widget.ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, labels) {
@@ -991,9 +1047,14 @@ public class BrowserActivity extends Activity {
             .setAdapter(ad, new android.content.DialogInterface.OnClickListener() {
                 public void onClick(android.content.DialogInterface d, int which) {
                     if (which == 0) {
+                        pSel = true;
+                        pKeys.clear();
+                        pKeys.add(it.key());
+                        showPhotos(pos);
+                    } else if (which == 1) {
                         if (isHid) Prefs.unhide(BrowserActivity.this, it.key()); else Prefs.hide(BrowserActivity.this, it.key());
                         refreshAfterChange(pos);
-                    } else if (which == 1) {
+                    } else if (which == 2) {
                         showInfo(it);
                     } else {
                         Prefs.toggleFav(BrowserActivity.this, it.key());
@@ -1001,6 +1062,47 @@ public class BrowserActivity extends Activity {
                     }
                 }
             }).show();
+    }
+
+    private void togglePhoto(int pos) {
+        if (current == null || pos < 0 || pos >= current.shown().size()) return;
+        String k = current.shown().get(pos).key();
+        if (!pKeys.remove(k)) pKeys.add(k);
+        if (photoGrid != null) {
+            ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
+            photoGrid.setSelection(pos);
+        }
+        updateCount();
+    }
+
+    private void refreshPhotoSel() {
+        if (photoGrid != null) {
+            int p = photoGrid.getSelectedItemPosition();
+            ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
+            if (p >= 0) photoGrid.setSelection(p);
+        }
+        updateCount();
+    }
+
+    private void exitPSel() {
+        int fp = photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0;
+        pSel = false;
+        pKeys.clear();
+        showPhotos(fp);
+    }
+
+    /** 0 = ocultar o mostrar, 1 = añadir a favoritas, 2 = quitar de favoritas, para todas las seleccionadas. */
+    private void applyPhotoSel(int what) {
+        if (pKeys.isEmpty()) { showToast("Marca primero alguna foto o vídeo."); return; }
+        List<String> ks = new ArrayList<String>(pKeys);
+        int fp = photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0;
+        if (what == 0) Prefs.hideAll(this, ks, current.kind != 3);
+        else Prefs.favAll(this, ks, what == 1);
+        showToast(ks.size() + (ks.size() == 1 ? " elemento cambiado." : " elementos cambiados."));
+        pSel = false;
+        pKeys.clear();
+        refreshAfterChange(fp);
+        if (level == 1 && current != null && entries.contains(current)) showPhotos(fp);
     }
 
     private void showInfo(Item it) {
@@ -1027,6 +1129,7 @@ public class BrowserActivity extends Activity {
         } else {
             t = "  \u00B7  " + current.items.size() + " elementos";
         }
+        if (pSel) t += "  \u00B7  " + pKeys.size() + " seleccionados";
         countView.setText(t);
     }
 
@@ -1277,6 +1380,9 @@ public class BrowserActivity extends Activity {
             t.img.setScaleType(crop ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
             thumbs.load(t.img, it.url, r32(photoTile), r32(photoTileH), crop);
             t.fav.setVisibility(favSet.contains(it.key()) ? View.VISIBLE : View.GONE);
+            boolean on = pSel && pKeys.contains(it.key());
+            t.setAlpha(pSel && !on ? 0.5f : 1f);
+            t.setForeground(on ? selFrame() : null);
             prefetchAhead(pos);
             return t;
         }
@@ -1289,6 +1395,18 @@ public class BrowserActivity extends Activity {
         for (int i = Math.max(prefetched + 1, pos + 1); i <= to; i++)
             thumbs.prefetch(l.get(i).url, r32(photoTile), r32(photoTileH), !"full".equals(photoShape));
         if (to > prefetched) prefetched = to;
+    }
+
+    private android.graphics.drawable.Drawable selFrameD;
+
+    private android.graphics.drawable.Drawable selFrame() {
+        if (selFrameD == null) {
+            GradientDrawable g = new GradientDrawable();
+            g.setColor(0x334DA3FF);
+            g.setStroke(Ui.dp(this, 4), 0xFF4DA3FF);
+            selFrameD = g;
+        }
+        return selFrameD;
     }
 
     private Tile newPhotoTile() {
