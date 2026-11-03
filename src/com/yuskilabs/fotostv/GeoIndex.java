@@ -105,6 +105,22 @@ class GeoIndex extends SQLiteOpenHelper {
         if (!p) GeoService.start(c);
     }
 
+    /** Vuelve a mirar las fotos sin ubicación y arranca el servicio. */
+    static void forceRecheck(Context c) {
+        try { MetaFetcher.forgetMissingGps(c); } catch (Throwable ignored) { }
+        get(c).getWritableDatabase().delete("photos", "st=?", new String[]{"" + NO_GPS});
+        Prefs.meta(c).edit().putBoolean("geoPause", false).apply();
+        GeoService.start(c);
+    }
+
+    /** Lugares con fotos: nombre → nº de fotos. */
+    HashMap<String, Integer> placeCounts() {
+        HashMap<String, Integer> m = new HashMap<String, Integer>();
+        Cursor q = getReadableDatabase().rawQuery("SELECT place, COUNT(*) FROM photos WHERE place IS NOT NULL GROUP BY place", null);
+        try { while (q.moveToNext()) m.put(q.getString(0), q.getInt(1)); } finally { q.close(); }
+        return m;
+    }
+
     static String status(Context c) {
         GeoIndex g = get(c);
         int done = g.count("");

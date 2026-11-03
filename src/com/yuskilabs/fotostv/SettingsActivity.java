@@ -236,7 +236,19 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         left.addView(pair(idleBtn, check));
         left.addView(pair(stopBtn, vqBtn));
         left.addView(pair(proj, dream));
-        LinearLayout lastRow = pair(upd, cacheBtn);
+        Button places = side("Lugares", R.drawable.ic_place, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, PlacesActivity.class)); }
+        });
+        Button geoBtn = side("Revisar ubicaciones", R.drawable.ic_refresh, new View.OnClickListener() {
+            public void onClick(View v) {
+                new Thread(new Runnable() { public void run() { GeoIndex.forceRecheck(SettingsActivity.this); } }).start();
+                android.widget.Toast.makeText(SettingsActivity.this, "Vuelvo a buscar las ubicaciones que faltan, en segundo plano.", android.widget.Toast.LENGTH_LONG).show();
+                h.removeCallbacks(geoTick);
+                h.postDelayed(geoTick, 1500);
+            }
+        });
+        left.addView(pair(places, upd));
+        LinearLayout lastRow = pair(cacheBtn, geoBtn);
         ((LinearLayout.LayoutParams) lastRow.getLayoutParams()).setMargins(0, 0, 0, 0);
         left.addView(lastRow);
         LinearLayout.LayoutParams leftP = new LinearLayout.LayoutParams(0, -1, 0.50f);

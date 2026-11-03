@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 5.31.0
+- **Lugares**: nueva pantalla (botón «Lugares» en Ajustes) con los países, provincias e islas donde has hecho fotos, con el número de fotos de cada uno. Al elegir uno ves sus localidades; al elegir una localidad o «Todas las fotos de…» arranca un pase con ellas.
+- Botón «Revisar ubicaciones» (fila inferior de Ajustes): vuelve a mirar las fotos sin ubicación, como «Recargar álbumes» hace con los álbumes.
+
 ## 5.30.0
 - **Índice de ubicaciones en segundo plano**: la app va leyendo dónde se hizo cada foto de todos tus álbumes y le pone nombre al lugar, sin que tengas que abrirlas. Funciona con un servicio en primer plano (con aviso en la barra), mantiene la CPU y el wifi despiertos y continúa donde se quedó si se interrumpe.
 - En Ajustes, bajo «Tus álbumes», un contador («Ubicaciones: X de Y fotos revisadas») que se puede pausar o reanudar con OK.

@@ -66,6 +66,16 @@ class Nav {
         }).start();
     }
 
+    /** Abre un pase con las fotos de un lugar (o de una región entera). */
+    static void openPlace(final Context ctx, final String want, final boolean region) {
+        new Thread(new Runnable() {
+            public void run() {
+                final List<Item> list = GeoIndex.items(ctx, want, region);
+                ui.post(new Runnable() { public void run() { go(ctx, PLACE_TOWN, null, null, list); } });
+            }
+        }).start();
+    }
+
     private static void go(Context ctx, int action, Item it, Prefs.Album al, List<Item> list) {
         if (action == ALBUM) {
             if (al == null) { Toast.makeText(ctx, "No encuentro el álbum de esta foto.", Toast.LENGTH_LONG).show(); return; }
