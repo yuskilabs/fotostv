@@ -63,7 +63,10 @@ public class PlacesActivity extends Activity {
         right.setOrientation(LinearLayout.VERTICAL);
         map = new MapView(this);
         map.setPick(new MapView.Pick() {
-            public void box(double a, double b2, double c, double d) { Nav.openBox(PlacesActivity.this, a, b2, c, d); }
+            public void box(double a, double b2, double c, double d) {
+                fromMap = true;
+                Nav.openMosaic(PlacesActivity.this, "Zona del mapa", null, false, new double[] { a, b2, c, d });
+            }
         });
         right.addView(map, new LinearLayout.LayoutParams(-1, 0, 1f));
         TextView hint = new TextView(this);
@@ -108,14 +111,23 @@ public class PlacesActivity extends Activity {
         }).start();
     }
 
+    private boolean fromMap;
+
+    /** Al volver del mosaico, el foco vuelve a donde estabas: mapa si vienes del mapa, lista si vienes de la lista. */
+    @Override protected void onResume() {
+        super.onResume();
+        if (map == null || list == null) return;
+        if (fromMap) map.requestFocus(); else list.requestFocus();
+    }
+
     private int dp(int v) { return (int) (v * getResources().getDisplayMetrics().density + 0.5f); }
 
     private static String num(int n) { return String.format(java.util.Locale.GERMAN, "%,d", n); }
 
     private void pick(String key) {
         if (key.startsWith("R:")) show(key.substring(2));
-        else if (key.startsWith("A:")) Nav.openPlace(this, key.substring(2), true);    // todo el sitio mayor
-        else if (key.startsWith("T:")) Nav.openPlace(this, key.substring(2), false);
+        else if (key.startsWith("A:")) { fromMap = false; Nav.openMosaic(this, key.substring(2), key.substring(2), true, null); }    // todo el sitio mayor
+        else if (key.startsWith("T:")) { fromMap = false; Nav.openMosaic(this, key.substring(2), key.substring(2), false, null); }
     }
 
     /** Al moverte por la lista, el mapa se coloca sobre ese sitio. */

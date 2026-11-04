@@ -86,6 +86,28 @@ class Nav {
         }).start();
     }
 
+    /** Abre el mosaico (como un álbum) con las fotos de un lugar, o de un rectángulo del mapa si box != null. */
+    static void openMosaic(final Context ctx, final String title, final String want, final boolean region, final double[] box) {
+        new Thread(new Runnable() {
+            public void run() {
+                final List<Item> list = box != null
+                        ? GeoIndex.itemsOf(ctx, GeoIndex.get(ctx).keysIn(box[0], box[1], box[2], box[3]))
+                        : GeoIndex.items(ctx, want, region);
+                ui.post(new Runnable() {
+                    public void run() {
+                        if (list == null || list.isEmpty()) {
+                            Toast.makeText(ctx, "Aún no conozco fotos de este sitio (la app las va revisando en segundo plano).", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        Session.placeItems = list;
+                        Session.placeTitle = title;
+                        ctx.startActivity(new Intent(ctx, BrowserActivity.class));
+                    }
+                });
+            }
+        }).start();
+    }
+
     private static void go(Context ctx, int action, Item it, Prefs.Album al, List<Item> list) {
         if (action == ALBUM) {
             if (al == null) { Toast.makeText(ctx, "No encuentro el álbum de esta foto.", Toast.LENGTH_LONG).show(); return; }

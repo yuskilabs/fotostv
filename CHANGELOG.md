@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.2
+- **Mosaico de lugar**: al pulsar OK en una zona con fotos del mapa, o en un lugar de la lista, se abre un mosaico como el de un álbum (con Pase, orden, formato, etc.). El nombre es el del lugar («Zona del mapa» si viene del mapa). Atrás vuelve a Lugares y el foco queda en el mapa o en la lista, según de dónde vengas.
+- Mapa: el rótulo «OK: acercar» / «N fotos aquí» pasa arriba y ya no tapa la mira.
+- **Ajustes**: nuevo orden de las tarjetas (Presentación, Información en pantalla, Música, Vídeo/caché/ocultas, Ubicaciones y Salvapantallas al final).
+
 ## 6.1
 - **Ajustes, pantalla independiente** y con tarjetas por secciones (música, ubicaciones, información en pantalla, salvapantallas, presentación, vídeo, caché y fotos ocultas). Ahí están ahora todos los ajustes que antes se tocaban en la web: orden, tiempo por foto, encuadre, seguir donde se quedó, vídeos y sonido, límites de caché, qué datos mostrar y volver a mostrar las ocultas. La pantalla principal queda con cuatro filas: Vista previa, Ver álbumes, Lugares, Recargar álbumes, Inicio y parada del salvapantallas, Actualizar y Ajustes.
 - **Web simplificada**: solo enlace del álbum, nombre, reordenar, mostrar/marcar, quitar, añadir en lote y copia de seguridad (Exportar copia al portapapeles). Se añade un único campo para pegar la dirección de una emisora propia; el resto de ajustes se hace en la tele. Logo centrado.

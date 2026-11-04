@@ -72,6 +72,7 @@ public class BrowserActivity extends Activity {
     private final Handler h = new Handler(Looper.getMainLooper());
     private final ExecutorService bg = Executors.newSingleThreadExecutor();
     private final ExecutorService flagExec = Executors.newSingleThreadExecutor();
+    private boolean placeMode;
     private final List<Entry> entries = new ArrayList<Entry>();
     private final LinkedHashSet<Item> flagPending = new LinkedHashSet<Item>();
     private final Set<String> flagTried = new HashSet<String>();
@@ -213,6 +214,24 @@ public class BrowserActivity extends Activity {
         root = new FrameLayout(this);
         root.setBackgroundColor(0xFF0F1D2E);
         setContentView(root);
+        if (Session.placeItems != null) {
+            // mosaico de un lugar (viene de Lugares o del mapa): como un álbum, pero sin salir de la lista de lugares
+            placeMode = true;
+            Entry e = new Entry();
+            e.kind = 5;
+            e.title = Session.placeTitle != null ? Session.placeTitle : "Lugar";
+            e.src = new ArrayList<Item>(Session.placeItems);
+            Session.placeItems = null;
+            Session.placeTitle = null;
+            favSet = Prefs.favs(this);
+            e.items = visible(e.src, Prefs.hidden(this));
+            pickCover(e);
+            entries.add(e);
+            loaded = true;
+            current = e;
+            showPhotos(0);
+            return;
+        }
         showMessage("Cargando álbumes…");
         loadEntries();
     }
@@ -222,7 +241,19 @@ public class BrowserActivity extends Activity {
         h.removeCallbacks(guestTick);
         h.postDelayed(guestTick, 30000);
         Guest.purgeExpired(this);
-        if (loaded) {
+        if (placeMode && Session.gotoUrl != null) {   // «Ir al álbum» desde un pase de lugar: abre el explorador normal
+            startActivity(new Intent(this, BrowserActivity.class));
+            finish();
+            return;
+        }
+        if (placeMode) {
+            if (current != null && photoGrid != null) {
+                favSet = Prefs.favs(this);
+                current.items = visible(current.src, Prefs.hidden(this));
+                ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
+                updateCount();
+            }
+        } else if (loaded) {
             int fp = photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0;
             refreshAfterChange(fp);       // por si se ha ocultado o marcado algo en el visor
         }
@@ -558,6 +589,7 @@ public class BrowserActivity extends Activity {
     }
 
     private void showAlbums() {
+        if (placeMode) { finish(); return; }   // desde un lugar, «atrás» vuelve a Lugares
         pSel = false;
         pKeys.clear();
         level = 0;

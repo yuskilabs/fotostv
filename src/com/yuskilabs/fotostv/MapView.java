@@ -166,9 +166,9 @@ class MapView extends View {
         String t = nr > 0 ? nr + (nr == 1 ? " foto aquí · OK para verla" : " fotos aquí · OK para verlas") : "OK: acercar";
         float tw = p.measureText(t);
         p.setColor(0xB0000000);
-        cv.drawRect(mx - tw / 2 - 14, my + MIRA + 12, mx + tw / 2 + 14, my + MIRA + 56, p);
+        cv.drawRect(w / 2f - tw / 2 - 14, 10, w / 2f + tw / 2 + 14, 54, p);   // arriba, para no tapar la mira
         p.setColor(0xFFFFFFFF);
-        cv.drawText(t, mx - tw / 2, my + MIRA + 44, p);
+        cv.drawText(t, w / 2f - tw / 2, 42, p);
         p.setTextSize(22);
         p.setColor(0xB0000000);
         String at = "© colaboradores de OpenStreetMap";

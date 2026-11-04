@@ -109,7 +109,7 @@ public class AjustesActivity extends Activity {
         cm.addView(row(musicBtn, volBtn));
         cm.addView(row(radioBtn, folderBtn));
         cm.addView(row(dreamMusicBtn, null));
-        left.addView(cm);
+        
 
         // --- ubicaciones
         LinearLayout cg = card("Ubicaciones", R.drawable.ic_place);
@@ -138,7 +138,7 @@ public class AjustesActivity extends Activity {
             public void onClick(View v) { rebuildDialog(); }
         });
         cg.addView(row(geoBtn, rebuild));
-        left.addView(cg);
+        
 
         // --- salvapantallas
         LinearLayout cs = card("Salvapantallas", R.drawable.ic_tv);
@@ -149,7 +149,7 @@ public class AjustesActivity extends Activity {
             public void onClick(View v) { startActivity(new Intent(AjustesActivity.this, ProjectivyActivity.class)); }
         });
         cs.addView(row(dream, proj));
-        right.addView(cs);
+        
 
         // --- vídeo y caché
         LinearLayout cv = card("Vídeo, caché y ocultas", R.drawable.ic_video);
@@ -192,7 +192,7 @@ public class AjustesActivity extends Activity {
             }
         });
         cv.addView(row(unhide, null));
-        right.addView(cv);
+        
 
         // --- presentación
         LinearLayout cp = card("Presentación", R.drawable.ic_photo);
@@ -208,7 +208,7 @@ public class AjustesActivity extends Activity {
                 new String[]{"automático", "llenar pantalla", "foto completa"}, R.drawable.ic_fullscreen,
                 new Cur() { public String get() { return Prefs.fit(AjustesActivity.this); } }),
             tog("Seguir donde se quedó", "resume", R.drawable.ic_check, new Bool() { public boolean get() { return Prefs.resume(AjustesActivity.this); } })));
-        right.addView(cp);
+        
 
         LinearLayout ci = card("Información en pantalla", R.drawable.ic_info);
         ci.addView(row(
@@ -217,8 +217,15 @@ public class AjustesActivity extends Activity {
         ci.addView(row(
             tog("Lugar", "showPlace", R.drawable.ic_place, new Bool() { public boolean get() { return Prefs.showPlace(AjustesActivity.this); } }),
             tog("Hora", "clock", R.drawable.ic_schedule, new Bool() { public boolean get() { return Prefs.clock(AjustesActivity.this); } })));
-        left.addView(ci);
+        
 
+        // orden de lectura (izquierda→derecha, y luego hacia abajo)
+        left.addView(cp);
+        right.addView(ci);
+        left.addView(cm);
+        right.addView(cv);
+        left.addView(cg);
+        right.addView(cs);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
         lp.setMargins(0, 0, dp(8), 0);
         cols.addView(left, lp);
