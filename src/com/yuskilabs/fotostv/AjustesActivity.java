@@ -486,7 +486,7 @@ public class AjustesActivity extends Activity {
                 return t;
             }
         };
-        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+        final android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle("Emisora de radio")
             .setAdapter(ad, new android.content.DialogInterface.OnClickListener() {
                 public void onClick(android.content.DialogInterface d, int w) {
@@ -496,8 +496,80 @@ public class AjustesActivity extends Activity {
                     refreshMusic();
                 }
             })
-            .setNegativeButton("Cancelar", null).show();
+            .setNegativeButton("Cancelar", null).create();
+        dlg.setOnDismissListener(new android.content.DialogInterface.OnDismissListener() {
+            public void onDismiss(android.content.DialogInterface d) { stopPreview(); }
+        });
+        dlg.show();
+        // al posarte sobre una emisora suena; al abrir, suena la que está elegida
+        final android.widget.ListView lv = dlg.getListView();
+        int cur = 0;
+        String curUrl = Prefs.musicRadio(this);
+        for (int i = 0; i < rowsL.size(); i++) if (rowsL.get(i)[1] != null && rowsL.get(i)[1].equals(curUrl)) { cur = i; break; }
+        if (cur == 0) for (int i = 0; i < rowsL.size(); i++) if (rowsL.get(i)[1] != null) { cur = i; break; }
+        lv.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(android.widget.AdapterView<?> a, View v, int pos, long id) {
+                if (pos >= 0 && pos < rowsL.size() && rowsL.get(pos)[1] != null) preview(rowsL.get(pos)[1]);
+                else stopPreview();
+            }
+            public void onNothingSelected(android.widget.AdapterView<?> a) { }
+        });
+        lv.requestFocus();
+        lv.setSelection(cur);
+        preview(rowsL.get(cur)[1]);
     }
+
+    // ---- escucha de prueba en la lista de emisoras
+    private android.media.MediaPlayer prev;
+    private String prevUrl;
+    private final Runnable prevRun = new Runnable() {
+        public void run() {
+            if (prevUrl == null) return;
+            try {
+                final android.media.MediaPlayer m = new android.media.MediaPlayer();
+                prev = m;
+                m.setAudioStreamType(android.media.AudioManager.STREAM_MUSIC);
+                m.setDataSource(prevUrl);
+                m.setOnPreparedListener(new android.media.MediaPlayer.OnPreparedListener() {
+                    public void onPrepared(android.media.MediaPlayer p) {
+                        if (p != prev) return;
+                        float v = (float) Math.pow(Prefs.musicVol(AjustesActivity.this) / 100.0, 2);
+                        try { p.setVolume(v, v); p.start(); } catch (Exception ignored) { }
+                    }
+                });
+                m.setOnErrorListener(new android.media.MediaPlayer.OnErrorListener() {
+                    public boolean onError(android.media.MediaPlayer p, int w, int e) { return true; }
+                });
+                m.prepareAsync();
+            } catch (Exception ignored) { }
+        }
+    };
+
+    /** Suena la emisora tras una pausa corta (así, al bajar rápido por la lista, no se abren todas). */
+    private void preview(String url) {
+        if (url == null || url.equals(prevUrl) && prev != null) return;
+        h.removeCallbacks(prevRun);
+        killPreview();
+        prevUrl = url;
+        h.postDelayed(prevRun, 500);
+    }
+
+    private void killPreview() {
+        android.media.MediaPlayer m = prev;
+        prev = null;
+        if (m != null) {
+            try { m.stop(); } catch (Exception ignored) { }
+            try { m.release(); } catch (Exception ignored) { }
+        }
+    }
+
+    private void stopPreview() {
+        h.removeCallbacks(prevRun);
+        prevUrl = null;
+        killPreview();
+    }
+
+    @Override protected void onPause() { stopPreview(); super.onPause(); }
 
     private void pickFolder() {
         final java.util.List<String> fs = Music.suggestFolders();
