@@ -55,7 +55,7 @@ class GeoIndex extends SQLiteOpenHelper {
     /** Casilla (0,01°) pendiente de ponerle nombre: {cell, lat, lon}. */
     String[] nextCell(HashSet<String> skip) {
         Cursor q = getReadableDatabase().rawQuery(
-                "SELECT cell, lat, lon FROM photos WHERE st=1 AND place IS NULL GROUP BY cell LIMIT 50", null);
+                "SELECT cell, lat, lon FROM photos WHERE st=1 AND place IS NULL GROUP BY cell ORDER BY COUNT(*) DESC LIMIT 50", null);
         try {
             while (q.moveToNext()) if (!skip.contains(q.getString(0)))
                 return new String[]{q.getString(0), q.getString(1), q.getString(2)};
@@ -201,6 +201,23 @@ class GeoIndex extends SQLiteOpenHelper {
         if (paused(c)) return "Ubicaciones en pausa: " + done + " de " + tot + " fotos revisadas";
         if (done >= tot && noName == 0) return "Ubicaciones al día: " + named + " fotos con lugar";
         return "Ubicaciones: " + done + " de " + tot + " fotos revisadas" + (noName > 0 ? " · " + noName + " pendientes de nombre" : "");
+    }
+
+    /** {lat, lon} de una foto ya leída; null si no se conoce. */
+    double[] gpsOf(String k) {
+        Cursor q = getReadableDatabase().rawQuery("SELECT lat, lon FROM photos WHERE k=? AND st=1", new String[]{k});
+        try { return q.moveToFirst() ? new double[]{q.getDouble(0), q.getDouble(1)} : null; } finally { q.close(); }
+    }
+
+    /** Rectángulo {minLat, maxLat, minLon, maxLon} que cubre las fotos de un lugar (o región); null si no hay. */
+    double[] bbox(String want, boolean region) {
+        Cursor q = region
+                ? getReadableDatabase().rawQuery("SELECT MIN(lat), MAX(lat), MIN(lon), MAX(lon), COUNT(*) FROM photos WHERE place=? OR place LIKE ?", new String[]{want, "%, " + want})
+                : getReadableDatabase().rawQuery("SELECT MIN(lat), MAX(lat), MIN(lon), MAX(lon), COUNT(*) FROM photos WHERE place=?", new String[]{want});
+        try {
+            if (q.moveToFirst() && q.getInt(4) > 0) return new double[]{q.getDouble(0), q.getDouble(1), q.getDouble(2), q.getDouble(3)};
+            return null;
+        } finally { q.close(); }
     }
 
     /** Puntos del mapa de calor: {lat, lon, nº de fotos} por casilla de 0,01°. */

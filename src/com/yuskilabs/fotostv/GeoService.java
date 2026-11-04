@@ -108,6 +108,7 @@ public class GeoService extends Service {
                                 r = Double.isNaN(f[0]) ? new double[]{Double.NaN, Double.NaN} : new double[]{f[0], f[1]};
                             }
                             g.put(it.key(), r[0], r[1], !Double.isNaN(r[0]));
+                            if (!Double.isNaN(r[0]) && MetaFetcher.cachedGps(c, it) == null) MetaFetcher.storeGps(c, it, r[0], r[1], 0);
                             fails.set(0);
                         } catch (Throwable e) {
                             if (fails.incrementAndGet() > 5) {      // sin red: espera un poco

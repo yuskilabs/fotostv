@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Mapa de OpenStreetMap con mapa de calor de tus fotos. Flechas: mover · OK: ver fotos de la mira (o acercar) · OK largo: alejar. */
+/** Mapa de OpenStreetMap con mapa de calor de tus fotos. Flechas: mover · OK: ver fotos de la mira (o acercar) · Play: acercar · Pausa: alejar. */
 class MapView extends View {
     interface Pick { void box(double minLat, double maxLat, double minLon, double maxLon); }
 
@@ -79,6 +79,19 @@ class MapView extends View {
         cx = (px(c, z) + px(d, z)) / 2;
         cy = (py(a, z) + py(b, z)) / 2;
         fitted = true;
+    }
+
+    /** Lleva el mapa a un rectángulo {minLat, maxLat, minLon, maxLon}. */
+    void fitBox(double[] b) {
+        if (b == null || getWidth() == 0) return;
+        int best = 3;
+        for (int k = 14; k >= 2; k--) {
+            if (px(b[3], k) - px(b[2], k) <= getWidth() * 0.7 && py(b[0], k) - py(b[1], k) <= getHeight() * 0.7) { best = k; break; }
+        }
+        z = best;
+        cx = (px(b[2], z) + px(b[3], z)) / 2;
+        cy = (py(b[0], z) + py(b[1], z)) / 2;
+        invalidate();
     }
 
     private void zoom(int dz) {
@@ -180,7 +193,7 @@ class MapView extends View {
 
     // ---- mando
     @Override public boolean onKeyDown(int code, KeyEvent e) {
-        int step = Math.max(120, Math.min(getWidth(), getHeight()) / 4);
+        int step = Math.max(36, Math.min(getWidth(), getHeight()) / 16);
         switch (code) {
             case KeyEvent.KEYCODE_DPAD_LEFT: pan(-step, 0); return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT: pan(step, 0); return true;
@@ -188,9 +201,10 @@ class MapView extends View {
             case KeyEvent.KEYCODE_DPAD_DOWN: pan(0, step); return true;
             case KeyEvent.KEYCODE_PAGE_UP: case KeyEvent.KEYCODE_CHANNEL_UP: case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
             case KeyEvent.KEYCODE_ZOOM_IN: case KeyEvent.KEYCODE_PLUS: case KeyEvent.KEYCODE_MENU:
+            case KeyEvent.KEYCODE_MEDIA_PLAY: case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
                 zoom(1); return true;
             case KeyEvent.KEYCODE_PAGE_DOWN: case KeyEvent.KEYCODE_CHANNEL_DOWN: case KeyEvent.KEYCODE_MEDIA_REWIND:
-            case KeyEvent.KEYCODE_ZOOM_OUT: case KeyEvent.KEYCODE_MINUS:
+            case KeyEvent.KEYCODE_ZOOM_OUT: case KeyEvent.KEYCODE_MINUS: case KeyEvent.KEYCODE_MEDIA_PAUSE:
                 zoom(-1); return true;
             case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER:
                 longDone = false;

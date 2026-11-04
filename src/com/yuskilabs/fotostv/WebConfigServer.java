@@ -233,30 +233,14 @@ class WebConfigServer extends Thread {
         String nu = val(f, "urlnew");
         if (nu.length() > 0) list.add(new Prefs.Album(nu, val(f, "namenew"), true));
         Prefs.saveAlbums(ctx, list);
-        if (f.containsKey("unhide")) Prefs.clearHidden(ctx);
-        int interval = 60;
-        try { interval = Integer.parseInt(f.get("interval")); } catch (Exception ignored) { }
-        Prefs.sp(ctx).edit()
-            .putInt("interval", interval)
-            .putInt("thumbMB", intOf(f.get("thumbMB"), Prefs.thumbMB(ctx)))
-            .putInt("videoMB", intOf(f.get("videoMB"), Prefs.videoMB(ctx)))
-            .putString("fit", f.containsKey("fit") ? f.get("fit") : "auto")
-            .putString("order", f.containsKey("order") ? f.get("order") : "random")
-            .putString("albumMode", f.containsKey("albumMode") ? f.get("albumMode") : "all")
-            .putString("albumSort", f.containsKey("albumSort") ? f.get("albumSort") : "manual")
-            .putBoolean("resume", f.containsKey("resume"))
-            .putBoolean("video", f.containsKey("video"))
-            .putBoolean("sound", f.containsKey("sound"))
-            .putBoolean("clock", f.containsKey("clock"))
-            .putBoolean("showAlbum", f.containsKey("showAlbum"))
-            .putBoolean("showDate", f.containsKey("showDate"))
-            .putBoolean("showPlace", f.containsKey("showPlace"))
-            .putString("musicMode", f.containsKey("musicMode") ? f.get("musicMode") : "off")
-            .putString("musicRadio", val(f, "musicRadio"))
-            .putString("musicFolder", val(f, "musicFolder"))
-            .putInt("musicVol", Math.max(0, Math.min(100, intOf(f.get("musicVol"), Prefs.musicVol(ctx)))))
-            .putBoolean("musicDream", f.containsKey("musicDream"))
-            .apply();
+        android.content.SharedPreferences.Editor e = Prefs.sp(ctx).edit();
+        if (f.containsKey("albumMode")) e.putString("albumMode", f.get("albumMode"));
+        if (f.containsKey("albumSort")) e.putString("albumSort", f.get("albumSort"));
+        if (f.containsKey("musicRadio")) {
+            String mr = val(f, "musicRadio");
+            if (mr.length() > 0 || Prefs.musicRadio(ctx).length() > 0) e.putString("musicRadio", mr);
+        }
+        e.apply();
     }
 
     private static int intOf(String s, int def) {
@@ -468,77 +452,16 @@ class WebConfigServer extends Thread {
     }
 
     private String form() {
-        String iv = String.valueOf(Prefs.interval(ctx));
-        String fit = Prefs.fit(ctx), order = Prefs.order(ctx), mode = Prefs.albumMode(ctx);
+        String mode = Prefs.albumMode(ctx);
         StringBuilder sb = new StringBuilder("<form method='post' action='/save'>");
-        sb.append("<h2>Presentación</h2><label>Orden</label><select name='order'>")
-          .append(opt("random", "Aleatorio (se baraja cada vez que empieza)", order))
-          .append(opt("norepeat", "Aleatorio sin repetir hasta verlas todas", order))
-          .append(opt("asc", "Por fecha, de más antigua a más reciente", order))
-          .append(opt("desc", "Por fecha, de más reciente a más antigua", order))
-          .append("</select>")
-          .append(chk("resume", "Por fecha: seguir donde se quedó la última vez", Prefs.resume(ctx)))
-          .append("<label>Cambiar de foto cada</label><select name='interval'>")
-          .append(opt("5", "5 segundos", iv)).append(opt("10", "10 segundos", iv)).append(opt("30", "30 segundos", iv))
-          .append(opt("60", "1 minuto", iv)).append(opt("180", "3 minutos", iv))
-          .append(opt("300", "5 minutos", iv)).append(opt("600", "10 minutos", iv))
-          .append("</select><label>Encuadre</label><select name='fit'>")
-          .append(opt("auto", "Automático (recorta solo si encaja)", fit))
-          .append(opt("crop", "Llenar pantalla (recorta)", fit))
-          .append(opt("fit", "Foto completa (bandas negras)", fit))
-          .append("</select>");
-        sb.append("<h2>Vídeos</h2>")
-          .append(chk("video", "Reproducir vídeos", Prefs.video(ctx)))
-          .append(chk("sound", "Con sonido", Prefs.sound(ctx)));
-        String tm = String.valueOf(Prefs.thumbMB(ctx)), vm = String.valueOf(Prefs.videoMB(ctx));
-        sb.append("<h2>Caché</h2><label>Máximo para miniaturas</label><select name='thumbMB'>")
-          .append(opt("100", "100 MB", tm)).append(opt("150", "150 MB", tm)).append(opt("250", "250 MB", tm))
-          .append(opt("500", "500 MB", tm)).append(opt("1000", "1 GB", tm)).append(opt("2000", "2 GB", tm))
-          .append("</select><label>Máximo para vídeos temporales</label><select name='videoMB'>")
-          .append(opt("300", "300 MB", vm)).append(opt("500", "500 MB", vm)).append(opt("1000", "1 GB", vm))
-          .append(opt("1500", "1,5 GB", vm)).append(opt("3000", "3 GB", vm))
-          .append("</select><p class='muted'>Al llenarse, se borra lo menos usado. En dispositivos con poco espacio (Fire Stick) conviene dejarlo bajo.</p>");
-        String mm = Prefs.musicMode(ctx), mr = Prefs.musicRadio(ctx);
-        sb.append("<h2>Música del pase</h2><label>Fuente</label><select name='musicMode'>")
-          .append(opt("off", "Sin música", mm)).append(opt("radio", "Emisora de internet", mm))
-          .append(opt("folder", "Carpeta con canciones (en la tele o en un USB)", mm))
-          .append("</select><label>Emisora</label><select onchange=\"if(this.value)document.getElementById('mr').value=this.value\">")
-          .append("<option value=''>Elegir una…</option>");
-        boolean og = false;
-        for (String[] pr : Music.PRESETS) {
-            if (pr[1] == null) {
-                if (og) sb.append("</optgroup>");
-                sb.append("<optgroup label='").append(esc(pr[0])).append("'>");
-                og = true;
-            } else sb.append("<option value='").append(pr[1]).append("'>").append(esc(pr[0])).append("</option>");
-        }
-        if (og) sb.append("</optgroup>");
-        sb.append("</select><input id='mr' name='musicRadio' type='url' placeholder='o pega aquí la dirección de otra emisora' value='")
-          .append(esc(mr)).append("'>")
-          .append("<label>Carpeta de canciones</label><input name='musicFolder' list='mfl' placeholder='/storage/emulated/0/Music' value='")
-          .append(esc(Prefs.musicFolder(ctx))).append("'><datalist id='mfl'>");
-        try { for (String d : Music.suggestFolders()) sb.append("<option value='").append(esc(d)).append("'>"); } catch (Throwable ignored) { }
-        sb.append("</datalist><label>Volumen de la música</label><input type='range' name='musicVol' min='0' max='100' value='")
-          .append(Prefs.musicVol(ctx)).append("'>")
-          .append(chk("musicDream", "Que suene también en el salvapantallas y en la vista previa", Prefs.musicDream(ctx)))
-          .append("<p class='muted'>Suena en los pases que abres tú. Si un vídeo tiene sonido, la música se calla mientras dura. "
-                + "Las emisoras necesitan internet; con carpeta, la tele pedirá permiso para leer los archivos la primera vez. "
-                + "Si una emisora deja de funcionar, pega otra dirección.</p>");
-        sb.append("<h2>Información en pantalla</h2>")
-          .append(chk("showAlbum", "Nombre del álbum", Prefs.showAlbum(ctx)))
-          .append(chk("showDate", "Fecha de captura", Prefs.showDate(ctx)))
-          .append(chk("showPlace", "Lugar (si la foto tiene GPS)", Prefs.showPlace(ctx)))
-          .append(chk("clock", "Hora", Prefs.clock(ctx)));
-        int nh = Prefs.hidden(ctx).size();
-        sb.append("<h2>Fotos ocultas</h2>");
-        if (nh == 0) sb.append("<p class='muted'>No has ocultado ninguna foto. Durante el salvapantallas, pulsa \u25BC en el mando para ocultar la que se está viendo.</p>");
-        else sb.append(chk("unhide", "Volver a mostrar las " + nh + " fotos ocultas", false));
+        sb.append("<h2>Emisora propia</h2><p class='muted'>La música (apagada, radio o carpeta, volumen…) se elige en la tele, en Ajustes. Aquí solo hace falta pegar la dirección de una emisora que no esté en la lista.</p>")
+          .append("<input name='musicRadio' type='url' placeholder='https://… (dirección de la emisora)' value='")
+          .append(esc(Prefs.musicRadio(ctx))).append("'>");
         sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes, ajustes, favoritas y ubicaciones ya revisadas a otro dispositivo: pulsa «Exportar» (se copia solo al portapapeles), y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya).</p>")
           .append("<textarea id='bk' rows='5' placeholder='Aquí aparece la copia, o pega la que quieras importar'></textarea>")
           .append("<div class='row2'><button type='button' class='sec' onclick='expBk()'>📤 Exportar</button>")
           .append("<button type='button' class='sec' onclick='impBk()'>📥 Importar</button></div>")
           .append("<p id='bkm' class='muted'></p>");
-        sb.append("<h2>Mando</h2><p class='muted'>\u25C0 \u25B6 cambiar de foto \u00B7 OK pausar / continuar \u00B7 \u25B2 ocultar esa foto (queda en el álbum «Ocultas») \u00B7 \u25BC pausa y muestra la información de la foto (con el mapa si tiene GPS); cualquier botón la cierra y continúa \u00B7 en el salvapantallas, cualquier otro botón sale. En el mosaico, mantén pulsado OK sobre una foto para ocultar, ver información o marcar como favorita.</p>");
         sb.append("<button type='submit'>💾 Guardar</button>");
         StringBuilder alb = new StringBuilder();
         alb.append("<h2>Álbumes</h2>");
@@ -672,7 +595,7 @@ class WebConfigServer extends Thread {
         return "<!doctype html><html lang='es'><head><meta charset='utf-8'>"
             + "<meta name='viewport' content='width=device-width,initial-scale=1'><title>FotosTV · Invitado</title><style>"
             + "body{font-family:-apple-system,system-ui,sans-serif;background:#0f1d2e;color:#eef;margin:0;padding:24px 16px}"
-            + "img.logo{height:72px;max-width:100%;display:block;margin:0 0 4px}h2{font-size:20px;margin:24px 0 8px;color:#8cf}"
+            + "img.logo{height:72px;max-width:100%;display:block;margin:0 auto 8px}h2{font-size:20px;margin:24px 0 8px;color:#8cf}"
             + ".muted{color:#9ab;font-size:15px;line-height:1.4}label{display:block;margin:22px 0 6px;font-size:15px;color:#bcd}"
             + "input{width:100%;box-sizing:border-box;font-size:17px;padding:12px;border-radius:10px;border:1px solid #456;background:#1b2d44;color:#fff}"
             + "button{margin-top:22px;width:100%;font-size:18px;padding:14px;border:0;border-radius:12px;background:#3d8bfd;color:#fff;font-weight:600}"
@@ -685,7 +608,7 @@ class WebConfigServer extends Thread {
             + "<meta name='viewport' content='width=device-width,initial-scale=1'>"
             + "<title>FotosTV</title><style>"
             + "body{font-family:-apple-system,system-ui,sans-serif;background:#0f1d2e;color:#eef;margin:0;padding:24px 16px}"
-            + "img.logo{height:72px;max-width:100%;display:block;margin:0 0 4px}.by{margin:44px 0 8px;text-align:center;font-size:15px}.by a{color:#89a;text-decoration:none}.by img{height:24px;vertical-align:middle;margin-right:8px}h2{font-size:17px;margin:28px 0 4px;color:#8cf}"
+            + "img.logo{height:72px;max-width:100%;display:block;margin:0 auto 8px}.by{margin:44px 0 8px;text-align:center;font-size:15px}.by a{color:#89a;text-decoration:none}.by img{height:24px;vertical-align:middle;margin-right:8px}h2{font-size:17px;margin:28px 0 4px;color:#8cf}"
             + ".card{background:#162a40;border-radius:12px;padding:10px 12px;margin:10px 0}.card input{margin:4px 0}"
             + ".row{display:flex;justify-content:space-between;align-items:center;gap:8px}.row .chk{margin:6px 0}"
             + ".muted{color:#89a;font-size:14px}.new{border:1px dashed #456}"

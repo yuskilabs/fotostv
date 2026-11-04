@@ -635,6 +635,29 @@ public class BrowserActivity extends Activity {
     }
 
     /** Pulsación larga en un álbum: pase, pase con música, recargar, ocultar, borrar o empezar a seleccionar. */
+    /** Menú de la pulsación larga con iconos (el mismo estilo para álbumes y fotos). */
+    private void iconMenu(String title, final String[] labels, final int[] icons, android.content.DialogInterface.OnClickListener l) {
+        android.widget.ListAdapter ad = new android.widget.ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, labels) {
+            @Override public View getView(int i, View cv, ViewGroup parent) {
+                TextView tv = (TextView) super.getView(i, cv, parent);
+                tv.setTypeface(Ui.REG);
+                tv.setTextColor(Color.WHITE);
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                android.graphics.drawable.Drawable d = getResources().getDrawable(icons[i]).mutate();
+                int sz = Ui.dp(BrowserActivity.this, 22);
+                d.setBounds(0, 0, sz, sz);
+                tv.setCompoundDrawables(d, null, null, null);
+                tv.setCompoundDrawablePadding(Ui.dp(BrowserActivity.this, 14));
+                tv.setGravity(Gravity.CENTER_VERTICAL);
+                return tv;
+            }
+        };
+        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK);
+        if (title != null && title.length() > 0) b.setTitle(title);
+        b.setAdapter(ad, l).show();
+    }
+
     private boolean albumMenu(int pos) {
         if (pos < 0 || pos >= entries.size()) return false;
         final Entry e = entries.get(pos);
@@ -643,11 +666,12 @@ public class BrowserActivity extends Activity {
             final boolean off = offUrls.contains(e.url);
             final List<Entry> one = new ArrayList<Entry>();
             one.add(e);
-            new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-                .setTitle(e.title)
-                .setItems(new String[]{"Seleccionar", "Pase", "Pase con música", "Recargar álbum",
+            iconMenu(e.title,
+                new String[]{"Seleccionar", "Pase", "Pase con música", "Recargar álbum",
                         off ? "Mostrar álbum" : "Ocultar álbum", "Revisar ubicaciones", "Borrar álbum"},
-                    new android.content.DialogInterface.OnClickListener() {
+                new int[]{R.drawable.ic_check, R.drawable.ic_play, R.drawable.ic_tune, R.drawable.ic_refresh,
+                        off ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_place, R.drawable.ic_delete},
+                new android.content.DialogInterface.OnClickListener() {
                     public void onClick(android.content.DialogInterface d, int w) {
                         if (w == 0) { selMode = true; sel.clear(); sel.add(e); albumPos = Math.max(0, entries.indexOf(e)); showAlbums(); }
                         else if (w == 1) startPase(one, false);
@@ -657,9 +681,7 @@ public class BrowserActivity extends Activity {
                         else if (w == 5) recheckPlaces(one);
                         else confirmDelete(one);
                     }
-                })
-                .setNegativeButton("Cancelar", null)
-                .show();
+                });
             return true;
         }
         if (e.kind != 4) return false;
@@ -994,6 +1016,18 @@ public class BrowserActivity extends Activity {
 
         photoGrid = makeGrid(photoCols);
         photoGrid.setAdapter(new PhotoAdapter());
+        final LinearLayout frow = row;
+        photoGrid.setOnKeyListener(new View.OnKeyListener() {
+            public boolean onKey(View v, int code, android.view.KeyEvent ev) {
+                // arriba desde la primera foto: al primer botón (no al más cercano, que era el segundo)
+                if (code == android.view.KeyEvent.KEYCODE_DPAD_UP && ev.getAction() == android.view.KeyEvent.ACTION_DOWN
+                        && photoGrid != null && photoGrid.getSelectedItemPosition() == 0 && frow.getChildCount() > 0) {
+                    frow.getChildAt(0).requestFocus();
+                    return true;
+                }
+                return false;
+            }
+        });
         photoGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
                 if (pSel) togglePhoto(pos); else openViewer(pos);

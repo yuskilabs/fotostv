@@ -3,6 +3,20 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.1
+- **Ajustes, pantalla independiente** y con tarjetas por secciones (música, ubicaciones, información en pantalla, salvapantallas, presentación, vídeo, caché y fotos ocultas). Ahí están ahora todos los ajustes que antes se tocaban en la web: orden, tiempo por foto, encuadre, seguir donde se quedó, vídeos y sonido, límites de caché, qué datos mostrar y volver a mostrar las ocultas. La pantalla principal queda con cuatro filas: Vista previa, Ver álbumes, Lugares, Recargar álbumes, Inicio y parada del salvapantallas, Actualizar y Ajustes.
+- **Web simplificada**: solo enlace del álbum, nombre, reordenar, mostrar/marcar, quitar, añadir en lote y copia de seguridad (Exportar copia al portapapeles). Se añade un único campo para pegar la dirección de una emisora propia; el resto de ajustes se hace en la tele. Logo centrado.
+- **Pulsación larga en un álbum**: mismo menú con iconos que el de las fotos.
+- **Ficha de la foto**: los botones ya no se salen; van en dos filas (álbum y volver; lugar y recalcular).
+- Al subir desde la primera foto de un álbum, el foco va al primer botón.
+- **Lugares**: letra más pequeña, menos interlineado y nombre en ámbar. En el mapa, Play acerca y Pausa aleja (además de OK largo).
+
+## 6.0.1
+- **Lugares y Mapa en una sola pantalla**: lista a la izquierda y mapa a la derecha. Al moverte por la lista, el mapa te lleva a ese sitio. Derecha entra en el mapa; Atrás vuelve a la lista.
+- Mapa: las flechas mueven mucho menos por pulsación.
+- Los nombres de lugar se ponen primero a las zonas con más fotos (antes iban por orden de coordenadas, y sitios como Londres podían tardar). Lugares avisa de cuántas fotos aún no tienen nombre.
+- Rótulo del pase: si la ubicación ya la conocía el índice o la ficha de la foto, el rótulo la usa también (antes podía quedarse sin lugar aunque la ficha lo mostrara bien).
+
 ## 6.0
 - **Ajustes**: la pantalla principal queda con lo de uso diario (Vista previa, Ver álbumes, Lugares, Recargar álbumes, Actualizar y Ajustes). Lo demás pasa al panel **Ajustes**, por secciones: salvapantallas, música, vídeo y caché, ubicaciones. Atrás o «Volver» regresa.
 - **Música desde la app**: apagada / radio / carpeta, emisora (lista por secciones), carpeta, volumen y música en el salvapantallas. Las direcciones de emisoras propias se siguen escribiendo en la web.

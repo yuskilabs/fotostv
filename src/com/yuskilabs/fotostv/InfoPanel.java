@@ -53,14 +53,9 @@ class InfoPanel extends FrameLayout {
         wrap.addView(main, new LinearLayout.LayoutParams(-1, 0, 1f));
         if (actions) {
             bar = new LinearLayout(c);
-            bar.setOrientation(LinearLayout.HORIZONTAL);
-            bar.setGravity(Gravity.CENTER_VERTICAL);
-            android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(c);
-            hs.setHorizontalScrollBarEnabled(false);
-            hs.setFillViewport(true);
-            hs.addView(bar);
-            hs.setPadding(dp(44), 0, dp(44), dp(14));
-            wrap.addView(hs, new LinearLayout.LayoutParams(-1, -2));
+            bar.setOrientation(LinearLayout.VERTICAL);
+            bar.setPadding(dp(44), 0, dp(44), dp(14));
+            wrap.addView(bar, new LinearLayout.LayoutParams(-1, -2));
         }
         addView(wrap, new FrameLayout.LayoutParams(-1, -1));
 
@@ -114,49 +109,66 @@ class InfoPanel extends FrameLayout {
     private android.widget.Button barBtn(String label, int icon, View.OnClickListener l) {
         android.widget.Button b = Ui.button(getContext(), label, l);
         b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        b.setSingleLine(true);
+        b.setEllipsize(android.text.TextUtils.TruncateAt.END);
         if (icon != 0) Ui.icon(b, icon);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
-        lp.setMargins(0, 0, dp(10), 0);
-        b.setLayoutParams(lp);
         return b;
     }
 
+    private LinearLayout barRow() {
+        LinearLayout r = new LinearLayout(getContext());
+        r.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.setMargins(0, 0, 0, dp(8));
+        bar.addView(r, lp);
+        return r;
+    }
+
+    private void addBtn(LinearLayout row, android.widget.Button b) {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
+        lp.setMargins(row.getChildCount() == 0 ? 0 : dp(10), 0, 0, 0);
+        row.addView(b, lp);
+    }
+
+    /** Todos los botones caben en la pantalla: arriba el álbum y volver; debajo el lugar (localidad, provincia o país) y recalcular. */
     private void buildBar() {
         bar.removeAllViews();
         final Context c = getContext();
+        LinearLayout r1 = barRow();
         android.widget.Button first = barBtn("Ir al álbum", R.drawable.ic_albums, new View.OnClickListener() {
             public void onClick(View v) { Nav.run(c, Nav.ALBUM, item, null); }
         });
-        bar.addView(first);
-        bar.addView(barBtn("Pase de este álbum", R.drawable.ic_play, new View.OnClickListener() {
+        addBtn(r1, first);
+        addBtn(r1, barBtn("Pase de este álbum", R.drawable.ic_play, new View.OnClickListener() {
             public void onClick(View v) { Nav.run(c, Nav.ALBUM_PASE, item, null); }
+        }));
+        addBtn(r1, barBtn("Volver", R.drawable.ic_close, new View.OnClickListener() {
+            public void onClick(View v) { if (closer != null) closer.run(); }
         }));
         final String pl = placeName;
         if (pl != null && pl.length() > 0) {
-            bar.addView(barBtn("Más de " + Nav.townOf(pl), R.drawable.ic_place, new View.OnClickListener() {
+            LinearLayout r2 = barRow();
+            addBtn(r2, barBtn("Más de " + Nav.townOf(pl), R.drawable.ic_place, new View.OnClickListener() {
                 public void onClick(View v) { Nav.run(c, Nav.PLACE_TOWN, item, pl); }
             }));
             final String rg = Nav.regionOf(pl);
-            if (rg != null) bar.addView(barBtn("Más de " + rg, R.drawable.ic_place, new View.OnClickListener() {
+            if (rg != null) addBtn(r2, barBtn("Más de " + rg, R.drawable.ic_place, new View.OnClickListener() {
                 public void onClick(View v) { Nav.run(c, Nav.PLACE_REGION, item, pl); }
             }));
+            addBtn(r2, barBtn("Recalcular lugar", R.drawable.ic_refresh, new View.OnClickListener() {
+                public void onClick(View v) {
+                    Toast.makeText(c, "Recalculando el lugar…", Toast.LENGTH_SHORT).show();
+                    new Thread(new Runnable() {
+                        public void run() {
+                            List<Item> l = new ArrayList<Item>();
+                            l.add(item);
+                            try { GeoIndex.recheck(c, l); } catch (Throwable ignored) { }
+                            post(new Runnable() { public void run() { if (!dead) load(); } });
+                        }
+                    }).start();
+                }
+            }));
         }
-        if (pl != null && pl.length() > 0) bar.addView(barBtn("Recalcular lugar", R.drawable.ic_refresh, new View.OnClickListener() {
-            public void onClick(View v) {
-                Toast.makeText(c, "Recalculando el lugar…", Toast.LENGTH_SHORT).show();
-                new Thread(new Runnable() {
-                    public void run() {
-                        List<Item> l = new ArrayList<Item>();
-                        l.add(item);
-                        try { GeoIndex.recheck(c, l); } catch (Throwable ignored) { }
-                        post(new Runnable() { public void run() { if (!dead) load(); } });
-                    }
-                }).start();
-            }
-        }));
-        bar.addView(barBtn("Volver", R.drawable.ic_close, new View.OnClickListener() {
-            public void onClick(View v) { if (closer != null) closer.run(); }
-        }));
         final android.widget.Button f = first;
         post(new Runnable() { public void run() { if (!dead) f.requestFocus(); } });
     }

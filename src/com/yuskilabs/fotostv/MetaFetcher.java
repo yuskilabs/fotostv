@@ -263,7 +263,13 @@ class MetaFetcher {
             r = new double[]{Double.parseDouble(p[0]), Double.parseDouble(p[1]), Double.parseDouble(p[2])};
             long checked = p.length > 3 ? Long.parseLong(p[3]) : 0;
             // con GPS guardado, vale siempre; sin GPS solo si se miró hace poco (puede que después se activase la ubicación al compartir)
-            if (!Double.isNaN(r[0]) || System.currentTimeMillis() - checked < RECHECK_MS) return r;
+            if (!Double.isNaN(r[0])) return r;
+            double[] kg = knownGps(c, it);          // el índice o la ficha ya la tienen aunque aquí se guardase «sin ubicación»
+            if (kg != null) { r[0] = kg[0]; r[1] = kg[1]; storeGps(c, it, kg[0], kg[1], r[2]); return r; }
+            if (System.currentTimeMillis() - checked < RECHECK_MS) return r;
+        } else {
+            double[] kg = knownGps(c, it);
+            if (kg != null) { r[0] = kg[0]; r[1] = kg[1]; storeGps(c, it, kg[0], kg[1], 0); return r; }
         }
         try {
             byte[] head = AlbumFetcher.get(it.url + "=d", HEAD_BYTES);
@@ -288,6 +294,18 @@ class MetaFetcher {
             m.edit().putString(k, r[0] + ";" + r[1] + ";" + r[2] + ";" + System.currentTimeMillis()).apply();
         } catch (Throwable ignored) { }
         return r;
+    }
+
+    /** Coordenadas ya conocidas por la ficha (d1_) o por el índice de ubicaciones; null si no hay. */
+    static double[] knownGps(Context c, Item it) {
+        double[] g = cachedGps(c, it);
+        if (g == null) { try { g = GeoIndex.get(c).gpsOf(it.key()); } catch (Throwable ignored) { } }
+        return g;
+    }
+
+    /** Guarda las coordenadas de una foto en la caché rápida (la que usa el rótulo del pase). */
+    static void storeGps(Context c, Item it, double lat, double lon, double date) {
+        Prefs.meta(c).edit().putString("x_" + it.key(), lat + ";" + lon + ";" + date + ";" + System.currentTimeMillis()).apply();
     }
 
     /** Datos de la foto para el panel de información. */
