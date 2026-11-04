@@ -520,53 +520,70 @@ public class AjustesActivity extends Activity {
     }
 
     // ---- escucha de prueba en la lista de emisoras
-    private android.media.MediaPlayer prev;
+    // Todo lo del reproductor va en un hilo aparte: abrir o soltar una emisora de internet puede tardar
+    // segundos y no debe congelar la lista.
+    private final java.util.concurrent.ExecutorService prevExec = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private volatile int prevGen;
     private String prevUrl;
+    private android.media.MediaPlayer prev;   // solo se toca desde prevExec
+
     private final Runnable prevRun = new Runnable() {
         public void run() {
-            if (prevUrl == null) return;
-            try {
-                final android.media.MediaPlayer m = new android.media.MediaPlayer();
-                prev = m;
-                m.setAudioStreamType(android.media.AudioManager.STREAM_MUSIC);
-                m.setDataSource(prevUrl);
-                m.setOnPreparedListener(new android.media.MediaPlayer.OnPreparedListener() {
-                    public void onPrepared(android.media.MediaPlayer p) {
-                        if (p != prev) return;
-                        float v = (float) Math.pow(Prefs.musicVol(AjustesActivity.this) / 100.0, 2);
-                        try { p.setVolume(v, v); p.start(); } catch (Exception ignored) { }
-                    }
-                });
-                m.setOnErrorListener(new android.media.MediaPlayer.OnErrorListener() {
-                    public boolean onError(android.media.MediaPlayer p, int w, int e) { return true; }
-                });
-                m.prepareAsync();
-            } catch (Exception ignored) { }
+            final String url = prevUrl;
+            if (url == null) return;
+            final int g = prevGen;
+            final int vol = Prefs.musicVol(AjustesActivity.this);
+            prevExec.submit(new Runnable() {
+                public void run() {
+                    releasePrev();
+                    if (g != prevGen) return;
+                    try {
+                        final android.media.MediaPlayer m = new android.media.MediaPlayer();
+                        prev = m;
+                        m.setAudioStreamType(android.media.AudioManager.STREAM_MUSIC);
+                        m.setDataSource(url);
+                        m.setOnPreparedListener(new android.media.MediaPlayer.OnPreparedListener() {
+                            public void onPrepared(android.media.MediaPlayer p) {
+                                if (g != prevGen) return;
+                                float v = (float) Math.pow(vol / 100.0, 2);
+                                try { p.setVolume(v, v); p.start(); } catch (Exception ignored) { }
+                            }
+                        });
+                        m.setOnErrorListener(new android.media.MediaPlayer.OnErrorListener() {
+                            public boolean onError(android.media.MediaPlayer p, int w, int e) { return true; }
+                        });
+                        m.prepareAsync();
+                    } catch (Throwable ignored) { }
+                }
+            });
         }
     };
 
+    private void releasePrev() {
+        android.media.MediaPlayer m = prev;
+        prev = null;
+        if (m != null) {
+            try { m.reset(); } catch (Throwable ignored) { }
+            try { m.release(); } catch (Throwable ignored) { }
+        }
+    }
+
     /** Suena la emisora tras una pausa corta (así, al bajar rápido por la lista, no se abren todas). */
     private void preview(String url) {
-        if (url == null || url.equals(prevUrl) && prev != null) return;
+        if (url == null) return;
+        prevGen++;
         h.removeCallbacks(prevRun);
-        killPreview();
         prevUrl = url;
         h.postDelayed(prevRun, 500);
     }
 
-    private void killPreview() {
-        android.media.MediaPlayer m = prev;
-        prev = null;
-        if (m != null) {
-            try { m.stop(); } catch (Exception ignored) { }
-            try { m.release(); } catch (Exception ignored) { }
-        }
-    }
-
     private void stopPreview() {
+        prevGen++;
         h.removeCallbacks(prevRun);
         prevUrl = null;
-        killPreview();
+        try {
+            prevExec.submit(new Runnable() { public void run() { releasePrev(); } });
+        } catch (Throwable ignored) { }
     }
 
     @Override protected void onPause() { stopPreview(); super.onPause(); }
