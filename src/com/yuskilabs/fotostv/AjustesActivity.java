@@ -171,7 +171,7 @@ public class AjustesActivity extends Activity {
             cyc("Miniaturas", "thumbMB", true, new String[]{"100", "150", "250", "500", "1000", "2000"},
                 new String[]{"100 MB", "150 MB", "250 MB", "500 MB", "1 GB", "2 GB"}, R.drawable.ic_photo,
                 new Cur() { public String get() { return String.valueOf(Prefs.thumbMB(AjustesActivity.this)); } }),
-            cyc("Vídeos temporales", "videoMB", true, new String[]{"300", "500", "1000", "1500", "3000"},
+            cyc("Vídeos", "videoMB", true, new String[]{"300", "500", "1000", "1500", "3000"},
                 new String[]{"300 MB", "500 MB", "1 GB", "1,5 GB", "3 GB"}, R.drawable.ic_video,
                 new Cur() { public String get() { return String.valueOf(Prefs.videoMB(AjustesActivity.this)); } })));
         final int nh = Prefs.hidden(this).size();
@@ -207,7 +207,7 @@ public class AjustesActivity extends Activity {
             cyc("Encuadre", "fit", false, new String[]{"auto", "crop", "fit"},
                 new String[]{"automático", "llenar pantalla", "foto completa"}, R.drawable.ic_fullscreen,
                 new Cur() { public String get() { return Prefs.fit(AjustesActivity.this); } }),
-            tog("Seguir donde se quedó", "resume", R.drawable.ic_check, new Bool() { public boolean get() { return Prefs.resume(AjustesActivity.this); } })));
+            tog("Continuar", "resume", R.drawable.ic_check, new Bool() { public boolean get() { return Prefs.resume(AjustesActivity.this); } })));
         
 
         LinearLayout ci = card("Información en pantalla", R.drawable.ic_info);
@@ -300,11 +300,9 @@ public class AjustesActivity extends Activity {
         b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         b.setMinHeight(0);
         b.setMinimumHeight(0);
-        b.setSingleLine(false);
-        b.setMaxLines(2);
+        b.setSingleLine(true);
         b.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
-        b.setPadding(dp(10), dp(2), dp(8), dp(2));
+        b.setPadding(dp(12), dp(4), dp(12), dp(4));
         return b;
     }
 
@@ -313,11 +311,11 @@ public class AjustesActivity extends Activity {
         LinearLayout r = new LinearLayout(this);
         r.setOrientation(LinearLayout.HORIZONTAL);
         r.setClipChildren(false);
-        LinearLayout.LayoutParams la = new LinearLayout.LayoutParams(0, dp(52), 1f);
+        LinearLayout.LayoutParams la = new LinearLayout.LayoutParams(0, dp(46), 1f);
         if (b != null) la.setMargins(0, 0, dp(5), 0);
         r.addView(a, la);
         if (b != null) {
-            LinearLayout.LayoutParams lb = new LinearLayout.LayoutParams(0, dp(52), 1f);
+            LinearLayout.LayoutParams lb = new LinearLayout.LayoutParams(0, dp(46), 1f);
             lb.setMargins(dp(5), 0, 0, 0);
             r.addView(b, lb);
         }
@@ -384,7 +382,7 @@ public class AjustesActivity extends Activity {
     // ---- acciones
     private String vqLabel() {
         String q = Prefs.vq(this);
-        return "Vídeos: " + ("hd".equals(q) ? "calidad alta" : "sd".equals(q) ? "calidad media" : "calidad automática");
+        return "Vídeos: " + ("hd".equals(q) ? "calidad alta" : "sd".equals(q) ? "calidad media" : "calidad auto");
     }
 
     private void clearCache() {

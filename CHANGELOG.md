@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.3.1
+- Ajustes: los botones vuelven a su tamaño anterior (alineados y sin cortes). Textos más cortos: «Vídeos: 1,5 GB», «Vídeos: calidad auto» y «Continuar: no».
+
 ## 6.3
 - Lugares: la lista es más estrecha y el mapa más ancho. Mapa: la cruceta mueve bastante menos por pulsación.
 - Emisoras: nombres sin «Antenne Bayern», «80s80s» ni «90s90s».

@@ -1,6 +1,6 @@
 {
-  "version": "6.3",
+  "version": "6.3.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 819535,
-  "notes": "- Lugares: la lista es más estrecha y el mapa más ancho. Mapa: la cruceta mueve bastante menos por pulsación.\n- Emisoras: nombres sin «Antenne Bayern», «80s80s» ni «90s90s».\n- Web: nuevos botones «Exportar a archivo» e «Importar archivo» (además de copiar/pegar).\n- Pantalla principal: la frase bajo el logo queda centrada. Ajustes: los botones con texto largo usan dos líneas.\n- Ubicaciones: «OK: pausar» solo aparece mientras lee fotos; si solo faltan nombres sale «OK: reintentar nombres» (actúa al momento). Las zonas que tras 3 intentos no tienen nombre pasan a «Sin nombre» y dejan de contar como pendientes."
+  "notes": "- Ajustes: los botones vuelven a su tamaño anterior (alineados y sin cortes). Textos más cortos: «Vídeos: 1,5 GB», «Vídeos: calidad auto» y «Continuar: no»."
 }
