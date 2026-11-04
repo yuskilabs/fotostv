@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.0
+- **Ajustes**: la pantalla principal queda con lo de uso diario (Vista previa, Ver álbumes, Lugares, Recargar álbumes, Actualizar y Ajustes). Lo demás pasa al panel **Ajustes**, por secciones: salvapantallas, música, vídeo y caché, ubicaciones. Atrás o «Volver» regresa.
+- **Música desde la app**: apagada / radio / carpeta, emisora (lista por secciones), carpeta, volumen y música en el salvapantallas. Las direcciones de emisoras propias se siguen escribiendo en la web.
+- **Mapa** (primera versión), dentro de Lugares con «Ver mapa»: mapa de OpenStreetMap con mapa de calor de tus fotos. Flechas para mover, OK para ver las fotos de la mira (o acercar), OK largo o ⏪ para alejar, ⏩ para acercar, Atrás para volver a la lista.
+- **Copia de seguridad (web)**: «Exportar» copia directamente al portapapeles e incluye también las favoritas y las coordenadas ya revisadas, para no repetir el trabajo en otro dispositivo.
+
 ## 5.31.2
 - El índice de ubicaciones trabaja por tandas: tras leer las coordenadas de cada 400 fotos, pone nombre a los sitios nuevos. «Lugares» y «Más de…» se van llenando desde el principio, sin esperar a que acabe de revisar todas las fotos.
 

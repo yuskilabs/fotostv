@@ -231,11 +231,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         Button upd = side("Actualizar", R.drawable.ic_download, new View.OnClickListener() {
             public void onClick(View v) { updateFlow(); }
         });
-        // dos columnas: ver y previsualizar · salvapantallas e inicio · tiempos y vídeo · extras · mantenimiento
-        left.addView(pair(preview, browse));
-        left.addView(pair(idleBtn, check));
-        left.addView(pair(stopBtn, vqBtn));
-        left.addView(pair(proj, dream));
+        // pantalla principal: solo lo de uso diario. El resto, en «Ajustes»
         Button places = side("Lugares", R.drawable.ic_place, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, PlacesActivity.class)); }
         });
@@ -247,10 +243,80 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                 h.postDelayed(geoTick, 1500);
             }
         });
-        left.addView(pair(places, upd));
-        LinearLayout lastRow = pair(cacheBtn, geoBtn);
+        Button rebuildBtn = side("Rehacer nombres", R.drawable.ic_place, new View.OnClickListener() {
+            public void onClick(View v) { rebuildNamesDialog(); }
+        });
+        Button ajBtn = side("Ajustes", R.drawable.ic_tune, new View.OnClickListener() {
+            public void onClick(View v) { showAjustes(true); }
+        });
+        Button backBtn = side("Volver", R.drawable.ic_close, new View.OnClickListener() {
+            public void onClick(View v) { showAjustes(false); }
+        });
+        mainBox = new LinearLayout(this);
+        mainBox.setOrientation(LinearLayout.VERTICAL);
+        mainBox.setClipChildren(false);
+        mainBox.addView(pair(preview, browse));
+        mainBox.addView(pair(places, check));
+        LinearLayout lastRow = pair(upd, ajBtn);
         ((LinearLayout.LayoutParams) lastRow.getLayoutParams()).setMargins(0, 0, 0, 0);
-        left.addView(lastRow);
+        mainBox.addView(lastRow);
+        firstMain = preview;
+        LinearLayout aj = new LinearLayout(this);
+        aj.setOrientation(LinearLayout.VERTICAL);
+        aj.setClipChildren(false);
+        backBtn.setLayoutParams(new LinearLayout.LayoutParams(-1, dp(46)));
+        aj.addView(backBtn);
+        aj.addView(secLabel("Salvapantallas"));
+        aj.addView(pairFixed(idleBtn, stopBtn));
+        aj.addView(pairFixed(dream, proj));
+        aj.addView(secLabel("Música del pase"));
+        musicBtn = side(musicLabel(), R.drawable.ic_tune, new View.OnClickListener() {
+            public void onClick(View v) {
+                String m = Prefs.musicMode(SettingsActivity.this);
+                String nx = "off".equals(m) ? "radio" : "radio".equals(m) ? "folder" : "off";
+                Prefs.sp(SettingsActivity.this).edit().putString("musicMode", nx).commit();
+                refreshMusic();
+            }
+        });
+        radioBtn = side(radioLabel(), R.drawable.ic_play, new View.OnClickListener() {
+            public void onClick(View v) { pickRadio(); }
+        });
+        folderBtn = side(folderLabel(), R.drawable.ic_albums, new View.OnClickListener() {
+            public void onClick(View v) { pickFolder(); }
+        });
+        volBtn = side(volLabel(), R.drawable.ic_tune, new View.OnClickListener() {
+            public void onClick(View v) {
+                int[] o = {10, 20, 30, 40, 60, 80, 100};
+                int cur = Prefs.musicVol(SettingsActivity.this), nx = o[0];
+                for (int i = 0; i < o.length; i++) if (o[i] > cur) { nx = o[i]; break; }
+                Prefs.sp(SettingsActivity.this).edit().putInt("musicVol", nx).commit();
+                refreshMusic();
+            }
+        });
+        dreamMusicBtn = side(dreamMusicLabel(), R.drawable.ic_tv, new View.OnClickListener() {
+            public void onClick(View v) {
+                Prefs.sp(SettingsActivity.this).edit().putBoolean("musicDream", !Prefs.musicDream(SettingsActivity.this)).commit();
+                refreshMusic();
+            }
+        });
+        aj.addView(pairFixed(musicBtn, volBtn));
+        aj.addView(pairFixed(radioBtn, folderBtn));
+        LinearLayout.LayoutParams dmp = new LinearLayout.LayoutParams(-1, dp(46));
+        dmp.setMargins(0, 0, 0, dp(6));
+        dreamMusicBtn.setLayoutParams(dmp);
+        aj.addView(dreamMusicBtn);
+        aj.addView(secLabel("Vídeo y caché"));
+        aj.addView(pairFixed(vqBtn, cacheBtn));
+        aj.addView(secLabel("Ubicaciones"));
+        aj.addView(pairFixed(geoBtn, rebuildBtn));
+        ajBox = new ScrollView(this);
+        ajBox.setFillViewport(false);
+        ajBox.setVerticalScrollBarEnabled(false);
+        ajBox.addView(aj);
+        ajBox.setVisibility(View.GONE);
+        firstAj = backBtn;
+        left.addView(mainBox, new LinearLayout.LayoutParams(-1, -1));
+        left.addView(ajBox, new LinearLayout.LayoutParams(-1, -1));
         LinearLayout.LayoutParams leftP = new LinearLayout.LayoutParams(0, -1, 0.50f);
         leftP.setMargins(0, 0, dp(7), 0);
         row2.addView(left, leftP);
@@ -274,20 +340,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             }
         });
         geoView.setOnLongClickListener(new View.OnLongClickListener() {
-            public boolean onLongClick(View v) {
-                new android.app.AlertDialog.Builder(SettingsActivity.this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-                    .setTitle("Rehacer los nombres de lugar")
-                    .setMessage("Se olvidan todos los nombres y se vuelven a calcular con las reglas actuales, en segundo plano. Puede tardar un buen rato (más de un segundo por cada sitio distinto).")
-                    .setPositiveButton("Rehacer", new android.content.DialogInterface.OnClickListener() {
-                        public void onClick(android.content.DialogInterface d, int w) {
-                            new Thread(new Runnable() { public void run() { GeoIndex.rebuildNames(SettingsActivity.this); } }).start();
-                            h.removeCallbacks(geoTick);
-                            h.postDelayed(geoTick, 1500);
-                        }
-                    })
-                    .setNegativeButton("Cancelar", null).show();
-                return true;
-            }
+            public boolean onLongClick(View v) { rebuildNamesDialog(); return true; }
         });
         c2.addView(geoView);
         status = text("", 15, Color.WHITE);
@@ -352,6 +405,139 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     /** Dos botones lado a lado, ocupando la misma altura que el resto de filas. */
+    private Button musicBtn, radioBtn, folderBtn, volBtn, dreamMusicBtn;
+
+    private String musicLabel() {
+        String m = Prefs.musicMode(this);
+        return "Música: " + ("radio".equals(m) ? "radio" : "folder".equals(m) ? "carpeta" : "apagada");
+    }
+    private String radioLabel() {
+        String u = Prefs.musicRadio(this);
+        if (u.length() == 0) return "Emisora: elegir";
+        for (String[] pr : Music.PRESETS) if (pr[1] != null && pr[1].equals(u)) {
+            String n = pr[0];
+            int i = n.indexOf(" (");
+            return "Emisora: " + (i > 0 ? n.substring(0, i) : n);
+        }
+        return "Emisora: la tuya (web)";
+    }
+    private String folderLabel() {
+        String f = Prefs.musicFolder(this);
+        if (f.length() == 0) return "Carpeta: elegir";
+        return "Carpeta: " + new java.io.File(f).getName();
+    }
+    private String volLabel() { return "Volumen: " + Prefs.musicVol(this) + " %"; }
+    private String dreamMusicLabel() { return "Música en el salvapantallas: " + (Prefs.musicDream(this) ? "sí" : "no"); }
+
+    private void refreshMusic() {
+        musicBtn.setText(musicLabel());
+        radioBtn.setText(radioLabel());
+        folderBtn.setText(folderLabel());
+        volBtn.setText(volLabel());
+        dreamMusicBtn.setText(dreamMusicLabel());
+    }
+
+    /** Lista de emisoras por secciones; las de otra dirección se añaden desde la web. */
+    private void pickRadio() {
+        final java.util.List<String[]> rowsL = new java.util.ArrayList<String[]>();
+        for (String[] pr : Music.PRESETS) rowsL.add(pr);
+        android.widget.ListAdapter ad = new android.widget.ArrayAdapter<String[]>(this, android.R.layout.simple_list_item_1, rowsL) {
+            @Override public boolean areAllItemsEnabled() { return false; }
+            @Override public boolean isEnabled(int i) { return getItem(i)[1] != null; }
+            @Override public View getView(int i, View cv, android.view.ViewGroup par) {
+                TextView t = (TextView) super.getView(i, cv, par);
+                String[] it = getItem(i);
+                boolean head = it[1] == null;
+                t.setText(head ? it[0] : it[0]);
+                t.setTypeface(head ? Ui.BLACK : Ui.REG);
+                t.setTextColor(head ? 0xFF7FB2FF : (it[1].equals(Prefs.musicRadio(SettingsActivity.this)) ? 0xFF7CE08A : Color.WHITE));
+                t.setTextSize(TypedValue.COMPLEX_UNIT_SP, head ? 13 : 16);
+                return t;
+            }
+        };
+        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Emisora de radio")
+            .setAdapter(ad, new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    String u = rowsL.get(w)[1];
+                    if (u == null) return;
+                    Prefs.sp(SettingsActivity.this).edit().putString("musicRadio", u).putString("musicMode", "radio").commit();
+                    refreshMusic();
+                }
+            })
+            .setNegativeButton("Cancelar", null).show();
+    }
+
+    private void pickFolder() {
+        final java.util.List<String> fs = Music.suggestFolders();
+        if (fs.isEmpty()) {
+            new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+                .setTitle("Carpeta de música")
+                .setMessage("No encuentro carpetas de música en este dispositivo. Puedes escribir la ruta desde la web de configuración.")
+                .setPositiveButton("Vale", null).show();
+            return;
+        }
+        if (android.os.Build.VERSION.SDK_INT >= 23
+                && checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            try { requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 8); } catch (Throwable ignored) { }
+        }
+        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Carpeta de música")
+            .setItems(fs.toArray(new String[0]), new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    Prefs.sp(SettingsActivity.this).edit().putString("musicFolder", fs.get(w)).putString("musicMode", "folder").commit();
+                    refreshMusic();
+                }
+            })
+            .setNegativeButton("Cancelar", null).show();
+    }
+
+    private LinearLayout mainBox;
+    private ScrollView ajBox;
+    private Button firstMain, firstAj;
+
+    private void showAjustes(boolean on) {
+        ajBox.setVisibility(on ? View.VISIBLE : View.GONE);
+        mainBox.setVisibility(on ? View.GONE : View.VISIBLE);
+        (on ? firstAj : firstMain).requestFocus();
+        if (on) ajBox.scrollTo(0, 0);
+    }
+
+    @Override public void onBackPressed() {
+        if (ajBox != null && ajBox.getVisibility() == View.VISIBLE) showAjustes(false);
+        else super.onBackPressed();
+    }
+
+    private TextView secLabel(String t) {
+        TextView v = text(t, 13, 0xFF9FB3C8);
+        v.setTypeface(Ui.BLACK);
+        v.setPadding(dp(4), dp(12), 0, dp(4));
+        return v;
+    }
+
+    /** Como pair(), pero con alto fijo (para listas con desplazamiento). */
+    private LinearLayout pairFixed(Button a, Button b) {
+        LinearLayout r = pair(a, b);
+        LinearLayout.LayoutParams lr = new LinearLayout.LayoutParams(-1, dp(46));
+        lr.setMargins(0, 0, 0, dp(6));
+        r.setLayoutParams(lr);
+        return r;
+    }
+
+    private void rebuildNamesDialog() {
+        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Rehacer los nombres de lugar")
+            .setMessage("Se olvidan todos los nombres y se vuelven a calcular con las reglas actuales, en segundo plano. Puede tardar un buen rato (más de un segundo por cada sitio distinto).")
+            .setPositiveButton("Rehacer", new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    new Thread(new Runnable() { public void run() { GeoIndex.rebuildNames(SettingsActivity.this); } }).start();
+                    h.removeCallbacks(geoTick);
+                    h.postDelayed(geoTick, 1500);
+                }
+            })
+            .setNegativeButton("Cancelar", null).show();
+    }
+
     private LinearLayout pair(Button a, Button b) {
         LinearLayout r = new LinearLayout(this);
         r.setOrientation(LinearLayout.HORIZONTAL);

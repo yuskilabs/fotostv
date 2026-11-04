@@ -26,6 +26,35 @@ public class PlacesActivity extends Activity {
     private final List<String[]> rows = new ArrayList<String[]>();   // {texto, clave}
     private HashMap<String, Integer> counts = new HashMap<String, Integer>();
     private String region;   // null = nivel de regiones
+    private MapView map;
+    private TextView mapHint;
+    private android.widget.Button mapBtn;
+    private boolean mapLoaded;
+
+    private void showMap(boolean on) {
+        map.setVisibility(on ? View.VISIBLE : View.GONE);
+        mapHint.setVisibility(on ? View.VISIBLE : View.GONE);
+        list.setVisibility(on ? View.GONE : View.VISIBLE);
+        mapBtn.setText(on ? "Ver lista" : "Ver mapa");
+        if (on) {
+            map.requestFocus();
+            if (!mapLoaded) {
+                mapLoaded = true;
+                new Thread(new Runnable() {
+                    public void run() {
+                        final java.util.List<double[]> pts = GeoIndex.get(PlacesActivity.this).heat();
+                        runOnUiThread(new Runnable() {
+                            public void run() {
+                                map.setPoints(pts);
+                                if (pts.isEmpty()) android.widget.Toast.makeText(PlacesActivity.this,
+                                        "Aún no hay fotos con ubicación: la app las va revisando en segundo plano.", android.widget.Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                }).start();
+            }
+        } else list.requestFocus();
+    }
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -34,22 +63,46 @@ public class PlacesActivity extends Activity {
         root.setBackgroundColor(0xFF0B1622);
         int p = dp(28);
         root.setPadding(p, dp(20), p, dp(16));
+        LinearLayout head = new LinearLayout(this);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout tb = new LinearLayout(this);
+        tb.setOrientation(LinearLayout.VERTICAL);
         title = new TextView(this);
         title.setTypeface(Ui.BLACK);
         title.setTextColor(Color.WHITE);
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
-        root.addView(title);
+        tb.addView(title);
         sub = new TextView(this);
         sub.setTypeface(Ui.REG);
         sub.setTextColor(0xFF9FB3C8);
         sub.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         sub.setPadding(0, dp(2), 0, dp(10));
-        root.addView(sub);
+        tb.addView(sub);
+        head.addView(tb, new LinearLayout.LayoutParams(0, -2, 1f));
+        mapBtn = Ui.icon(Ui.button(this, "Ver mapa", new View.OnClickListener() {
+            public void onClick(View v) { showMap(map.getVisibility() != View.VISIBLE); }
+        }), R.drawable.ic_place);
+        head.addView(mapBtn, new LinearLayout.LayoutParams(-2, -2));
+        root.addView(head, new LinearLayout.LayoutParams(-1, -2));
+        map = new MapView(this);
+        map.setVisibility(View.GONE);
+        map.setPick(new MapView.Pick() {
+            public void box(double a, double b, double c, double d) { Nav.openBox(PlacesActivity.this, a, b, c, d); }
+        });
+        mapHint = new TextView(this);
+        mapHint.setTypeface(Ui.REG);
+        mapHint.setTextColor(0xFF9FB3C8);
+        mapHint.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        mapHint.setPadding(0, dp(6), 0, 0);
+        mapHint.setText("Flechas: mover  ·  OK: ver las fotos de la mira (o acercar)  ·  OK largo o ⏪: alejar  ·  ⏩: acercar  ·  Atrás: volver a la lista");
+        mapHint.setVisibility(View.GONE);
         list = new ListView(this);
         list.setDivider(null);
         list.setSelector(new android.graphics.drawable.ColorDrawable(0x553D8BFD));
         list.setItemsCanFocus(false);
         root.addView(list, new LinearLayout.LayoutParams(-1, 0, 1f));
+        root.addView(map, new LinearLayout.LayoutParams(-1, 0, 1f));
+        root.addView(mapHint, new LinearLayout.LayoutParams(-1, -2));
         setContentView(root);
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> a, View v, int pos, long id) { pick(rows.get(pos)[1]); }
@@ -126,6 +179,7 @@ public class PlacesActivity extends Activity {
     };
 
     @Override public void onBackPressed() {
+        if (map != null && map.getVisibility() == View.VISIBLE) { showMap(false); return; }
         if (region != null) show(null); else super.onBackPressed();
     }
 }

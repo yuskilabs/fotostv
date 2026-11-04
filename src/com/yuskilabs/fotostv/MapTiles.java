@@ -71,7 +71,7 @@ class MapTiles {
         }
     }
 
-    private static Bitmap tile(int z, int x, int y) {
+    static Bitmap tile(int z, int x, int y) {
         HttpURLConnection c = null;
         try {
             c = (HttpURLConnection) new URL("https://tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png").openConnection();

@@ -286,6 +286,10 @@ class WebConfigServer extends Thread {
             org.json.JSONArray hid = new org.json.JSONArray();
             for (String k : Prefs.hidden(ctx)) hid.put(k);
             o.put("hidden", hid);
+            org.json.JSONArray fv = new org.json.JSONArray();
+            for (String k : Prefs.favs(ctx)) fv.put(k);
+            o.put("favs", fv);
+            o.put("geo", GeoIndex.get(ctx).exportGeo());     // coordenadas ya leídas: «clave,lat,lon» por foto
             return o.toString();
         } catch (Exception e) {
             return "";
@@ -321,8 +325,16 @@ class WebConfigServer extends Thread {
                 for (int i = 0; i < hid.length(); i++) hs.add(hid.getString(i));
                 Prefs.sp(ctx).edit().putStringSet("hidden", hs).apply();
             }
+            org.json.JSONArray fv = o.optJSONArray("favs");
+            if (fv != null) {
+                java.util.Set<String> fs = new java.util.HashSet<String>();
+                for (int i = 0; i < fv.length(); i++) fs.add(fv.getString(i));
+                Prefs.sp(ctx).edit().putStringSet("favs", fs).apply();
+            }
+            int geo = GeoIndex.get(ctx).importGeo(o.optString("geo", ""));
+            if (geo > 0) GeoService.start(ctx);
             if (listener != null) listener.onSaved();
-            return "OK\n\u2714 Importado: " + list.size() + " álbumes. La tele los está comprobando.";
+            return "OK\n\u2714 Importado: " + list.size() + " álbumes" + (geo > 0 ? " y la ubicación de " + geo + " fotos" : "") + ". La tele los está comprobando.";
         } catch (Exception e) {
             return "ER\nNo se pudo leer ese texto: " + esc(String.valueOf(e.getMessage()));
         }
@@ -521,7 +533,7 @@ class WebConfigServer extends Thread {
         sb.append("<h2>Fotos ocultas</h2>");
         if (nh == 0) sb.append("<p class='muted'>No has ocultado ninguna foto. Durante el salvapantallas, pulsa \u25BC en el mando para ocultar la que se está viendo.</p>");
         else sb.append(chk("unhide", "Volver a mostrar las " + nh + " fotos ocultas", false));
-        sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes y ajustes a otro dispositivo: pulsa «Exportar», copia el texto, y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya).</p>")
+        sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes, ajustes, favoritas y ubicaciones ya revisadas a otro dispositivo: pulsa «Exportar» (se copia solo al portapapeles), y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya).</p>")
           .append("<textarea id='bk' rows='5' placeholder='Aquí aparece la copia, o pega la que quieras importar'></textarea>")
           .append("<div class='row2'><button type='button' class='sec' onclick='expBk()'>📤 Exportar</button>")
           .append("<button type='button' class='sec' onclick='impBk()'>📥 Importar</button></div>")
@@ -593,8 +605,10 @@ class WebConfigServer extends Thread {
         + "x.onerror=function(){m.textContent='No hay conexión con la Shield.';b.disabled=false;};"
         + "x.send('url='+encodeURIComponent(u.value.trim())+'&name='+encodeURIComponent(n.value.trim()));}"
         + "function expBk(){var x=new XMLHttpRequest();x.open('GET','/export');"
-        + "x.onload=function(){var a=document.getElementById('bk');a.value=x.responseText;a.focus();a.select();"
-        + "document.getElementById('bkm').textContent='Copia este texto y guárdalo, o pégalo en el otro dispositivo.';};x.send();}"
+        + "x.onload=function(){var a=document.getElementById('bk'),m=document.getElementById('bkm');a.value=x.responseText;a.focus();a.select();"
+        + "var done=function(ok){m.textContent=ok?'\u2714 Copiado al portapapeles ('+Math.round(x.responseText.length/1024)+' KB). Pégalo en el otro dispositivo con «Importar».':'No he podido copiar solo: el texto está seleccionado, copia con Ctrl+C.';};"
+        + "if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(x.responseText).then(function(){done(true);},function(){done(false);});}"
+        + "else{var ok=false;try{ok=document.execCommand('copy');}catch(e){}done(ok);}};x.send();}"
         + "function impBk(){var a=document.getElementById('bk'),m=document.getElementById('bkm');"
         + "if(!a.value.trim()){m.textContent='Pega primero el texto de la copia.';return;}"
         + "if(!confirm('Se sustituirán los álbumes y ajustes actuales. ¿Importar?'))return;"

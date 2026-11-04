@@ -142,6 +142,48 @@ class GeoIndex extends SQLiteOpenHelper {
         GeoService.start(c);
     }
 
+    /** Coordenadas ya leídas en formato compacto: «clave,lat,lon;clave,lat,lon;…» (sin nombres de lugar). */
+    String exportGeo() {
+        StringBuilder sb = new StringBuilder();
+        Cursor q = getReadableDatabase().rawQuery("SELECT k, lat, lon FROM photos WHERE st=1", null);
+        try {
+            while (q.moveToNext()) {
+                if (sb.length() > 0) sb.append(';');
+                sb.append(q.getString(0)).append(',')
+                  .append(String.format(Locale.US, "%.5f", q.getDouble(1))).append(',')
+                  .append(String.format(Locale.US, "%.5f", q.getDouble(2)));
+            }
+        } finally { q.close(); }
+        return sb.toString();
+    }
+
+    /** Carga coordenadas exportadas; devuelve cuántas fotos nuevas se añadieron. */
+    int importGeo(String data) {
+        if (data == null || data.length() == 0) return 0;
+        SQLiteDatabase db = getWritableDatabase();
+        int n = 0;
+        db.beginTransaction();
+        try {
+            for (String e : data.split(";")) {
+                String[] p = e.split(",");
+                if (p.length != 3) continue;
+                try {
+                    double la = Double.parseDouble(p[1]), lo = Double.parseDouble(p[2]);
+                    ContentValues v = new ContentValues();
+                    v.put("k", p[0]);
+                    v.put("st", GPS);
+                    v.put("ts", System.currentTimeMillis());
+                    v.put("lat", la);
+                    v.put("lon", lo);
+                    v.put("cell", cell(la, lo));
+                    if (db.insertWithOnConflict("photos", null, v, SQLiteDatabase.CONFLICT_IGNORE) != -1) n++;
+                } catch (NumberFormatException ignored) { }
+            }
+            db.setTransactionSuccessful();
+        } finally { db.endTransaction(); }
+        return n;
+    }
+
     /** Lugares con fotos: nombre → nº de fotos. */
     HashMap<String, Integer> placeCounts() {
         HashMap<String, Integer> m = new HashMap<String, Integer>();
@@ -161,9 +203,29 @@ class GeoIndex extends SQLiteOpenHelper {
         return "Ubicaciones: " + done + " de " + tot + " fotos revisadas" + (noName > 0 ? " · " + noName + " pendientes de nombre" : "");
     }
 
+    /** Puntos del mapa de calor: {lat, lon, nº de fotos} por casilla de 0,01°. */
+    List<double[]> heat() {
+        List<double[]> l = new ArrayList<double[]>();
+        Cursor q = getReadableDatabase().rawQuery("SELECT AVG(lat), AVG(lon), COUNT(*) FROM photos WHERE st=1 GROUP BY cell", null);
+        try { while (q.moveToNext()) l.add(new double[]{q.getDouble(0), q.getDouble(1), q.getInt(2)}); } finally { q.close(); }
+        return l;
+    }
+
+    /** Claves de las fotos dentro de un rectángulo de coordenadas. */
+    HashSet<String> keysIn(double minLat, double maxLat, double minLon, double maxLon) {
+        HashSet<String> s = new HashSet<String>();
+        Cursor q = getReadableDatabase().rawQuery("SELECT k FROM photos WHERE st=1 AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?",
+                new String[]{"" + minLat, "" + maxLat, "" + minLon, "" + maxLon});
+        try { while (q.moveToNext()) s.add(q.getString(0)); } finally { q.close(); }
+        return s;
+    }
+
     static List<Item> items(Context c, String want, boolean region) {
+        return itemsOf(c, get(c).keysAt(want, region));
+    }
+
+    static List<Item> itemsOf(Context c, HashSet<String> ks) {
         List<Item> res = new ArrayList<Item>();
-        HashSet<String> ks = get(c).keysAt(want, region);
         if (ks.isEmpty()) return res;
         for (Prefs.Album al : Prefs.albums(c)) {
             AlbumFetcher.AlbumData d = Prefs.albumCache(c, al.url);

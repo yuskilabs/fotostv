@@ -76,6 +76,16 @@ class Nav {
         }).start();
     }
 
+    /** Abre un pase con las fotos de un rectángulo del mapa. */
+    static void openBox(final Context ctx, final double minLat, final double maxLat, final double minLon, final double maxLon) {
+        new Thread(new Runnable() {
+            public void run() {
+                final List<Item> list = GeoIndex.itemsOf(ctx, GeoIndex.get(ctx).keysIn(minLat, maxLat, minLon, maxLon));
+                ui.post(new Runnable() { public void run() { go(ctx, PLACE_TOWN, null, null, list); } });
+            }
+        }).start();
+    }
+
     private static void go(Context ctx, int action, Item it, Prefs.Album al, List<Item> list) {
         if (action == ALBUM) {
             if (al == null) { Toast.makeText(ctx, "No encuentro el álbum de esta foto.", Toast.LENGTH_LONG).show(); return; }
