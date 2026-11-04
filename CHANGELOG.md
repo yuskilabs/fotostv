@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.4.1
+- Ajustes: menos margen en tarjetas y botones para que quepa más texto. «Encuadre» muestra auto / llenar / completo. Música: «En salvapantallas» pasa a botón pequeño junto a «Carpeta» y la emisora ocupa una fila entera.
+
 ## 6.4
 - Ajustes, lista de emisoras: al abrirla suena la emisora elegida y, al ir bajando, suena cada emisora sobre la que te posas (con el volumen de Música). Al cerrar la lista se corta.
 

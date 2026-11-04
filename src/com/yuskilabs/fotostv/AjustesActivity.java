@@ -107,8 +107,8 @@ public class AjustesActivity extends Activity {
             }
         });
         cm.addView(row(musicBtn, volBtn));
-        cm.addView(row(radioBtn, folderBtn));
-        cm.addView(row(dreamMusicBtn, null));
+        cm.addView(row(folderBtn, dreamMusicBtn));
+        cm.addView(row(radioBtn, null));
         
 
         // --- ubicaciones
@@ -205,7 +205,7 @@ public class AjustesActivity extends Activity {
                 new Cur() { public String get() { return String.valueOf(Prefs.interval(AjustesActivity.this)); } })));
         cp.addView(row(
             cyc("Encuadre", "fit", false, new String[]{"auto", "crop", "fit"},
-                new String[]{"automático", "llenar pantalla", "foto completa"}, R.drawable.ic_fullscreen,
+                new String[]{"auto", "llenar", "completo"}, R.drawable.ic_fullscreen,
                 new Cur() { public String get() { return Prefs.fit(AjustesActivity.this); } }),
             tog("Continuar", "resume", R.drawable.ic_check, new Bool() { public boolean get() { return Prefs.resume(AjustesActivity.this); } })));
         
@@ -268,7 +268,7 @@ public class AjustesActivity extends Activity {
     private LinearLayout card(String title, int icon) {
         LinearLayout c = new LinearLayout(this);
         c.setOrientation(LinearLayout.VERTICAL);
-        c.setPadding(dp(20), dp(14), dp(20), dp(10));
+        c.setPadding(dp(10), dp(12), dp(10), dp(8));
         GradientDrawable bg = new GradientDrawable();
         bg.setColor(0x99162A40);
         bg.setCornerRadius(dp(10));
@@ -302,7 +302,7 @@ public class AjustesActivity extends Activity {
         b.setMinimumHeight(0);
         b.setSingleLine(true);
         b.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        b.setPadding(dp(12), dp(4), dp(12), dp(4));
+        b.setPadding(dp(8), dp(4), dp(6), dp(4));
         return b;
     }
 
@@ -458,7 +458,7 @@ public class AjustesActivity extends Activity {
         return "Carpeta: " + new java.io.File(f).getName();
     }
     private String volLabel() { return "Volumen: " + Prefs.musicVol(this) + " %"; }
-    private String dreamMusicLabel() { return "Música en el salvapantallas: " + (Prefs.musicDream(this) ? "sí" : "no"); }
+    private String dreamMusicLabel() { return "En salvapantallas: " + (Prefs.musicDream(this) ? "sí" : "no"); }
 
     private void refreshMusic() {
         musicBtn.setText(musicLabel());

@@ -1,6 +1,6 @@
 {
-  "version": "6.4",
+  "version": "6.4.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 819535,
-  "notes": "- Ajustes, lista de emisoras: al abrirla suena la emisora elegida y, al ir bajando, suena cada emisora sobre la que te posas (con el volumen de Música). Al cerrar la lista se corta."
+  "notes": "- Ajustes: menos margen en tarjetas y botones para que quepa más texto. «Encuadre» muestra auto / llenar / completo. Música: «En salvapantallas» pasa a botón pequeño junto a «Carpeta» y la emisora ocupa una fila entera."
 }
