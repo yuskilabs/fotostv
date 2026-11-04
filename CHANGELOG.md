@@ -3,6 +3,13 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.3
+- Lugares: la lista es más estrecha y el mapa más ancho. Mapa: la cruceta mueve bastante menos por pulsación.
+- Emisoras: nombres sin «Antenne Bayern», «80s80s» ni «90s90s».
+- Web: nuevos botones «Exportar a archivo» e «Importar archivo» (además de copiar/pegar).
+- Pantalla principal: la frase bajo el logo queda centrada. Ajustes: los botones con texto largo usan dos líneas.
+- Ubicaciones: «OK: pausar» solo aparece mientras lee fotos; si solo faltan nombres sale «OK: reintentar nombres» (actúa al momento). Las zonas que tras 3 intentos no tienen nombre pasan a «Sin nombre» y dejan de contar como pendientes.
+
 ## 6.2
 - **Mosaico de lugar**: al pulsar OK en una zona con fotos del mapa, o en un lugar de la lista, se abre un mosaico como el de un álbum (con Pase, orden, formato, etc.). El nombre es el del lugar («Zona del mapa» si viene del mapa). Atrás vuelve a Lugares y el foco queda en el mapa o en la lista, según de dónde vengas.
 - Mapa: el rótulo «OK: acercar» / «N fotos aquí» pasa arriba y ya no tapa la mira.

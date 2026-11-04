@@ -41,7 +41,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                     String x;
                     try { x = GeoIndex.status(SettingsActivity.this); } catch (Throwable e) { x = ""; }
                     st = x;
-                    h.post(new Runnable() { public void run() { if (geoView != null) geoView.setText(st + (GeoIndex.paused(SettingsActivity.this) ? "  [OK: reanudar]" : "  [OK: pausar]")); } });
+                    h.post(new Runnable() { public void run() { if (geoView != null) { String ac = GeoIndex.action(SettingsActivity.this); geoView.setText(st + (ac.length() > 0 ? "  [OK: " + ac + "]" : "")); } } });
                 }
             }).start();
             h.postDelayed(this, 4000);
@@ -92,7 +92,8 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         top.addView(logo, new LinearLayout.LayoutParams(-2, 0, 1f));
         TextView tag = text("Tus álbumes de Google Fotos, en la tele y como salvapantallas", 13, 0xFF9FB3C8);
         tag.setPadding(0, dp(6), 0, 0);
-        top.addView(tag);
+        tag.setGravity(Gravity.CENTER_HORIZONTAL);
+        top.addView(tag, new LinearLayout.LayoutParams(-1, -2));
         LinearLayout vrow = new LinearLayout(this);
         vrow.setOrientation(LinearLayout.HORIZONTAL);
         vrow.setBaselineAligned(true);
@@ -261,7 +262,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         geoView.setBackground(svBgFocus());
         geoView.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                GeoIndex.setPaused(SettingsActivity.this, !GeoIndex.paused(SettingsActivity.this));
+                GeoIndex.toggle(SettingsActivity.this);
                 h.removeCallbacks(geoTick);
                 h.post(geoTick);
             }

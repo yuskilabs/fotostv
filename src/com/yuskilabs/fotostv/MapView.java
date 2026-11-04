@@ -193,7 +193,7 @@ class MapView extends View {
 
     // ---- mando
     @Override public boolean onKeyDown(int code, KeyEvent e) {
-        int step = Math.max(36, Math.min(getWidth(), getHeight()) / 16);
+        int step = Math.max(10, Math.min(getWidth(), getHeight()) / 40);
         switch (code) {
             case KeyEvent.KEYCODE_DPAD_LEFT: pan(-step, 0); return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT: pan(step, 0); return true;

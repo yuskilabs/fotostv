@@ -32,7 +32,7 @@ public class AjustesActivity extends Activity {
                     try { x = GeoIndex.status(AjustesActivity.this); } catch (Throwable e) { x = ""; }
                     final String st = x;
                     h.post(new Runnable() {
-                        public void run() { if (geoView != null) geoView.setText(st + (GeoIndex.paused(AjustesActivity.this) ? "\nOK: reanudar" : "\nOK: pausar")); }
+                        public void run() { if (geoView != null) { String ac = GeoIndex.action(AjustesActivity.this); geoView.setText(st + (ac.length() > 0 ? "\nOK: " + ac : "")); } }
                     });
                 }
             }).start();
@@ -120,7 +120,7 @@ public class AjustesActivity extends Activity {
         geoView.setBackground(focusBg());
         geoView.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                GeoIndex.setPaused(AjustesActivity.this, !GeoIndex.paused(AjustesActivity.this));
+                GeoIndex.toggle(AjustesActivity.this);
                 h.removeCallbacks(geoTick);
                 h.post(geoTick);
             }
@@ -300,9 +300,11 @@ public class AjustesActivity extends Activity {
         b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         b.setMinHeight(0);
         b.setMinimumHeight(0);
-        b.setSingleLine(true);
+        b.setSingleLine(false);
+        b.setMaxLines(2);
         b.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        b.setPadding(dp(12), dp(4), dp(12), dp(4));
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        b.setPadding(dp(10), dp(2), dp(8), dp(2));
         return b;
     }
 
@@ -311,11 +313,11 @@ public class AjustesActivity extends Activity {
         LinearLayout r = new LinearLayout(this);
         r.setOrientation(LinearLayout.HORIZONTAL);
         r.setClipChildren(false);
-        LinearLayout.LayoutParams la = new LinearLayout.LayoutParams(0, dp(46), 1f);
+        LinearLayout.LayoutParams la = new LinearLayout.LayoutParams(0, dp(52), 1f);
         if (b != null) la.setMargins(0, 0, dp(5), 0);
         r.addView(a, la);
         if (b != null) {
-            LinearLayout.LayoutParams lb = new LinearLayout.LayoutParams(0, dp(46), 1f);
+            LinearLayout.LayoutParams lb = new LinearLayout.LayoutParams(0, dp(52), 1f);
             lb.setMargins(dp(5), 0, 0, 0);
             r.addView(b, lb);
         }
@@ -446,7 +448,7 @@ public class AjustesActivity extends Activity {
         String u = Prefs.musicRadio(this);
         if (u.length() == 0) return "Emisora: elegir";
         for (String[] pr : Music.PRESETS) if (pr[1] != null && pr[1].equals(u)) {
-            String n = pr[0];
+            String n = Music.shortName(pr[0]);
             int i = n.indexOf(" (");
             return "Emisora: " + (i > 0 ? n.substring(0, i) : n);
         }
@@ -479,7 +481,7 @@ public class AjustesActivity extends Activity {
                 TextView t = (TextView) super.getView(i, cv, par);
                 String[] it = getItem(i);
                 boolean head = it[1] == null;
-                t.setText(head ? it[0] : it[0]);
+                t.setText(head ? it[0] : Music.shortName(it[0]));
                 t.setTypeface(head ? Ui.BLACK : Ui.REG);
                 t.setTextColor(head ? 0xFF7FB2FF : (it[1].equals(Prefs.musicRadio(AjustesActivity.this)) ? 0xFF7CE08A : Color.WHITE));
                 t.setTextSize(TypedValue.COMPLEX_UNIT_SP, head ? 13 : 16);

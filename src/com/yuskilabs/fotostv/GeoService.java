@@ -8,6 +8,7 @@ import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.PowerManager;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,7 +19,10 @@ public class GeoService extends Service {
     private PowerManager.WakeLock wl;
     private WifiManager.WifiLock wf;
 
+    static volatile boolean nudge;   // «reintentar nombres»: no esperar los 2 minutos entre pasadas
+
     static void start(Context c) {
+        nudge = true;
         if (alive || GeoIndex.paused(c)) return;
         try { c.getApplicationContext().startService(new Intent(c.getApplicationContext(), GeoService.class)); }
         catch (Throwable ignored) { }
@@ -66,7 +70,9 @@ public class GeoService extends Service {
         final Context c = this;
         final GeoIndex g = GeoIndex.get(c);
         int idle = 0;
+        HashMap<String, Integer> fails = new HashMap<String, Integer>();
         while (!stop()) {
+            nudge = false;
             List<Item> all = new ArrayList<Item>();
             GeoIndex.allItems(c, all);
             GeoIndex.total = all.size();
@@ -84,8 +90,19 @@ public class GeoService extends Service {
             }
             if (todo.isEmpty()) nameCells(c, g, skip);
             if (stop()) break;
+            // zonas que tras varios intentos siguen sin nombre (mar, descampado…): se agrupan como «Sin nombre»
+            // para que no queden pendientes eternamente. Solo si son pocas (si son muchas, lo normal es que no haya red).
+            for (String cell : skip) fails.put(cell, fails.containsKey(cell) ? fails.get(cell) + 1 : 1);
+            if (skip.size() <= 100) {
+                for (String cell : new ArrayList<String>(skip)) {
+                    if (fails.get(cell) >= 3) { g.setPlace(cell, "Sin nombre"); skip.remove(cell); fails.remove(cell); }
+                }
+            }
             // todo al día: se vuelve a mirar cada hora por si hay fotos nuevas; tras unas pasadas sin novedades, se acaba
-            if (!todo.isEmpty() || !skip.isEmpty()) { Thread.sleep(skip.isEmpty() ? 1000 : 120000); continue; }
+            if (!todo.isEmpty() || !skip.isEmpty()) {
+                for (int w = skip.isEmpty() ? 1 : 120; w > 0 && !nudge && !stop(); w--) Thread.sleep(1000);
+                continue;
+            }
             if (++idle >= 2) break;
             Thread.sleep(1000);
         }

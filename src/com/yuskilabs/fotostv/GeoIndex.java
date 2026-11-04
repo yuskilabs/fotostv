@@ -200,7 +200,33 @@ class GeoIndex extends SQLiteOpenHelper {
         int noName = g.count(" WHERE st=1 AND place IS NULL");
         if (paused(c)) return "Ubicaciones en pausa: " + done + " de " + tot + " fotos revisadas";
         if (done >= tot && noName == 0) return "Ubicaciones al día: " + named + " fotos con lugar";
+        if (done >= tot) return "Ubicaciones: " + named + " fotos con lugar · " + noName + " sin nombre todavía";
         return "Ubicaciones: " + done + " de " + tot + " fotos revisadas" + (noName > 0 ? " · " + noName + " pendientes de nombre" : "");
+    }
+
+    /** Qué hace OK sobre el estado: «reanudar», «pausar» (solo si está trabajando de verdad), «reintentar nombres» o nada. */
+    static String action(Context c) {
+        if (paused(c)) return "reanudar";
+        int done = get(c).count("");
+        if (done < Math.max(total, done)) return "pausar";
+        return get(c).count(" WHERE st=1 AND place IS NULL") > 0 ? "reintentar nombres" : "";
+    }
+
+    /** OK sobre el estado. */
+    static void toggle(Context c) {
+        String a = action(c);
+        if ("reanudar".equals(a)) setPaused(c, false);
+        else if ("pausar".equals(a)) setPaused(c, true);
+        else if (a.startsWith("reintentar")) retryNames(c);
+    }
+
+    /** Vuelve a pedir el nombre de las zonas que se quedaron sin él (borra los intentos fallidos y despierta el servicio). */
+    static void retryNames(Context c) {
+        SharedPreferences.Editor e = Prefs.meta(c).edit();
+        SharedPreferences m = Prefs.meta(c);
+        for (String k : new ArrayList<String>(m.getAll().keySet())) if (k.startsWith("p8_") && k.endsWith("_t")) e.remove(k.substring(0, k.length() - 2)).remove(k);
+        e.putBoolean("geoPause", false).commit();
+        GeoService.start(c);
     }
 
     /** {lat, lon} de una foto ya leída; null si no se conoce. */

@@ -57,7 +57,7 @@ public class PlacesActivity extends Activity {
         list.setDivider(null);
         list.setSelector(new android.graphics.drawable.ColorDrawable(0x553D8BFD));
         list.setItemsCanFocus(false);
-        body.addView(list, new LinearLayout.LayoutParams(0, -1, 0.38f));
+        body.addView(list, new LinearLayout.LayoutParams(0, -1, 0.30f));
 
         LinearLayout right = new LinearLayout(this);
         right.setOrientation(LinearLayout.VERTICAL);
@@ -76,7 +76,7 @@ public class PlacesActivity extends Activity {
         hint.setPadding(0, dp(6), 0, 0);
         hint.setText("Lista: derecha entra en el mapa.  Mapa: flechas mover · Play acercar · Pausa alejar · OK ver las fotos de la mira · Atrás volver a la lista");
         right.addView(hint);
-        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(0, -1, 0.62f);
+        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(0, -1, 0.70f);
         rp.setMargins(dp(16), 0, 0, 0);
         body.addView(right, rp);
         root.addView(body, new LinearLayout.LayoutParams(-1, 0, 1f));

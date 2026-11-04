@@ -1,6 +1,6 @@
 {
-  "version": "6.2",
+  "version": "6.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 815439,
-  "notes": "- Mosaico de lugar: al pulsar OK en una zona con fotos del mapa, o en un lugar de la lista, se abre un mosaico como el de un álbum (con Pase, orden, formato, etc.). El nombre es el del lugar («Zona del mapa» si viene del mapa). Atrás vuelve a Lugares y el foco queda en el mapa o en la lista, según de dónde vengas.\n- Mapa: el rótulo «OK: acercar» / «N fotos aquí» pasa arriba y ya no tapa la mira.\n- Ajustes: nuevo orden de las tarjetas (Presentación, Información en pantalla, Música, Vídeo/caché/ocultas, Ubicaciones y Salvapantallas al final)."
+  "size": 819535,
+  "notes": "- Lugares: la lista es más estrecha y el mapa más ancho. Mapa: la cruceta mueve bastante menos por pulsación.\n- Emisoras: nombres sin «Antenne Bayern», «80s80s» ni «90s90s».\n- Web: nuevos botones «Exportar a archivo» e «Importar archivo» (además de copiar/pegar).\n- Pantalla principal: la frase bajo el logo queda centrada. Ajustes: los botones con texto largo usan dos líneas.\n- Ubicaciones: «OK: pausar» solo aparece mientras lee fotos; si solo faltan nombres sale «OK: reintentar nombres» (actúa al momento). Las zonas que tras 3 intentos no tienen nombre pasan a «Sin nombre» y dejan de contar como pendientes."
 }

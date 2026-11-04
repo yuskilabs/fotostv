@@ -457,10 +457,13 @@ class WebConfigServer extends Thread {
         sb.append("<h2>Emisora propia</h2><p class='muted'>La música (apagada, radio o carpeta, volumen…) se elige en la tele, en Ajustes. Aquí solo hace falta pegar la dirección de una emisora que no esté en la lista.</p>")
           .append("<input name='musicRadio' type='url' placeholder='https://… (dirección de la emisora)' value='")
           .append(esc(Prefs.musicRadio(ctx))).append("'>");
-        sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes, ajustes, favoritas y ubicaciones ya revisadas a otro dispositivo: pulsa «Exportar» (se copia solo al portapapeles), y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya).</p>")
+        sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes, ajustes, favoritas y ubicaciones ya revisadas a otro dispositivo: pulsa «Exportar» (se copia solo al portapapeles), y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya). También puedes «Exportar a archivo» e «Importar archivo».</p>")
           .append("<textarea id='bk' rows='5' placeholder='Aquí aparece la copia, o pega la que quieras importar'></textarea>")
           .append("<div class='row2'><button type='button' class='sec' onclick='expBk()'>📤 Exportar</button>")
           .append("<button type='button' class='sec' onclick='impBk()'>📥 Importar</button></div>")
+          .append("<div class='row2' style='margin-top:10px'><button type='button' class='sec' onclick='expFile()'>💾 Exportar a archivo</button>")
+          .append("<button type='button' class='sec' onclick=\"document.getElementById('bkf').click()\">📂 Importar archivo</button></div>")
+          .append("<input type='file' id='bkf' accept='.json,.txt,application/json,text/plain' style='display:none' onchange='impFile(this)'>")
           .append("<p id='bkm' class='muted'></p>");
         sb.append("<button type='submit'>💾 Guardar</button>");
         StringBuilder alb = new StringBuilder();
@@ -532,6 +535,13 @@ class WebConfigServer extends Thread {
         + "var done=function(ok){m.textContent=ok?'\u2714 Copiado al portapapeles ('+Math.round(x.responseText.length/1024)+' KB). Pégalo en el otro dispositivo con «Importar».':'No he podido copiar solo: el texto está seleccionado, copia con Ctrl+C.';};"
         + "if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(x.responseText).then(function(){done(true);},function(){done(false);});}"
         + "else{var ok=false;try{ok=document.execCommand('copy');}catch(e){}done(ok);}};x.send();}"
+        + "function expFile(){var x=new XMLHttpRequest();x.open('GET','/export');"
+        + "x.onload=function(){var m=document.getElementById('bkm');var d=new Date(),p=function(n){return (n<10?'0':'')+n;};"
+        + "var name='FotosTV_copia_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.json';"
+        + "var bl=new Blob([x.responseText],{type:'application/json'}),l=document.createElement('a');l.href=URL.createObjectURL(bl);l.download=name;"
+        + "document.body.appendChild(l);l.click();document.body.removeChild(l);m.textContent='\u2714 Archivo '+name+' descargado.';};x.send();}"
+        + "function impFile(f){if(!f.files||!f.files[0])return;var r=new FileReader();"
+        + "r.onload=function(){document.getElementById('bk').value=r.result;f.value='';impBk();};r.readAsText(f.files[0]);}"
         + "function impBk(){var a=document.getElementById('bk'),m=document.getElementById('bkm');"
         + "if(!a.value.trim()){m.textContent='Pega primero el texto de la copia.';return;}"
         + "if(!confirm('Se sustituirán los álbumes y ajustes actuales. ¿Importar?'))return;"

@@ -12,6 +12,13 @@ import java.util.List;
 
 /** Música de fondo del pase: una emisora de internet o las canciones de una carpeta. Todo se llama desde el hilo principal. */
 class Music {
+    /** Nombre de emisora sin la cadena delante («Antenne Bayern - Relax (…)» → «Relax (…)»). */
+    static String shortName(String n) {
+        String[] pre = {"Antenne Bayern - ", "80s80s - ", "90s90s - ", "90s00s - "};
+        for (String p : pre) if (n.startsWith(p)) return n.substring(p.length());
+        return n;
+    }
+
     /** {nombre, url}; si la url es null, es el título de una sección. */
     static final String[][] PRESETS = {
         {"RELAX, COFFEE, LOUNGE, CHILLOUT & BALADAS", null},
