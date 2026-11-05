@@ -501,6 +501,10 @@ public class AjustesActivity extends Activity {
             public void onDismiss(android.content.DialogInterface d) { stopPreview(); }
         });
         dlg.show();
+        try {   // ventana estrecha: unos dos quintos del ancho de la pantalla
+            int sw = getResources().getDisplayMetrics().widthPixels;
+            dlg.getWindow().setLayout(Math.min(sw, Math.max(dp(320), (int) (sw * 0.40f))), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        } catch (Throwable ignored) { }
         // al posarte sobre una emisora suena; al abrir, suena la que está elegida
         final android.widget.ListView lv = dlg.getListView();
         int cur = 0;

@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.4.4
+- Emisoras: direcciones corregidas (muchas estaban mal), con los mismos nombres. Se quita Depeche Mode, que no está en la lista nueva. La ventana de selección de emisora es más estrecha.
+
 ## 6.4.3
 - Emisoras: nombres nuevos y sin descripción, todos distintos (con la década o el estilo para diferenciar las parecidas). Se quita la emisora general en directo (lleva charla y noticias) y se añade Navidad 90s.
 

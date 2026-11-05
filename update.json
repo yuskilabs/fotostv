@@ -1,6 +1,6 @@
 {
-  "version": "6.4.3",
+  "version": "6.4.4",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 819535,
-  "notes": "- Emisoras: nombres nuevos y sin descripción, todos distintos (con la década o el estilo para diferenciar las parecidas). Se quita la emisora general en directo (lleva charla y noticias) y se añade Navidad 90s."
+  "notes": "- Emisoras: direcciones corregidas (muchas estaban mal), con los mismos nombres. Se quita Depeche Mode, que no está en la lista nueva. La ventana de selección de emisora es más estrecha."
 }
