@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.4.3
+- Emisoras: nombres nuevos y sin descripción, todos distintos (con la década o el estilo para diferenciar las parecidas). Se quita la emisora general en directo (lleva charla y noticias) y se añade Navidad 90s.
+
 ## 6.4.2
 - Lista de emisoras: la escucha de prueba ya no congela la pantalla (abrir y soltar la emisora se hace en segundo plano), así que el cursor baja con normalidad y suena cada emisora al posarte.
 

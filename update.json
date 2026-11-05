@@ -1,6 +1,6 @@
 {
-  "version": "6.4.2",
+  "version": "6.4.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 819535,
-  "notes": "- Lista de emisoras: la escucha de prueba ya no congela la pantalla (abrir y soltar la emisora se hace en segundo plano), así que el cursor baja con normalidad y suena cada emisora al posarte."
+  "notes": "- Emisoras: nombres nuevos y sin descripción, todos distintos (con la década o el estilo para diferenciar las parecidas). Se quita la emisora general en directo (lleva charla y noticias) y se añade Navidad 90s."
 }
