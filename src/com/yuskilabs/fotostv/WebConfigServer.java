@@ -238,7 +238,8 @@ class WebConfigServer extends Thread {
         if (f.containsKey("albumSort")) e.putString("albumSort", f.get("albumSort"));
         if (f.containsKey("musicRadio")) {
             String mr = val(f, "musicRadio");
-            if (mr.length() > 0 || Prefs.musicRadio(ctx).length() > 0) e.putString("musicRadio", mr);
+            // vacío = no tocar si hay una emisora de la lista elegida; solo borra si había una propia
+            if (mr.length() > 0 || customRadio(ctx).length() > 0) e.putString("musicRadio", mr);
         }
         e.apply();
     }
@@ -456,7 +457,7 @@ class WebConfigServer extends Thread {
         StringBuilder sb = new StringBuilder("<form method='post' action='/save'>");
         sb.append("<h2>Emisora propia</h2><p class='muted'>La música (apagada, radio o carpeta, volumen…) se elige en la tele, en Ajustes. Aquí solo hace falta pegar la dirección de una emisora que no esté en la lista.</p>")
           .append("<input name='musicRadio' type='url' placeholder='https://… (dirección de la emisora)' value='")
-          .append(esc(Prefs.musicRadio(ctx))).append("'>");
+          .append(esc(customRadio(ctx))).append("'>");
         sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes, ajustes, favoritas y ubicaciones ya revisadas a otro dispositivo: pulsa «Exportar» (se copia solo al portapapeles), y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya). También puedes «Exportar a archivo» e «Importar archivo».</p>")
           .append("<textarea id='bk' rows='5' placeholder='Aquí aparece la copia, o pega la que quieras importar'></textarea>")
           .append("<div class='row2'><button type='button' class='sec' onclick='expBk()'>📤 Exportar</button>")
@@ -630,5 +631,12 @@ class WebConfigServer extends Thread {
             + "button{margin-top:26px;width:100%;font-size:18px;padding:14px;border:0;border-radius:12px;background:#3d8bfd;color:#fff;font-weight:600}"
             + ".ok{font-size:19px}a{color:#8cf}</style></head><body><img class='logo' src='/img/logo2.png' alt='FotosTV'>"
             + content + "<div class='by'><a href='https://github.com/yuskilabs/fotostv#readme' target='_blank'><img src='/img/yuski.png' alt=''>yuskilabs</a></div>" + SCRIPT + "</body></html>";
+    }
+
+    /** Dirección de emisora propia: vacía si la elegida es una de la lista. */
+    private static String customRadio(Context ctx) {
+        String u = Prefs.musicRadio(ctx);
+        for (String[] pr : Music.PRESETS) if (pr[1] != null && pr[1].equals(u)) return "";
+        return u;
     }
 }

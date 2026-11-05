@@ -1,6 +1,6 @@
 {
-  "version": "6.4.4",
+  "version": "6.4.5",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 819535,
-  "notes": "- Emisoras: direcciones corregidas (muchas estaban mal), con los mismos nombres. Se quita Depeche Mode, que no está en la lista nueva. La ventana de selección de emisora es más estrecha."
+  "notes": "- Lugares: «Denizli» pasa a llamarse «Pamukkale» (también en las fotos ya guardadas).\n- Ajustes: tras los dos puntos de cada botón, la primera letra va en mayúscula; las dos columnas acaban a la misma altura. La lista de emisoras vuelve a su ancho anterior (la ventana estrecha se veía cortada).\n- Web: «Emisora propia» ya no muestra ninguna dirección si la emisora elegida es de la lista."
 }

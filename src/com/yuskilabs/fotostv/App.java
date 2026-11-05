@@ -29,6 +29,17 @@ public class App extends Application {
                         try { GeoIndex.get(App.this).getWritableDatabase().execSQL("UPDATE photos SET place=NULL"); } catch (Throwable ignored) { }
                         m.edit().putString("geoNames", "5.31.1").apply();
                     }
+                    if (!"1".equals(m.getString("geoPamukkale", ""))) {   // «Denizli» pasa a llamarse «Pamukkale»
+                        android.content.SharedPreferences.Editor ed = m.edit();
+                        for (java.util.Map.Entry<String, ?> en : m.getAll().entrySet()) {
+                            if (en.getKey().startsWith("p8_") && en.getValue() instanceof String && ((String) en.getValue()).contains("Denizli")) {
+                                ed.remove(en.getKey());
+                                ed.remove(en.getKey() + "_t");
+                            }
+                        }
+                        ed.putString("geoPamukkale", "1").apply();
+                        try { GeoIndex.get(App.this).getWritableDatabase().execSQL("UPDATE photos SET place=NULL WHERE place LIKE '%Denizli%'"); } catch (Throwable ignored) { }
+                    }
                     GeoService.start(App.this);
                 } catch (Throwable ignored) { }
             }

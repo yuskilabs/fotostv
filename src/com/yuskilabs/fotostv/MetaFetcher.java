@@ -568,7 +568,7 @@ class MetaFetcher {
     }
 
     private static final String[][] EXONIMOS = {
-        {"london", "Londres"}, {"greater london", "Londres"}, {"gran londres", "Londres"}, {"city of london", "Londres"}, {"city of westminster", "Londres"}, {"istanbul", "Estambul"}, {"jakarta", "Yakarta"}, {"kobenhavn", "Copenhague"}, {"copenhagen", "Copenhague"},
+        {"denizli", "Pamukkale"}, {"london", "Londres"}, {"greater london", "Londres"}, {"gran londres", "Londres"}, {"city of london", "Londres"}, {"city of westminster", "Londres"}, {"istanbul", "Estambul"}, {"jakarta", "Yakarta"}, {"kobenhavn", "Copenhague"}, {"copenhagen", "Copenhague"},
         {"roma", "Roma"}, {"wien", "Viena"}, {"vienna", "Viena"}, {"praha", "Praga"}, {"prague", "Praga"}, {"firenze", "Florencia"},
         {"florence", "Florencia"}, {"venezia", "Venecia"}, {"venice", "Venecia"}, {"napoli", "Nápoles"}, {"naples", "Nápoles"},
         {"milano", "Milán"}, {"milan", "Milán"}, {"torino", "Turín"}, {"turin", "Turín"}, {"genova", "Génova"}, {"genoa", "Génova"},

@@ -224,12 +224,15 @@ public class AjustesActivity extends Activity {
         right.addView(ci);
         left.addView(cm);
         right.addView(cv);
-        left.addView(cg);
-        right.addView(cs);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
+        // la última tarjeta de cada columna se estira para que las dos acaben a la misma altura
+        LinearLayout.LayoutParams gp = new LinearLayout.LayoutParams(-1, 0, 1f);
+        left.addView(cg, gp);
+        LinearLayout.LayoutParams sp2 = new LinearLayout.LayoutParams(-1, 0, 1f);
+        right.addView(cs, sp2);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1f);
         lp.setMargins(0, 0, dp(8), 0);
         cols.addView(left, lp);
-        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(0, -2, 1f);
+        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(0, -1, 1f);
         rp.setMargins(dp(8), 0, 0, 0);
         cols.addView(right, rp);
         ScrollView sv = new ScrollView(this);
@@ -295,7 +298,19 @@ public class AjustesActivity extends Activity {
     }
 
     private Button btn(String label, int icon, View.OnClickListener l) {
-        Button b = Ui.icon(Ui.button(this, label, l), icon);
+        Button cb = new Button(this) {   // tras los dos puntos, la primera letra en mayúscula («Música: Apagada»)
+            @Override public void setText(CharSequence t, BufferType type) {
+                if (t != null) {
+                    String s = t.toString();
+                    int i = s.indexOf(": ");
+                    if (i >= 0 && i + 2 < s.length() && Character.isLowerCase(s.charAt(i + 2)))
+                        s = s.substring(0, i + 2) + Character.toUpperCase(s.charAt(i + 2)) + s.substring(i + 3);
+                    t = s;
+                }
+                super.setText(t, type);
+            }
+        };
+        Button b = Ui.icon(Ui.button(this, cb, label, l), icon);
         b.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         b.setMinHeight(0);
@@ -501,10 +516,6 @@ public class AjustesActivity extends Activity {
             public void onDismiss(android.content.DialogInterface d) { stopPreview(); }
         });
         dlg.show();
-        try {   // ventana estrecha: unos dos quintos del ancho de la pantalla
-            int sw = getResources().getDisplayMetrics().widthPixels;
-            dlg.getWindow().setLayout(Math.min(sw, Math.max(dp(320), (int) (sw * 0.40f))), android.view.WindowManager.LayoutParams.WRAP_CONTENT);
-        } catch (Throwable ignored) { }
         // al posarte sobre una emisora suena; al abrir, suena la que está elegida
         final android.widget.ListView lv = dlg.getListView();
         int cur = 0;

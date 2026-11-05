@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.4.5
+- Lugares: «Denizli» pasa a llamarse «Pamukkale» (también en las fotos ya guardadas).
+- Ajustes: tras los dos puntos de cada botón, la primera letra va en mayúscula; las dos columnas acaban a la misma altura. La lista de emisoras vuelve a su ancho anterior (la ventana estrecha se veía cortada).
+- Web: «Emisora propia» ya no muestra ninguna dirección si la emisora elegida es de la lista.
+
 ## 6.4.4
 - Emisoras: direcciones corregidas (muchas estaban mal), con los mismos nombres. Se quita Depeche Mode, que no está en la lista nueva. La ventana de selección de emisora es más estrecha.
 

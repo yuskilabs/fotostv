@@ -66,7 +66,10 @@ class Ui {
 
     /** Botón para mando: el seleccionado se ve azul intenso con borde blanco. */
     static Button button(Context c, String label, View.OnClickListener l) {
-        Button btn = new Button(c);
+        return button(c, new Button(c), label, l);
+    }
+
+    static Button button(Context c, Button btn, String label, View.OnClickListener l) {
         btn.setTypeface(Ui.BTN);
         btn.setText(label);
         btn.setAllCaps(false);
