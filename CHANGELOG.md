@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.4.6
+- Emisoras de 90s90s: direcciones corregidas de Millennium y Dance. «Radio 90s» pasa a «Pop & Hits 90s» (se quita «Pop 90s», que era la misma emisora).
+
 ## 6.4.5
 - Lugares: «Denizli» pasa a llamarse «Pamukkale» (también en las fotos ya guardadas).
 - Ajustes: tras los dos puntos de cada botón, la primera letra va en mayúscula; las dos columnas acaban a la misma altura. La lista de emisoras vuelve a su ancho anterior (la ventana estrecha se veía cortada).
