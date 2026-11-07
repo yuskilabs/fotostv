@@ -1320,12 +1320,16 @@ class Slideshow {
 
     boolean infoOpen() { return panel != null; }
 
+    /** Atrás dentro de la ficha: si el foco está en el mapa, lo saca del mapa (y no cierra la ficha). */
+    boolean infoBack() { return panel != null && panel.handleBack(); }
+
     private void openInfo() {
         if (cur == null || cur.item == null || panel != null) return;
         resumeAfterInfo = !paused;
         setPaused(true, false);
         panel = new InfoPanel(ctx, cur.item, cur.album != null && cur.album.length() > 0 ? cur.album : cur.item.album,
-                new Runnable() { public void run() { closeInfo(); } });
+                new Runnable() { public void run() { closeInfo(); } },
+                new Runnable() { public void run() { closeInfo(); hideCurrent(); } });
         root.addView(panel, new FrameLayout.LayoutParams(-1, -1));
         panel.bringToFront();
     }

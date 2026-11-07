@@ -30,6 +30,7 @@ class MapView extends View {
     private int z = 2;
     private double cx, cy;                               // centro, en píxeles del mapa a este zoom
     private boolean fitted, longDone;
+    private double[] marker;                           // modo «una foto» (ficha): punto exacto, sin mapa de calor ni mira
     private float tx, ty, downX, downY;
     private long lastTap;
 
@@ -50,6 +51,19 @@ class MapView extends View {
     }
 
     int count() { return pts.size(); }
+
+    /** Modo ficha: muestra un único punto (la foto) con el zoom dado. Se puede mover y hacer zoom. */
+    void setMarker(double lat, double lon, int zoom) {
+        pts.clear();
+        marker = new double[] { lat, lon };
+        z = zoom;
+        cx = px(lon, z);
+        cy = py(lat, z);
+        fitted = true;
+        invalidate();
+    }
+
+    void zoomBy(int dz) { zoom(dz); }
 
     // ---- proyección
     private static double world(int zoom) { return 256.0 * Math.pow(2, zoom); }
@@ -136,6 +150,25 @@ class MapView extends View {
                 dst.set(x0, y0, x0 + 256, y0 + 256);
                 cv.drawBitmap(b, null, dst, null);
             }
+        }
+        if (marker != null) {
+            double mx2 = px(marker[1], z) - left, my2 = py(marker[0], z) - top;
+            p.setStyle(Paint.Style.FILL);
+            p.setColor(0xFFE5173F);
+            cv.drawCircle((float) mx2, (float) my2, 15, p);
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(4);
+            p.setColor(0xFFFFFFFF);
+            cv.drawCircle((float) mx2, (float) my2, 15, p);
+            p.setStyle(Paint.Style.FILL);
+            p.setTextSize(22);
+            p.setColor(0xB0000000);
+            String at0 = "© colaboradores de OpenStreetMap";
+            float aw0 = p.measureText(at0);
+            cv.drawRect(w - aw0 - 24, h - 36, w, h, p);
+            p.setColor(0xFFFFFFFF);
+            cv.drawText(at0, w - aw0 - 12, h - 11, p);
+            return;
         }
         // mapa de calor: círculos translúcidos que se acumulan donde hay más fotos
         double world = world(z);

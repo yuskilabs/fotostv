@@ -1,6 +1,6 @@
 {
-  "version": "6.4.6",
+  "version": "6.5",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 819535,
-  "notes": "- Emisoras de 90s90s: direcciones corregidas de Millennium y Dance. «Radio 90s» pasa a «Pop & Hits 90s» (se quita «Pop 90s», que era la misma emisora)."
+  "size": 823702,
+  "notes": "- Ficha de la foto: botones en dos columnas (debajo de Información: Ir al álbum, Pase de este álbum, Favoritos, Ocultar; debajo del mapa: Más de la localidad, de la provincia/isla/país o de la zona de 1 km, Más de este día, Recargar lugar), con el mismo estilo que Ajustes. El mapa se maneja con el mando y lleva Acercar y Alejar.\n- Todos los álbumes se abren con «Recientes primero» por defecto.\n- «Todas»: nuevo botón de pase con música (ignora el ajuste del salvapantallas y usa la emisora o carpeta elegida).\n- Lugares: se usa el municipio y no la aldea (Estepona, no Voladilla). Los nombres ya guardados se recalculan solos."
 }

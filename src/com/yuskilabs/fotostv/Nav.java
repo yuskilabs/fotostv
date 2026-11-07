@@ -12,7 +12,7 @@ import java.util.List;
 
 /** Saltos desde la ficha de una foto en el pase: ir a su álbum, pase solo de su álbum o de su lugar. */
 class Nav {
-    static final int ALBUM = 1, ALBUM_PASE = 2, PLACE_TOWN = 3, PLACE_REGION = 4;
+    static final int ALBUM = 1, ALBUM_PASE = 2, PLACE_TOWN = 3, PLACE_REGION = 4, DAY = 5, ZONE = 6;
     private static final Handler ui = new Handler(Looper.getMainLooper());
 
     /** Parte «provincia, isla o país» de un nombre de lugar («Adeje, Tenerife» → «Tenerife»); null si no la hay. */
@@ -62,6 +62,40 @@ class Nav {
                 ui.post(new Runnable() {
                     public void run() { go(ctx, action, it, al, list); }
                 });
+            }
+        }).start();
+    }
+
+    /** Pase con las fotos hechas el mismo día que «it» (de todos los álbumes). */
+    static void runDay(final Context ctx, final Item it) {
+        new Thread(new Runnable() {
+            public void run() {
+                final List<Item> list = new ArrayList<Item>();
+                if (it.ts > 0) {
+                    java.util.Calendar a = java.util.Calendar.getInstance(), b = java.util.Calendar.getInstance();
+                    a.setTimeInMillis(it.ts);
+                    HashSet<String> keys = new HashSet<String>();
+                    for (Item x : GeoIndex.allItems(ctx, null).values()) {
+                        if (x.ts <= 0) continue;
+                        b.setTimeInMillis(x.ts);
+                        if (a.get(java.util.Calendar.YEAR) == b.get(java.util.Calendar.YEAR)
+                                && a.get(java.util.Calendar.DAY_OF_YEAR) == b.get(java.util.Calendar.DAY_OF_YEAR)) keys.add(x.key());
+                    }
+                    list.addAll(GeoIndex.itemsOf(ctx, keys));
+                }
+                ui.post(new Runnable() { public void run() { go(ctx, DAY, it, null, list); } });
+            }
+        }).start();
+    }
+
+    /** Pase con las fotos a menos de «km» kilómetros de un punto. */
+    static void runZone(final Context ctx, final Item it, final double lat, final double lon, final double km) {
+        new Thread(new Runnable() {
+            public void run() {
+                double dLat = km / 111.0;
+                double dLon = km / (111.0 * Math.max(0.2, Math.cos(Math.toRadians(lat))));
+                final List<Item> list = GeoIndex.itemsOf(ctx, GeoIndex.get(ctx).keysIn(lat - dLat, lat + dLat, lon - dLon, lon + dLon));
+                ui.post(new Runnable() { public void run() { go(ctx, ZONE, it, null, list); } });
             }
         }).start();
     }
@@ -123,6 +157,7 @@ class Nav {
         }
         if (list == null || list.isEmpty()) {
             Toast.makeText(ctx, action == ALBUM_PASE ? "No encuentro el álbum de esta foto."
+                    : action == DAY ? "No encuentro más fotos de este día."
                     : "Aún no conozco más fotos de este sitio (la app las va revisando en segundo plano; mira el contador en Ajustes).",
                     Toast.LENGTH_LONG).show();
             return;

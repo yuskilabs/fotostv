@@ -40,7 +40,8 @@ public class BrowserActivity extends Activity {
         List<Item> src = new ArrayList<Item>();     // todo lo del álbum
         List<Item> items = new ArrayList<Item>();   // lo que se ve (sin las ocultas, salvo en «Ocultas»)
         List<Item> view;          // lista ordenada (null = tal cual la da Google)
-        String order = "";       // random | asc | desc | vacío
+        String order = "desc";   // random | asc | desc: por defecto, recientes primero
+        boolean orderSet;        // el usuario eligió el orden (si no, el pase del álbum va aleatorio)
         Item cover;
 
         boolean onlyVideos;       // filtro «Vídeos»
@@ -90,7 +91,7 @@ public class BrowserActivity extends Activity {
     private boolean destroyed, flagBusy, loaded;
     private int prefetched = -1;
     private static final int AHEAD = 150;
-    private android.widget.Button orderBtn, fitBtn, kindBtn;
+    private android.widget.Button orderBtn, fitBtn, kindBtn, musicPlayBtn;
     private TextView countView;
     private int scanGen, scanDone, scanTotal;
     private final ExecutorService scanExec = Executors.newSingleThreadExecutor();
@@ -225,6 +226,7 @@ public class BrowserActivity extends Activity {
             Session.placeTitle = null;
             favSet = Prefs.favs(this);
             e.items = visible(e.src, Prefs.hidden(this));
+            applyOrder(e);
             pickCover(e);
             entries.add(e);
             loaded = true;
@@ -250,6 +252,7 @@ public class BrowserActivity extends Activity {
             if (current != null && photoGrid != null) {
                 favSet = Prefs.favs(this);
                 current.items = visible(current.src, Prefs.hidden(this));
+                reapply(current);
                 ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
                 updateCount();
             }
@@ -509,6 +512,7 @@ public class BrowserActivity extends Activity {
                 for (Item it : d.items) { if (it.akey.length() == 0) it.akey = d.key; }
                 ge.src = d.items;
                 ge.items = d.items;
+                applyOrder(ge);
                 pickCover(ge);
                 guestMap.put(g.id, ge);
             }
@@ -964,6 +968,10 @@ public class BrowserActivity extends Activity {
         row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 4));
         playBtn = sbtn("Pase", R.drawable.ic_play, play());
         row.addView(playBtn);
+        if (current.kind == 1) {   // en «Todas»: pase con música, aunque en Ajustes esté apagada
+            musicPlayBtn = sbtn("Pase", R.drawable.ic_music, play(true));
+            row.addView(musicPlayBtn);
+        }
         kindBtn = sbtn(current.onlyVideos ? "Vídeos" : "Todo", current.onlyVideos ? R.drawable.ic_video : R.drawable.ic_photo,
                 new View.OnClickListener() {
             public void onClick(View v) { toggleKind(); }
@@ -1292,6 +1300,7 @@ public class BrowserActivity extends Activity {
     private void setOrder(String key) {
         if (current == null) return;
         current.order = key;
+        current.orderSet = true;
         applyOrder(current);
         if (current.onlyVideos) rebuildVids();
         prefetched = -1;
@@ -1325,18 +1334,25 @@ public class BrowserActivity extends Activity {
         return "crop".equals(f) ? "Pantalla: rellenar" : ("fit".equals(f) ? "Pantalla: original" : "Pantalla: automática");
     }
 
-    private View.OnClickListener play() {
+    private View.OnClickListener play() { return play(false); }
+
+    /** Con «music», el pase suena con la emisora o carpeta de música aunque en Ajustes esté apagada. */
+    private View.OnClickListener play(final boolean music) {
         return new View.OnClickListener() {
             public void onClick(View v) {
                 if (current == null || current.items.isEmpty()) return;
+                if (music && Prefs.musicRadio(BrowserActivity.this).length() == 0 && Prefs.musicFolder(BrowserActivity.this).length() == 0) {
+                    showToast("Elige antes una emisora o una carpeta de música en Ajustes.");
+                    return;
+                }
                 Session.items = current.shown();
-                Session.order = current.order.length() == 0 && current.kind != 3 ? "random" : "keep";   // sin ordenar: aleatorio
+                Session.order = !current.orderSet && current.kind != 3 ? "random" : "keep";   // sin elegir orden: aleatorio
                 Session.manual = false;
                 Session.guest = current.kind == 4;
                 Session.guestId = current.kind == 4 ? current.gid : null;
                 Session.startKey = null;
                 Session.lastKey = null;
-                Session.music = 0;
+                Session.music = music ? 1 : 0;
                 startActivity(new Intent(BrowserActivity.this, PlayerActivity.class));
             }
         };

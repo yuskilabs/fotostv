@@ -77,7 +77,7 @@ public class PlayerActivity extends Activity {
         if (show.infoOpen()) {                                      // ficha abierta: Atrás vuelve al pase; las flechas y OK mueven y pulsan sus botones
             int kc = e.getKeyCode();
             if (kc == KeyEvent.KEYCODE_BACK || kc == KeyEvent.KEYCODE_ESCAPE) {
-                if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
+                if (e.getAction() == KeyEvent.ACTION_DOWN && !show.infoBack()) show.closeInfo();
                 return true;
             }
             return super.dispatchKeyEvent(e);

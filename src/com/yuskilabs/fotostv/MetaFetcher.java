@@ -485,8 +485,8 @@ class MetaFetcher {
         } catch (Exception ignored) { }
         town = loc;
         boolean es = cc != null && "ES".equalsIgnoreCase(cc);
-        if (!es) {
-            // fuera de España: la ciudad (no el barrio ni el distrito), con el nombre en castellano si OpenStreetMap lo tiene
+        {
+            // el municipio (no la aldea, el barrio ni el distrito), con el nombre en castellano si OpenStreetMap lo tiene
             JSONObject a10 = osm(lat, lon, 10);
             if (a10 != null) {
                 String ncc = a10.optString("country_code", "");

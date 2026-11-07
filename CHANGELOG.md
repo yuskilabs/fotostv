@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.5
+- Ficha de la foto: botones en dos columnas (debajo de Información: Ir al álbum, Pase de este álbum, Favoritos, Ocultar; debajo del mapa: Más de la localidad, de la provincia/isla/país o de la zona de 1 km, Más de este día, Recargar lugar), con el mismo estilo que Ajustes. El mapa se maneja con el mando y lleva Acercar y Alejar.
+- Todos los álbumes se abren con «Recientes primero» por defecto.
+- «Todas»: nuevo botón de pase con música (ignora el ajuste del salvapantallas y usa la emisora o carpeta elegida).
+- Lugares: se usa el municipio y no la aldea (Estepona, no Voladilla). Los nombres ya guardados se recalculan solos.
+
 ## 6.4.6
 - Emisoras de 90s90s: direcciones corregidas de Millennium y Dance. «Radio 90s» pasa a «Pop & Hits 90s» (se quita «Pop 90s», que era la misma emisora).
 
