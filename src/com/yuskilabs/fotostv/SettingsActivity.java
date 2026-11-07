@@ -877,7 +877,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     private String stopLabel() {
         int m = Prefs.autoStopMin(this);
-        return "Cerrar el pase tras: " + (m == 0 ? "Nunca" : m >= 60 ? (m / 60) + (m == 60 ? " hora" : " horas") : m + " min");
+        return "Cerrar pase: " + (m == 0 ? "Nunca" : m >= 60 ? (m / 60) + (m == 60 ? " hora" : " horas") : m + " min");
     }
 
     private String vqLabel() {

@@ -45,7 +45,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 
 ### Lugares y mapa
 - **Índice de ubicaciones** en segundo plano: la app lee dónde se hizo cada foto de todos tus álbumes y le pone nombre al sitio, sin que las abras. Funciona con un servicio en primer plano (con aviso en la barra), trabaja por tandas y continúa donde se quedó si se interrumpe. Solo cuenta con las fotos cuya ubicación entrega Google (el álbum debe haberse compartido con ubicación).
-- **Nombres de lugar**: se usa el **municipio**, no la aldea ni el barrio (Estepona y no Voladilla). En España sale «Municipio, Provincia» (o «Municipio, Isla» en Baleares y Canarias; solo la ciudad si es capital) y en el extranjero «Ciudad, País», en castellano y con letras latinas. Las zonas con más fotos se nombran primero y las que no consiguen nombre tras varios intentos quedan como «Sin nombre».
+- **Nombres de lugar**: se usa la **localidad**, no la aldea ni el barrio; si solo hay aldea, la localidad o municipio al que pertenece (Estepona y no Voladilla). En España sale «Municipio, Provincia» (o «Municipio, Isla» en Baleares y Canarias; solo la ciudad si es capital) y en el extranjero «Ciudad, País», en castellano y con letras latinas. Las zonas con más fotos se nombran primero y las que no consiguen nombre tras varios intentos quedan como «Sin nombre».
 - **Pantalla Lugares**: lista a la izquierda (países, provincias e islas con su número de fotos; al elegir uno, sus localidades) y **mapa de calor** a la derecha. Al moverte por la lista, el mapa te lleva a ese sitio.
 - **Mapa**: flechas para mover, OK para ver las fotos de la mira (o acercar), Play acerca, Pausa aleja.
 - **Mosaico de lugar**: al elegir una localidad, una zona del mapa o «Todas las fotos de…», se abre un mosaico como el de un álbum (con pase, orden y formato). Atrás vuelve a Lugares.
@@ -98,7 +98,7 @@ adb shell pm grant com.yuskilabs.fotostv android.permission.WRITE_SECURE_SETTING
 
 Después, en la pantalla principal, el botón **Inicio automático** elige el tiempo (1, 2, 5, 10, 15 o 30 minutos). Si falta algún permiso, la propia app muestra los pasos y los comandos con la IP de tu tele. El tiempo de FotosTV debe ser menor que el del reposo de la Fire TV. El servicio solo observa que se pulsa una tecla: no lee la pantalla ni guarda nada.
 
-El botón **Cerrar el pase tras** (5, 10, 15 o 30 min, 1 h, 2 h, nunca; 10 min por defecto) cierra el pase si nadie toca el mando, para no dejar la pantalla encendida si la tele se apaga. Las flechas y OK reinician la cuenta.
+El botón **Cerrar pase** (5, 10, 15 o 30 min, 1 h, 2 h, nunca; 10 min por defecto) cierra el pase si nadie toca el mando, para no dejar la pantalla encendida si la tele se apaga. Las flechas y OK reinician la cuenta.
 
 Para quitar el inicio automático: `adb shell settings put secure enabled_accessibility_services ""` (esto también desactiva el resto de servicios de accesibilidad).
 

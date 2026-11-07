@@ -1,6 +1,6 @@
 {
-  "version": "6.5.4",
+  "version": "6.5.5",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 823702,
-  "notes": "- Mosaicos: los botones son los mismos en todos los álbumes (se quitan «Pase con música» de Todas y «Recargar» de los álbumes) y se reparten solos todo el ancho, hasta donde acaba la última foto de la primera fila."
+  "notes": "- Lugares: vuelve la localidad (Zahara de los Atunes, no el municipio Barbate). Las aldeas no se usan: si el sitio es solo una aldea, sale la localidad o municipio al que pertenece (Estepona, no Voladilla). La provincia (Cádiz…) sale también en equipos sin Geocoder, como la Fire TV. Los nombres guardados se recalculan solos.\n- Pantalla principal: «Cerrar pase: 10 min» (antes «Cerrar el pase tras»)."
 }

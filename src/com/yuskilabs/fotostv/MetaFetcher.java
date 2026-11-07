@@ -483,31 +483,38 @@ class MetaFetcher {
                 }
             }
         } catch (Exception ignored) { }
-        town = loc;
         boolean es = cc != null && "ES".equalsIgnoreCase(cc);
-        {
-            // el municipio (no la aldea, el barrio ni el distrito), con el nombre en castellano si OpenStreetMap lo tiene
-            JSONObject a10 = osm(lat, lon, 10);
-            if (a10 != null) {
-                String ncc = a10.optString("country_code", "");
-                if (ncc.length() > 0) { cc = ncc; es = "es".equalsIgnoreCase(ncc); }
-                String q = firstLatin(a10.optString("city", null), a10.optString("town", null), a10.optString("village", null),
-                        a10.optString("municipality", null));
-                if (q != null && !distrito(q)) town = q;
-            }
-        }
-        if (town == null) {
-            // OpenStreetMap: nombre en castellano si existe, si no en inglés, si no el local
+        // OpenStreetMap (detalle de localidad): país, provincia y localidad aunque el equipo no tenga Geocoder (Fire TV)
+        String q14 = null, hamlet = null;
+        if (cc == null || loc == null || (es && rgEs == null)) {
             JSONObject a = osm(lat, lon, 14);
             if (a != null) {
                 String ncc = a.optString("country_code", "");
                 if (ncc.length() > 0) { cc = ncc; es = "es".equalsIgnoreCase(ncc); }
-                String q = firstLatin(a.optString("city", null), a.optString("town", null),
-                        a.optString("village", null), a.optString("municipality", null),
-                        a.optString("hamlet", null));
-                if (q != null && !distrito(q)) town = q;
-                if (es && rgEs == null) rgEs = first(a.optString("province", null), a.optString("county", null), a.optString("state", null));
+                q14 = firstLatin(a.optString("city", null), a.optString("town", null),
+                        a.optString("village", null), a.optString("municipality", null));
+                if (q14 != null && distrito(q14)) q14 = null;
+                hamlet = firstLatin(a.optString("hamlet", null));
+                if (es && rgEs == null) rgEs = first(a.optString("province", null), a.optString("state", null));
                 if (region == null) region = firstLatin(a.optString("state", null));
+            }
+        }
+        // la localidad, nunca la aldea: si solo hay aldea, el municipio al que pertenece
+        town = loc != null ? loc : q14;
+        if (!es) {
+            // fuera de España: la ciudad (no el barrio ni el distrito), con el nombre en castellano si OpenStreetMap lo tiene
+            JSONObject a10 = osm(lat, lon, 10);
+            if (a10 != null) {
+                String q = firstLatin(a10.optString("city", null), a10.optString("town", null), a10.optString("village", null),
+                        a10.optString("municipality", null));
+                if (q != null && !distrito(q)) town = q;
+            }
+        } else if (town == null || (hamlet != null && q14 == null && hamlet.equalsIgnoreCase(town))) {
+            JSONObject a10 = osm(lat, lon, 10);
+            if (a10 != null) {
+                String q = firstLatin(a10.optString("city", null), a10.optString("town", null), a10.optString("village", null),
+                        a10.optString("municipality", null));
+                if (q != null && !distrito(q)) town = q;
             }
         }
         if (town == null) town = nearestPlace(lat, lon);   // mar abierto, campo: el núcleo habitado más cercano

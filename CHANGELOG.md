@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.5.5
+- Lugares: vuelve la localidad (Zahara de los Atunes, no el municipio Barbate). Las aldeas no se usan: si el sitio es solo una aldea, sale la localidad o municipio al que pertenece (Estepona, no Voladilla). La provincia (Cádiz…) sale también en equipos sin Geocoder, como la Fire TV. Los nombres guardados se recalculan solos.
+- Pantalla principal: «Cerrar pase: 10 min» (antes «Cerrar el pase tras»).
+
 ## 6.5.4
 - Mosaicos: los botones son los mismos en todos los álbumes (se quitan «Pase con música» de Todas y «Recargar» de los álbumes) y se reparten solos todo el ancho, hasta donde acaba la última foto de la primera fila.
 
