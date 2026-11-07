@@ -1,6 +1,6 @@
 {
-  "version": "6.5.1",
+  "version": "6.5.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 823702,
-  "notes": "- Ficha de la foto: los botones van de dos en dos (dos filas de dos bajo Información y otras dos bajo el mapa)."
+  "notes": "- Ficha de la foto: las dos mitades (información y mapa) miden lo mismo y los cuatro botones de cada fila tienen el mismo ancho y la misma separación. Acercar y Alejar pasan a ser dos botones cuadrados «+» y «−» en la esquina inferior izquierda del mapa."
 }

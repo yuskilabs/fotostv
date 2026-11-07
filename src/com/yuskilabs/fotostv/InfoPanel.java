@@ -85,7 +85,7 @@ class InfoPanel extends FrameLayout {
         } else {
             left.addView(text("Pulsa cualquier botón para volver", 12, 0xFF7C93AD));
         }
-        main.addView(left, new LinearLayout.LayoutParams(0, -1, 0.45f));
+        main.addView(left, new LinearLayout.LayoutParams(0, -1, 0.5f));
 
         LinearLayout right = new LinearLayout(c);
         right.setOrientation(LinearLayout.VERTICAL);
@@ -102,8 +102,8 @@ class InfoPanel extends FrameLayout {
             rightBtns.setPadding(0, dp(6), 0, 0);
             right.addView(rightBtns, new LinearLayout.LayoutParams(-1, -2));
         }
-        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(0, -1, 0.55f);
-        mp.setMargins(dp(32), 0, 0, 0);
+        LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(0, -1, 0.5f);
+        mp.setMargins(dp(5), 0, 0, 0);
         main.addView(right, mp);
 
         // lo que ya se sabe sin descargar nada
@@ -340,17 +340,29 @@ class InfoPanel extends FrameLayout {
         }
         LinearLayout z = new LinearLayout(getContext());
         z.setOrientation(LinearLayout.HORIZONTAL);
-        zin = barBtn("Acercar", 0, new View.OnClickListener() { public void onClick(View v) { if (map != null) map.zoomBy(1); } });
-        zout = barBtn("Alejar", 0, new View.OnClickListener() { public void onClick(View v) { if (map != null) map.zoomBy(-1); } });
-        zin.setGravity(Gravity.CENTER);
-        zout.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams zp = new LinearLayout.LayoutParams(dp(110), -2);
-        zp.setMargins(dp(4), 0, 0, 0);
-        z.addView(zin, new LinearLayout.LayoutParams(dp(110), -2));
+        zin = zoomBtn("+", new View.OnClickListener() { public void onClick(View v) { if (map != null) map.zoomBy(1); } });
+        zout = zoomBtn("\u2212", new View.OnClickListener() { public void onClick(View v) { if (map != null) map.zoomBy(-1); } });
+        z.addView(zin, new LinearLayout.LayoutParams(dp(46), dp(46)));
+        LinearLayout.LayoutParams zp = new LinearLayout.LayoutParams(dp(46), dp(46));
+        zp.setMargins(dp(5), 0, 0, 0);
         z.addView(zout, zp);
-        FrameLayout.LayoutParams fz = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
-        fz.setMargins(0, 0, dp(8), dp(22));
+        FrameLayout.LayoutParams fz = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.START);
+        fz.setMargins(dp(8), 0, 0, dp(8));
         mapBox.addView(z, fz);
+    }
+
+    /** Botón cuadrado de zoom con un solo signo. */
+    private android.widget.Button zoomBtn(String t, View.OnClickListener l) {
+        android.widget.Button b = Ui.button(getContext(), t, l);
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
+        b.setGravity(Gravity.CENTER);
+        b.setIncludeFontPadding(false);
+        b.setMinWidth(0);
+        b.setMinimumWidth(0);
+        b.setMinHeight(0);
+        b.setMinimumHeight(0);
+        b.setPadding(0, 0, 0, 0);
+        return b;
     }
 
     private void mapMessage(String msg) {

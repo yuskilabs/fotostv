@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.5.2
+- Ficha de la foto: las dos mitades (información y mapa) miden lo mismo y los cuatro botones de cada fila tienen el mismo ancho y la misma separación. Acercar y Alejar pasan a ser dos botones cuadrados «+» y «−» en la esquina inferior izquierda del mapa.
+
 ## 6.5.1
 - Ficha de la foto: los botones van de dos en dos (dos filas de dos bajo Información y otras dos bajo el mapa).
 
