@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.5.1
+- Ficha de la foto: los botones van de dos en dos (dos filas de dos bajo Información y otras dos bajo el mapa).
+
 ## 6.5
 - Ficha de la foto: botones en dos columnas (debajo de Información: Ir al álbum, Pase de este álbum, Favoritos, Ocultar; debajo del mapa: Más de la localidad, de la provincia/isla/país o de la zona de 1 km, Más de este día, Recargar lugar), con el mismo estilo que Ajustes. El mapa se maneja con el mando y lleva Acercar y Alejar.
 - Todos los álbumes se abren con «Recientes primero» por defecto.

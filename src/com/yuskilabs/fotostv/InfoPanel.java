@@ -139,10 +139,24 @@ class InfoPanel extends FrameLayout {
         b.setCompoundDrawablePadding(dp(10));
     }
 
+    /** Los botones van de dos en dos: cada fila tiene dos botones del mismo ancho. */
     private void addBtn(LinearLayout col, android.widget.Button b) {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-        lp.setMargins(0, 0, 0, dp(5));
-        col.addView(b, lp);
+        LinearLayout row = null;
+        int n = col.getChildCount();
+        if (n > 0) {
+            LinearLayout last = (LinearLayout) col.getChildAt(n - 1);
+            if (last.getChildCount() < 2) row = last;
+        }
+        if (row == null) {
+            row = new LinearLayout(getContext());
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2);
+            rp.setMargins(0, 0, 0, dp(5));
+            col.addView(row, rp);
+        }
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1f);
+        if (row.getChildCount() == 1) lp.setMargins(dp(5), 0, 0, 0);
+        row.addView(b, lp);
     }
 
     /** Debajo de «Información»: ir al álbum, pase de este álbum, favoritos y ocultar. */
