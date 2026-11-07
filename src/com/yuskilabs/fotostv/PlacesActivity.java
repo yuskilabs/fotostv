@@ -31,9 +31,17 @@ public class PlacesActivity extends Activity {
     private HashMap<String, Integer> counts = new HashMap<String, Integer>();
     private int pending;      // fotos con ubicación pero aún sin nombre de lugar
     private String region;    // null = nivel de regiones
+    private java.util.HashSet<String> scope;   // si no es null: solo las fotos de un álbum
+    private String scopeTitle;
+    private List<String[]> srows;              // fotos del álbum con ubicación (modo álbum)
+    private boolean single;                    // modo álbum con un solo sitio: la lista sale ya desglosada
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        scope = Session.mapScope;
+        scopeTitle = Session.mapTitle;
+        Session.mapScope = null;
+        Session.mapTitle = null;
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(0xFF0B1622);
@@ -65,7 +73,7 @@ public class PlacesActivity extends Activity {
         map.setPick(new MapView.Pick() {
             public void box(double a, double b2, double c, double d) {
                 fromMap = true;
-                Nav.openMosaic(PlacesActivity.this, "Zona del mapa", null, false, new double[] { a, b2, c, d });
+                Nav.openMosaic(PlacesActivity.this, "Zona del mapa", null, false, new double[] { a, b2, c, d }, scope);
             }
         });
         right.addView(map, new LinearLayout.LayoutParams(-1, 0, 1f));
@@ -101,9 +109,28 @@ public class PlacesActivity extends Activity {
         new Thread(new Runnable() {
             public void run() {
                 GeoIndex g = GeoIndex.get(PlacesActivity.this);
-                final HashMap<String, Integer> c = g.placeCounts();
-                final int pend = g.count(" WHERE st=1 AND place IS NULL");
-                final List<double[]> pts = g.heat();
+                final HashMap<String, Integer> c;
+                final int pend;
+                final List<double[]> pts;
+                if (scope == null) {
+                    c = g.placeCounts();
+                    pend = g.count(" WHERE st=1 AND place IS NULL");
+                    pts = g.heat();
+                } else {
+                    srows = g.rowsOf(scope);
+                    c = new HashMap<String, Integer>();
+                    int pn = 0;
+                    HashMap<String, double[]> cells = new HashMap<String, double[]>();
+                    for (String[] r : srows) {
+                        if (r[3] != null) { Integer o = c.get(r[3]); c.put(r[3], o == null ? 1 : o + 1); } else pn++;
+                        double[] a = cells.get(r[4]);
+                        if (a == null) { a = new double[3]; cells.put(r[4], a); }
+                        a[0] += Double.parseDouble(r[1]); a[1] += Double.parseDouble(r[2]); a[2]++;
+                    }
+                    pend = pn;
+                    pts = new ArrayList<double[]>();
+                    for (double[] a : cells.values()) pts.add(new double[]{a[0] / a[2], a[1] / a[2], a[2]});
+                }
                 runOnUiThread(new Runnable() {
                     public void run() { counts = c; pending = pend; map.setPoints(pts); show(null); }
                 });
@@ -126,8 +153,8 @@ public class PlacesActivity extends Activity {
 
     private void pick(String key) {
         if (key.startsWith("R:")) show(key.substring(2));
-        else if (key.startsWith("A:")) { fromMap = false; Nav.openMosaic(this, key.substring(2), key.substring(2), true, null); }    // todo el sitio mayor
-        else if (key.startsWith("T:")) { fromMap = false; Nav.openMosaic(this, key.substring(2), key.substring(2), false, null); }
+        else if (key.startsWith("A:")) { fromMap = false; Nav.openMosaic(this, key.substring(2), key.substring(2), true, null, scope); }    // todo el sitio mayor
+        else if (key.startsWith("T:")) { fromMap = false; Nav.openMosaic(this, key.substring(2), key.substring(2), false, null, scope); }
     }
 
     /** Al moverte por la lista, el mapa se coloca sobre ese sitio. */
@@ -138,10 +165,25 @@ public class PlacesActivity extends Activity {
         final boolean reg = !k.startsWith("T:");
         new Thread(new Runnable() {
             public void run() {
-                final double[] b = GeoIndex.get(PlacesActivity.this).bbox(want, reg);
+                final double[] b = scope == null ? GeoIndex.get(PlacesActivity.this).bbox(want, reg) : scopedBox(want, reg);
                 if (b != null) runOnUiThread(new Runnable() { public void run() { map.fitBox(b); } });
             }
         }).start();
+    }
+
+    /** Rectángulo {minLat, maxLat, minLon, maxLon} de un sitio dentro del álbum. */
+    private double[] scopedBox(String want, boolean reg) {
+        double[] b = null;
+        List<String[]> l = srows;
+        if (l == null) return null;
+        for (String[] r : l) {
+            if (r[3] == null) continue;
+            if (!(r[3].equals(want) || (reg && r[3].endsWith(", " + want)))) continue;
+            double la = Double.parseDouble(r[1]), lo = Double.parseDouble(r[2]);
+            if (b == null) b = new double[]{la, la, lo, lo};
+            else { b[0] = Math.min(b[0], la); b[1] = Math.max(b[1], la); b[2] = Math.min(b[2], lo); b[3] = Math.max(b[3], lo); }
+        }
+        return b;
     }
 
     private void show(String reg) {
@@ -158,9 +200,14 @@ public class PlacesActivity extends Activity {
             all += e.getValue();
             if (reg != null && reg.equals(r)) towns.put(e.getKey(), e.getValue());
         }
+        if (scope != null && reg == null && tot.size() == 1) {   // un solo sitio: la lista sale ya desglosada
+            single = true;
+            show(tot.keySet().iterator().next());
+            return;
+        }
         String wait = pending > 0 ? " · " + num(pending) + " fotos aún sin nombre de lugar (la app los va poniendo; salen en el mapa)" : "";
         if (reg == null) {
-            title.setText("Lugares");
+            title.setText(scopeTitle != null ? "Mapa · " + scopeTitle : "Lugares");
             sub.setText(counts.isEmpty() ? "Aún no hay nombres de lugar: la app los va descubriendo en segundo plano (mira el contador en Ajustes)." + wait
                     : tot.size() + " sitios · " + num(all) + " fotos con lugar" + wait);
             List<Map.Entry<String, Integer>> l = new ArrayList<Map.Entry<String, Integer>>(tot.entrySet());
@@ -205,6 +252,6 @@ public class PlacesActivity extends Activity {
 
     @Override public void onBackPressed() {
         if (map != null && map.hasFocus()) { list.requestFocus(); return; }
-        if (region != null) show(null); else super.onBackPressed();
+        if (region != null && !single) show(null); else super.onBackPressed();
     }
 }

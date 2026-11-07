@@ -14,6 +14,8 @@ class Session {
     static int music;                 // 0 = según los ajustes, 1 = con música aunque esté desactivada (menú «Pase con música»)
     static String gotoUrl, gotoKey;   // «Ir al álbum» desde la ficha: álbum y foto donde abrir el explorador
     static List<Item> placeItems;     // fotos de un lugar/zona para el mosaico de lugar
+    static java.util.HashSet<String> mapScope;   // «Mapa» de un álbum: solo las fotos de ese álbum (se lee y se borra al abrir Lugares)
+    static String mapTitle;
     static String placeTitle;         // nombre del lugar
     static String lastKey;            // última foto vista, para volver al mosaico en ella
 }

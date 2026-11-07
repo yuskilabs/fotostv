@@ -246,6 +246,17 @@ class GeoIndex extends SQLiteOpenHelper {
         } finally { q.close(); }
     }
 
+    /** Fotos con ubicación de un conjunto de claves: {k, lat, lon, place (o null), cell}. */
+    List<String[]> rowsOf(java.util.Set<String> scope) {
+        List<String[]> l = new ArrayList<String[]>();
+        Cursor q = getReadableDatabase().rawQuery("SELECT k, lat, lon, place, cell FROM photos WHERE st=1", null);
+        try {
+            while (q.moveToNext()) if (scope.contains(q.getString(0)))
+                l.add(new String[]{q.getString(0), q.getString(1), q.getString(2), q.getString(3), q.getString(4)});
+        } finally { q.close(); }
+        return l;
+    }
+
     /** Puntos del mapa de calor: {lat, lon, nº de fotos} por casilla de 0,01°. */
     List<double[]> heat() {
         List<double[]> l = new ArrayList<double[]>();

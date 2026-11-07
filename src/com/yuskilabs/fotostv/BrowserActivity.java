@@ -194,6 +194,49 @@ public class BrowserActivity extends Activity {
         return head;
     }
 
+    /** Icono «Mapa» arriba a la derecha: lugares y mapa de calor de las fotos de este álbum. */
+    private View mapButton() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setGravity(Gravity.CENTER_HORIZONTAL);
+        box.setFocusable(true);
+        box.setClickable(true);
+        int pd = Ui.dp(this, 4);
+        box.setPadding(Ui.dp(this, 10), pd, Ui.dp(this, 10), pd);
+        android.graphics.drawable.StateListDrawable sl = new android.graphics.drawable.StateListDrawable();
+        GradientDrawable on = new GradientDrawable();
+        on.setColor(0xFF3D8BFD);
+        on.setCornerRadius(Ui.dp(this, 8));
+        sl.addState(new int[]{android.R.attr.state_focused}, on);
+        box.setBackground(sl);
+        ImageView ic = new ImageView(this);
+        ic.setImageResource(R.drawable.ic_map);
+        box.addView(ic, new LinearLayout.LayoutParams(Ui.dp(this, 26), Ui.dp(this, 26)));
+        TextView lb = text("Mapa", 12, Color.WHITE);
+        lb.setPadding(0, 0, 0, 0);
+        lb.setGravity(Gravity.CENTER);
+        box.addView(lb);
+        box.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (current == null) return;
+                java.util.HashSet<String> ks = new java.util.HashSet<String>();
+                for (Item it : current.items) ks.add(it.key());
+                Session.mapScope = ks;
+                Session.mapTitle = current.title;
+                startActivity(new Intent(BrowserActivity.this, PlacesActivity.class));
+            }
+        });
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
+        lp.setMargins(0, 0, 0, 0);
+        View sp = new View(this);
+        LinearLayout wrap = new LinearLayout(this);
+        wrap.setOrientation(LinearLayout.HORIZONTAL);
+        wrap.setGravity(Gravity.END);
+        wrap.addView(box, lp);
+        wrap.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
+        return wrap;
+    }
+
     private LinearLayout.LayoutParams headParams() {
         LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, Ui.dp(this, 56));
         hp.setMargins(margin, Ui.dp(this, 10), margin, 0);
@@ -994,6 +1037,7 @@ public class BrowserActivity extends Activity {
         countView.setSingleLine(true);
         head.addView(countView);
         updateCount();
+        if (current.kind == 0 && !placeMode) head.addView(mapButton());
         col.addView(head, headParams());
 
         LinearLayout row = new LinearLayout(this);

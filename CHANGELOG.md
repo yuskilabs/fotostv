@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.7
+- Mapa de un álbum: icono «Mapa» arriba a la derecha del mosaico de cada álbum. Abre la pantalla de Lugares (lista y mapa de calor, con las mismas funciones) solo con las fotos de ese álbum. Si el álbum tiene un único sitio, la lista sale ya desglosada.
+
 ## 6.6.1
 - Portadas: el icono pequeño sale en la foto que es portada, dentro del mosaico del álbum (y no en la miniatura del álbum).
 

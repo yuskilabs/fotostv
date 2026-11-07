@@ -49,6 +49,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Nombres de lugar**: se usa la **localidad**, no la aldea ni el barrio; si solo hay aldea, la localidad o municipio al que pertenece (Estepona y no Voladilla). En España sale «Municipio, Provincia» (o «Municipio, Isla» en Baleares y Canarias; solo la ciudad si es capital) y en el extranjero «Ciudad, País», en castellano y con letras latinas. Las zonas con más fotos se nombran primero y las que no consiguen nombre tras varios intentos quedan como «Sin nombre».
 - **Pantalla Lugares**: lista a la izquierda (países, provincias e islas con su número de fotos; al elegir uno, sus localidades) y **mapa de calor** a la derecha. Al moverte por la lista, el mapa te lleva a ese sitio.
 - **Mapa**: flechas para mover, OK para ver las fotos de la mira (o acercar), Play acerca, Pausa aleja.
+- **Mapa de un álbum**: el icono «Mapa» de la esquina superior derecha del mosaico abre Lugares con solo las fotos de ese álbum (si hay un único sitio, la lista sale ya desglosada).
 - **Mosaico de lugar**: al elegir una localidad, una zona del mapa o «Todas las fotos de…», se abre un mosaico como el de un álbum (con pase, orden y formato). Atrás vuelve a Lugares.
 - **Revisar ubicaciones** (Ajustes, menú largo de un álbum o de una foto): vuelve a mirar solo lo pendiente. Pulsación larga sobre el contador: rehacer los nombres.
 

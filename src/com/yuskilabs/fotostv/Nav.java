@@ -121,12 +121,20 @@ class Nav {
     }
 
     /** Abre el mosaico (como un álbum) con las fotos de un lugar, o de un rectángulo del mapa si box != null. */
-    static void openMosaic(final Context ctx, final String title, final String want, final boolean region, final double[] box) {
+    static void openMosaic(Context ctx, String title, String want, boolean region, double[] box) {
+        openMosaic(ctx, title, want, region, box, null);
+    }
+
+    /** Con «scope», solo las fotos de ese conjunto de claves (el «Mapa» de un álbum). */
+    static void openMosaic(final Context ctx, final String title, final String want, final boolean region, final double[] box,
+                           final java.util.Set<String> scope) {
         new Thread(new Runnable() {
             public void run() {
-                final List<Item> list = box != null
-                        ? GeoIndex.itemsOf(ctx, GeoIndex.get(ctx).keysIn(box[0], box[1], box[2], box[3]))
-                        : GeoIndex.items(ctx, want, region);
+                java.util.HashSet<String> ks = box != null
+                        ? GeoIndex.get(ctx).keysIn(box[0], box[1], box[2], box[3])
+                        : GeoIndex.get(ctx).keysAt(want, region);
+                if (scope != null) ks.retainAll(scope);
+                final List<Item> list = GeoIndex.itemsOf(ctx, ks);
                 ui.post(new Runnable() {
                     public void run() {
                         if (list == null || list.isEmpty()) {

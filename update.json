@@ -1,6 +1,6 @@
 {
-  "version": "6.6.1",
+  "version": "6.7",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 823702,
-  "notes": "- Portadas: el icono pequeño sale en la foto que es portada, dentro del mosaico del álbum (y no en la miniatura del álbum)."
+  "size": 823771,
+  "notes": "- Mapa de un álbum: icono «Mapa» arriba a la derecha del mosaico de cada álbum. Abre la pantalla de Lugares (lista y mapa de calor, con las mismas funciones) solo con las fotos de ese álbum. Si el álbum tiene un único sitio, la lista sale ya desglosada."
 }
