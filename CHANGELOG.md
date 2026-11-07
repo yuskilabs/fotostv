@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.5.6
+- Lugares: la localidad la decide OpenStreetMap y no el Geocoder del equipo (que daba el municipio: Barbate en vez de Zahara de los Atunes, o aldeas como Resinera Voladilla). Si el sitio es solo una aldea, sale el municipio (Estepona). Mismo resultado en Shield y Fire TV. Los nombres guardados se recalculan solos.
+
 ## 6.5.5
 - Lugares: vuelve la localidad (Zahara de los Atunes, no el municipio Barbate). Las aldeas no se usan: si el sitio es solo una aldea, sale la localidad o municipio al que pertenece (Estepona, no Voladilla). La provincia (Cádiz…) sale también en equipos sin Geocoder, como la Fire TV. Los nombres guardados se recalculan solos.
 - Pantalla principal: «Cerrar pase: 10 min» (antes «Cerrar el pase tras»).

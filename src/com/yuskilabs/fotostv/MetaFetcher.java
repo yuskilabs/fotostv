@@ -486,7 +486,7 @@ class MetaFetcher {
         boolean es = cc != null && "ES".equalsIgnoreCase(cc);
         // OpenStreetMap (detalle de localidad): país, provincia y localidad aunque el equipo no tenga Geocoder (Fire TV)
         String q14 = null, hamlet = null;
-        if (cc == null || loc == null || (es && rgEs == null)) {
+        {
             JSONObject a = osm(lat, lon, 14);
             if (a != null) {
                 String ncc = a.optString("country_code", "");
@@ -499,23 +499,28 @@ class MetaFetcher {
                 if (region == null) region = firstLatin(a.optString("state", null));
             }
         }
-        // la localidad, nunca la aldea: si solo hay aldea, el municipio al que pertenece
-        town = loc != null ? loc : q14;
+        // la localidad (la que dice OpenStreetMap, no la del Geocoder: ese da el municipio, p. ej. Barbate para Zahara),
+        // nunca la aldea: si solo hay aldea, el municipio al que pertenece
+        town = q14;
         if (!es) {
             // fuera de España: la ciudad (no el barrio ni el distrito), con el nombre en castellano si OpenStreetMap lo tiene
+            town = loc != null ? loc : q14;
+            try { Thread.sleep(1100); } catch (InterruptedException ignored) { }
             JSONObject a10 = osm(lat, lon, 10);
             if (a10 != null) {
                 String q = firstLatin(a10.optString("city", null), a10.optString("town", null), a10.optString("village", null),
                         a10.optString("municipality", null));
                 if (q != null && !distrito(q)) town = q;
             }
-        } else if (town == null || (hamlet != null && q14 == null && hamlet.equalsIgnoreCase(town))) {
+        } else if (town == null) {
+            try { Thread.sleep(1100); } catch (InterruptedException ignored) { }
             JSONObject a10 = osm(lat, lon, 10);
             if (a10 != null) {
                 String q = firstLatin(a10.optString("city", null), a10.optString("town", null), a10.optString("village", null),
                         a10.optString("municipality", null));
                 if (q != null && !distrito(q)) town = q;
             }
+            if (town == null && loc != null && (hamlet == null || !hamlet.equalsIgnoreCase(loc))) town = loc;
         }
         if (town == null) town = nearestPlace(lat, lon);   // mar abierto, campo: el núcleo habitado más cercano
         if (town == null) town = sub != null ? sub : subAdm;

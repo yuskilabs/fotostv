@@ -1,6 +1,6 @@
 {
-  "version": "6.5.5",
+  "version": "6.5.6",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 823702,
-  "notes": "- Lugares: vuelve la localidad (Zahara de los Atunes, no el municipio Barbate). Las aldeas no se usan: si el sitio es solo una aldea, sale la localidad o municipio al que pertenece (Estepona, no Voladilla). La provincia (Cádiz…) sale también en equipos sin Geocoder, como la Fire TV. Los nombres guardados se recalculan solos.\n- Pantalla principal: «Cerrar pase: 10 min» (antes «Cerrar el pase tras»)."
+  "notes": "- Lugares: la localidad la decide OpenStreetMap y no el Geocoder del equipo (que daba el municipio: Barbate en vez de Zahara de los Atunes, o aldeas como Resinera Voladilla). Si el sitio es solo una aldea, sale el municipio (Estepona). Mismo resultado en Shield y Fire TV. Los nombres guardados se recalculan solos."
 }

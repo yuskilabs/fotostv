@@ -40,10 +40,10 @@ public class App extends Application {
                         ed.putString("geoPamukkale", "1").apply();
                         try { GeoIndex.get(App.this).getWritableDatabase().execSQL("UPDATE photos SET place=NULL WHERE place LIKE '%Denizli%'"); } catch (Throwable ignored) { }
                     }
-                    if (!"1".equals(m.getString("geoLocalidad", ""))) {   // nombres por municipio (Estepona y no Voladilla)
+                    if (!"1".equals(m.getString("geoLocalidad2", ""))) {   // nombres por municipio (Estepona y no Voladilla)
                         android.content.SharedPreferences.Editor ed = m.edit();
                         for (String key : new java.util.ArrayList<String>(m.getAll().keySet())) if (key.startsWith("p8_")) ed.remove(key);
-                        ed.putString("geoLocalidad", "1").apply();
+                        ed.putString("geoLocalidad2", "1").apply();
                         try { GeoIndex.get(App.this).getWritableDatabase().execSQL("UPDATE photos SET place=NULL"); } catch (Throwable ignored) { }
                     }
                     GeoService.start(App.this);
