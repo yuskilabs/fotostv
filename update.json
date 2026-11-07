@@ -1,6 +1,6 @@
 {
-  "version": "6.5.2",
+  "version": "6.5.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 823702,
-  "notes": "- Ficha de la foto: las dos mitades (información y mapa) miden lo mismo y los cuatro botones de cada fila tienen el mismo ancho y la misma separación. Acercar y Alejar pasan a ser dos botones cuadrados «+» y «−» en la esquina inferior izquierda del mapa."
+  "notes": "- Ficha de la foto: los ocho botones tienen la misma altura (caben dos líneas) y «Más de la zona» ya no lleva «(radio de 1 km)». Los iconos de la ficha y de los botones de los mosaicos tienen el mismo tamaño que en la pantalla principal y en Ajustes."
 }

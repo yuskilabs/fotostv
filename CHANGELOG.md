@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.5.3
+- Ficha de la foto: los ocho botones tienen la misma altura (caben dos líneas) y «Más de la zona» ya no lleva «(radio de 1 km)». Los iconos de la ficha y de los botones de los mosaicos tienen el mismo tamaño que en la pantalla principal y en Ajustes.
+
 ## 6.5.2
 - Ficha de la foto: las dos mitades (información y mapa) miden lo mismo y los cuatro botones de cada fila tienen el mismo ancho y la misma separación. Acercar y Alejar pasan a ser dos botones cuadrados «+» y «−» en la esquina inferior izquierda del mapa.
 

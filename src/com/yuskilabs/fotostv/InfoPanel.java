@@ -131,13 +131,8 @@ class InfoPanel extends FrameLayout {
         return b;
     }
 
-    private void setIcon(android.widget.Button b, int icon) {
-        android.graphics.drawable.Drawable d = getContext().getResources().getDrawable(icon);
-        int sz = (int) (b.getTextSize() * 1.2f);
-        d.setBounds(0, 0, sz, sz);
-        b.setCompoundDrawables(d, null, null, null);
-        b.setCompoundDrawablePadding(dp(10));
-    }
+    /** Mismo icono y tamaño que en la pantalla principal y en Ajustes. */
+    private void setIcon(android.widget.Button b, int icon) { Ui.icon(b, icon); }
 
     /** Los botones van de dos en dos: cada fila tiene dos botones del mismo ancho. */
     private void addBtn(LinearLayout col, android.widget.Button b) {
@@ -150,8 +145,9 @@ class InfoPanel extends FrameLayout {
         if (row == null) {
             row = new LinearLayout(getContext());
             row.setOrientation(LinearLayout.HORIZONTAL);
-            LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2);
+            LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, dp(56));
             rp.setMargins(0, 0, 0, dp(5));
+            rp.height = dp(56);   // misma altura en los ocho: caben dos líneas
             col.addView(row, rp);
         }
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1f);
@@ -210,7 +206,7 @@ class InfoPanel extends FrameLayout {
                 }));
             } else {
                 // ciudad o sitio sin provincia: la zona (1 km) y el sitio entero
-                if (!Double.isNaN(lat)) addBtn(rightBtns, barBtn("Más de la zona (radio de 1 km)", R.drawable.ic_place, new View.OnClickListener() {
+                if (!Double.isNaN(lat)) addBtn(rightBtns, barBtn("Más de la zona", R.drawable.ic_place, new View.OnClickListener() {
                     public void onClick(View v) { Nav.runZone(c, item, lat, lon, 1.0); }
                 }));
                 addBtn(rightBtns, barBtn("Más de " + pl, R.drawable.ic_place, new View.OnClickListener() {

@@ -119,7 +119,7 @@ public class BrowserActivity extends Activity {
 
     private android.widget.Button sbtn(String label, int icon, View.OnClickListener l) {
         android.widget.Button b = Ui.button(this, label, l);
-        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         if (icon != 0) Ui.icon(b, icon);
         b.setPadding(Ui.dp(this, 9), Ui.dp(this, 6), Ui.dp(this, 9), Ui.dp(this, 6));
         b.setMinHeight(0); b.setMinimumHeight(0); b.setMinWidth(0); b.setMinimumWidth(0);
