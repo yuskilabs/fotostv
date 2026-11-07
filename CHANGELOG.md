@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.6.1
+- Portadas: el icono pequeño sale en la foto que es portada, dentro del mosaico del álbum (y no en la miniatura del álbum).
+
 ## 6.6
 - Portadas: con pulsación larga sobre una foto de un álbum, «Fijar como portada». La portada fijada se guarda, ya no cambia al azar y su miniatura lleva un icono. Con pulsación larga sobre el álbum, «Quitar portada» vuelve a la portada aleatoria. Sin portada fijada, los álbumes siguen con una al azar.
 - Lugares: Zahara de los Atunes y Atlanterra aparecían como Barbate; corregido solo para esa zona. Los nombres guardados se recalculan solos.

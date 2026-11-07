@@ -1,6 +1,6 @@
 {
-  "version": "6.6",
+  "version": "6.6.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 823702,
-  "notes": "- Portadas: con pulsación larga sobre una foto de un álbum, «Fijar como portada». La portada fijada se guarda, ya no cambia al azar y su miniatura lleva un icono. Con pulsación larga sobre el álbum, «Quitar portada» vuelve a la portada aleatoria. Sin portada fijada, los álbumes siguen con una al azar.\n- Lugares: Zahara de los Atunes y Atlanterra aparecían como Barbate; corregido solo para esa zona. Los nombres guardados se recalculan solos."
+  "notes": "- Portadas: el icono pequeño sale en la foto que es portada, dentro del mosaico del álbum (y no en la miniatura del álbum)."
 }

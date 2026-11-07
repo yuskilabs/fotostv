@@ -1178,6 +1178,7 @@ public class BrowserActivity extends Activity {
                         Prefs.sp(BrowserActivity.this).edit().putString("cover_" + current.url, it.key()).commit();
                         current.cover = it;
                         current.coverPinned = true;
+                        if (photoGrid != null) ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
                         showToast("Portada del álbum fijada.");
                     } else {
                         Prefs.toggleFav(BrowserActivity.this, it.key());
@@ -1478,7 +1479,6 @@ public class BrowserActivity extends Activity {
                 t.count.setText(e.items.size() + " elementos" + (off ? " \u00B7 oculto en el salvapantallas" : ""));
                 t.count.setTextColor(off ? 0xFFFFB454 : 0xFFD0DBE8);
             }
-            if (t.pin != null) t.pin.setVisibility(e.kind == 0 && e.coverPinned ? View.VISIBLE : View.GONE);
             if (e.items.isEmpty()) thumbs.clearView(t.img);
             else if (e.kind == 3) thumbs.loadBlur(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));
             else thumbs.load(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));
@@ -1511,19 +1511,6 @@ public class BrowserActivity extends Activity {
         box.addView(t.name);
         box.addView(t.count);
         t.addView(box, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
-        t.pin = new ImageView(this);
-        t.pin.setImageResource(R.drawable.ic_photo);
-        t.pin.setColorFilter(Color.WHITE);
-        GradientDrawable pbg = new GradientDrawable();
-        pbg.setShape(GradientDrawable.OVAL);
-        pbg.setColor(0xB3000000);
-        t.pin.setBackground(pbg);
-        int pp = Ui.dp(this, 5);
-        t.pin.setPadding(pp, pp, pp, pp);
-        FrameLayout.LayoutParams pl = new FrameLayout.LayoutParams(Ui.dp(this, 28), Ui.dp(this, 28), Gravity.TOP | Gravity.END);
-        pl.setMargins(0, Ui.dp(this, 8), Ui.dp(this, 8), 0);
-        t.addView(t.pin, pl);
-        t.pin.setVisibility(View.GONE);
         return t;
     }
 
@@ -1539,6 +1526,7 @@ public class BrowserActivity extends Activity {
             t.img.setScaleType(crop ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
             thumbs.load(t.img, it.url, r32(photoTile), r32(photoTileH), crop);
             t.fav.setVisibility(favSet.contains(it.key()) ? View.VISIBLE : View.GONE);
+            t.pin.setVisibility(current.kind == 0 && current.coverPinned && current.cover == it ? View.VISIBLE : View.GONE);
             boolean on = pSel && pKeys.contains(it.key());
             t.setAlpha(pSel && !on ? 0.5f : 1f);
             t.setForeground(on ? selFrame() : null);
@@ -1598,6 +1586,19 @@ public class BrowserActivity extends Activity {
         fp.setMargins(0, Ui.dp(this, 6), Ui.dp(this, 6), 0);
         t.addView(t.fav, fp);
         t.fav.setVisibility(View.GONE);
+        t.pin = new ImageView(this);
+        t.pin.setImageResource(R.drawable.ic_photo);
+        t.pin.setColorFilter(Color.WHITE);
+        GradientDrawable pbg = new GradientDrawable();
+        pbg.setShape(GradientDrawable.OVAL);
+        pbg.setColor(0xB3000000);
+        t.pin.setBackground(pbg);
+        int pp = Ui.dp(this, 5);
+        t.pin.setPadding(pp, pp, pp, pp);
+        FrameLayout.LayoutParams pl = new FrameLayout.LayoutParams(Ui.dp(this, 28), Ui.dp(this, 28), Gravity.TOP | Gravity.START);
+        pl.setMargins(Ui.dp(this, 6), Ui.dp(this, 6), 0, 0);
+        t.addView(t.pin, pl);
+        t.pin.setVisibility(View.GONE);
         return t;
     }
 
