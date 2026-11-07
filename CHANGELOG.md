@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.6
+- Portadas: con pulsación larga sobre una foto de un álbum, «Fijar como portada». La portada fijada se guarda, ya no cambia al azar y su miniatura lleva un icono. Con pulsación larga sobre el álbum, «Quitar portada» vuelve a la portada aleatoria. Sin portada fijada, los álbumes siguen con una al azar.
+- Lugares: Zahara de los Atunes y Atlanterra aparecían como Barbate; corregido solo para esa zona. Los nombres guardados se recalculan solos.
+
 ## 6.5.6
 - Lugares: la localidad la decide OpenStreetMap y no el Geocoder del equipo (que daba el municipio: Barbate en vez de Zahara de los Atunes, o aldeas como Resinera Voladilla). Si el sitio es solo una aldea, sale el municipio (Estepona). Mismo resultado en Shield y Fire TV. Los nombres guardados se recalculan solos.
 

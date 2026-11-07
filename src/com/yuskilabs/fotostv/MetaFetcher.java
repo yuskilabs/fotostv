@@ -522,6 +522,8 @@ class MetaFetcher {
             }
             if (town == null && loc != null && (hamlet == null || !hamlet.equalsIgnoreCase(loc))) town = loc;
         }
+        // Zahara de los Atunes y Atlanterra (pedanía de Barbate): OpenStreetMap las da como Barbate
+        if (town != null && town.equalsIgnoreCase("Barbate") && lat > 36.08 && lat < 36.165 && lon > -5.885 && lon < -5.78) town = "Zahara de los Atunes";
         if (town == null) town = nearestPlace(lat, lon);   // mar abierto, campo: el núcleo habitado más cercano
         if (town == null) town = sub != null ? sub : subAdm;
         boolean complete = town != null;
