@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.5.4
+- Mosaicos: los botones son los mismos en todos los álbumes (se quitan «Pase con música» de Todas y «Recargar» de los álbumes) y se reparten solos todo el ancho, hasta donde acaba la última foto de la primera fila.
+
 ## 6.5.3
 - Ficha de la foto: los ocho botones tienen la misma altura (caben dos líneas) y «Más de la zona» ya no lleva «(radio de 1 km)». Los iconos de la ficha y de los botones de los mosaicos tienen el mismo tamaño que en la pantalla principal y en Ajustes.
 

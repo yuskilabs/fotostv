@@ -91,7 +91,7 @@ public class BrowserActivity extends Activity {
     private boolean destroyed, flagBusy, loaded;
     private int prefetched = -1;
     private static final int AHEAD = 150;
-    private android.widget.Button orderBtn, fitBtn, kindBtn, musicPlayBtn;
+    private android.widget.Button orderBtn, fitBtn, kindBtn;
     private TextView countView;
     private int scanGen, scanDone, scanTotal;
     private final ExecutorService scanExec = Executors.newSingleThreadExecutor();
@@ -968,10 +968,6 @@ public class BrowserActivity extends Activity {
         row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 4));
         playBtn = sbtn("Pase", R.drawable.ic_play, play());
         row.addView(playBtn);
-        if (current.kind == 1) {   // en «Todas»: pase con música, aunque en Ajustes esté apagada
-            musicPlayBtn = sbtn("Pase", R.drawable.ic_music, play(true));
-            row.addView(musicPlayBtn);
-        }
         kindBtn = sbtn(current.onlyVideos ? "Vídeos" : "Todo", current.onlyVideos ? R.drawable.ic_video : R.drawable.ic_photo,
                 new View.OnClickListener() {
             public void onClick(View v) { toggleKind(); }
@@ -1000,19 +996,6 @@ public class BrowserActivity extends Activity {
             }
         });
         row.addView(fitBtn);
-        if (current.kind == 0) {
-            reloadBtn = sbtn("Recargar", R.drawable.ic_refresh, new View.OnClickListener() {
-                public void onClick(View v) { reloadAlbum(current); }
-            });
-            android.graphics.drawable.Drawable ic = reloadBtn.getCompoundDrawables()[0];
-            if (ic != null) {
-                reloadSpin = new Spin(ic);
-                reloadSpin.setBounds(ic.getBounds());
-                reloadBtn.setCompoundDrawables(reloadSpin, null, null, null);
-            }
-            row.addView(reloadBtn);
-            if (reloading) startSpin();
-        }
         row.addView(colsControl("photo", PHOTO_COLS_RANGE, photoCols, "photoCols", false));
         refreshOrderButtons();
         if (pSel) {
@@ -1046,13 +1029,20 @@ public class BrowserActivity extends Activity {
                 public void onClick(View v) { exitPSel(); }
             }));
         }
-        android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
-        hs.setHorizontalScrollBarEnabled(false);
-        hs.setClipToPadding(false);
-        hs.addView(row);
+        // los botones se reparten todo el ancho del mosaico, ni más ni menos (hasta donde acaba la última foto de la primera fila)
+        for (int i = 0; i < row.getChildCount(); i++) {
+            View v = row.getChildAt(i);
+            if (v instanceof android.widget.Button) {
+                LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(-2, -2, 1f);
+                bl.setMargins(0, 0, Ui.dp(this, 4), 0);
+                v.setLayoutParams(bl);
+                ((android.widget.Button) v).setGravity(Gravity.CENTER);
+                ((android.widget.Button) v).setSingleLine(true);
+            }
+        }
         LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, -2);
         rp.setMargins(margin, 0, margin, 0);
-        col.addView(hs, rp);
+        col.addView(row, rp);
 
         photoGrid = makeGrid(photoCols);
         photoGrid.setAdapter(new PhotoAdapter());
