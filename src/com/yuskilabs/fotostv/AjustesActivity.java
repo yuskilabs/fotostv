@@ -197,8 +197,8 @@ public class AjustesActivity extends Activity {
         // --- presentación
         LinearLayout cp = card("Presentación", R.drawable.ic_photo);
         cp.addView(row(
-            cyc("Orden", "order", false, new String[]{"random", "norepeat", "asc", "desc"},
-                new String[]{"aleatorio", "aleatorio sin repetir", "por fecha ↑", "por fecha ↓"}, R.drawable.ic_shuffle,
+            cyc("Orden", "order", false, new String[]{"random", "norepeat", "smart", "asc", "desc"},
+                new String[]{"aleatorio", "aleatorio sin repetir", "inteligente", "por fecha ↑", "por fecha ↓"}, R.drawable.ic_shuffle,
                 new Cur() { public String get() { return Prefs.order(AjustesActivity.this); } }),
             cyc("Cambiar cada", "interval", true, new String[]{"5", "10", "30", "60", "180", "300", "600"},
                 new String[]{"5 s", "10 s", "30 s", "1 min", "3 min", "5 min", "10 min"}, R.drawable.ic_timer,

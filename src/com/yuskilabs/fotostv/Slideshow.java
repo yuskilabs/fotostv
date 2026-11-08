@@ -503,6 +503,11 @@ class Slideshow {
         }
         if (isRandom()) {
             items = new ArrayList<Item>();
+            if (smart()) {
+                items = smartList();
+                idx = -1;
+                return;
+            }
             if (noRepeat()) {
                 for (Item it : all) if (!seen.contains(it.key())) items.add(it);
             } else {
@@ -531,13 +536,36 @@ class Slideshow {
 
     private boolean isRandom() {
         String o = order();
-        return "random".equals(o) || "norepeat".equals(o);
+        return "random".equals(o) || "norepeat".equals(o) || "smart".equals(o);
     }
 
     private boolean noRepeat() { return "norepeat".equals(order()); }
 
+    private boolean smart() { return "smart".equals(order()); }
+
+    /** Orden inteligente: al azar, pero las que ya han salido tienen pocas probabilidades de salir antes que las que no. Cuando han salido todas, se empieza de cero. */
+    private List<Item> smartList() {
+        if (seen == null) seen = Prefs.seen(ctx);
+        boolean unseen = false;
+        for (Item it : all) if (!seen.contains(it.key())) { unseen = true; break; }
+        if (!unseen) { seen.clear(); Prefs.saveSeen(ctx, seen); }
+        final java.util.Map<Item, Double> k = new java.util.IdentityHashMap<Item, Double>();
+        java.util.Random r = new java.util.Random();
+        for (Item it : all) {
+            double w = seen.contains(it.key()) ? 0.05 : 1.0;
+            k.put(it, Math.pow(r.nextDouble(), 1.0 / w));
+        }
+        List<Item> l = new ArrayList<Item>(all);
+        Collections.sort(l, new Comparator<Item>() {
+            public int compare(Item a, Item b) { return Double.compare(k.get(b), k.get(a)); }
+        });
+        if (l.size() > 1 && cur != null && l.get(0).key().equals(cur.item.key())) Collections.swap(l, 0, l.size() - 1);
+        return l;
+    }
+
     /** Empieza una vuelta nueva con todas las fotos barajadas. */
     private void newRound() {
+        if (smart()) { items = smartList(); return; }
         if (noRepeat()) {
             seen.clear();
             Prefs.saveSeen(ctx, seen);
@@ -568,7 +596,7 @@ class Slideshow {
             return;
         }
         if (seen == null) seen = Prefs.seen(ctx);
-        if (noRepeat() && seen.add(it.key())) Prefs.saveSeen(ctx, seen);
+        if ((noRepeat() || smart()) && seen.add(it.key())) Prefs.saveSeen(ctx, seen);
         Prefs.setLastShown(ctx, it.key());
     }
 

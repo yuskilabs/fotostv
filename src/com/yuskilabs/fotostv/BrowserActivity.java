@@ -757,6 +757,87 @@ public class BrowserActivity extends Activity {
         b.setAdapter(ad, l).show();
     }
 
+    // ---- reordenar álbumes (con el mando)
+    private Entry moveEntry;
+    private List<Entry> moveBackup;
+
+    private void startMove(Entry e) {
+        if (!"manual".equals(Prefs.albumSort(this))) {
+            Prefs.sp(this).edit().putString("albumSort", "manual").commit();
+            showToast("El orden de los álbumes pasa a manual.");
+        }
+        moveEntry = e;
+        moveBackup = new ArrayList<Entry>(real);
+        showToast("Mueve el álbum con las flechas. OK: fijar la posición. Atrás: cancelar.");
+        if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
+    }
+
+    private void applyRealOrder(List<Entry> order) {
+        int off = real.isEmpty() ? entries.size() : Math.max(0, entries.indexOf(real.get(0)));
+        entries.removeAll(real);
+        real = new ArrayList<Entry>(order);
+        entries.addAll(Math.min(off, entries.size()), real);
+    }
+
+    private void moveBy(int delta) {
+        int i = real.indexOf(moveEntry);
+        if (i < 0) return;
+        int n = Math.max(0, Math.min(real.size() - 1, i + delta));
+        if (n == i) return;
+        List<Entry> l = new ArrayList<Entry>(real);
+        l.remove(i);
+        l.add(n, moveEntry);
+        applyRealOrder(l);
+        if (albumGrid != null) {
+            ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
+            albumGrid.setSelection(Math.max(0, entries.indexOf(moveEntry)));
+        }
+    }
+
+    private void endMove(boolean keep) {
+        if (keep) {
+            List<Prefs.Album> old = Prefs.albums(this), nw = new ArrayList<Prefs.Album>();
+            for (Entry x : real) for (Prefs.Album al : old) if (al.url.equals(x.url)) { nw.add(al); break; }
+            for (Prefs.Album al : old) if (!nw.contains(al)) nw.add(al);
+            Prefs.saveAlbums(this, nw);
+            showToast("Posición fijada.");
+        } else if (moveBackup != null) applyRealOrder(moveBackup);
+        moveEntry = null;
+        moveBackup = null;
+        if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
+    }
+
+    /** Cambia el nombre del álbum solo dentro de FotosTV (no toca Google Fotos). */
+    private void renameAlbum(final Entry e) {
+        final android.widget.EditText in = new android.widget.EditText(this);
+        in.setSingleLine(true);
+        in.setTextColor(Color.WHITE);
+        in.setText(e.title);
+        in.setSelection(in.getText().length());
+        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Nombre del álbum")
+            .setMessage("Solo cambia aquí, en FotosTV. Déjalo vacío para volver al nombre de Google.")
+            .setView(in)
+            .setPositiveButton("Guardar", new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    String nm = in.getText().toString().trim();
+                    List<Prefs.Album> l = Prefs.albums(BrowserActivity.this);
+                    for (Prefs.Album al : l) if (al.url.equals(e.url)) al.name = nm;
+                    Prefs.saveAlbums(BrowserActivity.this, l);
+                    String t = nm;
+                    if (t.length() == 0) {
+                        AlbumFetcher.AlbumData cd = Prefs.albumCache(BrowserActivity.this, e.url);
+                        t = cd != null && cd.title.length() > 0 ? cd.title : "Álbum";
+                    }
+                    e.title = t;
+                    for (Item it : e.src) it.album = t;
+                    if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
+                }
+            })
+            .setNegativeButton("Cancelar", null)
+            .show();
+    }
+
     private boolean albumMenu(int pos) {
         if (pos < 0 || pos >= entries.size()) return false;
         final Entry e = entries.get(pos);
@@ -771,6 +852,8 @@ public class BrowserActivity extends Activity {
             final List<Integer> ic = new ArrayList<Integer>(java.util.Arrays.asList(R.drawable.ic_check, R.drawable.ic_play, R.drawable.ic_tune,
                     R.drawable.ic_refresh, off ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_place));
             if (pinned) { lb.add("Quitar portada"); ic.add(R.drawable.ic_photo); }
+            lb.add("Reordenar álbum"); ic.add(R.drawable.ic_move);
+            lb.add("Cambiar nombre"); ic.add(R.drawable.ic_tune);
             lb.add("Borrar álbum"); ic.add(R.drawable.ic_delete);
             int[] ia = new int[ic.size()];
             for (int i = 0; i < ia.length; i++) ia[i] = ic.get(i);
@@ -790,6 +873,8 @@ public class BrowserActivity extends Activity {
                             if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
                             showToast("Portada quitada: vuelve a ser aleatoria.");
                         }
+                        else if (a.equals("Reordenar álbum")) startMove(e);
+                        else if (a.equals("Cambiar nombre")) renameAlbum(e);
                         else if (a.equals("Borrar álbum")) confirmDelete(one);
                         else hideEntries(one, off);
                     }
@@ -1299,6 +1384,18 @@ public class BrowserActivity extends Activity {
             if (e.getAction() == android.view.KeyEvent.ACTION_DOWN) { infoPanel.detach(); infoPanel = null; }
             return true;
         }
+        if (moveEntry != null && level == 0) {        // reordenando un álbum
+            int k = e.getKeyCode();
+            if (e.getAction() == android.view.KeyEvent.ACTION_DOWN) {
+                if (k == android.view.KeyEvent.KEYCODE_DPAD_LEFT) moveBy(-1);
+                else if (k == android.view.KeyEvent.KEYCODE_DPAD_RIGHT) moveBy(1);
+                else if (k == android.view.KeyEvent.KEYCODE_DPAD_UP) moveBy(-albumCols);
+                else if (k == android.view.KeyEvent.KEYCODE_DPAD_DOWN) moveBy(albumCols);
+                else if (k == android.view.KeyEvent.KEYCODE_DPAD_CENTER || k == android.view.KeyEvent.KEYCODE_ENTER) endMove(true);
+                else if (k == android.view.KeyEvent.KEYCODE_BACK || k == android.view.KeyEvent.KEYCODE_ESCAPE) endMove(false);
+            }
+            return true;
+        }
         return super.dispatchKeyEvent(e);
     }
 
@@ -1523,6 +1620,8 @@ public class BrowserActivity extends Activity {
                 t.count.setText(e.items.size() + " elementos" + (off ? " \u00B7 oculto en el salvapantallas" : ""));
                 t.count.setTextColor(off ? 0xFFFFB454 : 0xFFD0DBE8);
             }
+            t.pin.setVisibility(e == moveEntry ? View.VISIBLE : View.GONE);
+            t.setForeground(e == moveEntry ? selFrame() : null);
             if (e.items.isEmpty()) thumbs.clearView(t.img);
             else if (e.kind == 3) thumbs.loadBlur(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));
             else thumbs.load(t.img, (e.cover != null ? e.cover : e.items.get(0)).url, r32(albumTileW), r32(albumTileH));
@@ -1555,6 +1654,17 @@ public class BrowserActivity extends Activity {
         box.addView(t.name);
         box.addView(t.count);
         t.addView(box, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+        t.pin = new ImageView(this);
+        t.pin.setImageResource(R.drawable.ic_move);
+        t.pin.setColorFilter(Color.WHITE);
+        GradientDrawable mbg = new GradientDrawable();
+        mbg.setShape(GradientDrawable.OVAL);
+        mbg.setColor(0xCC3D8BFD);
+        t.pin.setBackground(mbg);
+        int mp = Ui.dp(this, 8);
+        t.pin.setPadding(mp, mp, mp, mp);
+        t.addView(t.pin, new FrameLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48), Gravity.CENTER));
+        t.pin.setVisibility(View.GONE);
         return t;
     }
 

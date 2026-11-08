@@ -19,7 +19,9 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Salvapantallas** con fotos y vídeos de uno o varios álbumes compartidos, directamente desde la nube.
 - **Explorador en la tele**: mosaico de álbumes, mosaico de fotos y pantalla completa, como una galería normal.
 - **Álbumes especiales**: **Todas** (todas las fotos de todos tus álbumes), **Favoritos** y **Ocultas** (con la miniatura difuminada).
+- **Reordenar y renombrar álbumes**: pulsación larga sobre un álbum, «Reordenar álbum» (flechas del mando, OK fija la posición) y «Cambiar nombre» (solo interno, no toca Google Fotos).
 - **Portada** de cada álbum: al azar por defecto; con pulsación larga sobre una foto, «Fijar como portada» (esa foto lleva un icono en el mosaico) y, con pulsación larga sobre el álbum, «Quitar portada».
+- **Orden inteligente** del salvapantallas (Ajustes): fotos al azar, pero las que ya han salido tienen pocas probabilidades hasta que salgan todas; luego se reinicia.
 - **Orden** de cada álbum desde su mosaico: más recientes primero (por defecto), más antiguas primero o aleatorio. El pase de un álbum respeta el orden que elijas; si no eliges ninguno, el pase va aleatorio.
 - **Pase de diapositivas** desde el mosaico. Los botones del mosaico son los mismos en todos los álbumes y ocupan todo el ancho.
 - **Formato** de las fotos: auto, llenar o completo, con fondo difuminado opcional en las verticales.
