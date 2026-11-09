@@ -1,6 +1,6 @@
 {
-  "version": "6.8.1",
+  "version": "6.9",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 827937,
-  "notes": "- Ajustes: el orden «aleatorio sin repetir» pasa a llamarse «sin repetir» para que quepa en el botón."
+  "notes": "- Copia de seguridad: ahora también incluye las portadas fijadas, el orden de los álbumes en el explorador, las columnas y la forma de las miniaturas, el formato de foto, la calidad de vídeo, el inicio y el cierre automático y los ajustes de Projectivy. La lista de fotos «ya vistas» de los órdenes «sin repetir» e «inteligente» no se copia a propósito."
 }

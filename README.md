@@ -67,7 +67,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 ### Configuración
 - **Pantalla Ajustes** en la tele, con tarjetas por secciones: presentación (orden, tiempo por foto, encuadre, continuar, vídeos y sonido), información en pantalla, música, vídeo, caché y fotos ocultas, ubicaciones y salvapantallas.
 - **Página web local** que sirve la propia tele, con **código QR** (con OK sobre el código se ve en grande) y PIN: añadir enlaces (uno a uno o en lote), nombre, reordenar o ocultar álbumes, quitarlos, emisora propia y copia de seguridad.
-- **Copia de seguridad**: exportar e importar, copiando y pegando o con archivo, con álbumes, ajustes, fotos ocultas, favoritas y coordenadas ya revisadas.
+- **Copia de seguridad**: exportar e importar, copiando y pegando o con archivo, con álbumes (orden, nombres y portadas), todos los ajustes, fotos ocultas, favoritas y coordenadas ya revisadas.
 - **Pulsación larga** en un álbum o foto: menú con iconos (ocultar, información, favoritos, seleccionar, revisar ubicación…).
 - **Cachés con límite** configurable, para no llenar el dispositivo.
 - **Actualización desde la propia app** (botón «Actualizar»).
@@ -157,7 +157,7 @@ Aún no está probado en todos los equipos. Projectivy decide cada cuánto cambi
 
 ### Copia de seguridad
 
-En la página web del móvil, «Exportar» copia al portapapeles (o «Exportar a archivo» guarda un archivo) con álbumes, ajustes, fotos ocultas, favoritas y coordenadas revisadas; en otro dispositivo se pega en el mismo cuadro (o se elige «Importar archivo») y se pulsa «Importar».
+En la página web del móvil, «Exportar» copia al portapapeles (o «Exportar a archivo» guarda un archivo) con álbumes (orden, nombres y portadas), todos los ajustes, fotos ocultas, favoritas y coordenadas revisadas; en otro dispositivo se pega en el mismo cuadro (o se elige «Importar archivo») y se pulsa «Importar».
 
 ### Actualizar
 

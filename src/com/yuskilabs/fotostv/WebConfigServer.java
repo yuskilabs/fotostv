@@ -274,11 +274,58 @@ class WebConfigServer extends Thread {
             org.json.JSONArray fv = new org.json.JSONArray();
             for (String k : Prefs.favs(ctx)) fv.put(k);
             o.put("favs", fv);
+            o.put("extra", exportExtra());                    // portadas, orden de álbumes, columnas, inicio/cierre automático, Projectivy…
             o.put("geo", GeoIndex.get(ctx).exportGeo());     // coordenadas ya leídas: «clave,lat,lon» por foto
             return o.toString();
         } catch (Exception e) {
             return "";
         }
+    }
+
+    private static final String[] EXTRA_KEYS = {"albumSort", "albumCols", "photoCols", "photoShape", "photoFmt", "vq",
+        "idleMin", "autoStopMin", "pv_albums", "pv_all", "pv_fit", "pv_vert", "pv_videos"};
+
+    private boolean isExtra(String k) {
+        if (k.startsWith("cover_")) return true;
+        for (String x : EXTRA_KEYS) if (x.equals(k)) return true;
+        return false;
+    }
+
+    /** Ajustes sueltos (con su tipo) y portadas fijadas. */
+    private org.json.JSONObject exportExtra() throws org.json.JSONException {
+        org.json.JSONObject x = new org.json.JSONObject();
+        for (Map.Entry<String, ?> en : Prefs.sp(ctx).getAll().entrySet()) {
+            String k = en.getKey();
+            Object v = en.getValue();
+            if (!isExtra(k) || v == null) continue;
+            org.json.JSONObject t = new org.json.JSONObject();
+            if (v instanceof Boolean) t.put("t", "b").put("v", v);
+            else if (v instanceof Integer) t.put("t", "i").put("v", v);
+            else if (v instanceof Long) t.put("t", "l").put("v", v);
+            else if (v instanceof String) t.put("t", "s").put("v", v);
+            else continue;
+            x.put(k, t);
+        }
+        return x;
+    }
+
+    private void importExtra(org.json.JSONObject x) {
+        android.content.SharedPreferences sp = Prefs.sp(ctx);
+        android.content.SharedPreferences.Editor e = sp.edit();
+        for (String k : new ArrayList<String>(sp.getAll().keySet())) if (k.startsWith("cover_")) e.remove(k);   // las portadas de la copia sustituyen a las de ahora
+        java.util.Iterator<String> it = x.keys();
+        while (it.hasNext()) {
+            String k = it.next();
+            if (!isExtra(k)) continue;
+            org.json.JSONObject t = x.optJSONObject(k);
+            if (t == null) continue;
+            String ty = t.optString("t");
+            if ("b".equals(ty)) e.putBoolean(k, t.optBoolean("v"));
+            else if ("i".equals(ty)) e.putInt(k, t.optInt("v"));
+            else if ("l".equals(ty)) e.putLong(k, t.optLong("v"));
+            else if ("s".equals(ty)) e.putString(k, t.optString("v"));
+        }
+        e.apply();
     }
 
     private String importJson(Map<String, String> f) {
@@ -316,6 +363,8 @@ class WebConfigServer extends Thread {
                 for (int i = 0; i < fv.length(); i++) fs.add(fv.getString(i));
                 Prefs.sp(ctx).edit().putStringSet("favs", fs).apply();
             }
+            org.json.JSONObject ex = o.optJSONObject("extra");
+            if (ex != null) importExtra(ex);
             int geo = GeoIndex.get(ctx).importGeo(o.optString("geo", ""));
             if (geo > 0) GeoService.start(ctx);
             if (listener != null) listener.onSaved();
@@ -458,7 +507,7 @@ class WebConfigServer extends Thread {
         sb.append("<h2>Emisora propia</h2><p class='muted'>La música (apagada, radio o carpeta, volumen…) se elige en la tele, en Ajustes. Aquí solo hace falta pegar la dirección de una emisora que no esté en la lista.</p>")
           .append("<input name='musicRadio' type='url' placeholder='https://… (dirección de la emisora)' value='")
           .append(esc(customRadio(ctx))).append("'>");
-        sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes, ajustes, favoritas y ubicaciones ya revisadas a otro dispositivo: pulsa «Exportar» (se copia solo al portapapeles), y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya). También puedes «Exportar a archivo» e «Importar archivo».</p>")
+        sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes (con su orden, nombres y portadas), ajustes, favoritas y ubicaciones ya revisadas a otro dispositivo: pulsa «Exportar» (se copia solo al portapapeles), y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya). También puedes «Exportar a archivo» e «Importar archivo».</p>")
           .append("<textarea id='bk' rows='5' placeholder='Aquí aparece la copia, o pega la que quieras importar'></textarea>")
           .append("<div class='row2'><button type='button' class='sec' onclick='expBk()'>📤 Exportar</button>")
           .append("<button type='button' class='sec' onclick='impBk()'>📥 Importar</button></div>")

@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 6.9
+- Copia de seguridad: ahora también incluye las portadas fijadas, el orden de los álbumes en el explorador, las columnas y la forma de las miniaturas, el formato de foto, la calidad de vídeo, el inicio y el cierre automático y los ajustes de Projectivy. La lista de fotos «ya vistas» de los órdenes «sin repetir» e «inteligente» no se copia a propósito.
+
 ## 6.8.1
 - Ajustes: el orden «aleatorio sin repetir» pasa a llamarse «sin repetir» para que quepa en el botón.
 
