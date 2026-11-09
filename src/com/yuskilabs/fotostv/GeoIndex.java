@@ -157,6 +157,31 @@ class GeoIndex extends SQLiteOpenHelper {
         return sb.toString();
     }
 
+    /** Nombres de lugar ya calculados, uno por celda: [[celda, nombre], ...]. */
+    org.json.JSONArray exportPlaces() {
+        org.json.JSONArray a = new org.json.JSONArray();
+        Cursor q = getReadableDatabase().rawQuery("SELECT cell, place FROM photos WHERE place IS NOT NULL GROUP BY cell", null);
+        try {
+            while (q.moveToNext()) a.put(new org.json.JSONArray().put(q.getString(0)).put(q.getString(1)));
+        } finally { q.close(); }
+        return a;
+    }
+
+    /** Pone los nombres exportados a las fotos que aún no tienen. */
+    void importPlaces(org.json.JSONArray a) {
+        if (a == null) return;
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            for (int i = 0; i < a.length(); i++) {
+                org.json.JSONArray p = a.optJSONArray(i);
+                if (p == null || p.length() < 2) continue;
+                db.execSQL("UPDATE photos SET place=? WHERE cell=? AND place IS NULL", new Object[]{p.optString(1), p.optString(0)});
+            }
+            db.setTransactionSuccessful();
+        } finally { db.endTransaction(); }
+    }
+
     /** Carga coordenadas exportadas; devuelve cuántas fotos nuevas se añadieron. */
     int importGeo(String data) {
         if (data == null || data.length() == 0) return 0;

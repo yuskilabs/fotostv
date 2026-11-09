@@ -275,6 +275,7 @@ class WebConfigServer extends Thread {
             for (String k : Prefs.favs(ctx)) fv.put(k);
             o.put("favs", fv);
             o.put("extra", exportExtra());                    // portadas, orden de álbumes, columnas, inicio/cierre automático, Projectivy…
+            o.put("places", GeoIndex.get(ctx).exportPlaces());   // nombres de lugar ya calculados
             o.put("geo", GeoIndex.get(ctx).exportGeo());     // coordenadas ya leídas: «clave,lat,lon» por foto
             return o.toString();
         } catch (Exception e) {
@@ -366,6 +367,7 @@ class WebConfigServer extends Thread {
             org.json.JSONObject ex = o.optJSONObject("extra");
             if (ex != null) importExtra(ex);
             int geo = GeoIndex.get(ctx).importGeo(o.optString("geo", ""));
+            GeoIndex.get(ctx).importPlaces(o.optJSONArray("places"));
             if (geo > 0) GeoService.start(ctx);
             if (listener != null) listener.onSaved();
             return "OK\n\u2714 Importado: " + list.size() + " álbumes" + (geo > 0 ? " y la ubicación de " + geo + " fotos" : "") + ". La tele los está comprobando.";

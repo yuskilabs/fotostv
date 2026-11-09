@@ -1,6 +1,6 @@
 {
-  "version": "6.9",
+  "version": "6.9.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 827937,
-  "notes": "- Copia de seguridad: ahora también incluye las portadas fijadas, el orden de los álbumes en el explorador, las columnas y la forma de las miniaturas, el formato de foto, la calidad de vídeo, el inicio y el cierre automático y los ajustes de Projectivy. La lista de fotos «ya vistas» de los órdenes «sin repetir» e «inteligente» no se copia a propósito."
+  "notes": "- Copia de seguridad: incluye también los nombres de lugar ya calculados, así que al importar no hay que recalcularlos."
 }
