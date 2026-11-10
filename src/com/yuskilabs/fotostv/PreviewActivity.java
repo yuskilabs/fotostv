@@ -10,6 +10,7 @@ public class PreviewActivity extends Activity {
     private Slideshow show;
     private final android.os.Handler hh = new android.os.Handler();
     private final Runnable stopper = new Runnable() { public void run() { finish(); } };
+    private final Runnable timerEnd = new Runnable() { public void run() { finish(); } };   // temporizador (función extra)
 
     /** El pase abierto solo por inactividad se cierra tras un rato sin tocar el mando (por si la tele está apagada). */
     private void armStop() {
@@ -30,6 +31,7 @@ public class PreviewActivity extends Activity {
             root.animate().alpha(1f).setDuration(1800).start();
         }
         show = new Slideshow(this, root, true);
+        show.setKeyListener(new Runnable() { public void run() { armStop(); } });   // el mando del móvil también cuenta
     }
 
     @Override public void finish() {
@@ -37,8 +39,15 @@ public class PreviewActivity extends Activity {
         overridePendingTransition(0, android.R.anim.fade_out);
     }
 
-    @Override protected void onResume() { super.onResume(); show.start(); armStop(); if (Music.enabled(this, true)) Music.start(this); }
-    @Override protected void onPause() { hh.removeCallbacks(stopper); show.stop(); Music.stop(); super.onPause(); }
+    @Override protected void onResume() {
+        super.onResume();
+        show.start();
+        armStop();
+        hh.removeCallbacks(timerEnd);
+        if (Extras.num(this, Extras.TIMER) > 0) hh.postDelayed(timerEnd, Extras.num(this, Extras.TIMER) * 60000L);
+        if (Music.enabled(this, true)) Music.start(this);
+    }
+    @Override protected void onPause() { hh.removeCallbacks(stopper); hh.removeCallbacks(timerEnd); show.stop(); Music.stop(); super.onPause(); }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
         if (show.infoOpen()) {                                      // ficha abierta: Atrás vuelve al pase; las flechas y OK mueven y pulsan sus botones

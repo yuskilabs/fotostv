@@ -76,6 +76,43 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Inicio automático** del pase tras 1, 2, 5, 10, 15 o 30 minutos sin tocar el mando (pensado para Fire TV) y **cierre automático** del pase pasado un rato (5 min a 2 h, o nunca), por si la tele se apaga.
 - **Fondo de pantalla para Projectivy Launcher** con fotos (y opcionalmente vídeos) de tus álbumes.
 
+### Funciones extra (7.0)
+Están en **Ajustes → Funciones extra**. Todas vienen **apagadas**: con todo apagado, la app funciona igual que antes, y al apagar una vuelve a ser como era. Al pasar con el mando por cada botón, abajo se explica qué hace.
+
+**Pantalla del pase**
+- **Reloj grande**: hora más grande con el día de la semana y la fecha debajo.
+- **Tiempo**: temperatura y cielo de tu ciudad junto a la hora (Open-Meteo, cada media hora). La ciudad se escribe en «Ciudad».
+- **Recuerdos de hoy**: el salvapantallas enseña solo fotos de un día como hoy de años anteriores (si hay al menos 5), con «hace N años» junto a la fecha.
+- **Movimiento suave** (efecto Ken Burns): zoom lento sobre cada foto.
+- **Fondo** de las fotos que no llenan la pantalla: negro, el color de la foto o la foto difuminada.
+- **Dos verticales**: en el pase, dos fotos verticales seguidas se ven juntas.
+- **Pies de foto**: con pulsación larga en el mosaico, «Pie de foto»; sale en el pase y en la ficha.
+
+**Noche, temporizador y música**
+- **Modo noche** (22 a 8 h, 23 a 7 h o 0 a 7 h): el salvapantallas se atenúa (o se queda en negro) y la música y los vídeos se callan. Si tocas el mando, despierta durante 15 minutos.
+- **Temporizador**: cualquier pase se cierra solo tras 15 min, 30 min, 1 h o 1 h 30, aunque se use el mando.
+- **Música por álbum**: con pulsación larga en un álbum, «Música del álbum» elige su emisora, que suena en el pase de ese álbum.
+- **Con vídeo: bajar música**: con un vídeo con sonido, la música baja en vez de callarse.
+
+**Salvapantallas**
+- **Solo un lugar**: el salvapantallas enseña solo las fotos de una provincia, isla, país o localidad.
+- **Más favoritas**: con el orden «inteligente», las favoritas salen tres veces más a menudo.
+
+**Explorador**
+- **Buscar** (botón en la pantalla principal): por lugar, nombre del álbum, mes o año («Zahara», «agosto 2025», «Lara 2024»).
+- **Álbumes virtuales**: el resultado de una búsqueda se guarda como álbum (botón «Guardar» del mosaico) y se actualiza solo. Se borran con pulsación larga.
+- **Saltar por fecha**: botón «Fecha» en el mosaico para ir directo a un mes.
+- **Viajes** (botón en la pantalla principal): agrupa solas las fotos hechas en días seguidos, con su lugar y fechas.
+- **Varias portadas**: «Añadir a portadas» en varias fotos; cada vez que entras en los álbumes sale una de ellas.
+- **Marcar nuevas**: las fotos añadidas al álbum desde la última vez que lo abriste llevan «NUEVA», y el álbum dice cuántas hay.
+- **Fotos repetidas**: con pulsación larga en un álbum, «Buscar repetidas» marca las casi iguales hechas seguidas para ocultarlas de una vez (se queda la primera de cada grupo).
+- **Estadísticas** (botón en la pantalla principal): fotos por año, lugar, álbum y cámara; cada fila abre sus fotos. «Leer cámaras» averigua la cámara de las fotos que aún no la tienen.
+
+**Casa y móvil**
+- **Perfiles**: «Familia» e «Invitados», cada uno con sus álbumes visibles, ocultas, favoritas y ajustes. Se cambia con el botón «Perfil» de la pantalla principal; «Invitados» empieza como una copia de «Familia».
+- **Mando del móvil**: la web de ajustes enseña un mando (anterior, pausa, siguiente) para el pase que esté en marcha.
+- **Recargar álbumes**: cada 6, 12 o 24 horas vuelve a leer los álbumes de Google mientras la app o el salvapantallas estén en marcha.
+
 ## Instalación
 
 1. Descarga la última [`FotosTV.apk`](https://github.com/yuskilabs/fotostv/raw/main/dist/FotosTV.apk) (la versión actual está en [`update.json`](update.json)).
@@ -168,8 +205,8 @@ Todas las APK deben ir firmadas con la misma clave para que Android acepte la ac
 ## Privacidad
 
 - Los enlaces de los álbumes y los ajustes se guardan **solo en el dispositivo**.
-- La app se conecta a: la emisora de música que elijas (si la activas), Google Fotos (para leer los álbumes compartidos), GitHub (para buscar actualizaciones) y, para poner nombre a los lugares y dibujar el mapa, a OpenStreetMap (Nominatim y sus teselas; se le envían las coordenadas de las fotos con GPS).
-- La página de configuración es accesible desde cualquier dispositivo de tu red local mientras la pantalla principal está abierta, y pide un **PIN** de 4 cifras que sale en la tele (el código QR ya lo lleva). No uses la app en redes que no sean de confianza.
+- La app se conecta a: la emisora de música que elijas (si la activas), Google Fotos (para leer los álbumes compartidos), GitHub (para buscar actualizaciones), para poner nombre a los lugares y dibujar el mapa a OpenStreetMap (Nominatim y sus teselas; se le envían las coordenadas de las fotos con GPS) y, solo si activas el tiempo, a Open-Meteo (se le envía el nombre de la ciudad y sus coordenadas).
+- La página de configuración es accesible desde cualquier dispositivo de tu red local mientras la pantalla principal está abierta (y durante un pase, si el mando del móvil está activado), y pide un **PIN** de 4 cifras que sale en la tele (el código QR ya lo lleva). No uses la app en redes que no sean de confianza.
 - Quien tenga el enlace de un álbum puede verlo: no compartas enlaces de álbumes privados.
 
 ## Limitaciones conocidas
@@ -199,7 +236,12 @@ src/com/yuskilabs/fotostv/
   Nav                        saltos desde la ficha (álbum, pase del álbum, lugar, zona o día)
   PlacesActivity, MapView, MapTiles   pantalla Lugares y mapa de OpenStreetMap
   GeoIndex, GeoService       índice de ubicaciones en segundo plano
-  AjustesActivity            pantalla de ajustes
+  AjustesActivity, SettingsBase   pantalla de ajustes (y piezas comunes de las pantallas de ajustes)
+  ExtrasActivity, Extras     funciones extra (7.0): interruptores y ajustes
+  FxLogic                    lógica pura de las funciones extra (noche, búsqueda, viajes, repetidas…)
+  SearchActivity, Search     buscar por lugar, álbum o fecha
+  TripsActivity, StatsActivity, CamScan   viajes y estadísticas (con la cámara de cada foto)
+  Weather                    tiempo de la ciudad elegida (Open-Meteo)
   Guest                      álbumes de invitados
   IdleService                inicio automático (servicio de accesibilidad)
   ProjectivyService, ProjectivyActivity   fondo de pantalla para Projectivy

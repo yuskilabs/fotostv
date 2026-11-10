@@ -1,6 +1,6 @@
 {
-  "version": "6.9.1",
+  "version": "7.0",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 827937,
-  "notes": "- Copia de seguridad: incluye también los nombres de lugar ya calculados, así que al importar no hay que recalcularlos."
+  "size": 873707,
+  "notes": "Nueva pantalla Ajustes → Funciones extra con las funciones nuevas (24 interruptores). Todas vienen apagadas: con todo apagado la app funciona como la 6.9.1 y cada una se puede quitar cuando se quiera.\n- Pantalla del pase: reloj grande con fecha, tiempo de tu ciudad, recuerdos de un día como hoy, movimiento suave (Ken Burns), fondo de color o difuminado en las verticales, dos verticales juntas y pies de foto.\n- Noche y temporizador: modo noche (tenue o pantalla negra, sin música) y temporizador que cierra cualquier pase.\n- Música: emisora propia por álbum y música que baja (en vez de callarse) con los vídeos con sonido.\n- Salvapantallas: solo las fotos de un lugar, y favoritas más a menudo en el orden inteligente.\n- Explorador: Buscar (lugar, álbum, mes, año), álbumes virtuales (búsquedas guardadas), saltar por fecha, Viajes, varias portadas por álbum, marca «NUEVA», buscar fotos repetidas y Estadísticas con filtro por cámara.\n- Casa y móvil: perfiles «Familia» e «Invitados», mando en la web del móvil y recarga automática de los álbumes.\n- La copia de seguridad incluye las funciones extra, los pies de foto, la música por álbum y los álbumes virtuales."
 }

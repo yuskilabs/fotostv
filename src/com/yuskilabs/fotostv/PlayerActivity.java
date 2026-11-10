@@ -11,6 +11,7 @@ public class PlayerActivity extends Activity {
     private Slideshow show;
     private String guestId;
     private final android.os.Handler gh = new android.os.Handler();
+    private final Runnable timerEnd = new Runnable() { public void run() { finish(); } };   // temporizador (función extra)
     private final Runnable guestCheck = new Runnable() {
         public void run() {
             if (guestId == null) return;
@@ -47,6 +48,8 @@ public class PlayerActivity extends Activity {
         if (guestId != null) { gh.removeCallbacks(guestCheck); guestCheck.run(); if (isFinishing()) return; }
         if (show != null) show.start();
         Session.playerOn = true;
+        gh.removeCallbacks(timerEnd);
+        if (Extras.num(this, Extras.TIMER) > 0) gh.postDelayed(timerEnd, Extras.num(this, Extras.TIMER) * 60000L);
         if (Music.enabled(this, false)) {
             if ("folder".equals(Music.mode(this)) && android.os.Build.VERSION.SDK_INT >= 23 && checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 7);
@@ -62,6 +65,7 @@ public class PlayerActivity extends Activity {
         Session.playerOn = false;
         Music.stop();
         gh.removeCallbacks(guestCheck);
+        gh.removeCallbacks(timerEnd);
         if (show != null) {
             String k = show.currentKey();
             if (k != null) Session.lastKey = k;

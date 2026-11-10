@@ -8,8 +8,51 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 class Prefs {
+    /** Ajustes del perfil en uso («Familia» = los de siempre; «Invitados» = una copia aparte, si los perfiles están activados). */
     static SharedPreferences sp(Context c) {
+        return c.getSharedPreferences(profile(c) == 1 ? "cfg_p2" : "cfg", Context.MODE_PRIVATE);
+    }
+
+    /** Ajustes del aparato, iguales en todos los perfiles (PIN de la web). */
+    static SharedPreferences base(Context c) {
         return c.getSharedPreferences("cfg", Context.MODE_PRIVATE);
+    }
+
+    // ---- perfiles (función extra): se guardan en «meta», fuera de los propios perfiles ----
+    static final String[] PROFILE_NAMES = {"Familia", "Invitados"};
+
+    static boolean profilesOn(Context c) { return meta(c).getBoolean("fx_profiles", false); }
+
+    /** Perfil en uso: 0 = Familia (siempre, si los perfiles están desactivados), 1 = Invitados. */
+    static int profile(Context c) {
+        SharedPreferences m = meta(c);
+        return m.getBoolean("fx_profiles", false) ? (m.getInt("profile", 0) == 1 ? 1 : 0) : 0;
+    }
+
+    /** Cambia de perfil. La primera vez, «Invitados» empieza como una copia de «Familia». */
+    static void setProfile(Context c, int p) {
+        if (p == 1) {
+            SharedPreferences dst = c.getSharedPreferences("cfg_p2", Context.MODE_PRIVATE);
+            if (dst.getAll().isEmpty()) copyPrefs(base(c), dst);
+        }
+        meta(c).edit().putInt("profile", p == 1 ? 1 : 0).commit();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void copyPrefs(SharedPreferences from, SharedPreferences to) {
+        SharedPreferences.Editor e = to.edit();
+        for (java.util.Map.Entry<String, ?> en : from.getAll().entrySet()) {
+            String k = en.getKey();
+            Object v = en.getValue();
+            if ("webPin".equals(k) || v == null) continue;
+            if (v instanceof Boolean) e.putBoolean(k, (Boolean) v);
+            else if (v instanceof Integer) e.putInt(k, (Integer) v);
+            else if (v instanceof Long) e.putLong(k, (Long) v);
+            else if (v instanceof Float) e.putFloat(k, (Float) v);
+            else if (v instanceof String) e.putString(k, (String) v);
+            else if (v instanceof java.util.Set) e.putStringSet(k, new java.util.HashSet<String>((java.util.Set<String>) v));
+        }
+        e.commit();
     }
     static SharedPreferences meta(Context c) {
         return c.getSharedPreferences("meta", Context.MODE_PRIVATE);
@@ -73,14 +116,14 @@ class Prefs {
     /** PIN de 4 cifras de la web de ajustes (se crea la primera vez). */
     /** PIN nuevo: se cambia cada vez que arranca la app (los móviles que entraron antes vuelven a pedirlo). */
     static void renewWebPin(Context c) {
-        sp(c).edit().putString("webPin", String.format("%04d", new java.security.SecureRandom().nextInt(10000))).commit();
+        base(c).edit().putString("webPin", String.format("%04d", new java.security.SecureRandom().nextInt(10000))).commit();
     }
 
     static String webPin(Context c) {
-        String p = sp(c).getString("webPin", "");
+        String p = base(c).getString("webPin", "");
         if (p.length() != 4) {
             p = String.format("%04d", new java.security.SecureRandom().nextInt(10000));
-            sp(c).edit().putString("webPin", p).commit();
+            base(c).edit().putString("webPin", p).commit();
         }
         return p;
     }

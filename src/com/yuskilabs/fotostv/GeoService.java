@@ -119,7 +119,9 @@ public class GeoService extends Service {
                         Item it = todo.get(i);
                         try {
                             double[] r = MetaFetcher.cachedGps(c, it);
-                            if (r == null) r = MetaFetcher.quickGps(it);
+                            String[] cam = new String[1];
+                            if (r == null) r = MetaFetcher.quickGps(it, Extras.on(c, Extras.STATS) ? cam : null);
+                            if (cam[0] != null) g.putCam(it.key(), cam[0]);   // de paso, la cámara (para las estadísticas)
                             if (r == null || Double.isNaN(r[0])) {
                                 double[] f = MetaFetcher.exif(c, it);     // lectura completa (vídeos, Live Photos…)
                                 r = Double.isNaN(f[0]) ? new double[]{Double.NaN, Double.NaN} : new double[]{f[0], f[1]};

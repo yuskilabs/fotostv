@@ -19,7 +19,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 /** Ajustes de FotosTV en su propia pantalla: música, salvapantallas, vídeo y caché, ubicaciones. */
-public class AjustesActivity extends Activity {
+public class AjustesActivity extends SettingsBase {
     private final Handler h = new Handler(Looper.getMainLooper());
     private Button musicBtn, radioBtn, folderBtn, volBtn, dreamMusicBtn, vqBtn;
     private TextView geoView;
@@ -149,6 +149,10 @@ public class AjustesActivity extends Activity {
             public void onClick(View v) { startActivity(new Intent(AjustesActivity.this, ProjectivyActivity.class)); }
         });
         cs.addView(row(dream, proj));
+        Button extras = btn("Funciones extra (nuevas)", R.drawable.ic_sparkle, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(AjustesActivity.this, ExtrasActivity.class)); }
+        });
+        cs.addView(row(extras, null));
         
 
         // --- vídeo y caché
@@ -254,144 +258,6 @@ public class AjustesActivity extends Activity {
     @Override protected void onStop() {
         h.removeCallbacks(geoTick);
         super.onStop();
-    }
-
-    // ---- construcción
-    private int dp(int v) { return (int) (v * getResources().getDisplayMetrics().density + 0.5f); }
-
-    private TextView text(String s, int sp, int color) {
-        TextView t = new TextView(this);
-        t.setTypeface(Ui.REG);
-        t.setText(s);
-        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
-        t.setTextColor(color);
-        return t;
-    }
-
-    private LinearLayout card(String title, int icon) {
-        LinearLayout c = new LinearLayout(this);
-        c.setOrientation(LinearLayout.VERTICAL);
-        c.setPadding(dp(10), dp(12), dp(10), dp(8));
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(0x99162A40);
-        bg.setCornerRadius(dp(10));
-        bg.setStroke(dp(1), 0xFF2C4766);
-        c.setBackground(bg);
-        LinearLayout hd = new LinearLayout(this);
-        hd.setOrientation(LinearLayout.HORIZONTAL);
-        hd.setGravity(Gravity.CENTER_VERTICAL);
-        ImageView ic = new ImageView(this);
-        ic.setImageResource(icon);
-        ic.setColorFilter(0xFF7FB2FF);
-        hd.addView(ic, new LinearLayout.LayoutParams(dp(20), dp(20)));
-        TextView t = text(title, 18, Color.WHITE);
-        t.setTypeface(Ui.BLACK);
-        t.setPadding(dp(10), 0, 0, 0);
-        hd.addView(t);
-        LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, -2);
-        hp.setMargins(0, 0, 0, dp(8));
-        c.addView(hd, hp);
-        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-1, -2);
-        cp.setMargins(0, 0, 0, dp(14));
-        c.setLayoutParams(cp);
-        return c;
-    }
-
-    private Button btn(String label, int icon, View.OnClickListener l) {
-        Button cb = new Button(this) {   // tras los dos puntos, la primera letra en mayúscula («Música: Apagada»)
-            @Override public void setText(CharSequence t, BufferType type) {
-                if (t != null) {
-                    String s = t.toString();
-                    int i = s.indexOf(": ");
-                    if (i >= 0 && i + 2 < s.length() && Character.isLowerCase(s.charAt(i + 2)))
-                        s = s.substring(0, i + 2) + Character.toUpperCase(s.charAt(i + 2)) + s.substring(i + 3);
-                    t = s;
-                }
-                super.setText(t, type);
-            }
-        };
-        Button b = Ui.icon(Ui.button(this, cb, label, l), icon);
-        b.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        b.setMinHeight(0);
-        b.setMinimumHeight(0);
-        b.setSingleLine(true);
-        b.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        b.setPadding(dp(8), dp(4), dp(6), dp(4));
-        return b;
-    }
-
-    /** Fila de uno o dos botones de igual tamaño. */
-    private LinearLayout row(Button a, Button b) {
-        LinearLayout r = new LinearLayout(this);
-        r.setOrientation(LinearLayout.HORIZONTAL);
-        r.setClipChildren(false);
-        LinearLayout.LayoutParams la = new LinearLayout.LayoutParams(0, dp(46), 1f);
-        if (b != null) la.setMargins(0, 0, dp(5), 0);
-        r.addView(a, la);
-        if (b != null) {
-            LinearLayout.LayoutParams lb = new LinearLayout.LayoutParams(0, dp(46), 1f);
-            lb.setMargins(dp(5), 0, 0, 0);
-            r.addView(b, lb);
-        }
-        LinearLayout.LayoutParams lr = new LinearLayout.LayoutParams(-1, -2);
-        lr.setMargins(0, 0, 0, dp(8));
-        r.setLayoutParams(lr);
-        return r;
-    }
-
-    private android.graphics.drawable.Drawable focusBg() {
-        GradientDrawable on = new GradientDrawable();
-        on.setColor(0x00000000);
-        on.setCornerRadius(dp(5));
-        on.setStroke(dp(3), 0xFF3D8BFD);
-        android.graphics.drawable.StateListDrawable bg = new android.graphics.drawable.StateListDrawable();
-        bg.addState(new int[]{android.R.attr.state_focused}, on);
-        bg.addState(new int[]{}, new android.graphics.drawable.ColorDrawable(0x00000000));
-        return bg;
-    }
-
-    interface Cur { String get(); }
-    interface Bool { boolean get(); }
-
-    /** Botón que rota entre valores guardados en los ajustes. */
-    private Button cyc(final String prefix, final String key, final boolean isInt, final String[] vals, final String[] labs, int icon, final Cur cur) {
-        final Button[] self = new Button[1];
-        final Runnable show = new Runnable() {
-            public void run() {
-                String c = cur.get();
-                String l = c;
-                for (int i = 0; i < vals.length; i++) if (vals[i].equals(c)) l = labs[i];
-                self[0].setText(prefix + ": " + l);
-            }
-        };
-        self[0] = btn(prefix, icon, new View.OnClickListener() {
-            public void onClick(View v) {
-                String c = cur.get();
-                int idx = -1;
-                for (int i = 0; i < vals.length; i++) if (vals[i].equals(c)) idx = i;
-                String nx = vals[(idx + 1) % vals.length];
-                android.content.SharedPreferences.Editor e = Prefs.sp(AjustesActivity.this).edit();
-                if (isInt) e.putInt(key, Integer.parseInt(nx)); else e.putString(key, nx);
-                e.commit();
-                show.run();
-            }
-        });
-        show.run();
-        return self[0];
-    }
-
-    /** Botón de sí / no. */
-    private Button tog(final String label, final String key, int icon, final Bool cur) {
-        final Button[] self = new Button[1];
-        self[0] = btn(label, icon, new View.OnClickListener() {
-            public void onClick(View v) {
-                Prefs.sp(AjustesActivity.this).edit().putBoolean(key, !cur.get()).commit();
-                self[0].setText(label + ": " + (cur.get() ? "sí" : "no"));
-            }
-        });
-        self[0].setText(label + ": " + (cur.get() ? "sí" : "no"));
-        return self[0];
     }
 
     // ---- acciones

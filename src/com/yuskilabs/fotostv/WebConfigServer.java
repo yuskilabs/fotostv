@@ -55,6 +55,22 @@ class WebConfigServer extends Thread {
         return false;
     }
 
+    /** Solo el puerto de siempre (8080): para el mando durante un pase, si la pantalla principal ya no lo tiene abierto. */
+    boolean openExact() {
+        for (int t = 0; t < 10; t++) {
+            try {
+                ServerSocket ss = new ServerSocket();
+                ss.setReuseAddress(true);
+                ss.bind(new java.net.InetSocketAddress(8080));
+                server = ss;
+                port = 8080;
+                return true;
+            } catch (IOException ignored) { }
+            try { Thread.sleep(500); } catch (InterruptedException e) { break; }
+        }
+        return false;
+    }
+
     void close() {
         try { if (server != null) server.close(); } catch (IOException ignored) { }
     }
@@ -177,6 +193,9 @@ class WebConfigServer extends Thread {
             int off = 0;
             while (off < len) { int n = in.read(buf, off, len - off); if (n < 0) break; off += n; }
             body = addMany(parseForm(new String(buf, 0, off, "UTF-8")));
+        } else if (path.startsWith("/rc")) {
+            body = remote(path);
+            ctype = "text/plain; charset=utf-8";
         } else if (path.startsWith("/progress")) {
             body = progress();
         } else if ("POST".equals(method) && path.startsWith("/add")) {
@@ -286,8 +305,12 @@ class WebConfigServer extends Thread {
     private static final String[] EXTRA_KEYS = {"albumSort", "albumCols", "photoCols", "photoShape", "photoFmt", "vq",
         "idleMin", "autoStopMin", "pv_albums", "pv_all", "pv_fit", "pv_vert", "pv_videos"};
 
+    /** Claves que viajan en la copia «extra»: portadas, funciones extra, pies de foto, música por álbum y álbumes virtuales. */
+    private static final String[] EXTRA_PREFIXES = {"cover_", "fx_", "cap_", "amusic_"};
+
     private boolean isExtra(String k) {
-        if (k.startsWith("cover_")) return true;
+        for (String p : EXTRA_PREFIXES) if (k.startsWith(p)) return true;
+        if ("valbums".equals(k)) return true;
         for (String x : EXTRA_KEYS) if (x.equals(k)) return true;
         return false;
     }
@@ -310,10 +333,29 @@ class WebConfigServer extends Thread {
         return x;
     }
 
+    /** Grupo de una clave extra: su prefijo («cap_», «fx_»…) o la propia clave. */
+    private static String groupOf(String k) {
+        for (String p : EXTRA_PREFIXES) if (k.startsWith(p)) return p;
+        return k;
+    }
+
+    /** Ajustes sueltos de toda la vida (no se borran si la copia no los trae). */
+    private static boolean isFixed(String k) {
+        for (String x : EXTRA_KEYS) if (x.equals(k)) return true;
+        return false;
+    }
+
     private void importExtra(org.json.JSONObject x) {
         android.content.SharedPreferences sp = Prefs.sp(ctx);
         android.content.SharedPreferences.Editor e = sp.edit();
-        for (String k : new ArrayList<String>(sp.getAll().keySet())) if (k.startsWith("cover_")) e.remove(k);   // las portadas de la copia sustituyen a las de ahora
+        // lo de la copia sustituye a lo de ahora, pero solo en lo que la copia trae: una copia antigua (sin funciones
+        // extra, pies de foto, música por álbum o álbumes virtuales) no borra nada de eso. Las portadas, como siempre.
+        java.util.Set<String> brings = new java.util.HashSet<String>();
+        brings.add("cover_");
+        java.util.Iterator<String> ks = x.keys();
+        while (ks.hasNext()) brings.add(groupOf(ks.next()));
+        for (String k : new ArrayList<String>(sp.getAll().keySet()))
+            if (!isFixed(k) && isExtra(k) && brings.contains(groupOf(k))) e.remove(k);
         java.util.Iterator<String> it = x.keys();
         while (it.hasNext()) {
             String k = it.next();
@@ -503,9 +545,34 @@ class WebConfigServer extends Thread {
         return sb.toString();
     }
 
+    /** Mando desde el móvil (función extra): ◀ ▶ OK sobre el pase que esté en marcha en la tele. */
+    private String remote(String path) {
+        if (!Extras.on(ctx, Extras.REMOTE)) return "El mando está desactivado (Ajustes \u2192 Funciones extra).";
+        int q = path.indexOf("k=");
+        String k = q >= 0 ? path.substring(q + 2).split("&")[0] : "";
+        final int code = "left".equals(k) ? android.view.KeyEvent.KEYCODE_DPAD_LEFT
+                : "right".equals(k) ? android.view.KeyEvent.KEYCODE_DPAD_RIGHT
+                : "ok".equals(k) ? android.view.KeyEvent.KEYCODE_DPAD_CENTER : 0;
+        final Slideshow s = Slideshow.active;
+        if (s == null) return "Ahora mismo no hay ningún pase en marcha en la tele.";
+        if (code == 0) return "En marcha.";
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
+            public void run() { s.remoteKey(code); }
+        });
+        return "left".equals(k) ? "\u25C0 Anterior" : "right".equals(k) ? "Siguiente \u25B6" : "Pausa / continuar";
+    }
+
     private String form() {
         String mode = Prefs.albumMode(ctx);
-        StringBuilder sb = new StringBuilder("<form method='post' action='/save'>");
+        StringBuilder sb = new StringBuilder();
+        if (Extras.on(ctx, Extras.REMOTE)) {
+            sb.append("<h2>Mando</h2><p class='muted'>Pasa las fotos del pase que esté en marcha en la tele.</p>")
+              .append("<div class='row2'><button type='button' class='sec' onclick=\"rc('left')\">\u25C0 Anterior</button>")
+              .append("<button type='button' class='sec' onclick=\"rc('ok')\">\u275A\u275A Pausa</button>")
+              .append("<button type='button' class='sec' onclick=\"rc('right')\">Siguiente \u25B6</button></div>")
+              .append("<p id='rcm' class='muted'></p>");
+        }
+        sb.append("<form method='post' action='/save'>");
         sb.append("<h2>Emisora propia</h2><p class='muted'>La música (apagada, radio o carpeta, volumen…) se elige en la tele, en Ajustes. Aquí solo hace falta pegar la dirección de una emisora que no esté en la lista.</p>")
           .append("<input name='musicRadio' type='url' placeholder='https://… (dirección de la emisora)' value='")
           .append(esc(customRadio(ctx))).append("'>");
@@ -582,6 +649,8 @@ class WebConfigServer extends Thread {
         + "if(ok){u.value='';n.value='';u.focus();}b.disabled=false;};"
         + "x.onerror=function(){m.textContent='No hay conexión con la Shield.';b.disabled=false;};"
         + "x.send('url='+encodeURIComponent(u.value.trim())+'&name='+encodeURIComponent(n.value.trim()));}"
+        + "function rc(k){var m=document.getElementById('rcm'),x=new XMLHttpRequest();x.open('GET','/rc?k='+k);"
+        + "x.onload=function(){m.textContent=x.responseText;};x.onerror=function(){m.textContent='No hay conexión con la tele.';};x.send();}"
         + "function expBk(){var x=new XMLHttpRequest();x.open('GET','/export');"
         + "x.onload=function(){var a=document.getElementById('bk'),m=document.getElementById('bkm');a.value=x.responseText;a.focus();a.select();"
         + "var done=function(ok){m.textContent=ok?'\u2714 Copiado al portapapeles ('+Math.round(x.responseText.length/1024)+' KB). Pégalo en el otro dispositivo con «Importar».':'No he podido copiar solo: el texto está seleccionado, copia con Ctrl+C.';};"

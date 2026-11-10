@@ -14,6 +14,7 @@ public class App extends Application {
             Ui.REG = Typeface.createFromAsset(getAssets(), "fonts/Figtree-Regular.ttf");
         } catch (RuntimeException e) { /* si falla, se queda la fuente de Android */ }
         sweepGuests();
+        autoReload();
         try { Prefs.renewWebPin(this); } catch (Throwable ignored) { }
         new Thread(new Runnable() {
             public void run() {
@@ -50,6 +51,29 @@ public class App extends Application {
                 } catch (Throwable ignored) { }
             }
         }, "gps-reset").start();
+    }
+
+    /** Recarga automática de álbumes (función extra): mientras viva la app, cada media hora mira si toca. */
+    private void autoReload() {
+        final android.os.Handler hh = new android.os.Handler(android.os.Looper.getMainLooper());
+        final Runnable r = new Runnable() {
+            public void run() {
+                hh.postDelayed(this, 30 * 60 * 1000L);
+                final int hours = Extras.num(App.this, Extras.RELOAD);
+                if (hours <= 0) return;
+                final android.content.SharedPreferences m = Prefs.meta(App.this);
+                if (System.currentTimeMillis() - m.getLong("autoReload", 0) < hours * 3600000L) return;
+                m.edit().putLong("autoReload", System.currentTimeMillis()).apply();
+                new Thread(new Runnable() {
+                    public void run() {
+                        for (Prefs.Album al : Prefs.albums(App.this)) {
+                            try { Prefs.saveAlbumCache(App.this, al.url, AlbumFetcher.fetchAlbum(al.url)); } catch (Throwable ignored) { }
+                        }
+                    }
+                }, "auto-reload").start();
+            }
+        };
+        hh.postDelayed(r, 60 * 1000L);
     }
 
     /** Álbumes temporales de invitados: al arrancar y cada 5 minutos mientras viva la app, se borra lo caducado. */

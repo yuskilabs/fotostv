@@ -401,21 +401,36 @@ class MetaFetcher {
             o.put("make", d.make); o.put("model", d.model); o.put("exp", d.exposure); o.put("f", d.fnum);
             o.put("iso", d.iso); o.put("foc", d.focal); o.put("w", d.w); o.put("h", d.h);
             m.edit().putString(k, o.toString()).apply();
+            try { if (ex != null && Extras.on(c, Extras.STATS)) GeoIndex.get(c).putCam(it.key(), GeoIndex.camName(d.make, d.model)); } catch (Throwable ignored) { }
         } catch (Throwable ignored) { }
         return d;
     }
 
     /** Lectura rápida del GPS (solo ~160 KB de la foto). null = no se pudo decidir; {NaN,NaN} = sin GPS en el EXIF. */
-    static double[] quickGps(Item it) {
+    static double[] quickGps(Item it) { return quickGps(it, null); }
+
+    /** Igual, y de paso apunta la cámara («Apple iPhone 13») en cam[0] si el EXIF la trae. */
+    static double[] quickGps(Item it, String[] cam) {
         try {
             byte[] head = AlbumFetcher.get(it.url + "=d", 160 * 1024);
             if (head.length < 4 || (head[0] & 0xFF) != 0xFF || (head[1] & 0xFF) != 0xD8) return null;
             ExifInterface ex = (ExifInterface) ExifInterface.class
                     .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(head));
+            if (cam != null) cam[0] = GeoIndex.camName(tag(ex, "Make"), tag(ex, "Model"));
             float[] ll = new float[2];
             if (ex.getLatLong(ll) && !(ll[0] == 0f && ll[1] == 0f)) return new double[]{ll[0], ll[1]};
             return new double[]{Double.NaN, Double.NaN};
         } catch (Throwable t) { return null; }
+    }
+
+    /** Cámara («Apple iPhone 13») según el EXIF del principio de una foto; "" si no es JPEG o no la lleva. */
+    static String camFromHead(byte[] head) {
+        try {
+            if (head.length < 4 || (head[0] & 0xFF) != 0xFF || (head[1] & 0xFF) != 0xD8) return "";
+            ExifInterface ex = (ExifInterface) ExifInterface.class
+                    .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(head));
+            return GeoIndex.camName(tag(ex, "Make"), tag(ex, "Model"));
+        } catch (Throwable t) { return ""; }
     }
 
     /** {lat, lon} solo si ya se leyeron antes (sin red); null si no se sabe o no tiene GPS. */

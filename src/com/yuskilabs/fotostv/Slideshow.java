@@ -49,6 +49,9 @@ class Slideshow {
         String streamUrl;     // vídeo en directo (versión ligera) mientras baja la buena
         int startMs;          // empezar el vídeo por aquí (al pasar de baja a alta calidad)
         int state;            // 0 preparando, 1 descargando vídeo, 2 lista, 3 fallida
+        Item item2;           // «dos verticales»: la segunda foto que va al lado
+        int bgColor = Color.BLACK;          // fondo de las fotos que no llenan la pantalla
+        Bitmap bgSmall;       // fondo difuminado (la foto en miniatura, estirada)
     }
 
     private final Context ctx;
@@ -79,6 +82,16 @@ class Slideshow {
     private View shade;
     private LinearLayout info;
     private TextView clock, status, tvAlbum, tvDate, tvPlace;
+    private LinearLayout clockBox;     // hora (y, con las funciones extra, la fecha y el tiempo debajo)
+    private TextView clockSub, tvCaption;
+    private View nightView;            // velo del modo noche
+    private boolean nightOn, todayMode;
+    private long nightSnooze;
+    private int todayDay = -1;         // día en que se eligieron los «recuerdos de hoy»          // tras tocar el mando de noche, el modo noche espera un rato
+    private android.animation.Animator kenBurns;
+    private volatile String weatherTxt = "";
+    /** Pase en marcha (para el mando desde el móvil). */
+    static volatile Slideshow active;
     private boolean showingA = true, running, waiting, playingVideo, paused;
     private InfoPanel panel;
     private boolean resumeAfterInfo;
@@ -175,6 +188,10 @@ class Slideshow {
         hgt = Math.min(dm.widthPixels, dm.heightPixels);
         buildViews();
         h.post(clockTick);
+        if (cfg == null) h.post(nightTick);
+        if (Extras.on(ctx, Extras.WEATHER)) h.post(weatherTick);
+        active = this;
+        if (Extras.on(ctx, Extras.REMOTE)) openRemote();
         cleanVideos();
 
         if (cfg != null) {
@@ -197,6 +214,10 @@ class Slideshow {
 
     void stop() {
         running = false;
+        if (active == this) active = null;
+        if (rcServer != null) { rcServer.close(); rcServer = null; }
+        if (kenBurns != null) { kenBurns.cancel(); kenBurns = null; }
+        if (nightOn) { nightOn = false; Music.night(false); }
         if (panel != null) { panel.detach(); panel = null; }
         h.removeCallbacksAndMessages(null);
         session++;
@@ -274,16 +295,31 @@ class Slideshow {
         info.addView(tvAlbum);
         info.addView(tvDate);
         info.addView(tvPlace);
+        tvCaption = text(24, Gravity.START);   // pie de foto (función extra)
+        tvCaption.setTypeface(Ui.HAND);
+        tvCaption.setMaxLines(2);
+        tvCaption.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        tvCaption.setVisibility(View.GONE);
+        info.addView(tvCaption);
+        boolean big = Extras.on(ctx, Extras.BIG_CLOCK) && Prefs.clock(ctx);
         FrameLayout.LayoutParams ip = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM | Gravity.START);
-        ip.setMargins(dp(48), 0, dp(220), dp(32));   // ancho fijo (hasta la hora): el texto no se recorta
+        ip.setMargins(dp(48), 0, dp(big ? 380 : 220), dp(32));   // ancho fijo (hasta la hora): el texto no se recorta
         root.addView(info, ip);
 
-        clock = text(46, Gravity.END);
+        clockBox = new LinearLayout(ctx);
+        clockBox.setOrientation(LinearLayout.VERTICAL);
+        clockBox.setGravity(Gravity.END);
+        clock = text(big ? 92 : 46, Gravity.END);
         clock.setTypeface(Ui.BLACK);
+        if (big) clock.setIncludeFontPadding(false);
+        clockBox.addView(clock);
+        clockSub = text(big ? 22 : 20, Gravity.END);
+        clockSub.setVisibility(View.GONE);
+        clockBox.addView(clockSub);
         FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
         cp.setMargins(0, 0, dp(48), dp(28));
-        root.addView(clock, cp);
-        clock.setVisibility(Prefs.clock(ctx) ? View.VISIBLE : View.GONE);
+        root.addView(clockBox, cp);
+        clockBox.setVisibility(Prefs.clock(ctx) ? View.VISIBLE : View.GONE);
 
         status = text(22, Gravity.CENTER);
         root.addView(status, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
@@ -345,20 +381,25 @@ class Slideshow {
         vcp.setMargins(dp(48), 0, dp(48), dp(44));   // justo encima de la barra, a la izquierda
         root.addView(vidCaption, vcp);
 
-        boolean anyText = Prefs.clock(ctx) || Prefs.showAlbum(ctx) || Prefs.showDate(ctx) || Prefs.showPlace(ctx);
-        shade.setVisibility(anyText ? View.VISIBLE : View.GONE);
+        nightView = new View(ctx);
+        nightView.setBackgroundColor(Color.BLACK);
+        nightView.setVisibility(View.GONE);
+        root.addView(nightView, new FrameLayout.LayoutParams(-1, -1));
+
+        shade.setVisibility(anyText() ? View.VISIBLE : View.GONE);
         info.setVisibility(View.INVISIBLE);
     }
 
     private void overlaysToFront() {
         shade.bringToFront();
         info.bringToFront();
-        clock.bringToFront();
+        clockBox.bringToFront();
         status.bringToFront();
         pauseBadge.bringToFront();
         toast.bringToFront();
         progRow.bringToFront();
         vidCaption.bringToFront();
+        nightView.bringToFront();
     }
 
     private static String mmss(int ms) {
@@ -438,7 +479,8 @@ class Slideshow {
                 set(tvAlbum, Prefs.showAlbum(ctx) ? Ui.albumName(s.album) : null);
                 set(tvDate, Prefs.showDate(ctx) ? s.date : null);
                 setPlace(Prefs.showPlace(ctx) ? s.place : null);
-                info.setVisibility(View.VISIBLE);
+                setCaption(s);
+                info.setVisibility(nightOn ? View.INVISIBLE : View.VISIBLE);
                 info.requestLayout();
                 info.setAlpha(0f);
                 info.animate().alpha(1f).setDuration(600).start();
@@ -464,6 +506,13 @@ class Slideshow {
         tvPlace.setVisibility(View.VISIBLE);
     }
 
+    /** Pie de foto (función extra) y, con «Recuerdos de hoy», cuántos años hace. */
+    private void setCaption(Slide s) {
+        String c = s.item != null ? Extras.caption(ctx, s.item.key()) : "";
+        if (s.item2 != null && c.length() == 0) c = Extras.caption(ctx, s.item2.key());
+        set(tvCaption, c);
+    }
+
     private static void set(TextView t, String s) {
         if (s == null || s.length() == 0) t.setVisibility(View.GONE);
         else { t.setText(s); t.setVisibility(View.VISIBLE); }
@@ -487,6 +536,7 @@ class Slideshow {
      * Por fecha: continúa desde la última foto mostrada.
      */
     private synchronized void rebuild(List<Item> list) {
+        list = filterForScreensaver(list);
         boolean keep = "keep".equals(order());
         java.util.Set<String> hidden = keep ? new java.util.HashSet<String>() : Prefs.hidden(ctx);
         all = new ArrayList<Item>();
@@ -534,6 +584,28 @@ class Slideshow {
             if (items.get(i).key().equals(last)) { idx = i; break; }
     }
 
+    /** Salvapantallas y vista previa: «solo un lugar» y «recuerdos de hoy» (funciones extra). Si no queda nada, todo. */
+    private List<Item> filterForScreensaver(List<Item> list) {
+        todayMode = false;
+        if (cfg != null) return list;
+        List<Item> l = list;
+        String place = Extras.str(ctx, Extras.PLACE, "");
+        if (place.length() > 0) {
+            try {
+                java.util.Set<String> ks = GeoIndex.get(ctx).keysAt(place, Extras.on(ctx, Extras.PLACE_REGION));
+                List<Item> f = new ArrayList<Item>();
+                for (Item it : l) if (ks.contains(it.key())) f.add(it);
+                if (!f.isEmpty()) l = f;
+            } catch (Throwable ignored) { }
+        }
+        todayDay = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR);
+        if (Extras.on(ctx, Extras.TODAY)) {
+            List<Item> t = FxLogic.onThisDay(l, System.currentTimeMillis(), java.util.TimeZone.getDefault());
+            if (t.size() >= 5) { l = t; todayMode = true; }
+        }
+        return l;
+    }
+
     private boolean isRandom() {
         String o = order();
         return "random".equals(o) || "norepeat".equals(o) || "smart".equals(o);
@@ -549,16 +621,8 @@ class Slideshow {
         boolean unseen = false;
         for (Item it : all) if (!seen.contains(it.key())) { unseen = true; break; }
         if (!unseen) { seen.clear(); Prefs.saveSeen(ctx, seen); }
-        final java.util.Map<Item, Double> k = new java.util.IdentityHashMap<Item, Double>();
-        java.util.Random r = new java.util.Random();
-        for (Item it : all) {
-            double w = seen.contains(it.key()) ? 0.05 : 1.0;
-            k.put(it, Math.pow(r.nextDouble(), 1.0 / w));
-        }
-        List<Item> l = new ArrayList<Item>(all);
-        Collections.sort(l, new Comparator<Item>() {
-            public int compare(Item a, Item b) { return Double.compare(k.get(b), k.get(a)); }
-        });
+        boolean boost = Extras.on(ctx, Extras.FAV_BOOST);
+        List<Item> l = FxLogic.weightedOrder(all, seen, boost ? Prefs.favs(ctx) : null, boost, new java.util.Random());
         if (l.size() > 1 && cur != null && l.get(0).key().equals(cur.item.key())) Collections.swap(l, 0, l.size() - 1);
         return l;
     }
@@ -825,10 +889,112 @@ class Slideshow {
                 if (wantPlace) t.place = MetaFetcher.place(ctx, e[0], e[1]);
             }
             t.date = MetaFetcher.formatDate(date);
+            if (todayMode && date > 0) {
+                int n = FxLogic.yearsAgo(date, System.currentTimeMillis(), java.util.TimeZone.getDefault());
+                if (n > 0) t.date += "  \u00B7  hace " + n + (n == 1 ? " año" : " años");
+            }
+            fillBackground(t);
             return t;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // ------------------------------------------------------------ dos verticales juntas (función extra)
+    private boolean collageOn() { return !manual() && Extras.on(ctx, Extras.COLLAGE); }
+
+    private static boolean portrait(Bitmap b) { return b != null && b.getHeight() > b.getWidth() * 1.05f; }
+
+    /**
+     * Al pasar a una foto vertical, si la que va justo detrás en la cola ya está lista y también es una foto vertical,
+     * salen juntas (en el hilo de pantalla y en el orden de la lista: nunca se salta ni se desordena nada).
+     */
+    private void pairWithNext(Slide s) {
+        if (!collageOn() || s.video || s.item2 != null || !portrait(s.bmp) || queue.isEmpty()) return;
+        Slide n = queue.get(0);
+        if (n.state != 2 || n.video || n.bmp == null || !portrait(n.bmp) || Prefs.hidden(ctx).contains(n.item.key())) return;
+        try {
+            Bitmap both = combine(s.bmp, n.bmp);
+            queue.remove(0);
+            s.bmp = both;
+            s.item2 = n.item;
+            s.bgColor = Color.BLACK;
+            s.bgSmall = null;
+        } catch (Throwable oom) { /* sin memoria para juntarlas: van una detrás de otra */ }
+    }
+
+    /** Las dos fotos, cada una en su mitad de la pantalla, enteras y centradas. */
+    private Bitmap combine(Bitmap l, Bitmap r) {
+        Bitmap out = Bitmap.createBitmap(w, hgt, Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas c = new android.graphics.Canvas(out);
+        c.drawColor(Color.BLACK);
+        int gapPx = dp(8), half = (w - gapPx) / 2;
+        android.graphics.Paint pt = new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG);
+        drawFit(c, l, 0, half, pt);
+        drawFit(c, r, half + gapPx, w - half - gapPx, pt);
+        return out;
+    }
+
+    private void drawFit(android.graphics.Canvas c, Bitmap b, int x0, int bw, android.graphics.Paint pt) {
+        float sc = Math.min(bw / (float) b.getWidth(), hgt / (float) b.getHeight());
+        int dw = Math.round(b.getWidth() * sc), dh = Math.round(b.getHeight() * sc);
+        int x = x0 + (bw - dw) / 2, y = (hgt - dh) / 2;
+        c.drawBitmap(b, null, new android.graphics.Rect(x, y, x + dw, y + dh), pt);
+    }
+
+    // ------------------------------------------------------------ fondo de las verticales (función extra)
+    /** Color medio (oscurecido) o miniatura para difuminar, según el ajuste. Fuera del hilo de pantalla. */
+    private void fillBackground(Slide t) {
+        String mode = Extras.background(ctx);
+        if ("black".equals(mode) || t.bmp == null) return;
+        try {
+            if ("color".equals(mode)) {
+                Bitmap one = Bitmap.createScaledBitmap(t.bmp, 1, 1, true);
+                int c = one.getPixel(0, 0);
+                if (one != t.bmp) one.recycle();
+                t.bgColor = Color.rgb(Color.red(c) * 45 / 100, Color.green(c) * 45 / 100, Color.blue(c) * 45 / 100);
+            } else {
+                // el centro de la foto con la forma de la pantalla, reducido a 32×18: al estirarlo queda difuminado
+                int bw = t.bmp.getWidth(), bh = t.bmp.getHeight();
+                int cw = bw, ch = Math.round(bw * hgt / (float) w);
+                if (ch > bh) { ch = bh; cw = Math.max(1, Math.round(bh * w / (float) hgt)); }
+                Bitmap crop = Bitmap.createBitmap(t.bmp, (bw - cw) / 2, (bh - ch) / 2, cw, ch);
+                t.bgSmall = Bitmap.createScaledBitmap(crop, 32, 18, true);
+                if (crop != t.bmp && crop != t.bgSmall) crop.recycle();
+            }
+        } catch (Throwable ignored) { }
+    }
+
+    private void applyBackground(ImageView v, Slide s) {
+        if (s.bgSmall != null) {
+            android.graphics.drawable.BitmapDrawable d = new android.graphics.drawable.BitmapDrawable(ctx.getResources(), s.bgSmall);
+            d.setFilterBitmap(true);
+            d.setColorFilter(0xFF707070, android.graphics.PorterDuff.Mode.MULTIPLY);
+            v.setBackground(d);
+        } else v.setBackgroundColor(s.bgColor);
+    }
+
+    // ------------------------------------------------------------ movimiento suave (función extra)
+    private static void resetTransform(View v) {
+        v.setScaleX(1f);
+        v.setScaleY(1f);
+        v.setTranslationX(0f);
+    }
+
+    private void startKenBurns(ImageView v) {
+        if (kenBurns != null) { kenBurns.cancel(); kenBurns = null; }
+        resetTransform(v);
+        if (!Extras.on(ctx, Extras.KEN_BURNS) || browse()) return;
+        float dir = new java.util.Random().nextBoolean() ? 1f : -1f;
+        android.animation.ObjectAnimator a = android.animation.ObjectAnimator.ofPropertyValuesHolder(v,
+                android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 1.1f),
+                android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 1.1f),
+                android.animation.PropertyValuesHolder.ofFloat("translationX", 0f, dir * w * 0.02f));
+        a.setDuration(Prefs.interval(ctx) * 1000L + 2500L);
+        a.setInterpolator(new android.view.animation.LinearInterpolator());
+        a.start();
+        kenBurns = a;
+        if (paused) a.pause();
     }
 
     // ------------------------------------------------------------ precarga de la siguiente
@@ -878,6 +1044,7 @@ class Slideshow {
                         if (sess != session || !running) return;
                         if (p == null) { t.state = 3; } else {
                             t.bmp = p.bmp; t.date = p.date; t.place = p.place; t.state = 2;
+                            t.bgColor = p.bgColor; t.bgSmall = p.bgSmall;
                         }
                         onBuilt(t);
                     }
@@ -966,7 +1133,7 @@ class Slideshow {
     }
 
     private final Runnable tick = new Runnable() {
-        public void run() { if (!paused) goNext(); }
+        public void run() { if (!paused && !asleep()) goNext(); }
     };
 
     // ------------------------------------------------------------ navegación
@@ -1208,7 +1375,7 @@ class Slideshow {
     }
 
     private void goNext() {
-        if (!running) return;
+        if (!running || asleep()) return;      // de noche con pantalla negra, el pase espera
         if (browse()) { browseStep(1); return; }
         if (histPos < hist.size() - 1) {
             navigateTo(hist.get(histPos + 1), histPos + 1);
@@ -1216,6 +1383,7 @@ class Slideshow {
             Slide s = takeReady();
             if (s != null) {
                 gen++;
+                pairWithNext(s);
                 display(s, true);
                 prefetch();
             } else {
@@ -1275,6 +1443,7 @@ class Slideshow {
 
     private void display(Slide s, boolean append) {
         markShown(s.item);
+        if (s.item2 != null) markShown(s.item2);
         if (append) {
             hist.add(s.item);
             while (hist.size() > 200) hist.remove(0);
@@ -1299,6 +1468,11 @@ class Slideshow {
     // ------------------------------------------------------------ mando
     /** Devuelve true si la tecla es de navegación (se consume); false = salir. */
     boolean onKey(int keyCode) {
+        if (nightOn) {                                   // de noche, el mando despierta el pase durante 15 minutos
+            nightSnooze = System.currentTimeMillis() + 15 * 60 * 1000L;
+            setNight(false);
+            return true;
+        }
         boolean vid = playingVideo && player != null && revealed && cur != null && cur.video && panel == null;
         if (vid) {
             if (ctlMode) {
@@ -1344,6 +1518,40 @@ class Slideshow {
             default:
                 return false;
         }
+    }
+
+    // ------------------------------------------------------------ mando desde el móvil (función extra)
+    private WebConfigServer rcServer;
+
+    /** Durante el pase la pantalla principal cierra su web: el pase abre la suya en el mismo puerto (si está libre). */
+    private void openRemote() {
+        final int sess = session;
+        new Thread(new Runnable() {
+            public void run() {
+                final WebConfigServer srv = new WebConfigServer(ctx, null);
+                if (!srv.openExact()) return;               // la tiene abierta la pantalla principal: ya sirve
+                h.post(new Runnable() {
+                    public void run() {
+                        if (!running || sess != session || rcServer != null) { srv.close(); return; }
+                        rcServer = srv;
+                        srv.start();
+                    }
+                });
+            }
+        }, "remote-web").start();
+    }
+
+    private Runnable keyListener;
+
+    /** Lo que hay que hacer cuando se usa el mando del móvil (el salvapantallas rearma su cierre automático). */
+    void setKeyListener(Runnable r) { keyListener = r; }
+
+    /** Tecla que llega del móvil: como el mando (con la ficha abierta, la cierra). */
+    void remoteKey(int code) {
+        if (!running) return;
+        if (keyListener != null) keyListener.run();
+        if (panel != null) { closeInfo(); return; }
+        onKey(code);
     }
 
     boolean infoOpen() { return panel != null; }
@@ -1394,6 +1602,7 @@ class Slideshow {
             syncAuto();
         }
         pauseBadge.setVisibility(p && !manual() ? View.VISIBLE : View.GONE);
+        if (kenBurns != null) { if (p) kenBurns.pause(); else kenBurns.resume(); }
         if (p) {
             if (announce && manual()) flash("\u275A\u275A  Pase en pausa", 1500);
             h.removeCallbacks(tick);
@@ -1474,6 +1683,7 @@ class Slideshow {
         front.setAlpha(1f);                  // si se salta rápido, lo que estaba entrando queda completo
         back.setScaleType(scaleFor(s.bmp));
         back.setImageBitmap(s.bmp);
+        applyBackground(back, s);
         back.setAlpha(0f);
         back.bringToFront();
         overlaysToFront();
@@ -1482,6 +1692,9 @@ class Slideshow {
             back.setAlpha(1f);
             front.setImageDrawable(null);
             front.setAlpha(0f);
+            if (kenBurns != null) { kenBurns.cancel(); kenBurns = null; }
+            resetTransform(back);
+            resetTransform(front);
             if (hideVideo) {
                 releasePlayer();
                 videoHolder.setAlpha(0f);
@@ -1491,6 +1704,7 @@ class Slideshow {
             set(tvAlbum, Prefs.showAlbum(ctx) ? Ui.albumName(s.album) : null);
             set(tvDate, Prefs.showDate(ctx) ? s.date : null);
             setPlace(Prefs.showPlace(ctx) ? s.place : null);
+            setCaption(s);
             info.setVisibility(View.VISIBLE);
             info.requestLayout();
             info.setAlpha(1f);
@@ -1499,12 +1713,14 @@ class Slideshow {
         }
         setInfo(s);
         if (hideVideo) releasePlayer();
+        startKenBurns(back);
         back.animate().alpha(1f).setDuration(hideVideo ? 800 : 1200)
             .setInterpolator(new AccelerateDecelerateInterpolator()).withLayer()
             .withEndAction(new Runnable() {
                 public void run() {
                     front.setImageDrawable(null);
                     front.setAlpha(0f);
+                    resetTransform(front);
                     if (hideVideo) {
                         videoHolder.setAlpha(0f);
                         videoHolder.setVisibility(View.INVISIBLE);
@@ -1537,6 +1753,9 @@ class Slideshow {
             snap.animate().cancel();
             snap.setScaleType(ImageView.ScaleType.FIT_CENTER);
             snap.setImageBitmap(bm);
+            snap.setBackgroundColor(Color.BLACK);
+            if (kenBurns != null) { kenBurns.cancel(); kenBurns = null; }
+            resetTransform(snap);
             snap.setAlpha(1f);
             snap.bringToFront();
             overlaysToFront();
@@ -1590,10 +1809,13 @@ class Slideshow {
         if (al != null && al.length() > 0) b.append(al);
         if (Prefs.showDate(ctx) && s.date != null && s.date.length() > 0) { if (b.length() > 0) b.append('\n'); b.append(s.date); }
         if (Prefs.showPlace(ctx) && s.place != null && s.place.length() > 0) { if (b.length() > 0) b.append('\n'); b.append(s.place); }
+        String cap = s.item != null ? Extras.caption(ctx, s.item.key()) : "";
+        if (cap.length() > 0) { if (b.length() > 0) b.append('\n'); b.append(cap); }
         vidCaption.setText(b.toString());
     }
 
     private void playVideo(final Slide s) {
+        if (kenBurns != null) { kenBurns.cancel(); kenBurns = null; }
         setVidCaption(s);
         playingVideo = true;
         revealed = false;
@@ -1621,7 +1843,7 @@ class Slideshow {
                 public void onPrepared(MediaPlayer p) {
                     if (p != player) return;
                     h.removeCallbacks(videoTimeout);
-                    if (!Prefs.sound(ctx)) p.setVolume(0f, 0f); else Music.duck(true);   // con el sonido del vídeo, la música se calla
+                    if (!Prefs.sound(ctx) || nightOn) p.setVolume(0f, 0f); else Music.duck(true);   // con el sonido del vídeo, la música se calla
                     if (s.startMs > 0) { try { p.seekTo(s.startMs); } catch (Exception ignored) { } }
                     h.removeCallbacks(progTick);
                     h.post(progTick);
@@ -1707,13 +1929,18 @@ class Slideshow {
         if (on) {
             info.animate().cancel();
             info.setVisibility(View.INVISIBLE);
-            clock.setVisibility(View.INVISIBLE);
+            clockBox.setVisibility(View.INVISIBLE);
             shade.setVisibility(View.INVISIBLE);
         } else {
-            clock.setVisibility(Prefs.clock(ctx) ? View.VISIBLE : View.GONE);
-            boolean anyText = Prefs.clock(ctx) || Prefs.showAlbum(ctx) || Prefs.showDate(ctx) || Prefs.showPlace(ctx);
-            shade.setVisibility(anyText ? View.VISIBLE : View.GONE);
+            if (nightOn) return;                     // de noche, sin textos
+            clockBox.setVisibility(Prefs.clock(ctx) ? View.VISIBLE : View.GONE);
+            shade.setVisibility(anyText() ? View.VISIBLE : View.GONE);
         }
+    }
+
+    /** ¿Hay algún texto sobre la foto? (entonces se oscurece un poco la parte de abajo para que se lea) */
+    private boolean anyText() {
+        return Prefs.clock(ctx) || Prefs.showAlbum(ctx) || Prefs.showDate(ctx) || Prefs.showPlace(ctx) || Extras.on(ctx, Extras.CAPTIONS);
     }
 
     private void setCtl(boolean on) {
@@ -1788,7 +2015,100 @@ class Slideshow {
     private final Runnable clockTick = new Runnable() {
         public void run() {
             clock.setText(new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date()));
+            updateClockSub();
             h.postDelayed(this, 10000);
         }
     };
+
+    /** Debajo de la hora: la fecha (reloj grande) y el tiempo (si están activados). */
+    private void updateClockSub() {
+        StringBuilder b = new StringBuilder();
+        if (Extras.on(ctx, Extras.BIG_CLOCK)) b.append(new SimpleDateFormat("EEEE, d 'de' MMMM", MetaFetcher.ES).format(new Date()));
+        if (Extras.on(ctx, Extras.WEATHER) && weatherTxt.length() > 0) {
+            if (b.length() > 0) b.append("   ");
+            b.append(weatherTxt);
+        }
+        clockSub.setText(b.toString());
+        clockSub.setVisibility(b.length() > 0 ? View.VISIBLE : View.GONE);
+    }
+
+    /** Pide el tiempo cada 10 minutos (la clase Weather solo va a internet cada media hora). */
+    private final Runnable weatherTick = new Runnable() {
+        public void run() {
+            if (!running) return;
+            final int sess = session;
+            new Thread(new Runnable() {
+                public void run() {
+                    final String w = Weather.now(ctx);
+                    h.post(new Runnable() {
+                        public void run() {
+                            if (!running || sess != session) return;
+                            weatherTxt = w;
+                            updateClockSub();
+                        }
+                    });
+                }
+            }, "weather").start();
+            h.postDelayed(this, 10 * 60 * 1000L);
+        }
+    };
+
+    // ------------------------------------------------------------ modo noche (solo salvapantallas y vista previa)
+    private final Runnable nightTick = new Runnable() {
+        public void run() {
+            if (!running) return;
+            boolean want = Extras.isNight(ctx) && System.currentTimeMillis() > nightSnooze;
+            if (Extras.on(ctx, Extras.TODAY) && todayDay != java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR)) {
+                rebuild(loadFromCache());                 // pasada la medianoche, los recuerdos del día nuevo
+                queue.clear();
+                prefetch();
+            }
+            if (want != nightOn) setNight(want);
+            h.postDelayed(this, 60 * 1000L);
+        }
+    };
+
+    private void setNight(boolean on) {
+        nightOn = on;
+        Music.night(on);
+        if (player != null) {                           // de noche, los vídeos sin sonido
+            try {
+                if (on) { player.setVolume(0f, 0f); Music.duck(false); }
+                else if (Prefs.sound(ctx)) { player.setVolume(1f, 1f); Music.duck(true); }
+            } catch (Exception ignored) { }
+        }
+        boolean black = Extras.nightBlack(ctx);
+        if (on) {
+            nightView.setAlpha(black ? 1f : 0.72f);
+            nightView.setVisibility(View.VISIBLE);
+            nightView.bringToFront();
+            info.setVisibility(View.INVISIBLE);
+            clockBox.setVisibility(View.INVISIBLE);
+            shade.setVisibility(View.INVISIBLE);
+            if (black) {                                // pantalla negra: el pase se detiene hasta que acabe la noche
+                h.removeCallbacks(tick);
+                h.removeCallbacks(videoTimeout);
+                h.removeCallbacks(revealLater);
+                releasePlayer();
+                playingVideo = false;
+                videoHolder.animate().cancel();
+                videoHolder.setAlpha(0f);
+                videoHolder.setVisibility(View.INVISIBLE);
+                if (kenBurns != null) kenBurns.pause();
+            }
+        } else {
+            nightView.setVisibility(View.GONE);
+            boolean videoOn = playingVideo && revealed;   // con un vídeo en pantalla, los textos siguen ocultos
+            if (!videoOn) {
+                clockBox.setVisibility(Prefs.clock(ctx) ? View.VISIBLE : View.GONE);
+                shade.setVisibility(anyText() ? View.VISIBLE : View.GONE);
+                if (cur != null && !cur.video) info.setVisibility(View.VISIBLE);
+            }
+            if (black && kenBurns != null && !paused) kenBurns.resume();
+            if (black && !paused) goNext();            // vuelve el pase
+        }
+    }
+
+    /** De noche con pantalla negra no se pasa de foto. */
+    private boolean asleep() { return nightOn && Extras.nightBlack(ctx); }
 }

@@ -24,9 +24,11 @@ import android.widget.LinearLayout;
 import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -242,6 +244,27 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         left.addView(pair(preview, browse));
         left.addView(pair(places, check));
         left.addView(pair(idleBtn, stopBtn));
+        // funciones extra que añaden botones (solo si están activadas)
+        List<Button> fx = new ArrayList<Button>();
+        if (Extras.on(this, Extras.SEARCH)) fx.add(side("Buscar", R.drawable.ic_search, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, SearchActivity.class)); }
+        }));
+        if (Extras.on(this, Extras.TRIPS)) fx.add(side("Viajes", R.drawable.ic_flight, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, TripsActivity.class)); }
+        }));
+        if (Extras.on(this, Extras.STATS)) fx.add(side("Estadísticas", R.drawable.ic_stats, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, StatsActivity.class)); }
+        }));
+        if (Prefs.profilesOn(this)) fx.add(side("Perfil: " + Prefs.PROFILE_NAMES[Prefs.profile(this)], R.drawable.ic_person, new View.OnClickListener() {
+            public void onClick(View v) {
+                int nx = 1 - Prefs.profile(SettingsActivity.this);
+                Prefs.setProfile(SettingsActivity.this, nx);
+                Toast.makeText(SettingsActivity.this, "Perfil «" + Prefs.PROFILE_NAMES[nx] + "»: sus álbumes y ajustes.", Toast.LENGTH_LONG).show();
+                recreate();
+            }
+        }));
+        for (int i = 0; i < fx.size(); i += 2) left.addView(i + 1 < fx.size() ? pair(fx.get(i), fx.get(i + 1)) : single(fx.get(i)));
+        extrasSig = extrasSig();
         LinearLayout lastRow = pair(upd, ajBtn);
         ((LinearLayout.LayoutParams) lastRow.getLayoutParams()).setMargins(0, 0, 0, 0);
         left.addView(lastRow);
@@ -347,6 +370,26 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             .setNegativeButton("Cancelar", null).show();
     }
 
+    private String extrasSig;
+
+    /** Qué botones extra hay que enseñar (si cambia al volver de Ajustes, la pantalla se rehace). */
+    private String extrasSig() {
+        return Extras.on(this, Extras.SEARCH) + "," + Extras.on(this, Extras.TRIPS) + "," + Extras.on(this, Extras.STATS)
+                + "," + Prefs.profilesOn(this) + "," + Prefs.profile(this);
+    }
+
+    /** Un botón solo en su fila (con el mismo alto que las demás). */
+    private LinearLayout single(Button a) {
+        LinearLayout r = new LinearLayout(this);
+        r.setOrientation(LinearLayout.HORIZONTAL);
+        r.setClipChildren(false);
+        r.addView(a, new LinearLayout.LayoutParams(0, -1, 1f));
+        LinearLayout.LayoutParams lr = new LinearLayout.LayoutParams(-1, 0, 1f);
+        lr.setMargins(0, 0, 0, dp(6));
+        r.setLayoutParams(lr);
+        return r;
+    }
+
     private LinearLayout pair(Button a, Button b) {
         LinearLayout r = new LinearLayout(this);
         r.setOrientation(LinearLayout.HORIZONTAL);
@@ -431,6 +474,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     @Override protected void onStart() {
         super.onStart();
+        if (extrasSig != null && !extrasSig.equals(extrasSig())) { recreate(); return; }
         Guest.purgeExpired(this);
         if ("folder".equals(Prefs.musicMode(this)) && android.os.Build.VERSION.SDK_INT >= 23
                 && checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -499,6 +543,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                 Session.guestId = g.id;
                 Session.startKey = null;
                 Session.lastKey = null;
+                Session.musicUrl = null;
                 startActivity(new Intent(SettingsActivity.this, PlayerActivity.class));
             }
         });

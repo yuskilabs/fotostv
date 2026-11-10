@@ -143,7 +143,7 @@ class Music {
     private static final Handler h = new Handler(Looper.getMainLooper());
     private static Context app;
     private static MediaPlayer mp;
-    private static boolean active, ducked;
+    private static boolean active, ducked, nightMute;
     private static int retries, gen;
     private static List<File> files;
     private static int idx;
@@ -153,6 +153,7 @@ class Music {
     /** ¿Hay música configurada para este uso (dream = salvapantallas / vista previa)? */
     /** Fuente real: si la música está desactivada pero se pidió «Pase con música», usa la emisora o la carpeta que haya. */
     static String mode(Context c) {
+        if (Session.musicUrl != null && Session.musicUrl.length() > 0 && Session.playerOn) return "radio";   // música propia del álbum
         String m = Prefs.musicMode(c);
         if ("off".equals(m) && Session.music == 1 && Session.playerOn) {
             if (Prefs.musicRadio(c).length() > 0) return "radio";
@@ -165,8 +166,14 @@ class Music {
         String m = mode(c);
         if ("off".equals(m)) return false;
         if (dream && !Prefs.musicDream(c)) return false;
-        if ("radio".equals(m)) return Prefs.musicRadio(c).length() > 0;
+        if ("radio".equals(m)) return radioUrl(c).length() > 0;
         return Prefs.musicFolder(c).length() > 0;
+    }
+
+    /** Emisora que toca: la propia del álbum del pase, si la tiene; si no, la de Ajustes. */
+    static String radioUrl(Context c) {
+        if (Session.musicUrl != null && Session.musicUrl.length() > 0 && Session.playerOn) return Session.musicUrl;
+        return Prefs.musicRadio(c);
     }
 
     static void start(Context c) {
@@ -186,16 +193,24 @@ class Music {
         files = null;
     }
 
-    /** Silencia la música mientras suena el audio de un vídeo. */
+    /** Silencia la música mientras suena el audio de un vídeo (o solo la baja, con la función extra). */
     static void duck(boolean on) {
         ducked = on;
+        applyVol();
+    }
+
+    /** Modo noche: la música se calla mientras dure. */
+    static void night(boolean on) {
+        nightMute = on;
         applyVol();
     }
 
     private static void applyVol() {
         MediaPlayer m = mp;
         if (m == null || app == null) return;
-        float v = ducked ? 0f : (float) Math.pow(Prefs.musicVol(app) / 100.0, 2);   // curva suave: a medio control suena bajito
+        float v = (float) Math.pow(Prefs.musicVol(app) / 100.0, 2);   // curva suave: a medio control suena bajito
+        if (ducked) v = Extras.on(app, Extras.SOFT_DUCK) ? v * 0.2f : 0f;
+        if (nightMute) v = 0f;
         try { m.setVolume(v, v); } catch (Exception ignored) { }
     }
 
@@ -262,7 +277,7 @@ class Music {
             mp = m;
             m.setAudioStreamType(AudioManager.STREAM_MUSIC);
             if (radio) {
-                String url = Prefs.musicRadio(app);
+                String url = radioUrl(app);
                 if (url.length() == 0) { active = false; return; }
                 m.setDataSource(url);
             } else {

@@ -3,6 +3,16 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.0
+Nueva pantalla **Ajustes → Funciones extra** con las funciones nuevas (24 interruptores). Todas vienen apagadas: con todo apagado la app funciona como la 6.9.1 y cada una se puede quitar cuando se quiera.
+- Pantalla del pase: reloj grande con fecha, tiempo de tu ciudad, recuerdos de un día como hoy, movimiento suave (Ken Burns), fondo de color o difuminado en las verticales, dos verticales juntas y pies de foto.
+- Noche y temporizador: modo noche (tenue o pantalla negra, sin música) y temporizador que cierra cualquier pase.
+- Música: emisora propia por álbum y música que baja (en vez de callarse) con los vídeos con sonido.
+- Salvapantallas: solo las fotos de un lugar, y favoritas más a menudo en el orden inteligente.
+- Explorador: Buscar (lugar, álbum, mes, año), álbumes virtuales (búsquedas guardadas), saltar por fecha, Viajes, varias portadas por álbum, marca «NUEVA», buscar fotos repetidas y Estadísticas con filtro por cámara.
+- Casa y móvil: perfiles «Familia» e «Invitados», mando en la web del móvil y recarga automática de los álbumes.
+- La copia de seguridad incluye las funciones extra, los pies de foto, la música por álbum y los álbumes virtuales.
+
 ## 6.9.1
 - Copia de seguridad: incluye también los nombres de lugar ya calculados, así que al importar no hay que recalcularlos.
 

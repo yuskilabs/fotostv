@@ -178,6 +178,8 @@ class Nav {
         Session.startKey = null;
         Session.lastKey = null;
         Session.music = 0;
+        String am = action == ALBUM_PASE && al != null ? Extras.albumMusic(ctx, al.url) : "";
+        Session.musicUrl = am.length() > 0 ? am : null;      // «Pase de este álbum» con su música propia
         Intent i = new Intent(ctx, PlayerActivity.class);
         if (!(ctx instanceof Activity)) i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         ctx.startActivity(i);

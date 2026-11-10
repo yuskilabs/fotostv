@@ -32,6 +32,46 @@ class GeoIndex extends SQLiteOpenHelper {
 
     @Override public void onUpgrade(SQLiteDatabase db, int o, int n) { }
 
+    /**
+     * Tabla de cámaras (7.0, para las estadísticas; «» = se miró y no la tiene). Se crea al abrir, sin cambiar
+     * la versión de la base: así una versión anterior de la app la sigue abriendo sin problemas.
+     */
+    @Override public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        if (!db.isReadOnly()) db.execSQL("CREATE TABLE IF NOT EXISTS cams(k TEXT PRIMARY KEY, cam TEXT)");
+    }
+
+    /** «Apple iPhone 13» a partir de la marca y el modelo del EXIF (sin repetir la marca). */
+    static String camName(String make, String model) {
+        String mk = make == null ? "" : make.trim(), md = model == null ? "" : model.trim();
+        if (md.length() == 0) return mk;
+        if (mk.length() == 0 || md.toLowerCase(Locale.ROOT).startsWith(mk.toLowerCase(Locale.ROOT).split(" ")[0])) return md;
+        return mk + " " + md;
+    }
+
+    void putCam(String k, String cam) {
+        ContentValues v = new ContentValues();
+        v.put("k", k);
+        v.put("cam", cam == null ? "" : cam);
+        getWritableDatabase().insertWithOnConflict("cams", null, v, SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    /** Clave → cámara de las fotos en las que ya se ha mirado («» = sin cámara en el EXIF). */
+    HashMap<String, String> camMap() {
+        HashMap<String, String> m = new HashMap<String, String>();
+        Cursor q = getReadableDatabase().rawQuery("SELECT k, cam FROM cams", null);
+        try { while (q.moveToNext()) m.put(q.getString(0), q.getString(1)); } finally { q.close(); }
+        return m;
+    }
+
+    /** Clave → nombre de lugar de todas las fotos que ya lo tienen. */
+    HashMap<String, String> placeMap() {
+        HashMap<String, String> m = new HashMap<String, String>();
+        Cursor q = getReadableDatabase().rawQuery("SELECT k, place FROM photos WHERE place IS NOT NULL", null);
+        try { while (q.moveToNext()) m.put(q.getString(0), q.getString(1)); } finally { q.close(); }
+        return m;
+    }
+
     static String cell(double lat, double lon) { return String.format(Locale.US, "%.2f,%.2f", lat, lon); }
 
     /** Claves ya registradas (con GPS definitivo, o sin GPS mirado hace menos de una semana). */

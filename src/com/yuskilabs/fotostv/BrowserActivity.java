@@ -34,7 +34,7 @@ public class BrowserActivity extends Activity {
     private static class Entry {
         String title = "";
         String url = "";
-        int kind;                 // 0 álbum normal, 1 Todas, 2 Favoritos, 3 Ocultas, 4 temporal de invitado
+        int kind;                 // 0 álbum normal, 1 Todas, 2 Favoritos, 3 Ocultas, 4 temporal de invitado, 5 lugar o búsqueda, 6 álbum virtual
         String gid = "";          // (temporal) identificador
         long expires;             // (temporal) cuándo caduca
         List<Item> src = new ArrayList<Item>();     // todo lo del álbum
@@ -44,6 +44,9 @@ public class BrowserActivity extends Activity {
         boolean orderSet;        // el usuario eligió el orden (si no, el pase del álbum va aleatorio)
         Item cover;
         boolean coverPinned;     // portada fijada por el usuario (si no, al azar)
+        List<String> coverKeys = new ArrayList<String>();   // portadas fijadas (varias con la función extra)
+        String query;            // búsqueda que genera el álbum (virtual, o mosaico que viene de «Buscar»)
+        Set<String> newKeys = new HashSet<String>();      // fotos nuevas desde la última visita (función extra)
 
         boolean onlyVideos;       // filtro «Vídeos»
         List<Item> vids = new ArrayList<Item>();
@@ -55,7 +58,7 @@ public class BrowserActivity extends Activity {
     private static class Tile extends FrameLayout {
         final float ratio;
         ImageView img;
-        TextView name, count, badge;
+        TextView name, count, badge, fresh;
         ImageView fav, pin;
         View shade;
 
@@ -266,8 +269,10 @@ public class BrowserActivity extends Activity {
             e.kind = 5;
             e.title = Session.placeTitle != null ? Session.placeTitle : "Lugar";
             e.src = new ArrayList<Item>(Session.placeItems);
+            e.query = Session.searchQuery;
             Session.placeItems = null;
             Session.placeTitle = null;
+            Session.searchQuery = null;
             favSet = Prefs.favs(this);
             e.items = visible(e.src, Prefs.hidden(this));
             applyOrder(e);
@@ -389,10 +394,13 @@ public class BrowserActivity extends Activity {
                     list.add(makeEntry(al, d));
                 }
                 final List<Entry> fin = sortEntries(list);
+                final List<Entry> vl = buildVirtual(list);
                 h.post(new Runnable() {
                     public void run() {
                         if (destroyed) return;
                         real = new ArrayList<Entry>(fin);
+                        virt = vl;
+                        for (Entry e : real) computeNew(e);
                         refreshOff();
                         compose();
                         loaded = true;
@@ -407,6 +415,46 @@ public class BrowserActivity extends Activity {
                 });
             }
         });
+    }
+
+    // ------------------------------------------------------------ álbumes virtuales y fotos nuevas (funciones extra)
+    private List<Entry> virt = new ArrayList<Entry>();
+
+    /** Álbumes virtuales: búsquedas guardadas, calculadas con las fotos de los álbumes reales. Fuera del hilo de pantalla. */
+    private List<Entry> buildVirtual(List<Entry> reals) {
+        List<Entry> out = new ArrayList<Entry>();
+        List<String[]> defs = Extras.virtualAlbums(this);
+        if (defs.isEmpty()) return out;
+        List<Item> all = new ArrayList<Item>();
+        Set<String> seen = new HashSet<String>();
+        for (Entry e : reals) for (Item it : e.src) if (seen.add(it.key())) all.add(it);
+        java.util.HashMap<String, String> places = Search.places(this);
+        for (String[] d : defs) {
+            Entry v = new Entry();
+            v.kind = 6;
+            v.title = d[0];
+            v.query = d[1];
+            v.url = "virtual:" + d[1];
+            v.src = Search.runSuggestion(all, places, d[1]);
+            v.items = v.src;
+            out.add(v);
+        }
+        return out;
+    }
+
+    /** Fotos del álbum que no estaban la última vez que se abrió. La primera vez solo se apunta lo que hay. */
+    private void computeNew(Entry e) {
+        e.newKeys = new HashSet<String>();
+        if (e.kind != 0 || !Extras.on(this, Extras.NEW_BADGE)) return;
+        Set<String> known = Prefs.meta(this).getStringSet("kn_" + e.url, null);
+        if (known == null) { markKnown(e); return; }
+        for (Item it : e.src) if (!known.contains(it.key())) e.newKeys.add(it.key());
+    }
+
+    private void markKnown(Entry e) {
+        Set<String> ks = new HashSet<String>();
+        for (Item it : e.src) ks.add(it.key());
+        Prefs.meta(this).edit().putStringSet("kn_" + e.url, ks).apply();
     }
 
     private Entry makeEntry(Prefs.Album al, AlbumFetcher.AlbumData d) {
@@ -501,23 +549,25 @@ public class BrowserActivity extends Activity {
         return out;
     }
 
-    private String coverKey(Entry e) { return Prefs.sp(this).getString("cover_" + e.url, null); }
-
-    /** Portada fijada por el usuario si existe y la foto se ve; si no, una al azar que se mantiene mientras sirva. */
+    /**
+     * Portada fijada por el usuario si existe y la foto se ve (con varias, una de ellas al azar, que se mantiene
+     * mientras dure la pantalla); si no, una al azar que se mantiene mientras sirva.
+     */
     private void applyCover(Entry e, java.util.Set<String> hid) {
-        String ck = coverKey(e);
+        e.coverKeys = Extras.covers(this, e.url);
         e.coverPinned = false;
-        if (ck != null) {
-            for (Item it : e.items) {
-                if (ck.equals(it.key())) { e.cover = it; e.coverPinned = true; return; }
+        if (!e.coverKeys.isEmpty()) {
+            List<Item> pinned = new ArrayList<Item>();
+            for (Item it : e.items) if (e.coverKeys.contains(it.key())) pinned.add(it);
+            if (!pinned.isEmpty()) {
+                if (e.cover == null || !pinned.contains(e.cover)) e.cover = pinned.get(new java.util.Random().nextInt(pinned.size()));
+                e.coverPinned = true;
+                return;
             }
         }
-        if (e.cover == null || hid.contains(e.cover.key()) || e.cover.key().equals(ck) ) pickCover(e);
-        else if (e.cover != null) {
-            boolean in = false;
-            for (Item it : e.items) if (it == e.cover) { in = true; break; }
-            if (!in) pickCover(e);
-        }
+        boolean in = false;
+        if (e.cover != null && !hid.contains(e.cover.key())) for (Item it : e.items) if (it == e.cover) { in = true; break; }
+        if (!in) pickCover(e);
     }
 
     /** Rehace las listas que se ven: quita las ocultas, y arma Todas, Favoritos y Ocultas. */
@@ -588,6 +638,14 @@ public class BrowserActivity extends Activity {
         if (real.size() > 1) entries.add(allE);
         if (favE != null) entries.add(favE);
         entries.addAll(real);
+        if (Extras.on(this, Extras.VIRTUAL)) {
+            for (Entry v : virt) {
+                v.items = visible(v.src, hid);
+                reapply(v);
+                if (v.cover == null || hid.contains(v.cover.key()) || !v.items.contains(v.cover)) pickCover(v);
+                entries.add(v);
+            }
+        }
         if (hidE != null) entries.add(hidE);
     }
 
@@ -636,6 +694,7 @@ public class BrowserActivity extends Activity {
             for (Entry e : real) {
                 if (e.url.equals(f.url) && e.src.size() != f.src.size()) {
                     e.src = f.src;            // se cambia la lista entera, no se modifica la anterior
+                    if (e != current || level != 1) computeNew(e);
                     changed = true;
                 }
             }
@@ -657,6 +716,10 @@ public class BrowserActivity extends Activity {
 
     private void showAlbums() {
         if (placeMode) { finish(); return; }   // desde un lugar, «atrás» vuelve a Lugares
+        if (level == 1 && current != null && current.kind == 0 && !current.newKeys.isEmpty()) {
+            markKnown(current);                // ya vistas: dejan de ser nuevas
+            current.newKeys.clear();
+        }
         pSel = false;
         pKeys.clear();
         level = 0;
@@ -838,6 +901,184 @@ public class BrowserActivity extends Activity {
             .show();
     }
 
+    /** Pulsación larga en un álbum virtual: pase, nombre o borrarlo (las fotos no se tocan). */
+    private void virtualMenu(final Entry e) {
+        final List<Entry> one = new ArrayList<Entry>();
+        one.add(e);
+        iconMenu(e.title, new String[]{"Pase", "Cambiar nombre", "Borrar álbum virtual"},
+                new int[]{R.drawable.ic_play, R.drawable.ic_tune, R.drawable.ic_delete},
+                new android.content.DialogInterface.OnClickListener() {
+                    public void onClick(android.content.DialogInterface d, int w) {
+                        if (w == 0) startPase(one, false);
+                        else if (w == 1) askName("Nombre del álbum virtual", e.title, new NameDone() {
+                            public void done(String name) { renameVirtual(e, name); }
+                        });
+                        else {
+                            List<String[]> l = Extras.virtualAlbums(BrowserActivity.this);
+                            for (int i = l.size() - 1; i >= 0; i--) if (l.get(i)[1].equals(e.query)) l.remove(i);
+                            Extras.saveVirtualAlbums(BrowserActivity.this, l);
+                            virt.remove(e);
+                            if (current == e) current = null;
+                            refreshAfterChange(0);
+                            showToast("Álbum virtual borrado (las fotos siguen en sus álbumes).");
+                        }
+                    }
+                });
+    }
+
+    private void renameVirtual(Entry e, String name) {
+        if (name.length() == 0) return;
+        List<String[]> l = Extras.virtualAlbums(this);
+        for (String[] x : l) if (x[1].equals(e.query)) x[0] = name;
+        Extras.saveVirtualAlbums(this, l);
+        e.title = name;
+        if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
+    }
+
+    interface NameDone { void done(String name); }
+
+    private void askName(String title, String current, final NameDone done) {
+        final android.widget.EditText in = new android.widget.EditText(this);
+        in.setSingleLine(true);
+        in.setTextColor(Color.WHITE);
+        in.setText(current);
+        in.setSelection(in.getText().length());
+        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle(title)
+            .setView(in)
+            .setPositiveButton("Guardar", new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) { done.done(in.getText().toString().trim()); }
+            })
+            .setNegativeButton("Cancelar", null)
+            .show();
+    }
+
+    /** Guarda el mosaico de una búsqueda como álbum virtual (sale en la lista de álbumes y se actualiza solo). */
+    private void saveVirtual() {
+        if (current == null || current.query == null) return;
+        askName("Guardar como álbum virtual", current.title, new NameDone() {
+            public void done(String name) {
+                if (name.length() == 0) return;
+                List<String[]> l = Extras.virtualAlbums(BrowserActivity.this);
+                for (int i = l.size() - 1; i >= 0; i--) if (l.get(i)[1].equals(current.query)) l.remove(i);
+                l.add(new String[]{name, current.query});
+                Extras.saveVirtualAlbums(BrowserActivity.this, l);
+                showToast("Guardado: «" + name + "» sale en la lista de álbumes.");
+            }
+        });
+    }
+
+    /** Emisora propia del álbum (suena en el pase de ese álbum). */
+    private void pickAlbumMusic(final Entry e) {
+        final List<String[]> rows = new ArrayList<String[]>();
+        rows.add(new String[]{"La de Ajustes (sin emisora propia)", ""});
+        String own = Prefs.musicRadio(this);
+        boolean ownIsPreset = false;
+        for (String[] pr : Music.PRESETS) if (pr[1] != null && pr[1].equals(own)) ownIsPreset = true;
+        if (own.length() > 0 && !ownIsPreset) rows.add(new String[]{"Tu emisora (la de la web)", own});
+        for (String[] pr : Music.PRESETS) if (pr[1] != null) rows.add(new String[]{Music.shortName(pr[0]), pr[1]});
+        String cur = Prefs.sp(this).getString("amusic_" + e.url, "");
+        int sel = 0;
+        String[] labels = new String[rows.size()];
+        for (int i = 0; i < labels.length; i++) { labels[i] = rows.get(i)[0]; if (rows.get(i)[1].equals(cur)) sel = i; }
+        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Música del álbum «" + e.title + "»")
+            .setSingleChoiceItems(labels, sel, new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    Extras.setAlbumMusic(BrowserActivity.this, e.url, rows.get(w)[1]);
+                    d.dismiss();
+                    showToast(w == 0 ? "El pase de este álbum usará la música de Ajustes." : "El pase de este álbum sonará con «" + rows.get(w)[0] + "».");
+                }
+            })
+            .setNegativeButton("Cancelar", null)
+            .show();
+    }
+
+    // ------------------------------------------------------------ fotos repetidas (función extra)
+    private volatile boolean dupBusy;
+
+    /** Busca fotos casi iguales hechas seguidas (a menos de 4 s) y las deja marcadas en el mosaico para ocultarlas. */
+    private void findDupes(final Entry e) {
+        if (dupBusy) { showToast("Ya estoy buscando repetidas…"); return; }
+        dupBusy = true;
+        showToast("Buscando fotos repetidas en «" + e.title + "»…");
+        final List<Item> base = new ArrayList<Item>(e.items);
+        bg.submit(new Runnable() {
+            public void run() {
+                final Set<String> extra = new HashSet<String>();
+                try {
+                    for (List<Item> burst : FxLogic.bursts(base, 4000)) {
+                        if (destroyed) return;
+                        List<Item> photos = new ArrayList<Item>();
+                        for (Item it : burst) {
+                            Boolean v = MetaFetcher.cachedVideo(BrowserActivity.this, it);
+                            if (v == null || !v.booleanValue()) photos.add(it);
+                        }
+                        if (photos.size() < 2) continue;
+                        long[] hs = new long[photos.size()];
+                        boolean ok = true;
+                        for (int i = 0; i < hs.length && ok; i++) {
+                            Long hv = dhashOf(photos.get(i));
+                            if (hv == null) ok = false; else hs[i] = hv;
+                        }
+                        if (!ok) continue;
+                        for (int i : FxLogic.similarToEarlier(hs, 10)) extra.add(photos.get(i).key());
+                    }
+                } catch (Throwable ignored) { }
+                h.post(new Runnable() {
+                    public void run() {
+                        dupBusy = false;
+                        if (destroyed) return;
+                        if (extra.isEmpty()) { showToast("No he encontrado fotos repetidas en «" + e.title + "»."); return; }
+                        int pos = entries.indexOf(e);
+                        if (pos < 0) return;
+                        if (level != 0 || selMode || moveEntry != null) {   // mientras, has abierto otra cosa: no se cambia de pantalla
+                            pendingDupes = e;
+                            pendingDupeKeys = extra;
+                            showToast(extra.size() + (extra.size() == 1 ? " foto repetida" : " fotos repetidas") + " en «" + e.title + "»: ábrelo para verlas marcadas.");
+                            return;
+                        }
+                        openEntry(pos);
+                        markDupes(extra);
+                        showToast(extra.size() + (extra.size() == 1 ? " foto repetida marcada" : " fotos repetidas marcadas")
+                                + " (se queda la primera de cada grupo). Pulsa «Ocultar» para quitarlas o desmarca las que quieras.");
+                    }
+                });
+            }
+        });
+    }
+
+    private Entry pendingDupes;
+    private Set<String> pendingDupeKeys;
+
+    /** Deja marcadas las repetidas en el mosaico abierto (modo de selección, listas para «Ocultar»). */
+    private void markDupes(Set<String> keys) {
+        pSel = true;
+        pKeys.clear();
+        pKeys.addAll(keys);
+        showPhotos(0);
+    }
+
+    /** Huella dHash de la miniatura (9×8 en grises); null si no se pudo bajar. */
+    private Long dhashOf(Item it) {
+        try {
+            byte[] d = AlbumFetcher.get(it.url + "=w96-h96");
+            android.graphics.Bitmap b = android.graphics.BitmapFactory.decodeByteArray(d, 0, d.length);
+            if (b == null) return null;
+            android.graphics.Bitmap s9 = android.graphics.Bitmap.createScaledBitmap(b, 9, 8, true);
+            int[] g = new int[72];
+            for (int y = 0; y < 8; y++) for (int x = 0; x < 9; x++) {
+                int c = s9.getPixel(x, y);
+                g[y * 9 + x] = (Color.red(c) * 299 + Color.green(c) * 587 + Color.blue(c) * 114) / 1000;
+            }
+            if (s9 != b) s9.recycle();
+            b.recycle();
+            return FxLogic.dhash(g);
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     private boolean albumMenu(int pos) {
         if (pos < 0 || pos >= entries.size()) return false;
         final Entry e = entries.get(pos);
@@ -851,7 +1092,9 @@ public class BrowserActivity extends Activity {
                     off ? "Mostrar álbum" : "Ocultar álbum", "Revisar ubicaciones"));
             final List<Integer> ic = new ArrayList<Integer>(java.util.Arrays.asList(R.drawable.ic_check, R.drawable.ic_play, R.drawable.ic_tune,
                     R.drawable.ic_refresh, off ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_place));
-            if (pinned) { lb.add("Quitar portada"); ic.add(R.drawable.ic_photo); }
+            if (Extras.on(this, Extras.ALBUM_MUSIC)) { lb.add("Música del álbum"); ic.add(R.drawable.ic_music); }
+            if (Extras.on(this, Extras.DUPES)) { lb.add("Buscar repetidas"); ic.add(R.drawable.ic_copy); }
+            if (pinned) { lb.add(e.coverKeys.size() > 1 ? "Quitar portadas" : "Quitar portada"); ic.add(R.drawable.ic_photo); }
             lb.add("Reordenar álbum"); ic.add(R.drawable.ic_move);
             lb.add("Cambiar nombre"); ic.add(R.drawable.ic_tune);
             lb.add("Borrar álbum"); ic.add(R.drawable.ic_delete);
@@ -866,9 +1109,12 @@ public class BrowserActivity extends Activity {
                         else if (a.equals("Pase con música")) startPase(one, true);
                         else if (a.equals("Recargar álbum")) reloadAlbum(e);
                         else if (a.equals("Revisar ubicaciones")) recheckPlaces(one);
-                        else if (a.equals("Quitar portada")) {
-                            Prefs.sp(BrowserActivity.this).edit().remove("cover_" + e.url).commit();
+                        else if (a.equals("Música del álbum")) pickAlbumMusic(e);
+                        else if (a.equals("Buscar repetidas")) findDupes(e);
+                        else if (a.equals("Quitar portada") || a.equals("Quitar portadas")) {
+                            Extras.setCovers(BrowserActivity.this, e.url, null);   // vuelve a ser al azar (como siempre)
                             e.coverPinned = false;
+                            e.coverKeys = new ArrayList<String>();
                             pickCover(e);
                             if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
                             showToast("Portada quitada: vuelve a ser aleatoria.");
@@ -881,6 +1127,7 @@ public class BrowserActivity extends Activity {
                 });
             return true;
         }
+        if (e.kind == 6) { virtualMenu(e); return true; }
         if (e.kind != 4) return false;
         new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle(e.title)
@@ -928,6 +1175,7 @@ public class BrowserActivity extends Activity {
         Session.startKey = null;
         Session.lastKey = null;
         Session.music = music ? 1 : 0;
+        Session.musicUrl = es.size() == 1 && es.get(0).kind == 0 ? nullIfEmpty(Extras.albumMusic(this, es.get(0).url)) : null;
         selMode = false;
         sel.clear();
         startActivity(new Intent(this, PlayerActivity.class));
@@ -1097,6 +1345,13 @@ public class BrowserActivity extends Activity {
         current = entries.get(pos);
         current.onlyVideos = false;
         scanGen++;
+        if (pendingDupes == current && pendingDupeKeys != null) {   // repetidas que se encontraron mientras estabas en otro sitio
+            Set<String> k = pendingDupeKeys;
+            pendingDupes = null;
+            pendingDupeKeys = null;
+            markDupes(k);
+            return;
+        }
         showPhotos(0);
     }
 
@@ -1141,6 +1396,16 @@ public class BrowserActivity extends Activity {
             }
         });
         row.addView(orderBtn);
+        if (Extras.on(this, Extras.DATE_JUMP)) {
+            row.addView(sbtn("Fecha", R.drawable.ic_event, new View.OnClickListener() {
+                public void onClick(View v) { dateJump(); }
+            }));
+        }
+        if (current.kind == 5 && current.query != null && Extras.on(this, Extras.VIRTUAL)) {
+            row.addView(sbtn("Guardar", R.drawable.ic_albums, new View.OnClickListener() {
+                public void onClick(View v) { saveVirtual(); }
+            }));
+        }
         shapeBtn = sbtn(shapeLabel(photoShape), R.drawable.ic_format, new View.OnClickListener() {
             public void onClick(View v) {
                 String n = "square".equals(photoShape) ? "wide" : ("wide".equals(photoShape) ? "full" : "square");
@@ -1260,16 +1525,23 @@ public class BrowserActivity extends Activity {
         final boolean isHid = Prefs.hidden(this).contains(it.key());
         final boolean isFav = Prefs.favs(this).contains(it.key());
         final boolean canCover = current.kind == 0;
-        final String[] labels = canCover
-                ? new String[]{"Seleccionar", isHid ? "Mostrar" : "Ocultar", "Ver información",
-                    isFav ? "Quitar de favoritos" : "Añadir a favoritos", "Revisar ubicación", "Fijar como portada"}
-                : new String[]{"Seleccionar", isHid ? "Mostrar" : "Ocultar", "Ver información",
-                    isFav ? "Quitar de favoritos" : "Añadir a favoritos", "Revisar ubicación"};
-        final int[] icons = canCover
-                ? new int[]{R.drawable.ic_check, isHid ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_info,
-                    isFav ? R.drawable.ic_star_border : R.drawable.ic_star, R.drawable.ic_place, R.drawable.ic_photo}
-                : new int[]{R.drawable.ic_check, isHid ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_info,
-                    isFav ? R.drawable.ic_star_border : R.drawable.ic_star, R.drawable.ic_place};
+        final boolean multi = Extras.on(this, Extras.MULTI_COVER);
+        final boolean isCover = current.coverKeys.contains(it.key());
+        final List<String> lb = new ArrayList<String>();
+        final List<Integer> ic = new ArrayList<Integer>();
+        lb.add("Seleccionar"); ic.add(R.drawable.ic_check);
+        lb.add(isHid ? "Mostrar" : "Ocultar"); ic.add(isHid ? R.drawable.ic_visibility : R.drawable.ic_visibility_off);
+        lb.add("Ver información"); ic.add(R.drawable.ic_info);
+        lb.add(isFav ? "Quitar de favoritos" : "Añadir a favoritos"); ic.add(isFav ? R.drawable.ic_star_border : R.drawable.ic_star);
+        lb.add("Revisar ubicación"); ic.add(R.drawable.ic_place);
+        if (canCover) {
+            lb.add(multi ? (isCover ? "Quitar de portadas" : "Añadir a portadas") : "Fijar como portada");
+            ic.add(R.drawable.ic_photo);
+        }
+        if (Extras.on(this, Extras.CAPTIONS)) { lb.add("Pie de foto"); ic.add(R.drawable.ic_notes); }
+        final String[] labels = lb.toArray(new String[0]);
+        final int[] icons = new int[ic.size()];
+        for (int i = 0; i < icons.length; i++) icons[i] = ic.get(i);
         android.widget.ListAdapter ad = new android.widget.ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1, labels) {
             @Override public View getView(int i, View cv, ViewGroup parent) {
@@ -1289,32 +1561,85 @@ public class BrowserActivity extends Activity {
         new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setAdapter(ad, new android.content.DialogInterface.OnClickListener() {
                 public void onClick(android.content.DialogInterface d, int which) {
-                    if (which == 0) {
+                    String a = labels[which];
+                    if (a.equals("Seleccionar")) {
                         pSel = true;
                         pKeys.clear();
                         pKeys.add(it.key());
                         showPhotos(pos);
-                    } else if (which == 1) {
+                    } else if (a.equals("Mostrar") || a.equals("Ocultar")) {
                         if (isHid) Prefs.unhide(BrowserActivity.this, it.key()); else Prefs.hide(BrowserActivity.this, it.key());
                         refreshAfterChange(pos);
-                    } else if (which == 2) {
+                    } else if (a.equals("Ver información")) {
                         showInfo(it);
-                    } else if (which == 4) {
+                    } else if (a.equals("Revisar ubicación")) {
                         List<Item> l = new ArrayList<Item>();
                         l.add(it);
                         recheckItems(l);
-                    } else if (which == 5) {
-                        Prefs.sp(BrowserActivity.this).edit().putString("cover_" + current.url, it.key()).commit();
-                        current.cover = it;
-                        current.coverPinned = true;
+                    } else if (a.equals("Fijar como portada") || a.equals("Añadir a portadas") || a.equals("Quitar de portadas")) {
+                        // sin «Varias portadas» solo se cambia la primera: las demás se guardan por si se vuelve a activar
+                        List<String> keys = Extras.allCovers(BrowserActivity.this, current.url);
+                        if (a.equals("Quitar de portadas")) keys.remove(it.key());
+                        else if (multi) { if (!keys.contains(it.key())) keys.add(it.key()); }
+                        else if (keys.isEmpty()) keys.add(it.key());
+                        else { keys.remove(it.key()); if (keys.isEmpty()) keys.add(it.key()); else keys.set(0, it.key()); }
+                        Extras.setCovers(BrowserActivity.this, current.url, keys);
+                        current.coverKeys = Extras.covers(BrowserActivity.this, current.url);
+                        current.coverPinned = !current.coverKeys.isEmpty();
+                        if (a.equals("Quitar de portadas")) { if (current.cover == it) current.cover = null; }
+                        else current.cover = it;
+                        if (current.cover == null || !current.coverPinned) applyCover(current, Prefs.hidden(BrowserActivity.this));
                         if (photoGrid != null) ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
-                        showToast("Portada del álbum fijada.");
+                        showToast(a.equals("Quitar de portadas") ? "Quitada de las portadas del álbum."
+                                : multi ? "Añadida a las portadas del álbum (" + current.coverKeys.size() + ")." : "Portada del álbum fijada.");
+                    } else if (a.equals("Pie de foto")) {
+                        askName("Pie de foto (vacío para quitarlo)", Extras.rawCaption(BrowserActivity.this, it.key()), new NameDone() {
+                            public void done(String text) {
+                                Extras.setCaption(BrowserActivity.this, it.key(), text);
+                                showToast(text.length() == 0 ? "Pie de foto quitado." : "Pie de foto guardado: sale en el pase y en la ficha.");
+                            }
+                        });
                     } else {
                         Prefs.toggleFav(BrowserActivity.this, it.key());
                         refreshAfterChange(pos);
                     }
                 }
             }).show();
+    }
+
+    /** «Fecha» (función extra): lista de meses del álbum; al elegir uno, el mosaico va a su primera foto. */
+    private void dateJump() {
+        if (current == null) return;
+        final List<Item> l = current.shown();
+        final java.util.TreeMap<Integer, int[]> months = new java.util.TreeMap<Integer, int[]>(Collections.<Integer>reverseOrder());
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        for (int i = 0; i < l.size(); i++) {
+            long ts = l.get(i).ts;
+            int k = -1;
+            if (ts > 0) { c.setTimeInMillis(ts); k = c.get(java.util.Calendar.YEAR) * 100 + c.get(java.util.Calendar.MONTH); }
+            int[] v = months.get(k);
+            if (v == null) months.put(k, new int[]{i, 1}); else v[1]++;
+        }
+        if (months.isEmpty()) { showToast("Este álbum no tiene fotos."); return; }
+        final List<Integer> pos = new ArrayList<Integer>();
+        List<String> labels = new ArrayList<String>();
+        for (java.util.Map.Entry<Integer, int[]> e : months.entrySet()) {
+            int k = e.getKey();
+            String name = k < 0 ? "Sin fecha" : FxLogic.MONTHS[k % 100] + " de " + (k / 100);
+            labels.add(name.substring(0, 1).toUpperCase(MetaFetcher.ES) + name.substring(1) + "  \u00B7  " + e.getValue()[1]);
+            pos.add(e.getValue()[0]);
+        }
+        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Ir a la fecha")
+            .setItems(labels.toArray(new String[0]), new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    if (photoGrid == null) return;
+                    photoGrid.requestFocus();
+                    photoGrid.setSelection(pos.get(w));
+                }
+            })
+            .setNegativeButton("Cancelar", null)
+            .show();
     }
 
     private void togglePhoto(int pos) {
@@ -1511,6 +1836,8 @@ public class BrowserActivity extends Activity {
         return "crop".equals(f) ? "Pantalla: rellenar" : ("fit".equals(f) ? "Pantalla: original" : "Pantalla: automática");
     }
 
+    private static String nullIfEmpty(String s) { return s == null || s.length() == 0 ? null : s; }
+
     private View.OnClickListener play() { return play(false); }
 
     /** Con «music», el pase suena con la emisora o carpeta de música aunque en Ajustes esté apagada. */
@@ -1530,6 +1857,7 @@ public class BrowserActivity extends Activity {
                 Session.startKey = null;
                 Session.lastKey = null;
                 Session.music = music ? 1 : 0;
+                Session.musicUrl = current.kind == 0 ? nullIfEmpty(Extras.albumMusic(BrowserActivity.this, current.url)) : null;
                 startActivity(new Intent(BrowserActivity.this, PlayerActivity.class));
             }
         };
@@ -1545,6 +1873,7 @@ public class BrowserActivity extends Activity {
         Session.startKey = current.shown().get(pos).key();
         Session.lastKey = null;
         Session.music = 0;
+        Session.musicUrl = null;
         startActivity(new Intent(this, PlayerActivity.class));
     }
 
@@ -1602,7 +1931,8 @@ public class BrowserActivity extends Activity {
             t.name.setText(isSel ? "\u2713 " + e.title : e.title);
             t.setAlpha(selMode && !isSel ? 0.5f : 1f);
             int ic = e.kind == 1 ? R.drawable.ic_albums : e.kind == 2 ? R.drawable.ic_star
-                    : e.kind == 3 ? R.drawable.ic_visibility_off : e.kind == 4 ? R.drawable.ic_schedule : 0;
+                    : e.kind == 3 ? R.drawable.ic_visibility_off : e.kind == 4 ? R.drawable.ic_schedule
+                    : e.kind == 6 ? R.drawable.ic_search : 0;
             if (ic != 0) {
                 android.graphics.drawable.Drawable d = getResources().getDrawable(ic).mutate();
                 if (e.kind == 2) d.setColorFilter(0xFFFFC83D, android.graphics.PorterDuff.Mode.SRC_IN);
@@ -1617,8 +1947,11 @@ public class BrowserActivity extends Activity {
                 t.count.setTextColor(0xFFFFB454);
             } else {
                 boolean off = e.kind == 0 && offUrls.contains(e.url);
-                t.count.setText(e.items.size() + " elementos" + (off ? " \u00B7 oculto en el salvapantallas" : ""));
-                t.count.setTextColor(off ? 0xFFFFB454 : 0xFFD0DBE8);
+                int nn = 0;
+                if (!e.newKeys.isEmpty()) for (Item x : e.items) if (e.newKeys.contains(x.key())) nn++;   // sin las ocultas
+                t.count.setText(e.items.size() + " elementos" + (nn > 0 ? " \u00B7 " + nn + (nn == 1 ? " nueva" : " nuevas") : "")
+                        + (off ? " \u00B7 oculto en el salvapantallas" : ""));
+                t.count.setTextColor(off ? 0xFFFFB454 : nn > 0 ? 0xFF7CE08A : 0xFFD0DBE8);
             }
             t.pin.setVisibility(e == moveEntry ? View.VISIBLE : View.GONE);
             t.setForeground(e == moveEntry ? selFrame() : null);
@@ -1680,7 +2013,8 @@ public class BrowserActivity extends Activity {
             t.img.setScaleType(crop ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
             thumbs.load(t.img, it.url, r32(photoTile), r32(photoTileH), crop);
             t.fav.setVisibility(favSet.contains(it.key()) ? View.VISIBLE : View.GONE);
-            t.pin.setVisibility(current.kind == 0 && current.coverPinned && current.cover == it ? View.VISIBLE : View.GONE);
+            t.pin.setVisibility(current.kind == 0 && current.coverKeys.contains(it.key()) ? View.VISIBLE : View.GONE);
+            t.fresh.setVisibility(current.newKeys.contains(it.key()) ? View.VISIBLE : View.GONE);
             boolean on = pSel && pKeys.contains(it.key());
             t.setAlpha(pSel && !on ? 0.5f : 1f);
             t.setForeground(on ? selFrame() : null);
@@ -1753,6 +2087,20 @@ public class BrowserActivity extends Activity {
         pl.setMargins(Ui.dp(this, 6), Ui.dp(this, 6), 0, 0);
         t.addView(t.pin, pl);
         t.pin.setVisibility(View.GONE);
+        t.fresh = new TextView(this);                 // «NUEVA» (función extra)
+        t.fresh.setTypeface(Ui.BLACK);
+        t.fresh.setText("NUEVA");
+        t.fresh.setTextColor(0xFF0A1424);
+        t.fresh.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        t.fresh.setPadding(Ui.dp(this, 7), Ui.dp(this, 2), Ui.dp(this, 7), Ui.dp(this, 2));
+        GradientDrawable nb = new GradientDrawable();
+        nb.setColor(0xFF7CE08A);
+        nb.setCornerRadius(Ui.dp(this, 9));
+        t.fresh.setBackground(nb);
+        FrameLayout.LayoutParams nl = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
+        nl.setMargins(0, 0, Ui.dp(this, 6), Ui.dp(this, 6));
+        t.addView(t.fresh, nl);
+        t.fresh.setVisibility(View.GONE);
         return t;
     }
 

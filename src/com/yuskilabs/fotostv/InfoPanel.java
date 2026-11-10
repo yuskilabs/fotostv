@@ -111,6 +111,8 @@ class InfoPanel extends FrameLayout {
             addRow(R.drawable.ic_event, "Fecha", new SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", MetaFetcher.ES).format(new Date(it.ts)));
         }
         if (album != null && album.length() > 0) addRow(R.drawable.ic_albums, "Álbum", album);
+        String cap = Extras.caption(c, it.key());
+        if (cap.length() > 0) addRow(R.drawable.ic_notes, "Pie de foto", cap);
         mapMessage("Cargando información…");
         if (actions) { buildLeft(); buildRight(); }
         load();
@@ -302,6 +304,8 @@ class InfoPanel extends FrameLayout {
         }
         String a = albumText();
         if (a.length() > 0) addRow(R.drawable.ic_albums, "Álbum", a);
+        String capt = Extras.caption(getContext(), item.key());
+        if (capt.length() > 0) addRow(R.drawable.ic_notes, "Pie de foto", capt);
         if (Prefs.favs(getContext()).contains(item.key())) addRow(R.drawable.ic_star, "Favorita", "Sí");
         if (Double.isNaN(d.lat)) mapMessage("Esta foto no tiene ubicación GPS");
     }

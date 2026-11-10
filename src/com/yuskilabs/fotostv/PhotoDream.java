@@ -8,6 +8,7 @@ public class PhotoDream extends DreamService {
     private Slideshow show;
     private final android.os.Handler hh = new android.os.Handler();
     private final Runnable stopper = new Runnable() { public void run() { finish(); } };
+    private final Runnable timerEnd = new Runnable() { public void run() { finish(); } };   // temporizador (función extra)
 
     private void armStop() {
         hh.removeCallbacks(stopper);
@@ -23,6 +24,7 @@ public class PhotoDream extends DreamService {
         FrameLayout root = new FrameLayout(this);
         setContentView(root);
         show = new Slideshow(this, root, false);
+        show.setKeyListener(new Runnable() { public void run() { armStop(); } });   // el mando del móvil también cuenta
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
@@ -56,11 +58,14 @@ public class PhotoDream extends DreamService {
         super.onDreamingStarted();
         if (show != null) show.start();
         armStop();
+        hh.removeCallbacks(timerEnd);
+        if (Extras.num(this, Extras.TIMER) > 0) hh.postDelayed(timerEnd, Extras.num(this, Extras.TIMER) * 60000L);
         if (Music.enabled(this, true)) Music.start(this);
     }
 
     @Override public void onDreamingStopped() {
         hh.removeCallbacks(stopper);
+        hh.removeCallbacks(timerEnd);
         Music.stop();
         if (show != null) show.stop();
         super.onDreamingStopped();
