@@ -1,6 +1,6 @@
 {
-  "version": "7.5",
+  "version": "7.6",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 898568,
-  "notes": "- Ir a la fecha: el año va arriba del todo, debajo el mes y luego los días, así izquierda y derecha cambian el mes o el año según donde estés. El número de fotos de cada día es mucho más pequeño, entre paréntesis y de otro color, y los cuadros ya no se cortan.\n- Movimiento: el parón antes de pasar a un vídeo se debía a que la foto dejaba de moverse (y volvía a su posición inicial) mientras el vídeo cargaba. Ahora la foto sigue moviéndose hasta que el vídeo se ve.\n- Dos verticales: ahora solo se juntan dos fotos hechas con menos de 15 minutos de diferencia (del mismo álbum). Llevan un solo pie de foto y sin hora.\n- Nueva opción «Cuatro juntas» (Ajustes, Pase de fotos): de vez en cuando salen cuatro fotos hechas casi a la vez (menos de 15 minutos) en cuadrícula, con un solo pie de foto y sin hora. Las parejas y las cuadrículas se preparan en segundo plano y entran al pase cuando están listas."
+  "notes": "- Movimiento: cambio de fondo. Antes lo movía el hilo de la pantalla, y cualquier trabajo pesado en ese momento (cargar un vídeo, preparar la foto siguiente, escribir ajustes) lo dejaba parado un par de segundos. Ahora lo mueve la tarjeta gráfica, que no depende de ese hilo. El relleno va en una vista aparte y se queda quieto (con «Bordes a la vista» se ve detrás de la foto). Además, la subida de la foto siguiente a la tarjeta gráfica y el guardado de lo ya visto se hacen en segundo plano.\n- Dos verticales y cuatro juntas: el hueco entre fotos se rellena con el relleno elegido (difuminado o color), ya no sale negro.\n- Ir a la fecha: los cuadros de los días ya no se cortan por abajo."
 }

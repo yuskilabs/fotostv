@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.6
+- Movimiento: cambio de fondo. Antes lo movía el hilo de la pantalla, y cualquier trabajo pesado en ese momento (cargar un vídeo, preparar la foto siguiente, escribir ajustes) lo dejaba parado un par de segundos. Ahora lo mueve la tarjeta gráfica, que no depende de ese hilo. El relleno va en una vista aparte y se queda quieto (con «Bordes a la vista» se ve detrás de la foto). Además, la subida de la foto siguiente a la tarjeta gráfica y el guardado de lo ya visto se hacen en segundo plano.
+- Dos verticales y cuatro juntas: el hueco entre fotos se rellena con el relleno elegido (difuminado o color), ya no sale negro.
+- Ir a la fecha: los cuadros de los días ya no se cortan por abajo.
+
 ## 7.5
 - Ir a la fecha: el año va arriba del todo, debajo el mes y luego los días, así izquierda y derecha cambian el mes o el año según donde estés. El número de fotos de cada día es mucho más pequeño, entre paréntesis y de otro color, y los cuadros ya no se cortan.
 - Movimiento: el parón antes de pasar a un vídeo se debía a que la foto dejaba de moverse (y volvía a su posición inicial) mientras el vídeo cargaba. Ahora la foto sigue moviéndose hasta que el vídeo se ve.

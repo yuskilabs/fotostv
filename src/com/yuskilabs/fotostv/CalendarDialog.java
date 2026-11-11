@@ -84,6 +84,7 @@ class CalendarDialog {
         LinearLayout box = new LinearLayout(c);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setPadding(dp(16), dp(6), dp(16), dp(4));
+        box.setClipChildren(false);
         box.setMinimumWidth(dp(440));
 
         monthV = selector();
@@ -150,7 +151,10 @@ class CalendarDialog {
     private void focusFirstDay() {
         for (int r = 0; r < grid.getChildCount(); r++) {
             LinearLayout row = (LinearLayout) grid.getChildAt(r);
-            for (int i = 0; i < row.getChildCount(); i++) if (row.getChildAt(i).isFocusable()) { row.getChildAt(i).requestFocus(); return; }
+            for (int i = 0; i < row.getChildCount(); i++) {
+                View cell = ((android.view.ViewGroup) row.getChildAt(i)).getChildAt(0);
+                if (cell.isFocusable()) { cell.requestFocus(); return; }
+            }
         }
     }
 
@@ -170,6 +174,7 @@ class CalendarDialog {
         while (d <= n) {
             LinearLayout row = new LinearLayout(c);
             row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setClipChildren(false);
             for (int i = 0; i < 7; i++, d++) {
                 View cell;
                 if (d < 1 || d > n) {
@@ -200,16 +205,22 @@ class CalendarDialog {
                     }
                     cell = t;
                 }
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(44), 1f);
-                lp.setMargins(dp(2), dp(2), dp(2), dp(2));
-                row.addView(cell, lp);
+                // cada día va en un contenedor con margen: si el sistema recortara algo, recorta el margen y no el cuadro
+                android.widget.FrameLayout fl = new android.widget.FrameLayout(c);
+                fl.setClipChildren(false);
+                fl.setClipToPadding(false);
+                android.widget.FrameLayout.LayoutParams ip = new android.widget.FrameLayout.LayoutParams(-1, -1);
+                ip.setMargins(dp(2), dp(2), dp(2), dp(5));
+                fl.addView(cell, ip);
+                fl.setFocusable(false);
+                row.addView(fl, new LinearLayout.LayoutParams(0, dp(52), 1f));
                 if (firstDay == null && cell.isFocusable()) firstDay = cell;
             }
             grid.addView(row);
         }
         for (int r = 0; r < 1 && r < grid.getChildCount(); r++) {
             LinearLayout row = (LinearLayout) grid.getChildAt(r);
-            for (int i = 0; i < row.getChildCount(); i++) row.getChildAt(i).setNextFocusUpId(monthV.getId());
+            for (int i = 0; i < row.getChildCount(); i++) ((android.view.ViewGroup) row.getChildAt(i)).getChildAt(0).setNextFocusUpId(monthV.getId());
         }
         if (firstDay != null) {
             firstDay.setId(View.generateViewId());

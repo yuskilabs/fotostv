@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -71,6 +72,7 @@ class Slideshow {
     private final List<Slide> queue = new ArrayList<Slide>();
     private static final int AHEAD = 3;
     private ImageView a, b;
+    private View bgA, bgB;       // relleno de cada foto, aparte: así solo la foto se mueve (y la mueve la tarjeta gráfica)
     private TextureView videoView;
     private FrameLayout videoHolder;
     private boolean revealed, frameRendered;
@@ -91,7 +93,8 @@ class Slideshow {
     private long nightSnooze;
     private int todayDay = -1;         // día en que se eligieron los «recuerdos de hoy»          // tras tocar el mando de noche, el modo noche espera un rato
     /** Movimiento suave de cada una de las dos imágenes (la que sale sigue moviéndose mientras se funde). */
-    private final java.util.Map<View, android.animation.Animator> kb = new java.util.HashMap<View, android.animation.Animator>();
+    private final java.util.Map<View, Kb> kb = new java.util.HashMap<View, Kb>();
+    private final java.util.Map<View, android.animation.Animator> fades = new java.util.HashMap<View, android.animation.Animator>();
     private volatile String weatherTxt = "";
     /** Pase en marcha (para el mando desde el móvil). */
     static volatile Slideshow active;
@@ -247,9 +250,14 @@ class Slideshow {
         root.setBackgroundColor(Color.BLACK);
         a = newImage();
         b = newImage();
+        bgA = newBg();
+        bgB = newBg();
+        root.addView(bgA);
         root.addView(a);
+        root.addView(bgB);
         root.addView(b);
         b.setAlpha(0f);
+        bgB.setAlpha(0f);
 
         videoHolder = new FrameLayout(ctx);
         videoHolder.setBackgroundColor(Color.BLACK);
@@ -459,8 +467,31 @@ class Slideshow {
     private ImageView newImage() {
         ImageView v = new ImageView(ctx);
         v.setLayoutParams(new FrameLayout.LayoutParams(-1, -1));
+        return v;
+    }
+
+    private View newBg() {
+        View v = new View(ctx);
+        v.setLayoutParams(new FrameLayout.LayoutParams(-1, -1));
         v.setBackgroundColor(Color.BLACK);   // sin franjas transparentes en fotos verticales
         return v;
+    }
+
+    private View bgOf(View v) { return v == a ? bgA : bgB; }
+
+    private void slideAlpha(View v, float al) {
+        v.setAlpha(al);
+        bgOf(v).setAlpha(al);
+    }
+
+    private void slideToFront(View v) {
+        bgOf(v).bringToFront();
+        v.bringToFront();
+    }
+
+    private void fadeCancel(View v) {
+        android.animation.Animator f = fades.remove(v);
+        if (f != null) f.cancel();
     }
 
     private TextView text(int sp, int gravity) {
@@ -671,8 +702,15 @@ class Slideshow {
             return;
         }
         if (seen == null) seen = Prefs.seen(ctx);
-        if ((noRepeat() || smart()) && seen.add(it.key())) Prefs.saveSeen(ctx, seen);
-        Prefs.setLastShown(ctx, it.key());
+        final boolean save = (noRepeat() || smart()) && seen.add(it.key());
+        final java.util.Set<String> snap = save ? new java.util.HashSet<String>(seen) : null;
+        final String lk = it.key();
+        io.execute(new Runnable() {           // escribir los ajustes en disco no debe parar la pantalla
+            public void run() {
+                if (snap != null) Prefs.saveSeen(ctx, snap);
+                Prefs.setLastShown(ctx, lk);
+            }
+        });
     }
 
     private void refresh() {
@@ -935,6 +973,7 @@ class Slideshow {
     // ------------------------------------------------------------ grupos de fotos cercanas en el tiempo
     private static final long GROUP_WINDOW_MS = 15L * 60 * 1000;
     private static final int GRID_ODDS = 8;                 // «cuatro en cuadrícula» sale una de cada 8 fotos, más o menos
+    private final java.util.concurrent.Executor io = Executors.newSingleThreadExecutor();
     private final java.util.Random grpRnd = new java.util.Random();
 
     private boolean gridOn() { return !manual() && Extras.on(ctx, Extras.GRID4); }
@@ -1009,7 +1048,7 @@ class Slideshow {
             return false;
         }
         android.graphics.Canvas c = new android.graphics.Canvas(out);
-        c.drawColor(Color.BLACK);
+        c.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR);   // el relleno (negro, color o difuminado) va detrás, aparte
         android.graphics.Paint pt = new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG);
         int gap = dp(8);
         if (need == 1) {
@@ -1030,8 +1069,6 @@ class Slideshow {
             if (p.item2 == null) p.item2 = g.it;
             else { if (p.others == null) p.others = new ArrayList<Item>(); p.others.add(g.it); }
         }
-        p.bgColor = Color.BLACK;
-        p.bgSmall = null;
         if (p.date != null) p.date = p.date.replaceFirst(" - \\d{1,2}:\\d{2}", "");   // un solo pie de foto y sin hora
         return true;
     }
@@ -1074,7 +1111,8 @@ class Slideshow {
         } catch (Throwable ignored) { }
     }
 
-    private void applyBackground(ImageView v, Slide s) {
+    private void applyBackground(ImageView img, Slide s) {
+        View v = bgOf(img);
         if (s.bgSmall != null) {
             android.graphics.drawable.BitmapDrawable d = new android.graphics.drawable.BitmapDrawable(ctx.getResources(), s.bgSmall);
             d.setFilterBitmap(true);
@@ -1084,7 +1122,19 @@ class Slideshow {
     }
 
     // ------------------------------------------------------------ movimiento suave (función extra)
-    private static void resetTransform(View v) {
+    /** Movimiento de una foto: lo hace la tarjeta gráfica (ViewPropertyAnimator), no el hilo de pantalla, y así no se para si éste se atasca. */
+    private static class Kb {
+        float[] m;            // escala, desplazamientos (fracción de la pantalla) inicial y final
+        long dur;
+        long t0;              // cuándo empezó (ms de reloj)
+        long elapsed;         // lo que llevaba al pausar
+        boolean paused;
+    }
+
+    private static final android.view.animation.LinearInterpolator LINEAR = new android.view.animation.LinearInterpolator();
+
+    private void resetTransform(View v) {
+        v.animate().cancel();
         v.setScaleX(1f);
         v.setScaleY(1f);
         v.setTranslationX(0f);
@@ -1092,91 +1142,90 @@ class Slideshow {
     }
 
     private void kbStop(View v) {
-        android.animation.Animator a = kb.remove(v);
-        if (a != null) a.cancel();
+        kb.remove(v);
         resetTransform(v);
     }
 
     private void kbStopAll() {
-        for (android.animation.Animator a : kb.values()) a.cancel();
         kb.clear();
         if (a != null) resetTransform(a);
         if (b != null) resetTransform(b);
     }
 
     private void kbPauseAll(boolean p) {
-        for (android.animation.Animator x : kb.values()) { if (p) x.pause(); else x.resume(); }
+        for (Map.Entry<View, Kb> e : kb.entrySet()) {
+            View v = e.getKey();
+            Kb k = e.getValue();
+            if (p && !k.paused) {
+                k.elapsed = Math.min(k.dur, System.currentTimeMillis() - k.t0);
+                v.animate().cancel();
+                kbApply(v, k, k.elapsed / (float) k.dur);
+                k.paused = true;
+            } else if (!p && k.paused) {
+                k.paused = false;
+                kbRun(v, k, k.elapsed);
+            }
+        }
+    }
+
+    private void kbApply(View v, Kb k, float f) {
+        float[] m = k.m;
+        v.setScaleX(m[0] + (m[1] - m[0]) * f);
+        v.setScaleY(m[0] + (m[1] - m[0]) * f);
+        v.setTranslationX((m[2] + (m[3] - m[2]) * f) * w);
+        v.setTranslationY((m[4] + (m[5] - m[4]) * f) * hgt);
+    }
+
+    private void kbRun(View v, Kb k, long from) {
+        kbApply(v, k, from / (float) k.dur);
+        k.t0 = System.currentTimeMillis() - from;
+        float[] m = k.m;
+        v.animate().setListener(null).setUpdateListener(null).setStartDelay(0)
+            .scaleX(m[1]).scaleY(m[1]).translationX(m[3] * w).translationY(m[5] * hgt)
+            .setDuration(Math.max(1, k.dur - from)).setInterpolator(LINEAR).start();
     }
 
     /**
-     * Movimiento suave (Ken Burns): acercar, alejar, de lado, arriba/abajo o en diagonal, según el ajuste. La foto siempre
-     * está algo ampliada, así que nunca asoma un borde vacío. Dura bastante más que la foto en pantalla: nunca se para a la vista.
+     * Movimiento suave (Ken Burns): acercar, alejar, de lado, arriba/abajo o en diagonal, según el ajuste. Dura bastante
+     * más que la foto en pantalla: nunca se para a la vista. El relleno va en otra vista y no se mueve (bordes a la vista).
      */
     private void startKenBurns(ImageView v) {
         kbStop(v);
         if (!Extras.on(ctx, Extras.KEN_BURNS) || browse()) return;
         final boolean edges = "show".equals(Extras.str(ctx, Extras.KB_EDGE, "hide"));
         final float[] m = FxLogic.kenBurnsPath(Extras.str(ctx, Extras.KB_STYLE, "mix"), new java.util.Random(), edges);
-        // el movimiento dura justo lo que la foto está en pantalla (su tiempo más el fundido): nunca se queda quieta.
+        // el movimiento dura lo que la foto está en pantalla (su tiempo más el fundido) y un 60 % más, a la misma velocidad.
         // La velocidad (lenta/normal) cambia cuánto recorre en ese tiempo; el alejar con los bordes a la vista siempre acaba entero.
         long dur = Prefs.interval(ctx) * 1000L + 1200L;
         float part = "normal".equals(Extras.str(ctx, Extras.KB_SPEED, "slow")) ? 0.65f : 0.4f;
         if (edges && m[1] < m[0]) part = 1f;
-        // el recorrido se alarga un 60 % más (a la misma velocidad): si el cambio de foto se retrasa un instante,
-        // la foto sigue moviéndose en vez de quedarse parada esperando
         if (part < 1f) {
             float more = Math.min(1f, part * 1.6f);
             dur = (long) (dur * (more / part));
             part = more;
         }
         for (int q = 1; q < 6; q += 2) m[q] = m[q - 1] + (m[q] - m[q - 1]) * part;
-        if (edges) { startKenBurnsEdges(v, m, dur); return; }
-        android.animation.ObjectAnimator an = android.animation.ObjectAnimator.ofPropertyValuesHolder(v,
-                android.animation.PropertyValuesHolder.ofFloat("scaleX", m[0], m[1]),
-                android.animation.PropertyValuesHolder.ofFloat("scaleY", m[0], m[1]),
-                android.animation.PropertyValuesHolder.ofFloat("translationX", m[2] * w, m[3] * w),
-                android.animation.PropertyValuesHolder.ofFloat("translationY", m[4] * hgt, m[5] * hgt));
-        an.setDuration(dur);
-        an.setInterpolator(new android.view.animation.LinearInterpolator());
-        an.start();
-        kb.put(v, an);
-        if (paused) an.pause();
-    }
-
-    /**
-     * Movimiento «bordes a la vista»: mueve solo la foto (con su matriz) y deja quieto el relleno de detrás
-     * (negro, color o difuminado), que así se ve en los bordes.
-     */
-    private void startKenBurnsEdges(final ImageView v, final float[] m, long dur) {
-        final android.graphics.Bitmap bm = v.getDrawable() instanceof android.graphics.drawable.BitmapDrawable
-                ? ((android.graphics.drawable.BitmapDrawable) v.getDrawable()).getBitmap() : null;
-        if (bm == null || bm.getWidth() < 1 || bm.getHeight() < 1 || w < 1 || hgt < 1) return;
-        final boolean crop = v.getScaleType() == ImageView.ScaleType.CENTER_CROP;
-        final float fit = Math.min(w / (float) bm.getWidth(), hgt / (float) bm.getHeight());
-        final float fill = Math.max(w / (float) bm.getWidth(), hgt / (float) bm.getHeight());
-        final float base = crop ? fill : fit;
-        v.setScaleType(ImageView.ScaleType.MATRIX);
-        final android.graphics.Matrix mx = new android.graphics.Matrix();
-        final android.animation.ValueAnimator an = android.animation.ValueAnimator.ofFloat(0f, 1f);
-        final android.animation.ValueAnimator.AnimatorUpdateListener up = new android.animation.ValueAnimator.AnimatorUpdateListener() {
-            public void onAnimationUpdate(android.animation.ValueAnimator a) { edgeFrame(v, bm, mx, base, m, (Float) a.getAnimatedValue()); }
-        };
-        edgeFrame(v, bm, mx, base, m, 0f);
-        an.addUpdateListener(up);
-        an.setDuration(dur);
-        an.setInterpolator(new android.view.animation.LinearInterpolator());
-        an.start();
-        kb.put(v, an);
-        if (paused) an.pause();
-    }
-
-    private void edgeFrame(ImageView v, android.graphics.Bitmap bm, android.graphics.Matrix mx, float base, float[] m, float f) {
-        float z = base * (m[0] + (m[1] - m[0]) * f);
-        float tx = (m[2] + (m[3] - m[2]) * f) * w, ty = (m[4] + (m[5] - m[4]) * f) * hgt;
-        mx.reset();
-        mx.postScale(z, z);
-        mx.postTranslate((w - bm.getWidth() * z) / 2f + tx, (hgt - bm.getHeight() * z) / 2f + ty);
-        v.setImageMatrix(mx);
+        if (edges) {
+            // con los bordes a la vista la foto se ve entera (nunca recortada) y la escala va referida a esa
+            Drawable dr = v.getDrawable();
+            if (dr instanceof android.graphics.drawable.BitmapDrawable) {
+                Bitmap bm = ((android.graphics.drawable.BitmapDrawable) dr).getBitmap();
+                if (bm != null && bm.getWidth() > 0 && bm.getHeight() > 0 && w > 0 && hgt > 0) {
+                    float fit = Math.min(w / (float) bm.getWidth(), hgt / (float) bm.getHeight());
+                    float fill = Math.max(w / (float) bm.getWidth(), hgt / (float) bm.getHeight());
+                    float base = v.getScaleType() == ImageView.ScaleType.CENTER_CROP ? fill : fit;
+                    v.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                    m[0] *= base / fit;
+                    m[1] *= base / fit;
+                }
+            }
+        }
+        Kb k = new Kb();
+        k.m = m;
+        k.dur = dur;
+        kb.put(v, k);
+        kbRun(v, k, 0);
+        if (paused) kbPauseAll(true);
     }
 
     // ------------------------------------------------------------ precarga de la siguiente
@@ -1221,7 +1270,7 @@ class Slideshow {
                     return;
                 }
                 final Slide p = buildPhoto(it);
-                if (p != null) { try { groupUp(it, p); } catch (Throwable ignored) { } }
+                if (p != null) { try { groupUp(it, p); } catch (Throwable ignored) { } warm(p); }   // la subida a la tarjeta gráfica, aquí y no en el hilo de pantalla
                 h.post(new Runnable() {
                     public void run() {
                         if (sess != session || !running) return;
@@ -1229,7 +1278,6 @@ class Slideshow {
                             t.bmp = p.bmp; t.date = p.date; t.place = p.place; t.state = 2;
                             t.item2 = p.item2; t.others = p.others;
                             t.bgColor = p.bgColor; t.bgSmall = p.bgSmall;
-                            warm(t);
                         }
                         onBuilt(t);
                     }
@@ -1862,21 +1910,21 @@ class Slideshow {
         final ImageView front = showingA ? a : b;
         final ImageView back = showingA ? b : a;
         h.removeCallbacks(revealLater);
-        front.animate().cancel();
-        back.animate().cancel();
+        fadeCancel(front);
+        fadeCancel(back);
         videoHolder.animate().cancel();
-        front.setAlpha(1f);                  // si se salta rápido, lo que estaba entrando queda completo
+        slideAlpha(front, 1f);                  // si se salta rápido, lo que estaba entrando queda completo
         back.setScaleType(scaleFor(s.bmp));
         back.setImageBitmap(s.bmp);
         applyBackground(back, s);
-        back.setAlpha(0f);
-        back.bringToFront();
+        slideAlpha(back, 0f);
+        slideToFront(back);
         overlaysToFront();
         if (browse()) {
             // paso manual por el álbum: cambio inmediato, sin fundido
-            back.setAlpha(1f);
+            slideAlpha(back, 1f);
             front.setImageDrawable(null);
-            front.setAlpha(0f);
+            slideAlpha(front, 0f);
             kbStop(back);
             kbStop(front);
             if (hideVideo) {
@@ -1898,19 +1946,29 @@ class Slideshow {
         setInfo(s);
         if (hideVideo) releasePlayer();
         startKenBurns(back);
-        back.animate().alpha(1f).setDuration(hideVideo ? 800 : 1200)
-            .setInterpolator(new AccelerateDecelerateInterpolator())
-            .withEndAction(new Runnable() {
-                public void run() {
-                    front.setImageDrawable(null);
-                    front.setAlpha(0f);
-                    kbStop(front);
-                    if (hideVideo) {
-                        videoHolder.setAlpha(0f);
-                        videoHolder.setVisibility(View.INVISIBLE);
-                    }
+        android.animation.ObjectAnimator fa = android.animation.ObjectAnimator.ofFloat(back, View.ALPHA, 1f);
+        android.animation.ObjectAnimator fb = android.animation.ObjectAnimator.ofFloat(bgOf(back), View.ALPHA, 1f);
+        final android.animation.AnimatorSet fade = new android.animation.AnimatorSet();
+        fade.playTogether(fa, fb);
+        fade.setDuration(hideVideo ? 800 : 1200);
+        fade.setInterpolator(new AccelerateDecelerateInterpolator());
+        fade.addListener(new android.animation.AnimatorListenerAdapter() {
+            boolean cancelled;
+            public void onAnimationCancel(android.animation.Animator an) { cancelled = true; }
+            public void onAnimationEnd(android.animation.Animator an) {
+                if (cancelled) return;
+                fades.remove(back);
+                front.setImageDrawable(null);
+                slideAlpha(front, 0f);
+                kbStop(front);
+                if (hideVideo) {
+                    videoHolder.setAlpha(0f);
+                    videoHolder.setVisibility(View.INVISIBLE);
                 }
-            }).start();
+            }
+        });
+        fades.put(back, fade);
+        fade.start();
         showingA = !showingA;
     }
 
@@ -1933,18 +1991,18 @@ class Slideshow {
             if (bm == null) return;
             ImageView old = showingA ? a : b;
             ImageView snap = showingA ? b : a;
-            old.animate().cancel();
-            snap.animate().cancel();
+            fadeCancel(old);
+            fadeCancel(snap);
             snap.setScaleType(ImageView.ScaleType.FIT_CENTER);
             snap.setImageBitmap(bm);
-            snap.setBackgroundColor(Color.BLACK);
+            bgOf(snap).setBackgroundColor(Color.BLACK);
             kbStop(snap);
             kbStop(old);
-            snap.setAlpha(1f);
-            snap.bringToFront();
+            slideAlpha(snap, 1f);
+            slideToFront(snap);
             overlaysToFront();
             old.setImageDrawable(null);
-            old.setAlpha(0f);
+            slideAlpha(old, 0f);
             showingA = !showingA;
         } catch (Throwable ignored) { }
     }
