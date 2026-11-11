@@ -83,8 +83,8 @@ Están en **Ajustes → Funciones extra**. Todas vienen **apagadas**: con todo a
 - **Reloj grande**: hora más grande con el día de la semana y la fecha debajo.
 - **Tiempo**: temperatura y cielo de tu ciudad junto a la hora (Open-Meteo, cada media hora). La ciudad se escribe en «Ciudad».
 - **Recuerdos de hoy**: el salvapantallas enseña solo fotos de un día como hoy de años anteriores (si hay al menos 5), con «hace N años» junto a la fecha.
-- **Movimiento suave** (efecto Ken Burns): zoom lento sobre cada foto.
-- **Fondo** de las fotos que no llenan la pantalla: negro, el color de la foto o la foto difuminada.
+- **Movimiento** (efecto Ken Burns): movimiento lento de cada foto, variado (al azar acercar, alejar, de lado, arriba y abajo o en diagonal) o siempre el mismo, con velocidad lenta o normal. La foto siempre está algo ampliada, así que nunca asoma un borde vacío.
+- **Relleno** de lo que la foto no llena (verticales, fotos con otra forma): negro, el color de la foto o la foto muy difuminada, en degradado suave.
 - **Dos verticales**: en el pase, dos fotos verticales seguidas se ven juntas.
 - **Pies de foto**: con pulsación larga en el mosaico, «Pie de foto»; sale en el pase y en la ficha.
 

@@ -21,7 +21,9 @@ final class Extras {
     static final String PLACE_REGION = "fx_placeRegion";   // el lugar es una provincia/isla/país entero
     static final String COLLAGE = "fx_collage";        // dos fotos verticales juntas
     static final String KEN_BURNS = "fx_kenBurns";     // movimiento suave
-    static final String BACKGROUND = "fx_bg";          // fondo de las verticales: black | color | blur
+    static final String KB_STYLE = "fx_kbStyle";       // mix (variado) | in (acercar) | out (alejar) | pan (desplazar)
+    static final String KB_SPEED = "fx_kbSpeed";       // slow (lenta) | normal
+    static final String BACKGROUND = "fx_bg";          // relleno de lo que la foto no llena: black | color | blur
     static final String CAPTIONS = "fx_captions";      // pies de foto
     static final String FAV_BOOST = "fx_favBoost";     // favoritas más a menudo (orden inteligente)
     static final String ALBUM_MUSIC = "fx_albumMusic"; // música propia de cada álbum

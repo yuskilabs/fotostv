@@ -81,18 +81,23 @@ public class ExtrasActivity extends SettingsBase {
         describe(cityBtn, "Ciudad del tiempo. Escribe su nombre («Málaga», «Estepona»…).");
         Button today = fx("Recuerdos de hoy", Extras.TODAY, R.drawable.ic_event,
                 "El salvapantallas enseña solo fotos de un día como hoy de años anteriores (si hay al menos 5), con «hace N años».");
-        Button ken = twoFx("Movimiento", Extras.KEN_BURNS, "no", "suave", R.drawable.ic_fullscreen,
-                "Zoom lento sobre cada foto mientras se ve (efecto Ken Burns).");
-        Button bg = cycFx("Fondo", Extras.BACKGROUND, new String[]{"black", "color", "blur"}, new String[]{"negro", "color", "difuminado"},
-                R.drawable.ic_wallpaper, "Fondo de las fotos que no llenan la pantalla (verticales): negro, el color de la foto o la foto difuminada.");
+        Button ken = motionBtn();
+        Button speed = cycFx("Velocidad", Extras.KB_SPEED, new String[]{"slow", "normal"}, new String[]{"lenta", "normal"},
+                R.drawable.ic_timer, "Velocidad del movimiento. En las dos, el movimiento dura más que la foto: nunca se para a la vista.");
+        Button bg = cycFx("Relleno", Extras.BACKGROUND, new String[]{"black", "color", "blur"}, new String[]{"negro", "color", "difuminado"},
+                R.drawable.ic_wallpaper, "Lo que se ve donde la foto no llena la pantalla (verticales, fotos con otra forma, y al moverse): negro, el color de la foto o la foto muy difuminada.");
         Button collage = fx("Dos verticales", Extras.COLLAGE, R.drawable.ic_photo,
                 "En el pase, dos fotos verticales seguidas se ven juntas, una al lado de otra.");
         Button captions = fx("Pies de foto", Extras.CAPTIONS, R.drawable.ic_notes,
                 "Permite escribir un texto a cada foto (pulsación larga en el mosaico) y lo enseña en el pase y en la ficha.");
         cp.addView(row(bigClock, weather));
         cp.addView(row(cityBtn, today));
-        cp.addView(row(ken, bg));
-        cp.addView(row(collage, captions));
+        cp.addView(row(captions, null));
+
+        // --- cómo se ve cada foto
+        LinearLayout cf = card("Movimiento y relleno", R.drawable.ic_fullscreen);
+        cf.addView(row(ken, speed));
+        cf.addView(row(bg, collage));
 
         // --- noche y temporizador
         LinearLayout cn = card("Noche y temporizador", R.drawable.ic_moon);
@@ -169,6 +174,7 @@ public class ExtrasActivity extends SettingsBase {
         ch.addView(row(reload, null));
 
         left.addView(cp);
+        left.addView(cf);
         left.addView(cn);
         LinearLayout.LayoutParams lw = new LinearLayout.LayoutParams(-1, 0, 1f);
         left.addView(cm, lw);
@@ -215,6 +221,35 @@ public class ExtrasActivity extends SettingsBase {
         });
         describe(b, desc);
         return b;
+    }
+
+    private static final String[] MOTION_VALS = {"off", "mix", "in", "out", "pan"};
+    private static final String[] MOTION_LABS = {"no", "variado", "acercar", "alejar", "desplazar"};
+
+    private String motionNow() {
+        return Extras.on(this, Extras.KEN_BURNS) ? Extras.str(this, Extras.KB_STYLE, "mix") : "off";
+    }
+
+    /** Movimiento: no → variado → acercar → alejar → desplazar (de lado, arriba/abajo o en diagonal). */
+    private Button motionBtn() {
+        final Button[] self = new Button[1];
+        self[0] = btn("Movimiento", R.drawable.ic_fullscreen, new View.OnClickListener() {
+            public void onClick(View v) {
+                String cur = motionNow();
+                int i = 0;
+                for (int k = 0; k < MOTION_VALS.length; k++) if (MOTION_VALS[k].equals(cur)) i = k;
+                String nx = MOTION_VALS[(i + 1) % MOTION_VALS.length];
+                android.content.SharedPreferences.Editor e = Prefs.sp(ExtrasActivity.this).edit();
+                e.putBoolean(Extras.KEN_BURNS, !"off".equals(nx));
+                if (!"off".equals(nx)) e.putString(Extras.KB_STYLE, nx);
+                e.commit();
+                self[0].setText("Movimiento: " + MOTION_LABS[(i + 1) % MOTION_VALS.length]);
+            }
+        });
+        String cur = motionNow();
+        for (int k = 0; k < MOTION_VALS.length; k++) if (MOTION_VALS[k].equals(cur)) self[0].setText("Movimiento: " + MOTION_LABS[k]);
+        describe(self[0], "Movimiento lento de cada foto: variado (al azar acercar, alejar, de lado, arriba y abajo o en diagonal) o siempre el mismo.");
+        return self[0];
     }
 
     /** Sí/no con palabras propias («Movimiento: suave»). */

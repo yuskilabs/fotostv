@@ -88,7 +88,8 @@ class Slideshow {
     private boolean nightOn, todayMode;
     private long nightSnooze;
     private int todayDay = -1;         // día en que se eligieron los «recuerdos de hoy»          // tras tocar el mando de noche, el modo noche espera un rato
-    private android.animation.Animator kenBurns;
+    /** Movimiento suave de cada una de las dos imágenes (la que sale sigue moviéndose mientras se funde). */
+    private final java.util.Map<View, android.animation.Animator> kb = new java.util.HashMap<View, android.animation.Animator>();
     private volatile String weatherTxt = "";
     /** Pase en marcha (para el mando desde el móvil). */
     static volatile Slideshow active;
@@ -216,7 +217,7 @@ class Slideshow {
         running = false;
         if (active == this) active = null;
         if (rcServer != null) { rcServer.close(); rcServer = null; }
-        if (kenBurns != null) { kenBurns.cancel(); kenBurns = null; }
+        kbStopAll();
         if (nightOn) { nightOn = false; Music.night(false); }
         if (panel != null) { panel.detach(); panel = null; }
         h.removeCallbacksAndMessages(null);
@@ -959,8 +960,16 @@ class Slideshow {
                 int cw = bw, ch = Math.round(bw * hgt / (float) w);
                 if (ch > bh) { ch = bh; cw = Math.max(1, Math.round(bh * w / (float) hgt)); }
                 Bitmap crop = Bitmap.createBitmap(t.bmp, (bw - cw) / 2, (bh - ch) / 2, cw, ch);
-                t.bgSmall = Bitmap.createScaledBitmap(crop, 32, 18, true);
-                if (crop != t.bmp && crop != t.bgSmall) crop.recycle();
+                Bitmap small = Bitmap.createScaledBitmap(crop, 96, 54, true);
+                if (crop != t.bmp && crop != small) crop.recycle();
+                // difuminado de calidad: tres pasadas de desenfoque (casi gaussiano) sobre la miniatura; al estirarla queda un degradado suave
+                int[] px = new int[96 * 54];
+                small.getPixels(px, 0, 96, 0, 0, 96, 54);
+                FxLogic.blur(px, 96, 54, 7, 3);
+                Bitmap out = small.isMutable() ? small : Bitmap.createBitmap(96, 54, Bitmap.Config.ARGB_8888);
+                out.setPixels(px, 0, 96, 0, 0, 96, 54);
+                if (out != small) small.recycle();
+                t.bgSmall = out;
             }
         } catch (Throwable ignored) { }
     }
@@ -969,7 +978,7 @@ class Slideshow {
         if (s.bgSmall != null) {
             android.graphics.drawable.BitmapDrawable d = new android.graphics.drawable.BitmapDrawable(ctx.getResources(), s.bgSmall);
             d.setFilterBitmap(true);
-            d.setColorFilter(0xFF707070, android.graphics.PorterDuff.Mode.MULTIPLY);
+            d.setColorFilter(0xFF8C8C8C, android.graphics.PorterDuff.Mode.MULTIPLY);   // algo más oscuro: la foto destaca
             v.setBackground(d);
         } else v.setBackgroundColor(s.bgColor);
     }
@@ -979,22 +988,46 @@ class Slideshow {
         v.setScaleX(1f);
         v.setScaleY(1f);
         v.setTranslationX(0f);
+        v.setTranslationY(0f);
     }
 
-    private void startKenBurns(ImageView v) {
-        if (kenBurns != null) { kenBurns.cancel(); kenBurns = null; }
+    private void kbStop(View v) {
+        android.animation.Animator a = kb.remove(v);
+        if (a != null) a.cancel();
         resetTransform(v);
+    }
+
+    private void kbStopAll() {
+        for (android.animation.Animator a : kb.values()) a.cancel();
+        kb.clear();
+        if (a != null) resetTransform(a);
+        if (b != null) resetTransform(b);
+    }
+
+    private void kbPauseAll(boolean p) {
+        for (android.animation.Animator x : kb.values()) { if (p) x.pause(); else x.resume(); }
+    }
+
+    /**
+     * Movimiento suave (Ken Burns): acercar, alejar, de lado, arriba/abajo o en diagonal, según el ajuste. La foto siempre
+     * está algo ampliada, así que nunca asoma un borde vacío. Dura bastante más que la foto en pantalla: nunca se para a la vista.
+     */
+    private void startKenBurns(ImageView v) {
+        kbStop(v);
         if (!Extras.on(ctx, Extras.KEN_BURNS) || browse()) return;
-        float dir = new java.util.Random().nextBoolean() ? 1f : -1f;
-        android.animation.ObjectAnimator a = android.animation.ObjectAnimator.ofPropertyValuesHolder(v,
-                android.animation.PropertyValuesHolder.ofFloat("scaleX", 1f, 1.1f),
-                android.animation.PropertyValuesHolder.ofFloat("scaleY", 1f, 1.1f),
-                android.animation.PropertyValuesHolder.ofFloat("translationX", 0f, dir * w * 0.02f));
-        a.setDuration(Prefs.interval(ctx) * 1000L + 2500L);
-        a.setInterpolator(new android.view.animation.LinearInterpolator());
-        a.start();
-        kenBurns = a;
-        if (paused) a.pause();
+        float[] m = FxLogic.kenBurnsPath(Extras.str(ctx, Extras.KB_STYLE, "mix"), new java.util.Random());
+        long visible = Prefs.interval(ctx) * 1000L + 1500L;                     // tiempo en pantalla, con los fundidos
+        long dur = "normal".equals(Extras.str(ctx, Extras.KB_SPEED, "slow")) ? visible * 3 / 2 + 3000L : visible * 5 / 2 + 3000L;
+        android.animation.ObjectAnimator an = android.animation.ObjectAnimator.ofPropertyValuesHolder(v,
+                android.animation.PropertyValuesHolder.ofFloat("scaleX", m[0], m[1]),
+                android.animation.PropertyValuesHolder.ofFloat("scaleY", m[0], m[1]),
+                android.animation.PropertyValuesHolder.ofFloat("translationX", m[2] * w, m[3] * w),
+                android.animation.PropertyValuesHolder.ofFloat("translationY", m[4] * hgt, m[5] * hgt));
+        an.setDuration(dur);
+        an.setInterpolator(new android.view.animation.LinearInterpolator());
+        an.start();
+        kb.put(v, an);
+        if (paused) an.pause();
     }
 
     // ------------------------------------------------------------ precarga de la siguiente
@@ -1602,7 +1635,7 @@ class Slideshow {
             syncAuto();
         }
         pauseBadge.setVisibility(p && !manual() ? View.VISIBLE : View.GONE);
-        if (kenBurns != null) { if (p) kenBurns.pause(); else kenBurns.resume(); }
+        kbPauseAll(p);
         if (p) {
             if (announce && manual()) flash("\u275A\u275A  Pase en pausa", 1500);
             h.removeCallbacks(tick);
@@ -1692,9 +1725,8 @@ class Slideshow {
             back.setAlpha(1f);
             front.setImageDrawable(null);
             front.setAlpha(0f);
-            if (kenBurns != null) { kenBurns.cancel(); kenBurns = null; }
-            resetTransform(back);
-            resetTransform(front);
+            kbStop(back);
+            kbStop(front);
             if (hideVideo) {
                 releasePlayer();
                 videoHolder.setAlpha(0f);
@@ -1720,7 +1752,7 @@ class Slideshow {
                 public void run() {
                     front.setImageDrawable(null);
                     front.setAlpha(0f);
-                    resetTransform(front);
+                    kbStop(front);
                     if (hideVideo) {
                         videoHolder.setAlpha(0f);
                         videoHolder.setVisibility(View.INVISIBLE);
@@ -1754,8 +1786,8 @@ class Slideshow {
             snap.setScaleType(ImageView.ScaleType.FIT_CENTER);
             snap.setImageBitmap(bm);
             snap.setBackgroundColor(Color.BLACK);
-            if (kenBurns != null) { kenBurns.cancel(); kenBurns = null; }
-            resetTransform(snap);
+            kbStop(snap);
+            kbStop(old);
             snap.setAlpha(1f);
             snap.bringToFront();
             overlaysToFront();
@@ -1815,7 +1847,7 @@ class Slideshow {
     }
 
     private void playVideo(final Slide s) {
-        if (kenBurns != null) { kenBurns.cancel(); kenBurns = null; }
+        kbStopAll();
         setVidCaption(s);
         playingVideo = true;
         revealed = false;
@@ -2094,7 +2126,7 @@ class Slideshow {
                 videoHolder.animate().cancel();
                 videoHolder.setAlpha(0f);
                 videoHolder.setVisibility(View.INVISIBLE);
-                if (kenBurns != null) kenBurns.pause();
+                kbPauseAll(true);
             }
         } else {
             nightView.setVisibility(View.GONE);
@@ -2104,7 +2136,7 @@ class Slideshow {
                 shade.setVisibility(anyText() ? View.VISIBLE : View.GONE);
                 if (cur != null && !cur.video) info.setVisibility(View.VISIBLE);
             }
-            if (black && kenBurns != null && !paused) kenBurns.resume();
+            if (black && !paused) kbPauseAll(false);
             if (black && !paused) goNext();            // vuelve el pase
         }
     }

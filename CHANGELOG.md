@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.0.1
+- Movimiento suave: ya no se para (dura bastante más que la foto, y la que sale sigue moviéndose mientras se funde) y es más lento. Ahora puede ser variado (al azar: acercar, alejar, de lado, arriba y abajo o en diagonal) o siempre acercar, alejar o desplazar, con velocidad lenta o normal.
+- «Fondo de las verticales» pasa a ser «Relleno», para todo lo que la foto no llena. El difuminado es mucho más suave, en degradado.
+- Funciones extra: nueva tarjeta «Movimiento y relleno».
+
 ## 7.0
 Nueva pantalla **Ajustes → Funciones extra** con las funciones nuevas (24 interruptores). Todas vienen apagadas: con todo apagado la app funciona como la 6.9.1 y cada una se puede quitar cuando se quiera.
 - Pantalla del pase: reloj grande con fecha, tiempo de tu ciudad, recuerdos de un día como hoy, movimiento suave (Ken Burns), fondo de color o difuminado en las verticales, dos verticales juntas y pies de foto.

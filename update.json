@@ -1,6 +1,6 @@
 {
-  "version": "7.0",
+  "version": "7.0.1",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 873707,
-  "notes": "Nueva pantalla Ajustes → Funciones extra con las funciones nuevas (24 interruptores). Todas vienen apagadas: con todo apagado la app funciona como la 6.9.1 y cada una se puede quitar cuando se quiera.\n- Pantalla del pase: reloj grande con fecha, tiempo de tu ciudad, recuerdos de un día como hoy, movimiento suave (Ken Burns), fondo de color o difuminado en las verticales, dos verticales juntas y pies de foto.\n- Noche y temporizador: modo noche (tenue o pantalla negra, sin música) y temporizador que cierra cualquier pase.\n- Música: emisora propia por álbum y música que baja (en vez de callarse) con los vídeos con sonido.\n- Salvapantallas: solo las fotos de un lugar, y favoritas más a menudo en el orden inteligente.\n- Explorador: Buscar (lugar, álbum, mes, año), álbumes virtuales (búsquedas guardadas), saltar por fecha, Viajes, varias portadas por álbum, marca «NUEVA», buscar fotos repetidas y Estadísticas con filtro por cámara.\n- Casa y móvil: perfiles «Familia» e «Invitados», mando en la web del móvil y recarga automática de los álbumes.\n- La copia de seguridad incluye las funciones extra, los pies de foto, la música por álbum y los álbumes virtuales."
+  "size": 877803,
+  "notes": "- Movimiento suave: ya no se para (dura bastante más que la foto, y la que sale sigue moviéndose mientras se funde) y es más lento. Ahora puede ser variado (al azar: acercar, alejar, de lado, arriba y abajo o en diagonal) o siempre acercar, alejar o desplazar, con velocidad lenta o normal.\n- «Fondo de las verticales» pasa a ser «Relleno», para todo lo que la foto no llena. El difuminado es mucho más suave, en degradado.\n- Funciones extra: nueva tarjeta «Movimiento y relleno»."
 }

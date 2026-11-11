@@ -66,6 +66,62 @@ final class FxLogic {
         return "";
     }
 
+    // ------------------------------------------------------------ movimiento suave (Ken Burns)
+    static final float KB_ZOOM = 0.14f;   // la foto, como mucho, un 14 % más grande
+
+    /**
+     * Recorrido de una foto: {escala inicial, final, desplazamiento X inicial, final, Y inicial, final}; los desplazamientos,
+     * en fracción del ancho/alto de la pantalla. Estilos: in (acercar), out (alejar), pan (de lado, arriba/abajo o en
+     * diagonal) y mix (cualquiera de ellos). Nunca asoma un borde: con la escala 1+Z, cabe un desplazamiento de Z/2.
+     */
+    static float[] kenBurnsPath(String style, Random r) {
+        float z = KB_ZOOM, big = 1f + z, m = z / 2f * 0.9f;
+        int kind;
+        if ("in".equals(style)) kind = 0;
+        else if ("out".equals(style)) kind = 1;
+        else if ("pan".equals(style)) kind = 2 + r.nextInt(3);
+        else kind = r.nextInt(5);
+        float sx = r.nextBoolean() ? 1f : -1f, sy = r.nextBoolean() ? 1f : -1f;
+        switch (kind) {
+            case 0: return new float[]{1f, big, 0f, sx * m * 0.3f, 0f, sy * m * 0.3f};          // acercar (y un poco de lado)
+            case 1: return new float[]{big, 1f, sx * m * 0.3f, 0f, sy * m * 0.3f, 0f};          // alejar
+            case 2: return new float[]{big, big, -sx * m, sx * m, 0f, 0f};                      // de lado
+            case 3: return new float[]{big, big, 0f, 0f, -sy * m, sy * m};                      // arriba o abajo
+            default: return new float[]{big, big, -sx * m, sx * m, -sy * m, sy * m};            // en diagonal
+        }
+    }
+
+    /** Desenfoque de caja en «passes» pasadas (con 3 se parece mucho a uno gaussiano), sobre píxeles ARGB. Bordes repetidos. */
+    static void blur(int[] px, int w, int h, int radius, int passes) {
+        int[] tmp = new int[px.length];
+        for (int p = 0; p < passes; p++) {
+            boxLine(px, tmp, w, h, radius, true);
+            boxLine(tmp, px, w, h, radius, false);
+        }
+    }
+
+    private static void boxLine(int[] src, int[] dst, int w, int h, int r, boolean horizontal) {
+        int lines = horizontal ? h : w, len = horizontal ? w : h, div = 2 * r + 1;
+        for (int l = 0; l < lines; l++) {
+            int sa = 0, sr = 0, sg = 0, sb = 0;
+            for (int i = -r; i <= r; i++) {
+                int c = src[idx(l, Math.max(0, Math.min(len - 1, i)), w, horizontal)];
+                sa += c >>> 24; sr += (c >> 16) & 255; sg += (c >> 8) & 255; sb += c & 255;
+            }
+            for (int i = 0; i < len; i++) {
+                dst[idx(l, i, w, horizontal)] = ((sa / div) << 24) | ((sr / div) << 16) | ((sg / div) << 8) | (sb / div);
+                int out = src[idx(l, Math.max(0, i - r), w, horizontal)];
+                int in = src[idx(l, Math.min(len - 1, i + r + 1), w, horizontal)];
+                sa += (in >>> 24) - (out >>> 24);
+                sr += ((in >> 16) & 255) - ((out >> 16) & 255);
+                sg += ((in >> 8) & 255) - ((out >> 8) & 255);
+                sb += (in & 255) - (out & 255);
+            }
+        }
+    }
+
+    private static int idx(int line, int i, int w, boolean horizontal) { return horizontal ? line * w + i : i * w + line; }
+
     // ------------------------------------------------------------ recuerdos de hoy
     /** Fotos hechas un día como hoy (mismo día y mes) de años anteriores. */
     static List<Item> onThisDay(List<Item> all, long now, TimeZone tz) {
