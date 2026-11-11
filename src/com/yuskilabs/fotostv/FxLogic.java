@@ -90,7 +90,7 @@ final class FxLogic {
             float ex = r.nextBoolean() ? 1f : -1f, ey = r.nextBoolean() ? 1f : -1f, p = 0.035f;
             switch (k) {
                 case 0: return new float[]{1f, 1.07f, 0f, 0f, 0f, 0f};
-                case 1: return new float[]{1f, 0.93f, 0f, 0f, 0f, 0f};
+                case 1: return new float[]{1f + KB_ZOOM, 1f, 0f, 0f, 0f, 0f};   // alejar: empieza con zoom y acaba con la foto entera
                 case 2: return new float[]{1f, 1f, -ex * p, ex * p, 0f, 0f};
                 case 3: return new float[]{1f, 1f, 0f, 0f, -ey * p, ey * p};
                 default: return new float[]{1f, 1f, -ex * p, ex * p, -ey * p, ey * p};
