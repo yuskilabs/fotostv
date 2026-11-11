@@ -1019,6 +1019,7 @@ class Slideshow {
         final float[] m = FxLogic.kenBurnsPath(Extras.str(ctx, Extras.KB_STYLE, "mix"), new java.util.Random(), edges);
         long visible = Prefs.interval(ctx) * 1000L + 1500L;                     // tiempo en pantalla, con los fundidos
         long dur = "normal".equals(Extras.str(ctx, Extras.KB_SPEED, "slow")) ? visible * 3 / 2 + 3000L : visible * 5 / 2 + 3000L;
+        if (edges && m[1] < m[0]) dur = visible;      // alejar: acaba con la foto entera justo cuando termina su tiempo en pantalla
         if (edges) { startKenBurnsEdges(v, m, dur); return; }
         android.animation.ObjectAnimator an = android.animation.ObjectAnimator.ofPropertyValuesHolder(v,
                 android.animation.PropertyValuesHolder.ofFloat("scaleX", m[0], m[1]),

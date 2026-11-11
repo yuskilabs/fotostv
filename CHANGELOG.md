@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.1.1
+- Bordes «a la vista»: al alejar, la foto empieza ampliada y termina entera (con sus bordes) justo cuando acaba su tiempo en pantalla.
+
 ## 7.1
 - Movimiento: nuevo ajuste «Bordes». «Tapados» es como antes; «a la vista» hace que la foto empiece entera, sin zoom, y al moverse se vea el relleno (negro, color o difuminado), que se queda quieto detrás.
 - Buscar: ahora es una barra discreta en la pantalla principal, justo encima de los botones, donde estaba la frase bajo el logo (que se quita). Se llega subiendo con el mando; escribes y pulsas Intro. Solo aparece con «Buscar» activado en Funciones extra.
