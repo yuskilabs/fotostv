@@ -52,8 +52,15 @@ class Prefs {
         meta(c).edit().putString("prof_list", a.toString()).commit();
     }
 
+    private static final ThreadLocal<Integer> forced = new ThreadLocal<Integer>();
+
+    /** Solo para este hilo: trabaja con los datos de otro perfil (copia de seguridad) sin cambiar el que se está usando. */
+    static void forceProfile(Integer id) { if (id == null) forced.remove(); else forced.set(id); }
+
     /** Id del perfil en uso: 0 = Familia (siempre, si los perfiles están desactivados). */
     static int profile(Context c) {
+        Integer f = forced.get();
+        if (f != null) return f;
         SharedPreferences m = meta(c);
         if (!m.getBoolean("fx_profiles", false)) return 0;
         int id = m.getInt("profileId", 0);
@@ -97,7 +104,113 @@ class Prefs {
         for (int i = 1; i < l.size(); i++) if (l.get(i)[0].equals(String.valueOf(id))) l.remove(i--);
         saveProfiles(c, l);
         c.getSharedPreferences("cfgx_" + id, Context.MODE_PRIVATE).edit().clear().commit();
+        clearProfileLook(c, id);
         if (meta(c).getInt("profileId", 0) == id) setProfile(c, 0);
+    }
+
+    // ---- icono del perfil: uno de la lista (posición) o una foto propia (archivo pimg_<id>.png) ----
+    /** Posición del icono elegido en la lista de iconos, o -1 si no se ha elegido (se usa el de por defecto). */
+    static int profileIconIdx(Context c, int id) { return meta(c).getInt("picon_" + id, -1); }
+
+    static java.io.File profileImageFile(Context c, int id) {
+        java.io.File f = new java.io.File(c.getFilesDir(), "pimg_" + id + ".png");
+        return f.exists() ? f : null;
+    }
+
+    static void setProfileIcon(Context c, int id, int idx) {
+        meta(c).edit().putInt("picon_" + id, idx).commit();
+        java.io.File f = profileImageFile(c, id);
+        if (f != null) f.delete();
+    }
+
+    static void clearProfileLook(Context c, int id) {
+        meta(c).edit().remove("picon_" + id).commit();
+        java.io.File f = profileImageFile(c, id);
+        if (f != null) f.delete();
+    }
+
+    /** Guarda una foto como icono del perfil: cuadrada, de 160 px y con las esquinas redondeadas. */
+    static boolean setProfileImage(Context c, int id, android.graphics.Bitmap src) {
+        try {
+            int s = Math.min(src.getWidth(), src.getHeight());
+            android.graphics.Bitmap sq = android.graphics.Bitmap.createBitmap(src, (src.getWidth() - s) / 2, (src.getHeight() - s) / 2, s, s);
+            android.graphics.Bitmap out = android.graphics.Bitmap.createBitmap(160, 160, android.graphics.Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas cv = new android.graphics.Canvas(out);
+            android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG | android.graphics.Paint.FILTER_BITMAP_FLAG);
+            cv.drawRoundRect(new android.graphics.RectF(0, 0, 160, 160), 24, 24, p);
+            p.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SRC_IN));
+            cv.drawBitmap(sq, null, new android.graphics.Rect(0, 0, 160, 160), p);
+            java.io.FileOutputStream fo = new java.io.FileOutputStream(new java.io.File(c.getFilesDir(), "pimg_" + id + ".png"));
+            try { out.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, fo); } finally { fo.close(); }
+            meta(c).edit().putInt("picon_" + id, -1).commit();
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** Para la copia de seguridad: la lista de perfiles con su nombre e icono, y los iconos propios en base64. */
+    static org.json.JSONObject exportProfiles(Context c) throws org.json.JSONException {
+        org.json.JSONObject pr = new org.json.JSONObject();
+        pr.put("on", true).put("next", meta(c).getInt("prof_next", 1));
+        JSONArray l = new JSONArray();
+        for (String[] p : profiles(c)) {
+            int id = Integer.parseInt(p[0]);
+            JSONObject o = new JSONObject().put("id", id).put("name", p[1]).put("icon", profileIconIdx(c, id));
+            java.io.File f = profileImageFile(c, id);
+            if (f != null) {
+                try {
+                    java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+                    java.io.FileInputStream fi = new java.io.FileInputStream(f);
+                    byte[] b = new byte[8192];
+                    int n;
+                    while ((n = fi.read(b)) > 0) bo.write(b, 0, n);
+                    fi.close();
+                    o.put("img", android.util.Base64.encodeToString(bo.toByteArray(), android.util.Base64.NO_WRAP));
+                } catch (Exception ignored) { }
+            }
+            l.put(o);
+        }
+        pr.put("list", l);
+        return pr;
+    }
+
+    /** Pone la lista de perfiles de la copia (activa los perfiles). Los perfiles que ya no están se borran con sus datos. */
+    static void importProfiles(Context c, org.json.JSONObject pr) {
+        List<String[]> keep = new ArrayList<String[]>();
+        keep.add(new String[]{"0", "Familia"});
+        JSONArray l = pr.optJSONArray("list");
+        java.util.Set<String> ids = new java.util.HashSet<String>();
+        ids.add("0");
+        if (l != null) for (int i = 0; i < l.length(); i++) {
+            JSONObject o = l.optJSONObject(i);
+            if (o == null) continue;
+            int id = o.optInt("id", 0);
+            if (id != 0) { keep.add(new String[]{String.valueOf(id), o.optString("name", "Perfil")}); ids.add(String.valueOf(id)); }
+            int ic = o.optInt("icon", -1);
+            String img = o.optString("img", "");
+            if (img.length() > 0) {
+                try {
+                    byte[] b = android.util.Base64.decode(img, android.util.Base64.DEFAULT);
+                    java.io.FileOutputStream fo = new java.io.FileOutputStream(new java.io.File(c.getFilesDir(), "pimg_" + id + ".png"));
+                    try { fo.write(b); } finally { fo.close(); }
+                    meta(c).edit().putInt("picon_" + id, -1).commit();
+                } catch (Exception ignored) { }
+            } else {
+                java.io.File f = profileImageFile(c, id);
+                if (f != null) f.delete();
+                if (ic >= 0) meta(c).edit().putInt("picon_" + id, ic).commit(); else meta(c).edit().remove("picon_" + id).commit();
+            }
+        }
+        for (String[] p : new ArrayList<String[]>(profiles(c))) {
+            if (!ids.contains(p[0])) {
+                int id = Integer.parseInt(p[0]);
+                c.getSharedPreferences("cfgx_" + id, Context.MODE_PRIVATE).edit().clear().commit();
+                clearProfileLook(c, id);
+            }
+        }
+        saveProfiles(c, keep);
+        meta(c).edit().putBoolean("fx_profiles", true).putInt("prof_next", Math.max(meta(c).getInt("prof_next", 1), pr.optInt("next", 1))).commit();
     }
 
     static SharedPreferences meta(Context c) {
@@ -302,7 +415,8 @@ class Prefs {
             for (Item it : items) {
                 w.write(it.url); w.write('\t');
                 w.write(Long.toString(it.ts)); w.write('\t');
-                w.write(it.id == null ? "" : it.id); w.write('\n');
+                w.write(it.id == null ? "" : it.id); w.write('\t');
+                w.write(it.tz == Item.NO_TZ ? "" : Long.toString(it.tz)); w.write('\n');
             }
         } finally {
             w.close();
@@ -395,12 +509,13 @@ class Prefs {
                 d.title = o.optString("title", "");
                 d.key = o.optString("key", "");
                 while ((line = r.readLine()) != null) {
-                    String[] p = line.split("\t", 3);
+                    String[] p = line.split("\t", 4);
                     if (p.length < 2) continue;
                     long ts = 0;
                     try { ts = Long.parseLong(p[1]); } catch (Exception ignored) { }
                     Item x = new Item(p[0], ts);
                     x.id = p.length > 2 ? p[2] : "";
+                    if (p.length > 3 && p[3].length() > 0) { try { x.tz = Long.parseLong(p[3]); } catch (Exception ignored) { } }
                     x.akey = d.key;
                     d.items.add(x);
                 }

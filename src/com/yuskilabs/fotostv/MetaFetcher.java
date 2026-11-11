@@ -709,13 +709,25 @@ class MetaFetcher {
     /** «Día de la semana y hora» de la foto en la fecha del pase (función extra); lo fija el pase al empezar. */
     static volatile boolean fullDate;
 
-    static String formatDate(long ms) {
+    static String formatDate(long ms) { return formatDate(ms, Item.NO_TZ); }
+
+    /** Fecha de una foto. Con «tz» (diferencia horaria del lugar donde se hizo) la hora es la de allí, no la de aquí. */
+    static String formatDate(long ms, long tz) {
         if (ms <= 0) return null;
-        if (fullDate) {
-            String d = new SimpleDateFormat("EEEE d 'de' MMMM 'de' yyyy, HH:mm", ES).format(new java.util.Date(ms));
-            return Character.toUpperCase(d.charAt(0)) + d.substring(1);
-        }
-        return new SimpleDateFormat("d 'de' MMMM 'de' yyyy", ES).format(new java.util.Date(ms));
+        return fmt(fullDate ? "EEEE d 'de' MMMM 'de' yyyy' | 'HH:mm" : "d 'de' MMMM 'de' yyyy", ms, tz, fullDate);
+    }
+
+    /** Día de la semana, fecha y hora para la ficha. */
+    static String formatDateTime(long ms, long tz) {
+        return ms <= 0 ? null : fmt("EEEE, d 'de' MMMM 'de' yyyy' | 'HH:mm", ms, tz, true);
+    }
+
+    private static String fmt(String pattern, long ms, long tz, boolean capital) {
+        SimpleDateFormat f = new SimpleDateFormat(pattern, ES);
+        long t = ms;
+        if (tz != Item.NO_TZ) { f.setTimeZone(java.util.TimeZone.getTimeZone("GMT")); t = ms + tz; }
+        String d = f.format(new java.util.Date(t));
+        return capital ? Character.toUpperCase(d.charAt(0)) + d.substring(1) : d;
     }
 
     private static String first(String... s) {

@@ -1,6 +1,6 @@
 {
-  "version": "7.2.1",
+  "version": "7.3",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 886208,
-  "notes": "- Perfiles rehechos: «Familia» y los perfiles que añadas con su nombre (se añaden, renombran y borran en Funciones extra → Perfiles), vacíos al principio y cada uno con sus álbumes, ajustes, PIN y web. Se elige con un icono cuadrado con el nombre, a la derecha del QR (el de «Familia», de familia; los demás, formas neutras). Se quita «Invitados».\n- Avisos de tareas en segundo plano: solo cuando las lanzas tú (recargar un álbum, buscar repetidas, revisar ubicaciones), como un aviso fijo abajo en el centro que no se quita hasta que acaba. Ya no sale al comprobar los álbumes solo, y se quita el texto de colores junto al título.\n- Iconos «Fecha» y «Mapa»: el texto ya no se recorta, con letra gris como la de los botones y algo más separados."
+  "size": 894400,
+  "notes": "- Movimiento: ya no hay un tirón al final. La foto siguiente se prepara en la tarjeta gráfica con antelación y el movimiento es algo más lento.\n- Botones: cuando el texto no cabe, la letra se reduce de verdad (antes se encogía pero el texto seguía cortándose en el mismo sitio).\n- Perfiles: se puede elegir su icono (muestra de iconos o foto de un archivo) y, desde la web del móvil, cambiar el nombre y el icono del perfil en uso. Un perfil sin álbumes ya no enseña «Ubicaciones al día…».\n- Copia de seguridad: incluye también los perfiles (nombre, icono, álbumes y todos sus ajustes) además de todas las funciones extra.\n- Fecha: «Día y hora» separa la hora con « | ». La hora de las fotos y vídeos es la del lugar donde se hicieron (antes salía la de aquí: un vídeo de Tailandia de las 13:44 salía a las 08:44). La ficha de metadatos enseña el día de la semana y la hora.\n- Iconos «Fecha» y «Mapa» más juntos."
 }

@@ -90,6 +90,8 @@ class AlbumFetcher {
                         Item nit = new Item(u, it.optLong(2, 0));
                         nit.id = it.optString(0, "");
                         nit.akey = key;
+                        long z = it.optLong(4, 0);                       // diferencia horaria del lugar de la foto (ms)
+                        if (z != 0 && Math.abs(z) <= 14 * 3600000L && z % 900000L == 0) nit.tz = z;
                         all.add(nit);
                     }
                     if (page == 0 && d.title.length() == 0) {

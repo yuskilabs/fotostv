@@ -234,8 +234,8 @@ public class BrowserActivity extends Activity {
         wrap.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         wrap.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2), lp2 = new LinearLayout.LayoutParams(-2, -2);
-        lp.setMargins(Ui.dp(this, 14), 0, 0, 0);               // los iconos, algo separados
-        lp2.setMargins(Ui.dp(this, 14), 0, 0, 0);
+        lp.setMargins(Ui.dp(this, 4), 0, 0, 0);                // los iconos, juntos
+        lp2.setMargins(Ui.dp(this, 4), 0, 0, 0);
         if (Extras.on(this, Extras.DATE_JUMP)) {
             wrap.addView(iconBox(R.drawable.ic_event, "Fecha", new View.OnClickListener() {
                 public void onClick(View v) { dateJump(); }

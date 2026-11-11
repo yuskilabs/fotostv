@@ -436,7 +436,7 @@ public class ExtrasActivity extends SettingsBase {
 
     private void profileMenu(final int id, final String name) {
         final boolean fam = id == 0;
-        final String[] it = fam ? new String[]{"Usar este perfil"} : new String[]{"Usar este perfil", "Cambiar el nombre", "Borrar"};
+        final String[] it = fam ? new String[]{"Usar este perfil", "Cambiar el icono"} : new String[]{"Usar este perfil", "Cambiar el icono", "Cambiar el nombre", "Borrar"};
         new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle(name)
             .setItems(it, new DialogInterface.OnClickListener() {
@@ -445,7 +445,8 @@ public class ExtrasActivity extends SettingsBase {
                         Prefs.setProfile(ExtrasActivity.this, id);
                         Toast.makeText(ExtrasActivity.this, "Perfil «" + name + "» en uso.", Toast.LENGTH_SHORT).show();
                         recreate();
-                    } else if (which == 1) askProfileName("Nombre del perfil", name, id);
+                    } else if (which == 1) iconPicker(id, name);
+                    else if (which == 2) askProfileName("Nombre del perfil", name, id);
                     else confirmDeleteProfile(id, name);
                 }
             })
@@ -453,6 +454,94 @@ public class ExtrasActivity extends SettingsBase {
                 public void onClick(DialogInterface d, int w) { manageProfiles(); }
             })
             .show();
+    }
+
+    private int pickId = -1;
+
+    /** Muestra de iconos para el perfil, más «Foto» (de un archivo) y, si ya tiene una, «Quitar foto». */
+    private void iconPicker(final int id, final String name) {
+        final boolean hasImg = Prefs.profileImageFile(this, id) != null;
+        final int n = Ui.PROFILE_ICONS.length;
+        final int extra = hasImg ? 2 : 1;
+        final android.widget.GridView grid = new android.widget.GridView(this);
+        grid.setNumColumns(6);
+        grid.setVerticalSpacing(dp(6));
+        grid.setHorizontalSpacing(dp(6));
+        grid.setPadding(dp(14), dp(10), dp(14), dp(6));
+        grid.setSelector(new android.graphics.drawable.ColorDrawable(0x663D8BFD));
+        grid.setAdapter(new android.widget.BaseAdapter() {
+            public int getCount() { return n + extra; }
+            public Object getItem(int i) { return null; }
+            public long getItemId(int i) { return i; }
+            public View getView(int i, View cv, android.view.ViewGroup p) {
+                ImageView v = new ImageView(ExtrasActivity.this);
+                v.setPadding(dp(10), dp(10), dp(10), dp(10));
+                int res = i < n ? Ui.PROFILE_ICONS[i] : (i == n ? R.drawable.ic_file : R.drawable.ic_delete);
+                v.setImageResource(res);
+                GradientDrawable g = new GradientDrawable();
+                g.setColor(0xFF22364F);
+                g.setCornerRadius(dp(8));
+                v.setBackground(g);
+                v.setLayoutParams(new android.widget.AbsListView.LayoutParams(dp(52), dp(52)));
+                return v;
+            }
+        });
+        TextView tip = text("Elige un icono, o «archivo» para usar una foto" + (hasImg ? " (la papelera quita la foto actual)." : "."), 13, 0xFF9FB3C8);
+        tip.setPadding(dp(18), dp(8), dp(18), 0);
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.addView(tip);
+        box.addView(grid);
+        final AlertDialog dlg = new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK).setTitle("Icono de «" + name + "»").setView(box)
+            .setNegativeButton("Atrás", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface d, int w) { manageProfiles(); }
+            }).create();
+        grid.setOnItemClickListener(new android.widget.AdapterView.OnItemClickListener() {
+            public void onItemClick(android.widget.AdapterView<?> a, View v, int i, long l) {
+                dlg.dismiss();
+                if (i < n) { Prefs.setProfileIcon(ExtrasActivity.this, id, i); manageProfiles(); }
+                else if (i == n) pickPhoto(id);
+                else { Prefs.clearProfileLook(ExtrasActivity.this, id); manageProfiles(); }
+            }
+        });
+        dlg.show();
+    }
+
+    /** Elige una foto de un archivo (si el aparato tiene selector de archivos). */
+    private void pickPhoto(int id) {
+        pickId = id;
+        try {
+            android.content.Intent in = new android.content.Intent(android.content.Intent.ACTION_GET_CONTENT).setType("image/*");
+            startActivityForResult(in, 77);
+        } catch (Throwable t) {
+            Toast.makeText(this, "Este aparato no tiene selector de archivos. Puedes poner la foto desde la web del móvil (Perfil en uso).", Toast.LENGTH_LONG).show();
+            manageProfiles();
+        }
+    }
+
+    @Override protected void onActivityResult(int req, int res, android.content.Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req != 77) return;
+        if (res == RESULT_OK && data != null && data.getData() != null && pickId >= 0) {
+            boolean ok = false;
+            try {
+                android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+                o.inJustDecodeBounds = true;
+                java.io.InputStream a = getContentResolver().openInputStream(data.getData());
+                android.graphics.BitmapFactory.decodeStream(a, null, o);
+                a.close();
+                int ss = 1;
+                while (o.outWidth / ss > 800 && o.outHeight / ss > 800) ss *= 2;
+                o = new android.graphics.BitmapFactory.Options();
+                o.inSampleSize = ss;
+                java.io.InputStream b = getContentResolver().openInputStream(data.getData());
+                android.graphics.Bitmap bm = android.graphics.BitmapFactory.decodeStream(b, null, o);
+                b.close();
+                if (bm != null) ok = Prefs.setProfileImage(this, pickId, bm);
+            } catch (Throwable ignored) { }
+            Toast.makeText(this, ok ? "Foto puesta como icono." : "No se ha podido leer esa imagen.", Toast.LENGTH_SHORT).show();
+        }
+        manageProfiles();
     }
 
     private void confirmDeleteProfile(final int id, final String name) {

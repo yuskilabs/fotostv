@@ -42,8 +42,14 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                     final String st;
                     String x;
                     try { x = GeoIndex.status(SettingsActivity.this); } catch (Throwable e) { x = ""; }
-                    st = x;
-                    h.post(new Runnable() { public void run() { if (geoView != null) { String ac = GeoIndex.action(SettingsActivity.this); geoView.setText(st + (ac.length() > 0 ? "  [OK: " + ac + "]" : "")); } } });
+                    boolean none = Prefs.albums(SettingsActivity.this).isEmpty();   // un perfil sin álbumes: nada que resumir
+                    st = none ? "" : x;
+                    final boolean empty = none;
+                    h.post(new Runnable() { public void run() { if (geoView != null) {
+                        String ac = GeoIndex.action(SettingsActivity.this);
+                        geoView.setText(empty ? "" : st + (ac.length() > 0 ? "  [OK: " + ac + "]" : ""));
+                        geoView.setVisibility(empty ? View.GONE : View.VISIBLE);
+                    } } });
                 }
             }).start();
             h.postDelayed(this, 4000);
@@ -443,8 +449,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         bg.addState(new int[]{}, off);
         t.setBackground(bg);
         ImageView ic = new ImageView(this);
-        ic.setImageResource(Ui.profileIcon(Prefs.profileIndex(this, cur)));
-        ic.setPadding(dp(10), dp(10), dp(10), dp(10));
+        Ui.showProfileIcon(ic, cur);
         GradientDrawable sq = new GradientDrawable();
         sq.setColor(0xFF22364F);
         sq.setCornerRadius(dp(10));
@@ -476,7 +481,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     /** Qué botones extra hay que enseñar (si cambia al volver de Ajustes, la pantalla se rehace). */
     private String extrasSig() {
         return Extras.on(this, Extras.SEARCH) + "," + Extras.on(this, Extras.TRIPS) + "," + Extras.on(this, Extras.STATS)
-                + "," + Prefs.profilesOn(this) + "," + Prefs.profile(this) + "," + Prefs.profiles(this).size();
+                + "," + Prefs.profilesOn(this) + "," + Prefs.profile(this) + "," + Prefs.profiles(this).size()
+                + "," + Prefs.profileName(this, Prefs.profile(this)) + "," + Prefs.profileIconIdx(this, Prefs.profile(this))
+                + "," + (Prefs.profileImageFile(this, Prefs.profile(this)) == null ? 0 : Prefs.profileImageFile(this, Prefs.profile(this)).lastModified());
     }
 
     /** Un botón solo en su fila (con el mismo alto que las demás). */
@@ -749,6 +756,13 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             h.postDelayed(this, 60000);
         }
     };
+
+    /** Desde la web del móvil se ha cambiado el nombre o el icono del perfil (o se ha importado una copia): se rehace la pantalla. */
+    @Override public void onProfile() {
+        h.post(new Runnable() {
+            public void run() { if (extrasSig != null && !extrasSig.equals(extrasSig())) recreate(); }
+        });
+    }
 
     @Override public void onSaved() {
         h.post(new Runnable() {

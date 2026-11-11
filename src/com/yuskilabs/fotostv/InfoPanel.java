@@ -108,7 +108,7 @@ class InfoPanel extends FrameLayout {
 
         // lo que ya se sabe sin descargar nada
         if (it.ts > 0) {
-            addRow(R.drawable.ic_event, "Fecha", new SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", MetaFetcher.ES).format(new Date(it.ts)));
+            addRow(R.drawable.ic_event, "Fecha", MetaFetcher.formatDateTime(it.ts, it.tz));
         }
         if (album != null && album.length() > 0) addRow(R.drawable.ic_albums, "Álbum", album);
         String cap = Extras.caption(c, it.key());

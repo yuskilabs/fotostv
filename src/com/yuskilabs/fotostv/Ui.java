@@ -8,6 +8,7 @@ import android.graphics.drawable.StateListDrawable;
 import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 /** Elementos de interfaz compartidos. */
@@ -101,42 +102,64 @@ class Ui {
     }
 
     /** Pone un icono blanco a la izquierda del texto del botón. */
-    /** Icono de un perfil según su posición: «Familia» (0) la familia; los demás, formas neutras, sin personas. */
-    static int profileIcon(int index) {
-        int[] o = {R.drawable.ic_home, R.drawable.ic_heart, R.drawable.ic_star, R.drawable.ic_flight, R.drawable.ic_albums, R.drawable.ic_music};
-        return index <= 0 ? R.drawable.ic_family : o[(index - 1) % o.length];
+    /** Iconos que se pueden elegir para un perfil (el orden no debe cambiar: se guarda la posición). */
+    static final int[] PROFILE_ICONS = {R.drawable.ic_family, R.drawable.ic_home, R.drawable.ic_heart, R.drawable.ic_star,
+        R.drawable.ic_flight, R.drawable.ic_albums, R.drawable.ic_music, R.drawable.ic_photo, R.drawable.ic_camera,
+        R.drawable.ic_tv, R.drawable.ic_place, R.drawable.ic_sparkle, R.drawable.ic_moon, R.drawable.ic_cloud,
+        R.drawable.ic_terrain, R.drawable.ic_video};
+
+    /** Icono de un perfil: el elegido o, si no, «Familia» la familia y los demás formas neutras (sin personas). */
+    static int profileIcon(Context c, int id) {
+        int idx = Prefs.profileIconIdx(c, id);
+        if (idx >= 0 && idx < PROFILE_ICONS.length) return PROFILE_ICONS[idx];
+        int pos = Prefs.profileIndex(c, id);
+        return pos <= 0 ? PROFILE_ICONS[0] : PROFILE_ICONS[1 + (pos - 1) % 6];
+    }
+
+    /** Pone en la vista el icono (o la foto) del perfil. */
+    static void showProfileIcon(ImageView v, int id) {
+        Context c = v.getContext();
+        java.io.File f = Prefs.profileImageFile(c, id);
+        android.graphics.Bitmap b = f == null ? null : android.graphics.BitmapFactory.decodeFile(f.getPath());
+        if (b != null) { v.setPadding(0, 0, 0, 0); v.setImageBitmap(b); }
+        else { int p = dp(c, 10); v.setPadding(p, p, p, p); v.setImageResource(profileIcon(c, id)); }
     }
 
     /** Botón que reduce un poco la letra (hasta 10 sp) si su texto no cabe, antes de recortarlo con «…». */
     static class FitButton extends Button {
         private float basePx;
+        private boolean fitting;
         FitButton(Context c) { super(c); }
         @Override public void setText(CharSequence t, BufferType type) {
             super.setText(t, type);
-            if (basePx > 0) { getPaint().setTextSize(basePx); post(fit); }
+            if (basePx > 0) post(fit);
         }
         @Override public void setTextSize(int unit, float size) {
             super.setTextSize(unit, size);
-            basePx = getTextSize();
+            if (!fitting) basePx = getTextSize();
         }
         private final Runnable fit = new Runnable() { public void run() { fitNow(); } };
         @Override protected void onLayout(boolean changed, int l, int t, int r, int b) {
             super.onLayout(changed, l, t, r, b);
             if (basePx <= 0) basePx = getTextSize();
-            fitNow();
+            post(fit);
         }
+        /** Elige la letra más grande (entre la normal y 10 sp) con la que el texto cabe, y rehace la maquetación. */
         private void fitNow() {
             int w = getWidth();
             if (w <= 0 || basePx <= 0 || getText() == null) return;
             int avail = w - getPaddingLeft() - getPaddingRight();
             android.graphics.drawable.Drawable[] cd = getCompoundDrawables();
             if (cd[0] != null) avail -= cd[0].getBounds().width() + getCompoundDrawablePadding();
-            float px = basePx, min = 10f * getResources().getDisplayMetrics().scaledDensity;
+            float sd = getResources().getDisplayMetrics().scaledDensity, min = 10f * sd, px = basePx;
             String s = getText().toString();
-            android.text.TextPaint tp = getPaint();
+            android.text.TextPaint tp = new android.text.TextPaint(getPaint());
             tp.setTextSize(px);
-            while (px > min && tp.measureText(s) > avail) { px -= 0.5f * getResources().getDisplayMetrics().scaledDensity; tp.setTextSize(px); }
-            invalidate();
+            while (px > min && tp.measureText(s) > avail) { px -= 0.5f * sd; tp.setTextSize(px); }
+            if (Math.abs(px - getTextSize()) < 0.25f) return;
+            fitting = true;
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, px);
+            fitting = false;
         }
     }
 

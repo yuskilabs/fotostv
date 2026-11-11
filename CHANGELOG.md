@@ -3,6 +3,14 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.3
+- Movimiento: ya no hay un tirón al final. La foto siguiente se prepara en la tarjeta gráfica con antelación y el movimiento es algo más lento.
+- Botones: cuando el texto no cabe, la letra se reduce de verdad (antes se encogía pero el texto seguía cortándose en el mismo sitio).
+- Perfiles: se puede elegir su icono (muestra de iconos o foto de un archivo) y, desde la web del móvil, cambiar el nombre y el icono del perfil en uso. Un perfil sin álbumes ya no enseña «Ubicaciones al día…».
+- Copia de seguridad: incluye también los perfiles (nombre, icono, álbumes y todos sus ajustes) además de todas las funciones extra.
+- Fecha: «Día y hora» separa la hora con « | ». La hora de las fotos y vídeos es la del lugar donde se hicieron (antes salía la de aquí: un vídeo de Tailandia de las 13:44 salía a las 08:44). La ficha de metadatos enseña el día de la semana y la hora.
+- Iconos «Fecha» y «Mapa» más juntos.
+
 ## 7.2.1
 - Perfiles rehechos: «Familia» y los perfiles que añadas con su nombre (se añaden, renombran y borran en Funciones extra → Perfiles), vacíos al principio y cada uno con sus álbumes, ajustes, PIN y web. Se elige con un icono cuadrado con el nombre, a la derecha del QR (el de «Familia», de familia; los demás, formas neutras). Se quita «Invitados».
 - Avisos de tareas en segundo plano: solo cuando las lanzas tú (recargar un álbum, buscar repetidas, revisar ubicaciones), como un aviso fijo abajo en el centro que no se quita hasta que acaba. Ya no sale al comprobar los álbumes solo, y se quita el texto de colores junto al título.

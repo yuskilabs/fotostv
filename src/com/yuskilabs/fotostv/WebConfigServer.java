@@ -16,7 +16,7 @@ import java.util.Map;
 
 /** Pequeña web local para configurar el álbum desde el móvil. */
 class WebConfigServer extends Thread {
-    interface Listener { void onSaved(); void onGuest(String id); }
+    interface Listener { void onSaved(); void onGuest(String id); void onProfile(); }
 
     private final Context ctx;
     private final Listener listener;
@@ -148,6 +148,15 @@ class WebConfigServer extends Thread {
                 return;
             }
         }
+        if (path.startsWith("/img/pi/") || path.startsWith("/img/pp.png")) {
+            byte[] png = profileIconPng(path);
+            OutputStream o3 = s.getOutputStream();
+            o3.write(("HTTP/1.1 200 OK\r\nContent-Type: image/png\r\nCache-Control: no-cache\r\nContent-Length: "
+                    + png.length + "\r\nConnection: close\r\n\r\n").getBytes("UTF-8"));
+            o3.write(png);
+            o3.flush();
+            return;
+        }
         if (path.startsWith("/img/")) {
             int id = path.startsWith("/img/yuski") ? R.drawable.yuski_logo : R.drawable.logo_full;
             java.io.InputStream ri = ctx.getResources().openRawResource(id);
@@ -183,6 +192,12 @@ class WebConfigServer extends Thread {
             }
         } else if (path.startsWith("/export")) {
             body = exportJson();
+            ctype = "text/plain; charset=utf-8";
+        } else if ("POST".equals(method) && path.startsWith("/profile")) {
+            byte[] buf = new byte[len];
+            int off = 0;
+            while (off < len) { int n = in.read(buf, off, len - off); if (n < 0) break; off += n; }
+            body = saveProfile(parseForm(new String(buf, 0, off, "UTF-8")));
             ctype = "text/plain; charset=utf-8";
         } else if ("POST".equals(method) && path.startsWith("/import")) {
             byte[] buf = new byte[len];
@@ -264,6 +279,58 @@ class WebConfigServer extends Thread {
         e.apply();
     }
 
+    /** Icono de la lista (/img/pi/N.png) o el del perfil en uso (/img/pp.png), como PNG blanco sobre transparente o su foto. */
+    private byte[] profileIconPng(String path) {
+        try {
+            android.graphics.Bitmap bm = null;
+            int id = Prefs.profile(ctx);
+            if (path.startsWith("/img/pp.png")) {
+                java.io.File f = Prefs.profileImageFile(ctx, id);
+                if (f != null) bm = android.graphics.BitmapFactory.decodeFile(f.getPath());
+            }
+            if (bm == null) {
+                int res;
+                if (path.startsWith("/img/pi/")) {
+                    int n = Integer.parseInt(path.substring(8).split("\\.")[0]);
+                    res = Ui.PROFILE_ICONS[Math.max(0, Math.min(Ui.PROFILE_ICONS.length - 1, n))];
+                } else res = Ui.profileIcon(ctx, id);
+                android.graphics.drawable.Drawable d = ctx.getResources().getDrawable(res);
+                bm = android.graphics.Bitmap.createBitmap(96, 96, android.graphics.Bitmap.Config.ARGB_8888);
+                android.graphics.Canvas cv = new android.graphics.Canvas(bm);
+                d.setBounds(8, 8, 88, 88);
+                d.draw(cv);
+            }
+            java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+            bm.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, bo);
+            return bo.toByteArray();
+        } catch (Throwable t) {
+            return new byte[0];
+        }
+    }
+
+    /** Nombre e icono (de la lista o una foto) del perfil en uso, desde la web del móvil. */
+    private String saveProfile(Map<String, String> f) {
+        try {
+            int id = Prefs.profile(ctx);
+            String name = val(f, "name");
+            if (id != 0 && name.length() > 0) Prefs.renameProfile(ctx, id, name.length() > 20 ? name.substring(0, 20) : name);
+            String img = val(f, "img");
+            if (img.length() > 0) {
+                int c = img.indexOf(',');
+                byte[] b = android.util.Base64.decode(c >= 0 ? img.substring(c + 1) : img, android.util.Base64.DEFAULT);
+                android.graphics.Bitmap bm = android.graphics.BitmapFactory.decodeByteArray(b, 0, b.length);
+                if (bm == null || !Prefs.setProfileImage(ctx, id, bm)) return "ER\nNo he podido leer esa imagen.";
+            } else if (val(f, "icon").length() > 0) {
+                int ic = intOf(f.get("icon"), -1);
+                if (ic >= 0) Prefs.setProfileIcon(ctx, id, ic);
+            }
+            if (listener != null) listener.onProfile();
+            return "OK\n\u2714 Perfil guardado.";
+        } catch (Throwable t) {
+            return "ER\nNo se pudo guardar: " + esc(String.valueOf(t.getMessage()));
+        }
+    }
+
     private static int intOf(String s, int def) {
         try { return Integer.parseInt(s.trim()); } catch (Exception e) { return def; }
     }
@@ -271,36 +338,57 @@ class WebConfigServer extends Thread {
     // ---- copia de seguridad (exportar / importar)
     private String exportJson() {
         try {
-            org.json.JSONObject o = new org.json.JSONObject();
-            o.put("fotostv", 1);
-            org.json.JSONArray al = new org.json.JSONArray();
-            for (Prefs.Album a : Prefs.albums(ctx))
-                al.put(new org.json.JSONObject().put("url", a.url).put("name", a.name).put("show", a.show));
-            o.put("albums", al);
-            org.json.JSONObject s = new org.json.JSONObject();
-            s.put("interval", Prefs.interval(ctx)).put("fit", Prefs.fit(ctx)).put("order", Prefs.order(ctx))
-             .put("albumMode", Prefs.albumMode(ctx)).put("resume", Prefs.resume(ctx))
-             .put("video", Prefs.video(ctx)).put("sound", Prefs.sound(ctx)).put("clock", Prefs.clock(ctx))
-             .put("showAlbum", Prefs.showAlbum(ctx)).put("showDate", Prefs.showDate(ctx))
-             .put("showPlace", Prefs.showPlace(ctx)).put("thumbMB", Prefs.thumbMB(ctx))
-             .put("videoMB", Prefs.videoMB(ctx))
-             .put("musicMode", Prefs.musicMode(ctx)).put("musicRadio", Prefs.musicRadio(ctx))
-             .put("musicFolder", Prefs.musicFolder(ctx)).put("musicVol", Prefs.musicVol(ctx))
-             .put("musicDream", Prefs.musicDream(ctx));
-            o.put("settings", s);
-            org.json.JSONArray hid = new org.json.JSONArray();
-            for (String k : Prefs.hidden(ctx)) hid.put(k);
-            o.put("hidden", hid);
-            org.json.JSONArray fv = new org.json.JSONArray();
-            for (String k : Prefs.favs(ctx)) fv.put(k);
-            o.put("favs", fv);
-            o.put("extra", exportExtra());                    // portadas, orden de álbumes, columnas, inicio/cierre automático, Projectivy…
+            org.json.JSONObject o;
+            if (Prefs.profilesOn(ctx)) {
+                // con perfiles: lo de arriba es «Familia», y los demás perfiles (con su nombre e icono) van en «profiles»
+                Prefs.forceProfile(0);
+                try { o = coreJson(); } finally { Prefs.forceProfile(null); }
+                org.json.JSONObject pr = Prefs.exportProfiles(ctx);
+                org.json.JSONObject data = new org.json.JSONObject();
+                for (String[] p : Prefs.profiles(ctx)) {
+                    int id = Integer.parseInt(p[0]);
+                    if (id == 0) continue;
+                    Prefs.forceProfile(id);
+                    try { data.put(p[0], coreJson()); } finally { Prefs.forceProfile(null); }
+                }
+                pr.put("data", data);
+                o.put("profiles", pr);
+            } else o = coreJson();
             o.put("places", GeoIndex.get(ctx).exportPlaces());   // nombres de lugar ya calculados
             o.put("geo", GeoIndex.get(ctx).exportGeo());     // coordenadas ya leídas: «clave,lat,lon» por foto
             return o.toString();
         } catch (Exception e) {
             return "";
         }
+    }
+
+    /** Lo que guarda cada perfil: álbumes, ajustes, ocultas, favoritas y todo lo «extra» (funciones extra, portadas, pies de foto…). */
+    private org.json.JSONObject coreJson() throws org.json.JSONException {
+        org.json.JSONObject o = new org.json.JSONObject();
+        o.put("fotostv", 1);
+        org.json.JSONArray al = new org.json.JSONArray();
+        for (Prefs.Album a : Prefs.albums(ctx))
+            al.put(new org.json.JSONObject().put("url", a.url).put("name", a.name).put("show", a.show));
+        o.put("albums", al);
+        org.json.JSONObject s = new org.json.JSONObject();
+        s.put("interval", Prefs.interval(ctx)).put("fit", Prefs.fit(ctx)).put("order", Prefs.order(ctx))
+         .put("albumMode", Prefs.albumMode(ctx)).put("resume", Prefs.resume(ctx))
+         .put("video", Prefs.video(ctx)).put("sound", Prefs.sound(ctx)).put("clock", Prefs.clock(ctx))
+         .put("showAlbum", Prefs.showAlbum(ctx)).put("showDate", Prefs.showDate(ctx))
+         .put("showPlace", Prefs.showPlace(ctx)).put("thumbMB", Prefs.thumbMB(ctx))
+         .put("videoMB", Prefs.videoMB(ctx))
+         .put("musicMode", Prefs.musicMode(ctx)).put("musicRadio", Prefs.musicRadio(ctx))
+         .put("musicFolder", Prefs.musicFolder(ctx)).put("musicVol", Prefs.musicVol(ctx))
+         .put("musicDream", Prefs.musicDream(ctx));
+        o.put("settings", s);
+        org.json.JSONArray hid = new org.json.JSONArray();
+        for (String k : Prefs.hidden(ctx)) hid.put(k);
+        o.put("hidden", hid);
+        org.json.JSONArray fv = new org.json.JSONArray();
+        for (String k : Prefs.favs(ctx)) fv.put(k);
+        o.put("favs", fv);
+        o.put("extra", exportExtra());                    // portadas, orden de álbumes, columnas, inicio/cierre automático, Projectivy…
+        return o;
     }
 
     private static final String[] EXTRA_KEYS = {"albumSort", "albumCols", "photoCols", "photoShape", "photoFmt", "vq",
@@ -376,47 +464,71 @@ class WebConfigServer extends Thread {
         try {
             org.json.JSONObject o = new org.json.JSONObject(val(f, "data"));
             if (!o.has("fotostv")) return "ER\nEse texto no parece una copia de FotosTV.";
-            List<Prefs.Album> list = new ArrayList<Prefs.Album>();
-            org.json.JSONArray al = o.optJSONArray("albums");
-            if (al != null) for (int i = 0; i < al.length(); i++) {
-                org.json.JSONObject a = al.getJSONObject(i);
-                String u = a.optString("url", "").trim();
-                if (u.length() > 0) list.add(new Prefs.Album(u, a.optString("name", ""), a.optBoolean("show", true)));
-            }
-            Prefs.saveAlbums(ctx, list);
-            org.json.JSONObject s = o.optJSONObject("settings");
-            if (s != null) {
-                android.content.SharedPreferences.Editor e = Prefs.sp(ctx).edit();
-                String[] ints = {"interval", "thumbMB", "videoMB", "musicVol"};
-                String[] strs = {"fit", "order", "albumMode", "musicMode", "musicRadio", "musicFolder"};
-                String[] bools = {"resume", "video", "sound", "clock", "showAlbum", "showDate", "showPlace", "musicDream"};
-                for (String k : ints) if (s.has(k)) e.putInt(k, s.optInt(k));
-                for (String k : strs) if (s.has(k)) e.putString(k, s.optString(k));
-                for (String k : bools) if (s.has(k)) e.putBoolean(k, s.optBoolean(k));
-                e.apply();
-            }
-            org.json.JSONArray hid = o.optJSONArray("hidden");
-            if (hid != null) {
-                java.util.Set<String> hs = new java.util.HashSet<String>();
-                for (int i = 0; i < hid.length(); i++) hs.add(hid.getString(i));
-                Prefs.sp(ctx).edit().putStringSet("hidden", hs).apply();
-            }
-            org.json.JSONArray fv = o.optJSONArray("favs");
-            if (fv != null) {
-                java.util.Set<String> fs = new java.util.HashSet<String>();
-                for (int i = 0; i < fv.length(); i++) fs.add(fv.getString(i));
-                Prefs.sp(ctx).edit().putStringSet("favs", fs).apply();
-            }
-            org.json.JSONObject ex = o.optJSONObject("extra");
-            if (ex != null) importExtra(ex);
+            int n;
+            org.json.JSONObject pr = o.optJSONObject("profiles");
+            if (pr != null && pr.optBoolean("on")) {
+                // la copia trae perfiles: lo de arriba es «Familia» y cada perfil lleva lo suyo
+                Prefs.importProfiles(ctx, pr);
+                Prefs.forceProfile(0);
+                try { n = importCore(o); } finally { Prefs.forceProfile(null); }
+                org.json.JSONObject data = pr.optJSONObject("data");
+                if (data != null) {
+                    java.util.Iterator<String> ids = data.keys();
+                    while (ids.hasNext()) {
+                        String id = ids.next();
+                        org.json.JSONObject core = data.optJSONObject(id);
+                        if (core == null) continue;
+                        Prefs.forceProfile(Integer.parseInt(id));
+                        try { importCore(core); } finally { Prefs.forceProfile(null); }
+                    }
+                }
+            } else n = importCore(o);
             int geo = GeoIndex.get(ctx).importGeo(o.optString("geo", ""));
             GeoIndex.get(ctx).importPlaces(o.optJSONArray("places"));
             if (geo > 0) GeoService.start(ctx);
-            if (listener != null) listener.onSaved();
-            return "OK\n\u2714 Importado: " + list.size() + " álbumes" + (geo > 0 ? " y la ubicación de " + geo + " fotos" : "") + ". La tele los está comprobando.";
+            if (listener != null) { listener.onSaved(); listener.onProfile(); }
+            return "OK\n\u2714 Importado: " + n + " álbumes" + (geo > 0 ? " y la ubicación de " + geo + " fotos" : "") + ". La tele los está comprobando.";
         } catch (Exception e) {
             return "ER\nNo se pudo leer ese texto: " + esc(String.valueOf(e.getMessage()));
         }
+    }
+
+    /** Importa álbumes, ajustes, ocultas, favoritas y extras en el perfil que toque (el del hilo o el en uso). Devuelve cuántos álbumes. */
+    private int importCore(org.json.JSONObject o) throws Exception {
+        List<Prefs.Album> list = new ArrayList<Prefs.Album>();
+        org.json.JSONArray al = o.optJSONArray("albums");
+        if (al != null) for (int i = 0; i < al.length(); i++) {
+            org.json.JSONObject a = al.getJSONObject(i);
+            String u = a.optString("url", "").trim();
+            if (u.length() > 0) list.add(new Prefs.Album(u, a.optString("name", ""), a.optBoolean("show", true)));
+        }
+        Prefs.saveAlbums(ctx, list);
+        org.json.JSONObject s = o.optJSONObject("settings");
+        if (s != null) {
+            android.content.SharedPreferences.Editor e = Prefs.sp(ctx).edit();
+            String[] ints = {"interval", "thumbMB", "videoMB", "musicVol"};
+            String[] strs = {"fit", "order", "albumMode", "musicMode", "musicRadio", "musicFolder"};
+            String[] bools = {"resume", "video", "sound", "clock", "showAlbum", "showDate", "showPlace", "musicDream"};
+            for (String k : ints) if (s.has(k)) e.putInt(k, s.optInt(k));
+            for (String k : strs) if (s.has(k)) e.putString(k, s.optString(k));
+            for (String k : bools) if (s.has(k)) e.putBoolean(k, s.optBoolean(k));
+            e.apply();
+        }
+        org.json.JSONArray hid = o.optJSONArray("hidden");
+        if (hid != null) {
+            java.util.Set<String> hs = new java.util.HashSet<String>();
+            for (int i = 0; i < hid.length(); i++) hs.add(hid.getString(i));
+            Prefs.sp(ctx).edit().putStringSet("hidden", hs).apply();
+        }
+        org.json.JSONArray fv = o.optJSONArray("favs");
+        if (fv != null) {
+            java.util.Set<String> fs = new java.util.HashSet<String>();
+            for (int i = 0; i < fv.length(); i++) fs.add(fv.getString(i));
+            Prefs.sp(ctx).edit().putStringSet("favs", fs).apply();
+        }
+        org.json.JSONObject ex = o.optJSONObject("extra");
+        if (ex != null) importExtra(ex);
+        return list.size();
     }
 
     private static String val(Map<String, String> f, String k) {
@@ -566,6 +678,19 @@ class WebConfigServer extends Thread {
     private String form() {
         String mode = Prefs.albumMode(ctx);
         StringBuilder sb = new StringBuilder();
+        if (Prefs.profilesOn(ctx)) {
+            int pid = Prefs.profile(ctx);
+            sb.append("<h2>Perfil en uso</h2><div class='card'><div class='row' style='justify-content:flex-start'>")
+              .append("<img id='ppv' src='/img/pp.png?t=").append(System.currentTimeMillis()).append("' width='56' height='56' style='border-radius:12px;background:#22364f;padding:6px;box-sizing:border-box'>")
+              .append("<input id='pn' maxlength='20' value='").append(esc(Prefs.profileName(ctx, pid))).append("'").append(pid == 0 ? " disabled" : "").append(">")
+              .append("</div><p class='muted'>Icono</p><div style='display:flex;flex-wrap:wrap;gap:8px'>");
+            for (int i = 0; i < Ui.PROFILE_ICONS.length; i++)
+                sb.append("<img src='/img/pi/").append(i).append(".png' width='46' height='46' onclick='pickIcon(").append(i)
+                  .append(",this)' style='background:#22364f;border-radius:10px;padding:6px;box-sizing:border-box;border:2px solid transparent'>");
+            sb.append("</div><button type='button' class='sec' onclick=\"document.getElementById('pif').click()\">📷 Usar una foto</button>")
+              .append("<input type='file' id='pif' accept='image/*' style='display:none' onchange='pickImg(this)'>")
+              .append("<button type='button' class='sec' onclick='saveProfile()'>Guardar perfil</button><p id='pm' class='muted'></p></div>");
+        }
         if (Extras.on(ctx, Extras.REMOTE)) {
             sb.append("<h2>Mando</h2><p class='muted'>Pasa las fotos del pase que esté en marcha en la tele.</p>")
               .append("<div class='row2'><button type='button' class='sec' onclick=\"rc('left')\">\u25C0 Anterior</button>")
@@ -577,7 +702,7 @@ class WebConfigServer extends Thread {
         sb.append("<h2>Emisora propia</h2><p class='muted'>La música (apagada, radio o carpeta, volumen…) se elige en la tele, en Ajustes. Aquí solo hace falta pegar la dirección de una emisora que no esté en la lista.</p>")
           .append("<input name='musicRadio' type='url' placeholder='https://… (dirección de la emisora)' value='")
           .append(esc(customRadio(ctx))).append("'>");
-        sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes (con su orden, nombres y portadas), ajustes, favoritas y ubicaciones ya revisadas a otro dispositivo: pulsa «Exportar» (se copia solo al portapapeles), y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya). También puedes «Exportar a archivo» e «Importar archivo».</p>")
+        sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes (con su orden, nombres y portadas), ajustes (también los de las funciones extra), perfiles, favoritas y ubicaciones ya revisadas a otro dispositivo: pulsa «Exportar» (se copia solo al portapapeles), y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya). También puedes «Exportar a archivo» e «Importar archivo».</p>")
           .append("<textarea id='bk' rows='5' placeholder='Aquí aparece la copia, o pega la que quieras importar'></textarea>")
           .append("<div class='row2'><button type='button' class='sec' onclick='expBk()'>📤 Exportar</button>")
           .append("<button type='button' class='sec' onclick='impBk()'>📥 Importar</button></div>")
@@ -650,6 +775,17 @@ class WebConfigServer extends Thread {
         + "if(ok){u.value='';n.value='';u.focus();}b.disabled=false;};"
         + "x.onerror=function(){m.textContent='No hay conexión con la Shield.';b.disabled=false;};"
         + "x.send('url='+encodeURIComponent(u.value.trim())+'&name='+encodeURIComponent(n.value.trim()));}"
+        + "var pIcon='',pImg='';"
+        + "function pickIcon(i,el){pIcon=i;pImg='';var l=el.parentNode.querySelectorAll('img');for(var j=0;j<l.length;j++)l[j].style.borderColor='transparent';el.style.borderColor='#3d8bfd';document.getElementById('ppv').src=el.src;}"
+        + "function pickImg(inp){var f=inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){"
+        + "var c=document.createElement('canvas');c.width=c.height=160;var s=Math.min(im.width,im.height);"
+        + "c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,160,160);pImg=c.toDataURL('image/png');pIcon='';"
+        + "document.getElementById('ppv').src=pImg;};im.src=r.result;};r.readAsDataURL(f);}"
+        + "function saveProfile(){var m=document.getElementById('pm'),x=new XMLHttpRequest();x.open('POST','/profile');"
+        + "x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');"
+        + "x.onload=function(){var t=x.responseText,i=t.indexOf('\\n');m.textContent=t.substring(i+1);};"
+        + "x.onerror=function(){m.textContent='No hay conexión con la tele.';};"
+        + "x.send('name='+encodeURIComponent(document.getElementById('pn').value)+'&icon='+pIcon+'&img='+encodeURIComponent(pImg));}"
         + "function rc(k){var m=document.getElementById('rcm'),x=new XMLHttpRequest();x.open('GET','/rc?k='+k);"
         + "x.onload=function(){m.textContent=x.responseText;};x.onerror=function(){m.textContent='No hay conexión con la tele.';};x.send();}"
         + "function expBk(){var x=new XMLHttpRequest();x.open('GET','/export');"
