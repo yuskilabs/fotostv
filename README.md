@@ -111,7 +111,7 @@ Están en **Ajustes → Funciones extra**. Todas vienen **apagadas**: con todo a
 - **Estadísticas** (botón en la pantalla principal): fotos por año, lugar, álbum y cámara; cada fila abre sus fotos. «Leer cámaras» averigua la cámara de las fotos que aún no la tienen.
 
 **Casa y móvil**
-- **Perfiles**: «Familia» e «Invitados», cada uno con sus álbumes visibles, ocultas, favoritas y ajustes. Se cambia con el botón «Perfil» de la pantalla principal; «Invitados» empieza como una copia de «Familia»; el perfil en uso se ve junto a la versión.
+- **Perfiles**: «Familia» (el de siempre) y los perfiles que añadas en Ajustes → Funciones extra → Perfiles, cada uno con sus álbumes, ajustes, PIN y web de configuración; los nuevos empiezan vacíos. En la pantalla principal, a la derecha del QR, hay un icono cuadrado con el nombre del perfil en uso; al pulsarlo se pasa al siguiente y cambian el QR y el PIN. «Familia» lleva un icono de familia y los demás, formas neutras.
 - **Mando del móvil**: la web de ajustes enseña un mando (anterior, pausa, siguiente) para el pase que esté en marcha.
 - **Recargar álbumes**: cada 6, 12 o 24 horas vuelve a leer los álbumes de Google mientras la app o el salvapantallas estén en marcha.
 

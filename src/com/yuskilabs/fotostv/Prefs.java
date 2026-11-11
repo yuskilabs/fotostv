@@ -8,52 +8,98 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 class Prefs {
-    /** Ajustes del perfil en uso («Familia» = los de siempre; «Invitados» = una copia aparte, si los perfiles están activados). */
+    /** Ajustes del perfil en uso: «Familia» (id 0) usa los de siempre; cada perfil que se añade tiene los suyos, vacíos al principio. */
     static SharedPreferences sp(Context c) {
-        return c.getSharedPreferences(profile(c) == 1 ? "cfg_p2" : "cfg", Context.MODE_PRIVATE);
+        int p = profile(c);
+        return c.getSharedPreferences(p == 0 ? "cfg" : "cfgx_" + p, Context.MODE_PRIVATE);
     }
 
-    /** Ajustes del aparato, iguales en todos los perfiles (PIN de la web). */
+    /** Ajustes del aparato (los de «Familia»). */
     static SharedPreferences base(Context c) {
         return c.getSharedPreferences("cfg", Context.MODE_PRIVATE);
     }
 
-    // ---- perfiles (función extra): se guardan en «meta», fuera de los propios perfiles ----
-    static final String[] PROFILE_NAMES = {"Familia", "Invitados"};
-
+    // ---- perfiles (función extra): la lista y el perfil en uso se guardan en «meta», fuera de los propios perfiles ----
     static boolean profilesOn(Context c) { return meta(c).getBoolean("fx_profiles", false); }
 
-    /** Perfil en uso: 0 = Familia (siempre, si los perfiles están desactivados), 1 = Invitados. */
+    private static String profKey;
+    private static List<String[]> profCache = new ArrayList<String[]>();
+
+    /** Perfiles: {id, nombre}. El primero, «Familia» (id 0), siempre existe. */
+    static synchronized List<String[]> profiles(Context c) {
+        String j = meta(c).getString("prof_list", "[]");
+        if (!j.equals(profKey)) {
+            List<String[]> l = new ArrayList<String[]>();
+            l.add(new String[]{"0", "Familia"});
+            try {
+                JSONArray a = new JSONArray(j);
+                for (int i = 0; i < a.length(); i++) {
+                    JSONObject o = a.getJSONObject(i);
+                    l.add(new String[]{String.valueOf(o.getInt("id")), o.getString("name")});
+                }
+            } catch (Exception ignored) { }
+            profCache = l;
+            profKey = j;
+        }
+        return profCache;
+    }
+
+    private static void saveProfiles(Context c, List<String[]> l) {
+        JSONArray a = new JSONArray();
+        try {
+            for (int i = 1; i < l.size(); i++) a.put(new JSONObject().put("id", Integer.parseInt(l.get(i)[0])).put("name", l.get(i)[1]));
+        } catch (Exception ignored) { }
+        meta(c).edit().putString("prof_list", a.toString()).commit();
+    }
+
+    /** Id del perfil en uso: 0 = Familia (siempre, si los perfiles están desactivados). */
     static int profile(Context c) {
         SharedPreferences m = meta(c);
-        return m.getBoolean("fx_profiles", false) ? (m.getInt("profile", 0) == 1 ? 1 : 0) : 0;
+        if (!m.getBoolean("fx_profiles", false)) return 0;
+        int id = m.getInt("profileId", 0);
+        if (id == 0) return 0;
+        for (String[] p : profiles(c)) if (p[0].equals(String.valueOf(id))) return id;
+        return 0;
     }
 
-    /** Cambia de perfil. La primera vez, «Invitados» empieza como una copia de «Familia». */
-    static void setProfile(Context c, int p) {
-        if (p == 1) {
-            SharedPreferences dst = c.getSharedPreferences("cfg_p2", Context.MODE_PRIVATE);
-            if (dst.getAll().isEmpty()) copyPrefs(base(c), dst);
-        }
-        meta(c).edit().putInt("profile", p == 1 ? 1 : 0).commit();
+    /** Posición del perfil en la lista (para elegir su icono). */
+    static int profileIndex(Context c, int id) {
+        List<String[]> l = profiles(c);
+        for (int i = 0; i < l.size(); i++) if (l.get(i)[0].equals(String.valueOf(id))) return i;
+        return 0;
     }
 
-    @SuppressWarnings("unchecked")
-    private static void copyPrefs(SharedPreferences from, SharedPreferences to) {
-        SharedPreferences.Editor e = to.edit();
-        for (java.util.Map.Entry<String, ?> en : from.getAll().entrySet()) {
-            String k = en.getKey();
-            Object v = en.getValue();
-            if ("webPin".equals(k) || v == null) continue;
-            if (v instanceof Boolean) e.putBoolean(k, (Boolean) v);
-            else if (v instanceof Integer) e.putInt(k, (Integer) v);
-            else if (v instanceof Long) e.putLong(k, (Long) v);
-            else if (v instanceof Float) e.putFloat(k, (Float) v);
-            else if (v instanceof String) e.putString(k, (String) v);
-            else if (v instanceof java.util.Set) e.putStringSet(k, new java.util.HashSet<String>((java.util.Set<String>) v));
-        }
-        e.commit();
+    static String profileName(Context c, int id) { return profiles(c).get(profileIndex(c, id))[1]; }
+
+    static void setProfile(Context c, int id) { meta(c).edit().putInt("profileId", id).commit(); }
+
+    /** Perfil nuevo y vacío: sin álbumes y con sus ajustes de fábrica. Devuelve su id. */
+    static int addProfile(Context c, String name) {
+        List<String[]> l = new ArrayList<String[]>(profiles(c));
+        int id = meta(c).getInt("prof_next", 1);
+        meta(c).edit().putInt("prof_next", id + 1).commit();
+        l.add(new String[]{String.valueOf(id), name});
+        saveProfiles(c, l);
+        return id;
     }
+
+    static void renameProfile(Context c, int id, String name) {
+        if (id == 0) return;
+        List<String[]> l = new ArrayList<String[]>(profiles(c));
+        for (String[] p : l) if (p[0].equals(String.valueOf(id))) p[1] = name;
+        saveProfiles(c, l);
+    }
+
+    /** Borra el perfil con todos sus ajustes y álbumes. Si estaba en uso, se vuelve a «Familia». */
+    static void deleteProfile(Context c, int id) {
+        if (id == 0) return;
+        List<String[]> l = new ArrayList<String[]>(profiles(c));
+        for (int i = 1; i < l.size(); i++) if (l.get(i)[0].equals(String.valueOf(id))) l.remove(i--);
+        saveProfiles(c, l);
+        c.getSharedPreferences("cfgx_" + id, Context.MODE_PRIVATE).edit().clear().commit();
+        if (meta(c).getInt("profileId", 0) == id) setProfile(c, 0);
+    }
+
     static SharedPreferences meta(Context c) {
         return c.getSharedPreferences("meta", Context.MODE_PRIVATE);
     }
@@ -116,14 +162,17 @@ class Prefs {
     /** PIN de 4 cifras de la web de ajustes (se crea la primera vez). */
     /** PIN nuevo: se cambia cada vez que arranca la app (los móviles que entraron antes vuelven a pedirlo). */
     static void renewWebPin(Context c) {
-        base(c).edit().putString("webPin", String.format("%04d", new java.security.SecureRandom().nextInt(10000))).commit();
+        for (String[] p : profiles(c))
+            c.getSharedPreferences(p[0].equals("0") ? "cfg" : "cfgx_" + p[0], Context.MODE_PRIVATE).edit()
+                .putString("webPin", String.format("%04d", new java.security.SecureRandom().nextInt(10000))).commit();
     }
 
+    /** PIN de la web del perfil en uso (cada perfil tiene el suyo). */
     static String webPin(Context c) {
-        String p = base(c).getString("webPin", "");
+        String p = sp(c).getString("webPin", "");
         if (p.length() != 4) {
             p = String.format("%04d", new java.security.SecureRandom().nextInt(10000));
-            base(c).edit().putString("webPin", p).commit();
+            sp(c).edit().putString("webPin", p).commit();
         }
         return p;
     }

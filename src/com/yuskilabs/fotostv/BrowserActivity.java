@@ -205,7 +205,8 @@ public class BrowserActivity extends Activity {
         box.setFocusable(true);
         box.setClickable(true);
         int pd = Ui.dp(this, 4);
-        box.setPadding(Ui.dp(this, 10), pd, Ui.dp(this, 10), pd);
+        box.setPadding(Ui.dp(this, 6), pd, Ui.dp(this, 6), pd);
+        box.setMinimumWidth(Ui.dp(this, 68));
         android.graphics.drawable.StateListDrawable sl = new android.graphics.drawable.StateListDrawable();
         GradientDrawable on = new GradientDrawable();
         on.setColor(0xFF3D8BFD);
@@ -215,11 +216,13 @@ public class BrowserActivity extends Activity {
         ImageView ic = new ImageView(this);
         ic.setImageResource(icon);
         box.addView(ic, new LinearLayout.LayoutParams(Ui.dp(this, 26), Ui.dp(this, 26)));
-        TextView lb = text(label, 13, 0xFFD0DBE8);          // el mismo color que «Columnas: N»
-        lb.setPadding(0, 0, 0, 0);
+        TextView lb = text(label, 12, 0xFF9FB3C8);          // gris, como el texto de los botones
+        lb.setPadding(Ui.dp(this, 5), 0, Ui.dp(this, 5), 0);     // holgura a los lados: la última letra no se recorta
         lb.setGravity(Gravity.CENTER);
         lb.setSingleLine(true);
-        box.addView(lb);
+        lb.setEllipsize(null);
+        lb.setIncludeFontPadding(false);
+        box.addView(lb, new LinearLayout.LayoutParams(-2, -2));
         box.setOnClickListener(click);
         return box;
     }
@@ -230,8 +233,9 @@ public class BrowserActivity extends Activity {
         wrap.setOrientation(LinearLayout.HORIZONTAL);
         wrap.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
         wrap.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
-        lp.setMargins(Ui.dp(this, 4), 0, 0, 0);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2), lp2 = new LinearLayout.LayoutParams(-2, -2);
+        lp.setMargins(Ui.dp(this, 14), 0, 0, 0);               // los iconos, algo separados
+        lp2.setMargins(Ui.dp(this, 14), 0, 0, 0);
         if (Extras.on(this, Extras.DATE_JUMP)) {
             wrap.addView(iconBox(R.drawable.ic_event, "Fecha", new View.OnClickListener() {
                 public void onClick(View v) { dateJump(); }
@@ -246,7 +250,7 @@ public class BrowserActivity extends Activity {
                 Session.mapTitle = current.title;
                 startActivity(new Intent(BrowserActivity.this, PlacesActivity.class));
             }
-        }), lp);
+        }), lp2);
         return wrap;
     }
 
@@ -340,7 +344,6 @@ public class BrowserActivity extends Activity {
     @Override protected void onDestroy() {
         destroyed = true;
         h.removeCallbacksAndMessages(null);
-        stopBusyPulse();
         bg.shutdownNow();
         flagExec.shutdownNow();
         scanExec.shutdownNow();
@@ -678,7 +681,6 @@ public class BrowserActivity extends Activity {
 
     /** Actualiza los álbumes desde Google en segundo plano, sin bloquear el mosaico. */
     private void refreshInBackground() {
-        busyStart("Comprobando álbumes…");
         bg.submit(new Runnable() {
             public void run() {
                 final List<Entry> fresh = new ArrayList<Entry>();
@@ -692,9 +694,7 @@ public class BrowserActivity extends Activity {
                         fresh.add(makeEntry(al, d));
                     } catch (Exception ignored) { }
                 }
-                } finally {
-                    h.post(new Runnable() { public void run() { busyEnd("Comprobando álbumes…"); } });
-                }
+                } finally { }
                 if (fresh.isEmpty()) return;
                 h.post(new Runnable() {
                     public void run() { applyFresh(fresh); }
@@ -723,8 +723,6 @@ public class BrowserActivity extends Activity {
     // ------------------------------------------------------------ tareas en segundo plano (texto de colores junto al título)
     private final java.util.LinkedHashMap<String, Integer> busy = new java.util.LinkedHashMap<String, Integer>();
     private TextView busyView;
-    private android.animation.ValueAnimator busyPulse;
-    private static final int[] BUSY_PAL = {0xFFFFAA46, 0xFFF43F7A, 0xFF8250F5};
 
     private void busyStart(String label) {
         Integer n = busy.get(label);
@@ -739,50 +737,33 @@ public class BrowserActivity extends Activity {
         busyUpdate();
     }
 
-    /** Texto de estado para la cabecera (cada vez que se redibuja la pantalla se crea uno nuevo). */
-    private TextView newBusyView() {
-        stopBusyPulse();
-        busyView = text("", 15, BUSY_PAL[0]);
-        busyView.setPadding(Ui.dp(this, 16), 0, 0, 0);
+    /** Aviso fijo abajo en el centro (donde salen los avisos), que no se quita mientras algo sigue en marcha. */
+    private void ensureBusyView() {
+        if (busyView != null) return;
+        busyView = text("", 16, Color.WHITE);
+        busyView.setTypeface(Ui.REG);
         busyView.setSingleLine(true);
-        busyView.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        busyUpdate();
-        return busyView;
+        busyView.setGravity(Gravity.CENTER);
+        busyView.setPadding(Ui.dp(this, 22), Ui.dp(this, 10), Ui.dp(this, 22), Ui.dp(this, 10));
+        GradientDrawable bgd = new GradientDrawable();
+        bgd.setColor(0xE6323232);
+        bgd.setCornerRadius(Ui.dp(this, 24));
+        busyView.setBackground(bgd);
+        busyView.setVisibility(View.GONE);
+        android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(-2, -2,
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        lp.bottomMargin = Ui.dp(this, 56);
+        addContentView(busyView, lp);
     }
 
     private void busyUpdate() {
-        if (busyView == null) return;
-        if (busy.isEmpty()) {
-            stopBusyPulse();
-            busyView.setVisibility(View.GONE);
-            return;
-        }
+        ensureBusyView();
+        if (busy.isEmpty()) { busyView.setVisibility(View.GONE); return; }
         StringBuilder sb = new StringBuilder();
-        for (String k : busy.keySet()) { if (sb.length() > 0) sb.append(" · "); sb.append(k); }
+        for (String k : busy.keySet()) { if (sb.length() > 0) sb.append("  ·  "); sb.append(k); }
         busyView.setText(sb.toString());
         busyView.setVisibility(View.VISIBLE);
-        if (busyPulse != null) return;
-        final android.animation.ArgbEvaluator ev = new android.animation.ArgbEvaluator();
-        busyPulse = android.animation.ValueAnimator.ofFloat(0f, 1f);
-        busyPulse.setDuration(3000);
-        busyPulse.setRepeatCount(android.animation.ValueAnimator.INFINITE);
-        busyPulse.setInterpolator(new android.view.animation.LinearInterpolator());
-        busyPulse.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
-            public void onAnimationUpdate(android.animation.ValueAnimator a) {
-                if (busyView == null) return;
-                float t = (Float) a.getAnimatedValue();
-                float pos = t * BUSY_PAL.length;
-                int i = Math.min((int) pos, BUSY_PAL.length - 1);
-                int c = (Integer) ev.evaluate(pos - i, BUSY_PAL[i], BUSY_PAL[(i + 1) % BUSY_PAL.length]);
-                float k = 0.5f - 0.5f * (float) Math.cos(t * Math.PI * 2 * 3);
-                busyView.setTextColor((((int) (255 * (0.45f + 0.55f * k))) << 24) | (c & 0xFFFFFF));
-            }
-        });
-        busyPulse.start();
-    }
-
-    private void stopBusyPulse() {
-        if (busyPulse != null) { busyPulse.cancel(); busyPulse = null; }
+        busyView.bringToFront();
     }
 
     /** «Revisando ubicaciones…» hasta que las fotos revisadas vuelven a tener lugar (o pasan 10 minutos). */
@@ -832,11 +813,7 @@ public class BrowserActivity extends Activity {
         title.setTypeface(Ui.BLACK);
         title.setPadding(0, 0, 0, 0);
         selTitle = selMode ? title : null;
-        if (selMode) head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
-        else {
-            head.addView(title, new LinearLayout.LayoutParams(-2, -2));
-            head.addView(newBusyView(), new LinearLayout.LayoutParams(0, -2, 1f));
-        }
+        head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
         if (selMode) {
             head.addView(sbtn("Pase", R.drawable.ic_play, new View.OnClickListener() {
                 public void onClick(View v) { if (!sel.isEmpty()) startPase(selected(), false); }
@@ -1108,7 +1085,6 @@ public class BrowserActivity extends Activity {
         if (dupBusy) { showToast("Ya estoy buscando repetidas…"); return; }
         dupBusy = true;
         busyStart("Buscando repetidas…");
-        showToast("Buscando fotos repetidas en «" + e.title + "»…");
         final List<Item> base = new ArrayList<Item>(e.items);
         bg.submit(new Runnable() {
             public void run() {
@@ -1383,7 +1359,6 @@ public class BrowserActivity extends Activity {
     private void reloadAlbum(final Entry e) {
         if (e == null || e.kind != 0 || reloading) return;
         reloading = true;
-        showToast("Recargando «" + e.title + "»…");
         startSpin();
         busyStart("Recargando álbum…");
         final List<Item> old = new ArrayList<Item>(e.src);
@@ -1481,13 +1456,13 @@ public class BrowserActivity extends Activity {
         nm.setPadding(0, 0, 0, 0);
         nm.setSingleLine(true);
         nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        nm.setMaxWidth(getResources().getDisplayMetrics().widthPixels * 38 / 100);
         head.addView(nm, new LinearLayout.LayoutParams(-2, -2));
         countView = text("", 20, 0xFFD0DBE8);
         countView.setPadding(0, 0, 0, 0);
         countView.setSingleLine(true);
         head.addView(countView);
         updateCount();
-        head.addView(newBusyView());
         if (current.kind == 0 && !placeMode) head.addView(mapButton());
         else if (Extras.on(this, Extras.DATE_JUMP)) {
             LinearLayout w2 = new LinearLayout(this);
@@ -1789,7 +1764,6 @@ public class BrowserActivity extends Activity {
 
     /** Vuelve a leer la ubicación y el nombre del lugar de estas fotos (en segundo plano). */
     private void recheckItems(final List<Item> l) {
-        showToast(l.size() == 1 ? "Reviso la ubicación de esta foto en segundo plano." : "Reviso la ubicación de " + l.size() + " fotos en segundo plano.");
         final Set<String> ks = new HashSet<String>();
         for (Item it : l) ks.add(it.key());
         new Thread(new Runnable() {

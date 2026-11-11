@@ -158,18 +158,16 @@ public class ExtrasActivity extends SettingsBase {
 
         // --- casa y móvil
         LinearLayout ch = card("Casa y móvil", R.drawable.ic_guest);
-        profilesBtn = btn(profilesLabel(), R.drawable.ic_person, new View.OnClickListener() {
+        profilesBtn = btn(profilesLabel(), R.drawable.ic_family, new View.OnClickListener() {
             public void onClick(View v) {
-                boolean now = !Prefs.profilesOn(ExtrasActivity.this);
-                Prefs.meta(ExtrasActivity.this).edit().putBoolean("fx_profiles", now).commit();
-                if (!now && Prefs.profile(ExtrasActivity.this) != 0) Prefs.setProfile(ExtrasActivity.this, 0);
-                if (!now) Prefs.meta(ExtrasActivity.this).edit().putInt("profile", 0).commit();
-                Toast.makeText(ExtrasActivity.this, now ? "Perfiles activados: cambia de perfil desde la pantalla principal."
-                        : "Perfiles desactivados: vuelves al perfil «Familia».", Toast.LENGTH_LONG).show();
-                recreate();
+                if (!Prefs.profilesOn(ExtrasActivity.this)) {
+                    Prefs.meta(ExtrasActivity.this).edit().putBoolean("fx_profiles", true).commit();
+                    profilesBtn.setText(profilesLabel());
+                }
+                manageProfiles();
             }
         });
-        describe(profilesBtn, "Aparece el botón «Perfil» en la pantalla principal para cambiar entre «Familia» e «Invitados». Cada uno recuerda sus propios ajustes y qué álbumes se ven (invitados empieza como copia de familia): cámbialos estando en Invitados y se quedan solo ahí.");
+        describe(profilesBtn, "Perfiles con sus propios álbumes, ajustes, PIN y web de configuración. «Familia» es el de siempre; los que añadas empiezan vacíos. Se elige en la pantalla principal con el icono junto al QR; aquí se añaden, renombran y borran.");
         Button remote = fx("Mando del móvil", Extras.REMOTE, R.drawable.ic_remote,
                 "La web de ajustes del móvil enseña un mando para pasar fotos, pausar o ver la anterior.");
         Button reload = cycInt("Recargar álbumes", Extras.RELOAD, new int[]{0, 6, 12, 24}, new String[]{"no", "cada 6 h", "cada 12 h", "cada 24 h"},
@@ -406,5 +404,99 @@ public class ExtrasActivity extends SettingsBase {
             .show();
     }
 
-    private String profilesLabel() { return "Perfiles: " + (Prefs.profilesOn(this) ? "sí" : "no"); }
+    private String profilesLabel() {
+        return "Perfiles: " + (Prefs.profilesOn(this) ? (Prefs.profiles(this).size() - 1 == 0 ? "sí" : Prefs.profiles(this).size() + "") : "no");
+    }
+
+    /** Lista de perfiles: elegir uno para usarlo, renombrarlo o borrarlo; añadir uno nuevo o desactivar los perfiles. */
+    private void manageProfiles() {
+        final List<String[]> l = Prefs.profiles(this);
+        final int cur = Prefs.profile(this);
+        final List<String> labs = new ArrayList<String>();
+        for (String[] p : l) labs.add(p[1] + (p[0].equals(String.valueOf(cur)) ? "   (en uso)" : ""));
+        labs.add("＋  Añadir perfil…");
+        labs.add("Desactivar los perfiles");
+        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Perfiles")
+            .setItems(labs.toArray(new String[0]), new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface d, int which) {
+                    if (which < l.size()) profileMenu(Integer.parseInt(l.get(which)[0]), l.get(which)[1]);
+                    else if (which == l.size()) askProfileName("Nuevo perfil", "", -1);
+                    else {
+                        Prefs.setProfile(ExtrasActivity.this, 0);
+                        Prefs.meta(ExtrasActivity.this).edit().putBoolean("fx_profiles", false).commit();
+                        Toast.makeText(ExtrasActivity.this, "Perfiles desactivados: vuelves a «Familia». Los demás perfiles se guardan por si los activas otra vez.", Toast.LENGTH_LONG).show();
+                        recreate();
+                    }
+                }
+            })
+            .setNegativeButton("Cerrar", null)
+            .show();
+    }
+
+    private void profileMenu(final int id, final String name) {
+        final boolean fam = id == 0;
+        final String[] it = fam ? new String[]{"Usar este perfil"} : new String[]{"Usar este perfil", "Cambiar el nombre", "Borrar"};
+        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle(name)
+            .setItems(it, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface d, int which) {
+                    if (which == 0) {
+                        Prefs.setProfile(ExtrasActivity.this, id);
+                        Toast.makeText(ExtrasActivity.this, "Perfil «" + name + "» en uso.", Toast.LENGTH_SHORT).show();
+                        recreate();
+                    } else if (which == 1) askProfileName("Nombre del perfil", name, id);
+                    else confirmDeleteProfile(id, name);
+                }
+            })
+            .setNegativeButton("Atrás", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface d, int w) { manageProfiles(); }
+            })
+            .show();
+    }
+
+    private void confirmDeleteProfile(final int id, final String name) {
+        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("¿Borrar «" + name + "»?")
+            .setMessage("Se borran sus álbumes y todos sus ajustes. No se puede deshacer.")
+            .setPositiveButton("Borrar", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface d, int w) {
+                    boolean wasCur = Prefs.profile(ExtrasActivity.this) == id;
+                    Prefs.deleteProfile(ExtrasActivity.this, id);
+                    profilesBtn.setText(profilesLabel());
+                    if (wasCur) recreate(); else manageProfiles();
+                }
+            })
+            .setNegativeButton("Cancelar", null)
+            .show();
+    }
+
+    /** Pide el nombre de un perfil nuevo (id -1) o de uno existente. */
+    private void askProfileName(String title, String cur, final int id) {
+        final EditText in = new EditText(this);
+        in.setSingleLine(true);
+        in.setTextColor(Color.WHITE);
+        in.setText(cur);
+        in.setSelection(in.getText().length());
+        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle(title)
+            .setView(in)
+            .setPositiveButton("Guardar", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface d, int w) {
+                    String n = in.getText().toString().trim();
+                    if (n.length() > 20) n = n.substring(0, 20);
+                    if (n.length() == 0) { manageProfiles(); return; }
+                    if (id < 0) {
+                        int nid = Prefs.addProfile(ExtrasActivity.this, n);
+                        Toast.makeText(ExtrasActivity.this, "Perfil «" + n + "» creado, vacío. Pulsa «Usar este perfil» para entrar y añadir sus álbumes.", Toast.LENGTH_LONG).show();
+                    } else Prefs.renameProfile(ExtrasActivity.this, id, n);
+                    profilesBtn.setText(profilesLabel());
+                    manageProfiles();
+                }
+            })
+            .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface d, int w) { manageProfiles(); }
+            })
+            .show();
+    }
 }

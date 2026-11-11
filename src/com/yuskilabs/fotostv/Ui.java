@@ -101,6 +101,12 @@ class Ui {
     }
 
     /** Pone un icono blanco a la izquierda del texto del botón. */
+    /** Icono de un perfil según su posición: «Familia» (0) la familia; los demás, formas neutras, sin personas. */
+    static int profileIcon(int index) {
+        int[] o = {R.drawable.ic_home, R.drawable.ic_heart, R.drawable.ic_star, R.drawable.ic_flight, R.drawable.ic_albums, R.drawable.ic_music};
+        return index <= 0 ? R.drawable.ic_family : o[(index - 1) % o.length];
+    }
+
     /** Botón que reduce un poco la letra (hasta 10 sp) si su texto no cabe, antes de recortarlo con «…». */
     static class FitButton extends Button {
         private float basePx;

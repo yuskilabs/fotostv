@@ -147,7 +147,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(dp(1) + 1, dp(16));
         bp.setMargins(dp(10), 0, dp(10), 0);
         vrow.addView(bar, bp);
-        verInfo = text("Versión " + Updater.installed(this) + profileTag(), 13, 0xFF7C93AD);
+        verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
         verInfo.setIncludeFontPadding(false);
         verInfo.setPadding(0, 0, 0, 0);
         vrow.addView(verInfo, new LinearLayout.LayoutParams(-2, -2));
@@ -214,7 +214,17 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
         LinearLayout rightTop = new LinearLayout(this);
         rightTop.setOrientation(LinearLayout.VERTICAL);
-        rightTop.addView(zoneQr, new LinearLayout.LayoutParams(-1, -2));
+        if (Prefs.profilesOn(this)) {
+            // con perfiles: el cuadro del QR, y a su derecha un icono cuadrado con el nombre del perfil en uso
+            LinearLayout qrRow = new LinearLayout(this);
+            qrRow.setOrientation(LinearLayout.HORIZONTAL);
+            qrRow.addView(zoneQr, new LinearLayout.LayoutParams(0, -2, 1f));
+            profileTile = profileTile();
+            LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(dp(104), -1);
+            tp.setMargins(dp(10), 0, 0, 0);
+            qrRow.addView(profileTile, tp);
+            rightTop.addView(qrRow, new LinearLayout.LayoutParams(-1, -2));
+        } else rightTop.addView(zoneQr, new LinearLayout.LayoutParams(-1, -2));
         LinearLayout.LayoutParams zgp = new LinearLayout.LayoutParams(-1, dp(44));
         zgp.setMargins(0, dp(14), 0, 0);   // mismo hueco de 14 dp que entre columnas y hasta «Tus álbumes»
         rightTop.addView(zoneGuest, zgp);
@@ -287,14 +297,6 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         if (Extras.on(this, Extras.STATS)) fx.add(side("Estadísticas", R.drawable.ic_stats, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, StatsActivity.class)); }
         }));
-        if (Prefs.profilesOn(this)) fx.add(side("Perfil: " + Prefs.PROFILE_NAMES[Prefs.profile(this)], R.drawable.ic_person, new View.OnClickListener() {
-            public void onClick(View v) {
-                int nx = 1 - Prefs.profile(SettingsActivity.this);
-                Prefs.setProfile(SettingsActivity.this, nx);
-                Toast.makeText(SettingsActivity.this, "Perfil «" + Prefs.PROFILE_NAMES[nx] + "»: sus álbumes y ajustes.", Toast.LENGTH_LONG).show();
-                recreate();
-            }
-        }));
         for (int i = 0; i < fx.size(); i += 2) left.addView(i + 1 < fx.size() ? pair(fx.get(i), fx.get(i + 1)) : single(fx.get(i)));
         extrasSig = extrasSig();
         LinearLayout lastRow = pair(upd, ajBtn);
@@ -363,6 +365,12 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         preview.setId(View.generateViewId());
         zoneQr.setNextFocusDownId(zoneGuest.getId());
         zoneQr.setNextFocusLeftId(browse.getId());
+        if (profileTile != null) {
+            profileTile.setId(View.generateViewId());
+            zoneQr.setNextFocusRightId(profileTile.getId());
+            profileTile.setNextFocusLeftId(zoneQr.getId());
+            profileTile.setNextFocusDownId(zoneGuest.getId());
+        }
         zoneGuest.setNextFocusUpId(zoneQr.getId());
         zoneGuest.setNextFocusDownId(sv.getId());
         zoneGuest.setNextFocusLeftId(browse.getId());
@@ -411,17 +419,64 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     private String extrasSig;
-    private View searchBar;
+    private View searchBar, profileTile;
 
-    /** Con perfiles activados, el nombre del perfil en uso junto a la versión. */
-    private String profileTag() {
-        return Prefs.profilesOn(this) ? "  ·  Perfil «" + Prefs.PROFILE_NAMES[Prefs.profile(this)] + "»" : "";
+    /** Icono cuadrado con el nombre del perfil en uso; al pulsarlo se pasa al siguiente (y cambian el PIN, el QR y los álbumes). */
+    private View profileTile() {
+        final int cur = Prefs.profile(this);
+        LinearLayout t = new LinearLayout(this);
+        t.setOrientation(LinearLayout.VERTICAL);
+        t.setGravity(Gravity.CENTER);
+        t.setFocusable(true);
+        t.setClickable(true);
+        t.setPadding(dp(6), dp(8), dp(6), dp(8));
+        GradientDrawable off = new GradientDrawable();
+        off.setColor(0x1AFFFFFF);
+        off.setCornerRadius(dp(10));
+        off.setStroke(dp(1), 0x33FFFFFF);
+        GradientDrawable on = new GradientDrawable();
+        on.setColor(0x33FFFFFF);
+        on.setCornerRadius(dp(10));
+        on.setStroke(dp(3), 0xFF3D8BFD);
+        StateListDrawable bg = new StateListDrawable();
+        bg.addState(new int[]{android.R.attr.state_focused}, on);
+        bg.addState(new int[]{}, off);
+        t.setBackground(bg);
+        ImageView ic = new ImageView(this);
+        ic.setImageResource(Ui.profileIcon(Prefs.profileIndex(this, cur)));
+        ic.setPadding(dp(10), dp(10), dp(10), dp(10));
+        GradientDrawable sq = new GradientDrawable();
+        sq.setColor(0xFF22364F);
+        sq.setCornerRadius(dp(10));
+        ic.setBackground(sq);
+        t.addView(ic, new LinearLayout.LayoutParams(dp(52), dp(52)));
+        TextView nm = text(Prefs.profileName(this, cur), 13, Color.WHITE);
+        nm.setTypeface(Ui.BLACK);
+        nm.setSingleLine(true);
+        nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        nm.setGravity(Gravity.CENTER);
+        nm.setPadding(0, dp(6), 0, 0);
+        t.addView(nm, new LinearLayout.LayoutParams(-1, -2));
+        t.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                java.util.List<String[]> l = Prefs.profiles(SettingsActivity.this);
+                if (l.size() < 2) {
+                    Toast.makeText(SettingsActivity.this, "Solo hay el perfil «Familia». Añade más en Ajustes → Funciones extra → Perfiles.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                int nx = (Prefs.profileIndex(SettingsActivity.this, cur) + 1) % l.size();
+                Prefs.setProfile(SettingsActivity.this, Integer.parseInt(l.get(nx)[0]));
+                Toast.makeText(SettingsActivity.this, "Perfil «" + l.get(nx)[1] + "»: sus álbumes, ajustes, PIN y web.", Toast.LENGTH_LONG).show();
+                recreate();
+            }
+        });
+        return t;
     }
 
     /** Qué botones extra hay que enseñar (si cambia al volver de Ajustes, la pantalla se rehace). */
     private String extrasSig() {
         return Extras.on(this, Extras.SEARCH) + "," + Extras.on(this, Extras.TRIPS) + "," + Extras.on(this, Extras.STATS)
-                + "," + Prefs.profilesOn(this) + "," + Prefs.profile(this);
+                + "," + Prefs.profilesOn(this) + "," + Prefs.profile(this) + "," + Prefs.profiles(this).size();
     }
 
     /** Un botón solo en su fila (con el mismo alto que las demás). */

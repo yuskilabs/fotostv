@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.2.1
+- Perfiles rehechos: «Familia» y los perfiles que añadas con su nombre (se añaden, renombran y borran en Funciones extra → Perfiles), vacíos al principio y cada uno con sus álbumes, ajustes, PIN y web. Se elige con un icono cuadrado con el nombre, a la derecha del QR (el de «Familia», de familia; los demás, formas neutras). Se quita «Invitados».
+- Avisos de tareas en segundo plano: solo cuando las lanzas tú (recargar un álbum, buscar repetidas, revisar ubicaciones), como un aviso fijo abajo en el centro que no se quita hasta que acaba. Ya no sale al comprobar los álbumes solo, y se quita el texto de colores junto al título.
+- Iconos «Fecha» y «Mapa»: el texto ya no se recorta, con letra gris como la de los botones y algo más separados.
+
 ## 7.2
 - Búsqueda: la barra de la pantalla principal ya no es un campo de texto (con algunos mandos por RF no se podía salir de ella). Al pulsar OK se abre la búsqueda con el teclado; «Buscar» o Intro abre directamente los resultados, y ↓ baja a la lista.
 - Movimiento: dura exactamente el tiempo que cada foto está en pantalla, para que nunca se pare. «Velocidad» cambia lo que recorre. Nueva opción «solo zoom» (acercar y alejar).
