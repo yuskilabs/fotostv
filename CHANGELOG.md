@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.1
+- Movimiento: nuevo ajuste «Bordes». «Tapados» es como antes; «a la vista» hace que la foto empiece entera, sin zoom, y al moverse se vea el relleno (negro, color o difuminado), que se queda quieto detrás.
+- Buscar: ahora es una barra discreta en la pantalla principal, justo encima de los botones, donde estaba la frase bajo el logo (que se quita). Se llega subiendo con el mando; escribes y pulsas Intro. Solo aparece con «Buscar» activado en Funciones extra.
+
 ## 7.0.1
 - Movimiento suave: ya no se para (dura bastante más que la foto, y la que sale sigue moviéndose mientras se funde) y es más lento. Ahora puede ser variado (al azar: acercar, alejar, de lado, arriba y abajo o en diagonal) o siempre acercar, alejar o desplazar, con velocidad lenta o normal.
 - «Fondo de las verticales» pasa a ser «Relleno», para todo lo que la foto no llena. El difuminado es mucho más suave, en degradado.

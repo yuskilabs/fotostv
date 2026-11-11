@@ -84,6 +84,8 @@ public class ExtrasActivity extends SettingsBase {
         Button ken = motionBtn();
         Button speed = cycFx("Velocidad", Extras.KB_SPEED, new String[]{"slow", "normal"}, new String[]{"lenta", "normal"},
                 R.drawable.ic_timer, "Velocidad del movimiento. En las dos, el movimiento dura más que la foto: nunca se para a la vista.");
+        Button edge = cycFx("Bordes", Extras.KB_EDGE, new String[]{"hide", "show"}, new String[]{"tapados", "a la vista"},
+                R.drawable.ic_fullscreen, "Tapados: la foto va algo ampliada y no se ve el relleno. A la vista: la foto empieza entera, sin zoom, y al moverse se ve el relleno (negro, color o difuminado).");
         Button bg = cycFx("Relleno", Extras.BACKGROUND, new String[]{"black", "color", "blur"}, new String[]{"negro", "color", "difuminado"},
                 R.drawable.ic_wallpaper, "Lo que se ve donde la foto no llena la pantalla (verticales, fotos con otra forma, y al moverse): negro, el color de la foto o la foto muy difuminada.");
         Button collage = fx("Dos verticales", Extras.COLLAGE, R.drawable.ic_photo,
@@ -97,7 +99,8 @@ public class ExtrasActivity extends SettingsBase {
         // --- cómo se ve cada foto
         LinearLayout cf = card("Movimiento y relleno", R.drawable.ic_fullscreen);
         cf.addView(row(ken, speed));
-        cf.addView(row(bg, collage));
+        cf.addView(row(edge, bg));
+        cf.addView(row(collage, null));
 
         // --- noche y temporizador
         LinearLayout cn = card("Noche y temporizador", R.drawable.ic_moon);
@@ -132,7 +135,7 @@ public class ExtrasActivity extends SettingsBase {
         // --- explorador
         LinearLayout ce = card("Explorador", R.drawable.ic_albums);
         Button search = fx("Buscar", Extras.SEARCH, R.drawable.ic_search,
-                "Botón «Buscar» en la pantalla principal: por lugar, álbum o fecha («Zahara», «agosto 2025»).");
+                "Barra de búsqueda en la pantalla principal (encima de los botones; se llega subiendo con el mando): por lugar, álbum o fecha («Zahara», «agosto 2025»).");
         Button virt = fx("Álbumes virtuales", Extras.VIRTUAL, R.drawable.ic_albums,
                 "Guarda una búsqueda como álbum («Zahara 2025») y sale en la lista de álbumes; se actualiza solo.");
         Button jump = fx("Saltar por fecha", Extras.DATE_JUMP, R.drawable.ic_event,

@@ -84,6 +84,7 @@ Están en **Ajustes → Funciones extra**. Todas vienen **apagadas**: con todo a
 - **Tiempo**: temperatura y cielo de tu ciudad junto a la hora (Open-Meteo, cada media hora). La ciudad se escribe en «Ciudad».
 - **Recuerdos de hoy**: el salvapantallas enseña solo fotos de un día como hoy de años anteriores (si hay al menos 5), con «hace N años» junto a la fecha.
 - **Movimiento** (efecto Ken Burns): movimiento lento de cada foto, variado (al azar acercar, alejar, de lado, arriba y abajo o en diagonal) o siempre el mismo, con velocidad lenta o normal. La foto siempre está algo ampliada, así que nunca asoma un borde vacío.
+- **Bordes**: «tapados» (la foto va ampliada y no se ve el relleno) o «a la vista» (la foto empieza entera, sin zoom, y al moverse se ve el relleno quieto detrás).
 - **Relleno** de lo que la foto no llena (verticales, fotos con otra forma): negro, el color de la foto o la foto muy difuminada, en degradado suave.
 - **Dos verticales**: en el pase, dos fotos verticales seguidas se ven juntas.
 - **Pies de foto**: con pulsación larga en el mosaico, «Pie de foto»; sale en el pase y en la ficha.
@@ -99,7 +100,7 @@ Están en **Ajustes → Funciones extra**. Todas vienen **apagadas**: con todo a
 - **Más favoritas**: con el orden «inteligente», las favoritas salen tres veces más a menudo.
 
 **Explorador**
-- **Buscar** (botón en la pantalla principal): por lugar, nombre del álbum, mes o año («Zahara», «agosto 2025», «Lara 2024»).
+- **Buscar** (barra discreta en la pantalla principal, encima de los botones; se llega subiendo con el mando): por lugar, nombre del álbum, mes o año («Zahara», «agosto 2025», «Lara 2024»).
 - **Álbumes virtuales**: el resultado de una búsqueda se guarda como álbum (botón «Guardar» del mosaico) y se actualiza solo. Se borran con pulsación larga.
 - **Saltar por fecha**: botón «Fecha» en el mosaico para ir directo a un mes.
 - **Viajes** (botón en la pantalla principal): agrupa solas las fotos hechas en días seguidos, con su lugar y fechas.

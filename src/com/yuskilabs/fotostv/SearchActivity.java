@@ -96,6 +96,8 @@ public class SearchActivity extends SettingsBase {
                 });
             }
         });
+        String q0 = getIntent().getStringExtra("q");
+        if (q0 != null && q0.length() > 0) input.setText(q0);
         input.requestFocus();
     }
 

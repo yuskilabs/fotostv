@@ -1015,9 +1015,11 @@ class Slideshow {
     private void startKenBurns(ImageView v) {
         kbStop(v);
         if (!Extras.on(ctx, Extras.KEN_BURNS) || browse()) return;
-        float[] m = FxLogic.kenBurnsPath(Extras.str(ctx, Extras.KB_STYLE, "mix"), new java.util.Random());
+        final boolean edges = "show".equals(Extras.str(ctx, Extras.KB_EDGE, "hide"));
+        final float[] m = FxLogic.kenBurnsPath(Extras.str(ctx, Extras.KB_STYLE, "mix"), new java.util.Random(), edges);
         long visible = Prefs.interval(ctx) * 1000L + 1500L;                     // tiempo en pantalla, con los fundidos
         long dur = "normal".equals(Extras.str(ctx, Extras.KB_SPEED, "slow")) ? visible * 3 / 2 + 3000L : visible * 5 / 2 + 3000L;
+        if (edges) { startKenBurnsEdges(v, m, dur); return; }
         android.animation.ObjectAnimator an = android.animation.ObjectAnimator.ofPropertyValuesHolder(v,
                 android.animation.PropertyValuesHolder.ofFloat("scaleX", m[0], m[1]),
                 android.animation.PropertyValuesHolder.ofFloat("scaleY", m[0], m[1]),
@@ -1028,6 +1030,42 @@ class Slideshow {
         an.start();
         kb.put(v, an);
         if (paused) an.pause();
+    }
+
+    /**
+     * Movimiento «bordes a la vista»: mueve solo la foto (con su matriz) y deja quieto el relleno de detrás
+     * (negro, color o difuminado), que así se ve en los bordes.
+     */
+    private void startKenBurnsEdges(final ImageView v, final float[] m, long dur) {
+        final android.graphics.Bitmap bm = v.getDrawable() instanceof android.graphics.drawable.BitmapDrawable
+                ? ((android.graphics.drawable.BitmapDrawable) v.getDrawable()).getBitmap() : null;
+        if (bm == null || bm.getWidth() < 1 || bm.getHeight() < 1 || w < 1 || hgt < 1) return;
+        final boolean crop = v.getScaleType() == ImageView.ScaleType.CENTER_CROP;
+        final float fit = Math.min(w / (float) bm.getWidth(), hgt / (float) bm.getHeight());
+        final float fill = Math.max(w / (float) bm.getWidth(), hgt / (float) bm.getHeight());
+        final float base = crop ? fill : fit;
+        v.setScaleType(ImageView.ScaleType.MATRIX);
+        final android.graphics.Matrix mx = new android.graphics.Matrix();
+        final android.animation.ValueAnimator an = android.animation.ValueAnimator.ofFloat(0f, 1f);
+        final android.animation.ValueAnimator.AnimatorUpdateListener up = new android.animation.ValueAnimator.AnimatorUpdateListener() {
+            public void onAnimationUpdate(android.animation.ValueAnimator a) { edgeFrame(v, bm, mx, base, m, (Float) a.getAnimatedValue()); }
+        };
+        edgeFrame(v, bm, mx, base, m, 0f);
+        an.addUpdateListener(up);
+        an.setDuration(dur);
+        an.setInterpolator(new android.view.animation.LinearInterpolator());
+        an.start();
+        kb.put(v, an);
+        if (paused) an.pause();
+    }
+
+    private void edgeFrame(ImageView v, android.graphics.Bitmap bm, android.graphics.Matrix mx, float base, float[] m, float f) {
+        float z = base * (m[0] + (m[1] - m[0]) * f);
+        float tx = (m[2] + (m[3] - m[2]) * f) * w, ty = (m[4] + (m[5] - m[4]) * f) * hgt;
+        mx.reset();
+        mx.postScale(z, z);
+        mx.postTranslate((w - bm.getWidth() * z) / 2f + tx, (hgt - bm.getHeight() * z) / 2f + ty);
+        v.setImageMatrix(mx);
     }
 
     // ------------------------------------------------------------ precarga de la siguiente

@@ -92,10 +92,47 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         logo.setAdjustViewBounds(true);
         logo.setScaleType(ImageView.ScaleType.FIT_START);
         top.addView(logo, new LinearLayout.LayoutParams(-2, 0, 1f));
-        TextView tag = text("Tus álbumes de Google Fotos, en la tele y como salvapantallas", 13, 0xFF9FB3C8);
-        tag.setPadding(0, dp(6), 0, 0);
-        tag.setGravity(Gravity.CENTER_HORIZONTAL);
-        top.addView(tag, new LinearLayout.LayoutParams(-1, -2));
+        // barra de búsqueda discreta (solo con «Buscar» activado en Funciones extra); se llega subiendo con el mando
+        if (Extras.on(this, Extras.SEARCH)) {
+            searchBar = new android.widget.EditText(this);
+            searchBar.setSingleLine(true);
+            searchBar.setHint("Buscar lugar, álbum o fecha…");
+            searchBar.setHintTextColor(0xFF6F86A0);
+            searchBar.setTextColor(Color.WHITE);
+            searchBar.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+            searchBar.setTypeface(Ui.REG);
+            searchBar.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
+            searchBar.setPadding(dp(14), dp(4), dp(14), dp(4));
+            android.graphics.drawable.Drawable lens = getResources().getDrawable(R.drawable.ic_search);
+            lens.setBounds(0, 0, dp(16), dp(16));
+            searchBar.setCompoundDrawables(lens, null, null, null);
+            searchBar.setCompoundDrawablePadding(dp(10));
+            GradientDrawable sOff = new GradientDrawable();
+            sOff.setColor(0x26FFFFFF);
+            sOff.setCornerRadius(dp(18));
+            sOff.setStroke(dp(1), 0x33FFFFFF);
+            GradientDrawable sOn = new GradientDrawable();
+            sOn.setColor(0x33FFFFFF);
+            sOn.setCornerRadius(dp(18));
+            sOn.setStroke(dp(2), 0xFF3D8BFD);
+            StateListDrawable sBg = new StateListDrawable();
+            sBg.addState(new int[]{android.R.attr.state_focused}, sOn);
+            sBg.addState(new int[]{}, sOff);
+            searchBar.setBackground(sBg);
+            searchBar.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                public boolean onEditorAction(TextView v, int action, android.view.KeyEvent ev) {
+                    Intent in = new Intent(SettingsActivity.this, SearchActivity.class);
+                    String q = searchBar.getText().toString().trim();
+                    if (q.length() > 0) in.putExtra("q", q);
+                    searchBar.setText("");
+                    startActivity(in);
+                    return true;
+                }
+            });
+            LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-1, dp(36));
+            sp.setMargins(0, dp(6), 0, 0);
+            top.addView(searchBar, sp);
+        }
         LinearLayout vrow = new LinearLayout(this);
         vrow.setOrientation(LinearLayout.HORIZONTAL);
         vrow.setBaselineAligned(true);
@@ -246,9 +283,6 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         left.addView(pair(idleBtn, stopBtn));
         // funciones extra que añaden botones (solo si están activadas)
         List<Button> fx = new ArrayList<Button>();
-        if (Extras.on(this, Extras.SEARCH)) fx.add(side("Buscar", R.drawable.ic_search, new View.OnClickListener() {
-            public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, SearchActivity.class)); }
-        }));
         if (Extras.on(this, Extras.TRIPS)) fx.add(side("Viajes", R.drawable.ic_flight, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, TripsActivity.class)); }
         }));
@@ -337,6 +371,14 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         sv.setNextFocusUpId(zoneGuest.getId());
         browse.setNextFocusUpId(zoneGuest.getId());
         preview.setNextFocusUpId(zoneGuest.getId());
+        if (searchBar != null) {
+            searchBar.setId(View.generateViewId());
+            browse.setNextFocusUpId(searchBar.getId());
+            preview.setNextFocusUpId(searchBar.getId());
+            searchBar.setNextFocusDownId(preview.getId());
+            searchBar.setNextFocusUpId(zoneQr.getId());
+            searchBar.setNextFocusRightId(zoneGuest.getId());
+        }
 
         setContentView(root);
         preview.requestFocus();
@@ -371,6 +413,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     private String extrasSig;
+    private android.widget.EditText searchBar;
 
     /** Qué botones extra hay que enseñar (si cambia al volver de Ajustes, la pantalla se rehace). */
     private String extrasSig() {

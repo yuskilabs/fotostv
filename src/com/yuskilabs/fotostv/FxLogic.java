@@ -74,7 +74,28 @@ final class FxLogic {
      * en fracción del ancho/alto de la pantalla. Estilos: in (acercar), out (alejar), pan (de lado, arriba/abajo o en
      * diagonal) y mix (cualquiera de ellos). Nunca asoma un borde: con la escala 1+Z, cabe un desplazamiento de Z/2.
      */
-    static float[] kenBurnsPath(String style, Random r) {
+    static float[] kenBurnsPath(String style, Random r) { return kenBurnsPath(style, r, false); }
+
+    /**
+     * Con showEdges la foto empieza entera (escala 1, sin ampliar): acercar un poco, alejar (se encoge y deja ver el relleno)
+     * o desplazar unos pocos puntos; así se ven las zonas que la foto no llena.
+     */
+    static float[] kenBurnsPath(String style, Random r, boolean showEdges) {
+        if (showEdges) {
+            int k;
+            if ("in".equals(style)) k = 0;
+            else if ("out".equals(style)) k = 1;
+            else if ("pan".equals(style)) k = 2 + r.nextInt(3);
+            else k = r.nextInt(5);
+            float ex = r.nextBoolean() ? 1f : -1f, ey = r.nextBoolean() ? 1f : -1f, p = 0.035f;
+            switch (k) {
+                case 0: return new float[]{1f, 1.07f, 0f, 0f, 0f, 0f};
+                case 1: return new float[]{1f, 0.93f, 0f, 0f, 0f, 0f};
+                case 2: return new float[]{1f, 1f, -ex * p, ex * p, 0f, 0f};
+                case 3: return new float[]{1f, 1f, 0f, 0f, -ey * p, ey * p};
+                default: return new float[]{1f, 1f, -ex * p, ex * p, -ey * p, ey * p};
+            }
+        }
         float z = KB_ZOOM, big = 1f + z, m = z / 2f * 0.9f;
         int kind;
         if ("in".equals(style)) kind = 0;
