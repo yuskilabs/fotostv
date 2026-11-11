@@ -706,27 +706,52 @@ class MetaFetcher {
         return null;
     }
 
-    /** «Día de la semana y hora» de la foto en la fecha del pase (función extra); lo fija el pase al empezar. */
-    static volatile boolean fullDate;
+    /** «Día y hora» en la fecha del pase y formato de fecha corto (función extra); los fija el pase al empezar. */
+    static volatile boolean fullDate, shortDate;
+
+    private static String pattern(boolean withTime, boolean shrt) {
+        if (shrt) return withTime ? "EEE, d MMM yyyy' - 'HH:mm" : "d MMM yyyy";
+        return withTime ? "EEEE d 'de' MMMM 'de' yyyy' - 'HH:mm" : "d 'de' MMMM 'de' yyyy";
+    }
+
+    /**
+     * Diferencia horaria del lugar donde se hizo el elemento: la de Google si la da; si no, y solo cuando por su ubicación
+     * está claramente en otra zona (más de 3 h de la de este aparato), una estimación por la longitud. NO_TZ = usar la de aquí.
+     */
+    static long tzFor(Context c, Item it) {
+        if (it.tz != Item.NO_TZ) return it.tz;
+        try {
+            double[] g = knownGps(c, it);
+            if (g == null || Double.isNaN(g[1])) return Item.NO_TZ;
+            return estimateTz(g[1], it.ts);
+        } catch (Throwable t) { return Item.NO_TZ; }
+    }
+
+    static long estimateTz(double lon, long ms) {
+        long est = Math.round(lon / 15.0) * 3600000L;
+        long dev = java.util.TimeZone.getDefault().getOffset(ms);
+        return Math.abs(est - dev) > 3 * 3600000L ? est : Item.NO_TZ;
+    }
 
     static String formatDate(long ms) { return formatDate(ms, Item.NO_TZ); }
 
     /** Fecha de una foto. Con «tz» (diferencia horaria del lugar donde se hizo) la hora es la de allí, no la de aquí. */
     static String formatDate(long ms, long tz) {
         if (ms <= 0) return null;
-        return fmt(fullDate ? "EEEE d 'de' MMMM 'de' yyyy' | 'HH:mm" : "d 'de' MMMM 'de' yyyy", ms, tz, fullDate);
+        return fmt(pattern(fullDate, shortDate), ms, tz, true, shortDate);
     }
 
-    /** Día de la semana, fecha y hora para la ficha. */
+    /** Día de la semana, fecha y hora para la ficha (con el formato largo o corto elegido). */
     static String formatDateTime(long ms, long tz) {
-        return ms <= 0 ? null : fmt("EEEE, d 'de' MMMM 'de' yyyy' | 'HH:mm", ms, tz, true);
+        return ms <= 0 ? null : fmt(pattern(true, shortDate), ms, tz, true, shortDate);
     }
 
-    private static String fmt(String pattern, long ms, long tz, boolean capital) {
+    private static String fmt(String pattern, long ms, long tz, boolean capital, boolean shrt) {
         SimpleDateFormat f = new SimpleDateFormat(pattern, ES);
         long t = ms;
         if (tz != Item.NO_TZ) { f.setTimeZone(java.util.TimeZone.getTimeZone("GMT")); t = ms + tz; }
         String d = f.format(new java.util.Date(t));
+        if (shrt) d = d.replace(".", "");
         return capital ? Character.toUpperCase(d.charAt(0)) + d.substring(1) : d;
     }
 

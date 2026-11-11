@@ -51,7 +51,25 @@ public class BrowserActivity extends Activity {
         boolean onlyVideos;       // filtro «Vídeos»
         List<Item> vids = new ArrayList<Item>();
 
-        List<Item> shown() { return onlyVideos ? vids : (view != null ? view : items); }
+        int dayKey = -1;          // filtro «Ir a la fecha»: solo las de ese día (-1 = todas)
+        private List<Item> dayOf, dayList;
+        private int dayN = -1;
+
+        List<Item> base() { return onlyVideos ? vids : (view != null ? view : items); }
+
+        List<Item> shown() {
+            List<Item> b = base();
+            if (dayKey < 0) return b;
+            if (dayOf != b || dayN != b.size() || dayList == null) {
+                java.util.TimeZone tz = java.util.TimeZone.getDefault();
+                List<Item> r = new ArrayList<Item>();
+                for (Item it : b) if (FxLogic.dayKey(it.ts, tz) == dayKey) r.add(it);
+                dayOf = b;
+                dayN = b.size();
+                dayList = r;
+            }
+            return dayList;
+        }
     }
 
     /** Casilla con proporción fija (alto = ancho × ratio) para las cuadrículas. */
@@ -1429,6 +1447,7 @@ public class BrowserActivity extends Activity {
         albumPos = pos;
         current = entries.get(pos);
         current.onlyVideos = false;
+        current.dayKey = -1;
         scanGen++;
         if (pendingDupes == current && pendingDupeKeys != null) {   // repetidas que se encontraron mientras estabas en otro sitio
             Set<String> k = pendingDupeKeys;
@@ -1703,36 +1722,27 @@ public class BrowserActivity extends Activity {
     /** «Fecha» (función extra): lista de meses del álbum; al elegir uno, el mosaico va a su primera foto. */
     private void dateJump() {
         if (current == null) return;
-        final List<Item> l = current.shown();
-        final java.util.TreeMap<Integer, int[]> months = new java.util.TreeMap<Integer, int[]>(Collections.<Integer>reverseOrder());
-        java.util.Calendar c = java.util.Calendar.getInstance();
-        for (int i = 0; i < l.size(); i++) {
-            long ts = l.get(i).ts;
-            int k = -1;
-            if (ts > 0) { c.setTimeInMillis(ts); k = c.get(java.util.Calendar.YEAR) * 100 + c.get(java.util.Calendar.MONTH); }
-            int[] v = months.get(k);
-            if (v == null) months.put(k, new int[]{i, 1}); else v[1]++;
+        final Entry e = current;
+        final List<Item> l = e.base();
+        final java.util.TreeMap<Integer, Integer> days = new java.util.TreeMap<Integer, Integer>();
+        java.util.TimeZone tz = java.util.TimeZone.getDefault();
+        for (Item it : l) {
+            int k = FxLogic.dayKey(it.ts, tz);
+            if (k < 0) continue;
+            Integer n = days.get(k);
+            days.put(k, n == null ? 1 : n + 1);
         }
-        if (months.isEmpty()) { showToast("Este álbum no tiene fotos."); return; }
-        final List<Integer> pos = new ArrayList<Integer>();
-        List<String> labels = new ArrayList<String>();
-        for (java.util.Map.Entry<Integer, int[]> e : months.entrySet()) {
-            int k = e.getKey();
-            String name = k < 0 ? "Sin fecha" : FxLogic.MONTHS[k % 100] + " de " + (k / 100);
-            labels.add(name.substring(0, 1).toUpperCase(MetaFetcher.ES) + name.substring(1) + "  \u00B7  " + e.getValue()[1]);
-            pos.add(e.getValue()[0]);
+        if (days.isEmpty()) { showToast("Este álbum no tiene fotos con fecha."); return; }
+        int start = e.dayKey;
+        if (start < 0 && photoGrid != null) {
+            int p = photoGrid.getSelectedItemPosition();
+            List<Item> sh = e.shown();
+            if (p >= 0 && p < sh.size()) start = FxLogic.dayKey(sh.get(p).ts, tz);
         }
-        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle("Ir a la fecha")
-            .setItems(labels.toArray(new String[0]), new android.content.DialogInterface.OnClickListener() {
-                public void onClick(android.content.DialogInterface d, int w) {
-                    if (photoGrid == null) return;
-                    photoGrid.requestFocus();
-                    photoGrid.setSelection(pos.get(w));
-                }
-            })
-            .setNegativeButton("Cancelar", null)
-            .show();
+        new CalendarDialog(this, days, start, e.dayKey >= 0, new CalendarDialog.Listener() {
+            public void onDay(int key) { e.dayKey = key; showPhotos(0); }
+            public void onAll() { e.dayKey = -1; showPhotos(0); }
+        }).show();
     }
 
     private void togglePhoto(int pos) {
@@ -1827,6 +1837,10 @@ public class BrowserActivity extends Activity {
             if (scanTotal > 0 && scanDone < scanTotal) t += "  \u00B7  buscando " + scanDone + "/" + scanTotal + "…";
         } else {
             t = "  \u00B7  " + current.items.size() + " elementos";
+        }
+        if (current.dayKey >= 0) {
+            int dk = current.dayKey;
+            t += "  \u00B7  " + (dk % 100) + " " + FxLogic.MONTHS[(dk / 100) % 100] + " " + (dk / 10000) + ": " + current.shown().size();
         }
         if (pSel) t += "  \u00B7  " + pKeys.size() + " seleccionados";
         countView.setText(t);

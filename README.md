@@ -77,13 +77,13 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Fondo de pantalla para Projectivy Launcher** con fotos (y opcionalmente vídeos) de tus álbumes.
 
 ### Funciones extra (7.0)
-Están en **Ajustes → Funciones extra**. Todas vienen **apagadas**: con todo apagado, la app funciona igual que antes, y al apagar una vuelve a ser como era. Al pasar con el mando por cada botón, abajo se explica qué hace.
+Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde la 7.4 ya no hay pantalla aparte). Todas vienen **apagadas**: con todo apagado, la app funciona igual que antes, y al apagar una vuelve a ser como era. Al pasar con el mando por cada botón, abajo se explica qué hace.
 
 **Pantalla del pase**
 - **Reloj grande**: hora más grande con el día de la semana y la fecha debajo.
 - **Tiempo**: temperatura y cielo de tu ciudad junto a la hora (Open-Meteo, cada media hora). La ciudad se escribe en «Ciudad».
 - **Recuerdos de hoy**: «solo» (el salvapantallas enseña únicamente fotos de un día como hoy de años anteriores, si hay al menos 5) o «mezclados» (esas salen antes, una sí y una no, y también se ven todas las demás; con orden aleatorio o inteligente). Con «hace N años» junto a la fecha.
-- **Día y hora**: la fecha de cada foto en el pase lleva también el día de la semana y la hora a la que se hizo, separada con « | ». La hora es la del lugar donde se hizo la foto (no la de tu casa), y la ficha de metadatos también la enseña.
+- **Día y hora**: la fecha de cada foto en el pase lleva también el día de la semana y la hora a la que se hizo, separada con « - ». Con la opción **Fecha** en larga o corta (o sin fecha). La hora es la del lugar donde se hizo la foto (no la de tu casa), y la ficha de metadatos también la enseña.
 - **Movimiento** (efecto Ken Burns): movimiento lento de cada foto, variado (al azar acercar, alejar, de lado, arriba y abajo o en diagonal) «solo zoom» (acercar y alejar) o siempre el mismo. El movimiento dura justo lo que la foto está en pantalla, así que nunca se para; la velocidad (lenta o normal) cambia lo que recorre en ese tiempo. La foto siempre está algo ampliada, así que nunca asoma un borde vacío.
 - **Bordes**: «tapados» (la foto va ampliada y no se ve el relleno) o «a la vista» (la foto empieza entera, sin zoom, y al moverse se ve el relleno quieto detrás; al alejar empieza ampliada y acaba entera al terminar su tiempo).
 - **Relleno** de lo que la foto no llena (verticales, fotos con otra forma): negro, el color de la foto o la foto muy difuminada, en degradado suave.
@@ -103,7 +103,7 @@ Están en **Ajustes → Funciones extra**. Todas vienen **apagadas**: con todo a
 **Explorador**
 - **Buscar** (barra discreta en la pantalla principal, encima de los botones; se llega subiendo con el mando): por lugar, nombre del álbum, mes o año («Zahara», «agosto 2025», «Lara 2024»).
 - **Álbumes virtuales**: el resultado de una búsqueda se guarda como álbum (botón «Guardar» del mosaico) y se actualiza solo. Se borran con pulsación larga.
-- **Saltar por fecha**: icono «Fecha» (junto al de «Mapa», arriba a la derecha del mosaico) para ir directo a un mes.
+- **Saltar por fecha**: icono «Fecha» (junto al de «Mapa», arriba a la derecha del mosaico) que abre un calendario mensual: izquierda/derecha cambia de mes (o de año, si lo seleccionas) y al elegir un día se ven solo sus fotos.
 - **Viajes** (botón en la pantalla principal): agrupa solas las fotos hechas en días seguidos, con su lugar y fechas.
 - **Varias portadas**: «Añadir a portadas» en varias fotos; cada vez que entras en los álbumes sale una de ellas.
 - **Marcar nuevas**: las fotos añadidas al álbum desde la última vez que lo abriste llevan «NUEVA», y el álbum dice cuántas hay.
@@ -111,7 +111,7 @@ Están en **Ajustes → Funciones extra**. Todas vienen **apagadas**: con todo a
 - **Estadísticas** (botón en la pantalla principal): fotos por año, lugar, álbum y cámara; cada fila abre sus fotos. «Leer cámaras» averigua la cámara de las fotos que aún no la tienen.
 
 **Casa y móvil**
-- **Perfiles**: «Familia» (el de siempre) y los perfiles que añadas en Ajustes → Funciones extra → Perfiles, cada uno con sus álbumes, ajustes, PIN y web de configuración; los nuevos empiezan vacíos. En la pantalla principal, a la derecha del QR, hay un icono cuadrado con el nombre del perfil en uso; al pulsarlo se pasa al siguiente y cambian el QR y el PIN. «Familia» lleva un icono de familia y los demás, formas neutras. El icono se elige de una muestra o con una foto de un archivo (también desde la web del móvil, donde además se cambia el nombre del perfil en uso). La copia de seguridad incluye todos los perfiles, con su nombre e icono.
+- **Perfiles**: «Familia» (el de siempre) y los perfiles que añadas en Ajustes → Casa y móvil → Perfiles, cada uno con sus álbumes, ajustes, PIN y web de configuración; los nuevos empiezan vacíos. En la pantalla principal, a la derecha del QR, hay un icono cuadrado con el nombre del perfil en uso; al pulsarlo se pasa al siguiente y cambian el QR y el PIN. «Familia» lleva un icono de familia y los demás, uno de una sola persona (cambiable). El icono se elige de una muestra o con una foto de un archivo (también desde la web del móvil, donde además se cambia el nombre del perfil en uso). La copia de seguridad incluye todos los perfiles, con su nombre e icono.
 - **Mando del móvil**: la web de ajustes enseña un mando (anterior, pausa, siguiente) para el pase que esté en marcha.
 - **Recargar álbumes**: cada 6, 12 o 24 horas vuelve a leer los álbumes de Google mientras la app o el salvapantallas estén en marcha.
 
@@ -238,8 +238,9 @@ src/com/yuskilabs/fotostv/
   Nav                        saltos desde la ficha (álbum, pase del álbum, lugar, zona o día)
   PlacesActivity, MapView, MapTiles   pantalla Lugares y mapa de OpenStreetMap
   GeoIndex, GeoService       índice de ubicaciones en segundo plano
-  AjustesActivity, SettingsBase   pantalla de ajustes (y piezas comunes de las pantallas de ajustes)
-  ExtrasActivity, Extras     funciones extra (7.0): interruptores y ajustes
+  AjustesActivity, SettingsBase   pantalla de ajustes única, con todo por temas (y piezas comunes)
+  Extras                     claves de las funciones extra (7.0)
+  CalendarDialog             calendario mensual de «Ir a la fecha» (7.4)
   FxLogic                    lógica pura de las funciones extra (noche, búsqueda, viajes, repetidas…)
   SearchActivity, Search     buscar por lugar, álbum o fecha
   TripsActivity, StatsActivity, CamScan   viajes y estadísticas (con la cámara de cada foto)

@@ -98,7 +98,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         logo.setAdjustViewBounds(true);
         logo.setScaleType(ImageView.ScaleType.FIT_START);
         top.addView(logo, new LinearLayout.LayoutParams(-2, 0, 1f));
-        // barra de búsqueda discreta (solo con «Buscar» activado en Funciones extra); se llega subiendo con el mando
+        // barra de búsqueda discreta (solo con «Buscar» activado en Ajustes); se llega subiendo con el mando
         if (Extras.on(this, Extras.SEARCH)) {
             // no es un campo de texto de verdad (así ningún mando se queda «atrapado» dentro): al pulsar OK abre la búsqueda con el teclado
             LinearLayout bar = new LinearLayout(this);
@@ -466,7 +466,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             public void onClick(View v) {
                 java.util.List<String[]> l = Prefs.profiles(SettingsActivity.this);
                 if (l.size() < 2) {
-                    Toast.makeText(SettingsActivity.this, "Solo hay el perfil «Familia». Añade más en Ajustes → Funciones extra → Perfiles.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(SettingsActivity.this, "Solo hay el perfil «Familia». Añade más en Ajustes → Casa y móvil → Perfiles.", Toast.LENGTH_LONG).show();
                     return;
                 }
                 int nx = (Prefs.profileIndex(SettingsActivity.this, cur) + 1) % l.size();

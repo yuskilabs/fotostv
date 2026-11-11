@@ -660,7 +660,7 @@ class WebConfigServer extends Thread {
 
     /** Mando desde el móvil (función extra): ◀ ▶ OK sobre el pase que esté en marcha en la tele. */
     private String remote(String path) {
-        if (!Extras.on(ctx, Extras.REMOTE)) return "El mando está desactivado (Ajustes \u2192 Funciones extra).";
+        if (!Extras.on(ctx, Extras.REMOTE)) return "El mando está desactivado (Ajustes \u2192 Casa y móvil).";
         int q = path.indexOf("k=");
         String k = q >= 0 ? path.substring(q + 2).split("&")[0] : "";
         final int code = "left".equals(k) ? android.view.KeyEvent.KEYCODE_DPAD_LEFT
@@ -683,7 +683,8 @@ class WebConfigServer extends Thread {
             sb.append("<h2>Perfil en uso</h2><div class='card'><div class='row' style='justify-content:flex-start'>")
               .append("<img id='ppv' src='/img/pp.png?t=").append(System.currentTimeMillis()).append("' width='56' height='56' style='border-radius:12px;background:#22364f;padding:6px;box-sizing:border-box'>")
               .append("<input id='pn' maxlength='20' value='").append(esc(Prefs.profileName(ctx, pid))).append("'").append(pid == 0 ? " disabled" : "").append(">")
-              .append("</div><p class='muted'>Icono</p><div style='display:flex;flex-wrap:wrap;gap:8px'>");
+              .append("</div><button type='button' class='sec' onclick=\"var g=document.getElementById('pig');g.style.display=g.style.display=='flex'?'none':'flex'\">🎨 Elegir icono ▾</button>")
+              .append("<div id='pig' style='display:none;flex-wrap:wrap;gap:8px;margin:8px 0'>");
             for (int i = 0; i < Ui.PROFILE_ICONS.length; i++)
                 sb.append("<img src='/img/pi/").append(i).append(".png' width='46' height='46' onclick='pickIcon(").append(i)
                   .append(",this)' style='background:#22364f;border-radius:10px;padding:6px;box-sizing:border-box;border:2px solid transparent'>");
@@ -699,9 +700,6 @@ class WebConfigServer extends Thread {
               .append("<p id='rcm' class='muted'></p>");
         }
         sb.append("<form method='post' action='/save'>");
-        sb.append("<h2>Emisora propia</h2><p class='muted'>La música (apagada, radio o carpeta, volumen…) se elige en la tele, en Ajustes. Aquí solo hace falta pegar la dirección de una emisora que no esté en la lista.</p>")
-          .append("<input name='musicRadio' type='url' placeholder='https://… (dirección de la emisora)' value='")
-          .append(esc(customRadio(ctx))).append("'>");
         sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes (con su orden, nombres y portadas), ajustes (también los de las funciones extra), perfiles, favoritas y ubicaciones ya revisadas a otro dispositivo: pulsa «Exportar» (se copia solo al portapapeles), y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya). También puedes «Exportar a archivo» e «Importar archivo».</p>")
           .append("<textarea id='bk' rows='5' placeholder='Aquí aparece la copia, o pega la que quieras importar'></textarea>")
           .append("<div class='row2'><button type='button' class='sec' onclick='expBk()'>📤 Exportar</button>")
@@ -710,6 +708,9 @@ class WebConfigServer extends Thread {
           .append("<button type='button' class='sec' onclick=\"document.getElementById('bkf').click()\">📂 Importar archivo</button></div>")
           .append("<input type='file' id='bkf' accept='.json,.txt,application/json,text/plain' style='display:none' onchange='impFile(this)'>")
           .append("<p id='bkm' class='muted'></p>");
+        sb.append("<h2>Emisora propia</h2><p class='muted'>La música (apagada, radio o carpeta, volumen…) se elige en la tele, en Ajustes. Aquí solo hace falta pegar la dirección de una emisora que no esté en la lista.</p>")
+          .append("<input name='musicRadio' type='url' placeholder='https://… (dirección de la emisora)' value='")
+          .append(esc(customRadio(ctx))).append("'>");
         sb.append("<button type='submit'>💾 Guardar</button>");
         StringBuilder alb = new StringBuilder();
         alb.append("<h2>Álbumes</h2>");
@@ -776,7 +777,7 @@ class WebConfigServer extends Thread {
         + "x.onerror=function(){m.textContent='No hay conexión con la Shield.';b.disabled=false;};"
         + "x.send('url='+encodeURIComponent(u.value.trim())+'&name='+encodeURIComponent(n.value.trim()));}"
         + "var pIcon='',pImg='';"
-        + "function pickIcon(i,el){pIcon=i;pImg='';var l=el.parentNode.querySelectorAll('img');for(var j=0;j<l.length;j++)l[j].style.borderColor='transparent';el.style.borderColor='#3d8bfd';document.getElementById('ppv').src=el.src;}"
+        + "function pickIcon(i,el){pIcon=i;pImg='';document.getElementById('pig').style.display='none';var l=el.parentNode.querySelectorAll('img');for(var j=0;j<l.length;j++)l[j].style.borderColor='transparent';el.style.borderColor='#3d8bfd';document.getElementById('ppv').src=el.src;}"
         + "function pickImg(inp){var f=inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){"
         + "var c=document.createElement('canvas');c.width=c.height=160;var s=Math.min(im.width,im.height);"
         + "c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,160,160);pImg=c.toDataURL('image/png');pIcon='';"

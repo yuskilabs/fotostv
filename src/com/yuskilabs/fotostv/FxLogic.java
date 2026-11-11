@@ -415,4 +415,33 @@ final class FxLogic {
         }
         return extra;
     }
+
+    // ------------------------------------------------------------ calendario («Ir a la fecha»)
+    /** Clave de día año*10000+mes(0-11)*100+día en la zona dada; -1 si no hay fecha. */
+    static int dayKey(long ts, java.util.TimeZone tz) {
+        if (ts <= 0) return -1;
+        java.util.Calendar c = java.util.Calendar.getInstance(tz);
+        c.setTimeInMillis(ts);
+        return c.get(java.util.Calendar.YEAR) * 10000 + c.get(java.util.Calendar.MONTH) * 100 + c.get(java.util.Calendar.DAY_OF_MONTH);
+    }
+
+    /** Mes (año*12+mes) siguiente o anterior que tenga fotos; el mismo si no hay más en esa dirección. */
+    static int stepMonth(java.util.TreeSet<Integer> months, int cur, int dir) {
+        Integer n = dir > 0 ? months.higher(cur) : months.lower(cur);
+        return n == null ? cur : n;
+    }
+
+    /** Año siguiente o anterior que tenga fotos; el mes se queda en el mismo si allí hay fotos y, si no, en el más cercano. */
+    static int stepYear(java.util.TreeSet<Integer> months, int cur, int dir) {
+        int y = cur / 12, m = cur % 12, ny = -1;
+        for (int k : months) {
+            int ky = k / 12;
+            if (dir > 0 && ky > y) { ny = ky; break; }
+            if (dir < 0 && ky < y) ny = ky;      // el último año anterior
+        }
+        if (ny < 0) return cur;
+        int best = -1;
+        for (int k : months) if (k / 12 == ny && (best < 0 || Math.abs(k % 12 - m) < Math.abs(best % 12 - m))) best = k;
+        return best;
+    }
 }

@@ -3,6 +3,15 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.4
+- Ajustes: ahora todo está en una sola pantalla, ordenado por temas (Pase de fotos, Movimiento y relleno, Información en pantalla, Noche y temporizador, Salvapantallas, Casa y móvil, Música, Vídeo y caché, Explorador, Ubicaciones). Ya no existe la pantalla «Funciones extra». Al pasar por un botón, abajo se explica qué hace.
+- Fecha: nueva opción «Fecha» con tres valores: larga («Miércoles 27 de diciembre de 2023 - 15:03»), corta («Mié, 27 dic 2023 - 15:03») o no. «Día y hora» sigue aparte y añade o quita el día de la semana y la hora en la larga y en la corta. El separador de la hora es ahora « - ». La ficha usa el mismo formato.
+- Ir a la fecha: ahora es un calendario mensual. Con el mes seleccionado, izquierda y derecha cambian de mes; con el año, cambian de año (solo los que tienen fotos). Al elegir un día se ven solo las fotos de ese día («Ver todo» lo quita).
+- Hora de los vídeos en el extranjero: si Google no da la zona horaria y la ubicación está claramente en otra zona (más de 3 h de la de aquí), se calcula una hora aproximada por la longitud del lugar.
+- Movimiento: el recorrido dura un 60 % más a la misma velocidad, así la foto no se queda quieta si el cambio se retrasa un instante; se quita una capa gráfica del fundido que podía causar un parón.
+- Perfiles: nuevo icono de una sola persona, que llevan por defecto todos los perfiles nuevos («Familia» conserva el de familia).
+- Web del móvil: «Emisora propia» pasa justo entre «Copia de seguridad» y «Álbumes», y los iconos del perfil se eligen en un desplegable con botón.
+
 ## 7.3
 - Movimiento: ya no hay un tirón al final. La foto siguiente se prepara en la tarjeta gráfica con antelación y el movimiento es algo más lento.
 - Botones: cuando el texto no cabe, la letra se reduce de verdad (antes se encogía pero el texto seguía cortándose en el mismo sitio).

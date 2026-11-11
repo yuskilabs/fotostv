@@ -23,6 +23,7 @@ final class Extras {
     static final String KEN_BURNS = "fx_kenBurns";     // movimiento suave
     static final String KB_STYLE = "fx_kbStyle";       // mix (variado) | in (acercar) | out (alejar) | pan (desplazar)
     static final String KB_SPEED = "fx_kbSpeed";       // slow (lenta) | normal
+    static final String DATE_FMT = "fx_dateFmt";       // formato de fecha: long (por defecto) o short
     static final String DATE_FULL = "fx_dateFull";     // fecha del pase con día de la semana y hora
     static final String TODAY_MIX = "fx_todayMix";     // recuerdos de hoy mezclados con el resto
     static final String KB_EDGE = "fx_kbEdge";         // bordes: hide (la foto va ampliada) | show (empieza entera y se ve el relleno)

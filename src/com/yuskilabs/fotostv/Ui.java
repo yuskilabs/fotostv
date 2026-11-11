@@ -106,14 +106,14 @@ class Ui {
     static final int[] PROFILE_ICONS = {R.drawable.ic_family, R.drawable.ic_home, R.drawable.ic_heart, R.drawable.ic_star,
         R.drawable.ic_flight, R.drawable.ic_albums, R.drawable.ic_music, R.drawable.ic_photo, R.drawable.ic_camera,
         R.drawable.ic_tv, R.drawable.ic_place, R.drawable.ic_sparkle, R.drawable.ic_moon, R.drawable.ic_cloud,
-        R.drawable.ic_terrain, R.drawable.ic_video};
+        R.drawable.ic_terrain, R.drawable.ic_video, R.drawable.ic_single};
 
-    /** Icono de un perfil: el elegido o, si no, «Familia» la familia y los demás formas neutras (sin personas). */
+    /** Icono de un perfil: el elegido o, si no, la familia para «Familia» y una sola persona para los demás. */
     static int profileIcon(Context c, int id) {
         int idx = Prefs.profileIconIdx(c, id);
         if (idx >= 0 && idx < PROFILE_ICONS.length) return PROFILE_ICONS[idx];
         int pos = Prefs.profileIndex(c, id);
-        return pos <= 0 ? PROFILE_ICONS[0] : PROFILE_ICONS[1 + (pos - 1) % 6];
+        return pos <= 0 ? PROFILE_ICONS[0] : R.drawable.ic_single;      // Familia, la familia; los nuevos, una persona
     }
 
     /** Pone en la vista el icono (o la foto) del perfil. */

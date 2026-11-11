@@ -159,6 +159,7 @@ class Slideshow {
         if (running) return;
         running = true;
         MetaFetcher.fullDate = Extras.on(ctx, Extras.DATE_FULL);
+        MetaFetcher.shortDate = "short".equals(Extras.str(ctx, Extras.DATE_FMT, "long"));
         // estado limpio en cada arranque: una carga a medias de la vez anterior no debe bloquear el pase
         session++;
         queue.clear();
@@ -840,7 +841,7 @@ class Slideshow {
                     t.album = it.album;
                     t.video = true;
                     t.videoFile = f;
-                    t.date = MetaFetcher.formatDate(it.ts, it.tz);
+                    t.date = MetaFetcher.formatDate(it.ts, MetaFetcher.tzFor(ctx, it));
                     return t;
                 }
             }
@@ -897,7 +898,7 @@ class Slideshow {
                 if (e[2] > 0) date = (long) e[2];
                 if (wantPlace) t.place = MetaFetcher.place(ctx, e[0], e[1]);
             }
-            t.date = MetaFetcher.formatDate(date, date == it.ts ? it.tz : Item.NO_TZ);
+            t.date = MetaFetcher.formatDate(date, date == it.ts ? MetaFetcher.tzFor(ctx, it) : Item.NO_TZ);
             if ((todayMode || (todayKeys != null && todayKeys.contains(it.key()))) && date > 0) {
                 int n = FxLogic.yearsAgo(date, System.currentTimeMillis(), java.util.TimeZone.getDefault());
                 if (n > 0) t.date += "  \u00B7  hace " + n + (n == 1 ? " año" : " años");
@@ -1044,6 +1045,13 @@ class Slideshow {
         long dur = Prefs.interval(ctx) * 1000L + 1200L;
         float part = "normal".equals(Extras.str(ctx, Extras.KB_SPEED, "slow")) ? 0.65f : 0.4f;
         if (edges && m[1] < m[0]) part = 1f;
+        // el recorrido se alarga un 60 % más (a la misma velocidad): si el cambio de foto se retrasa un instante,
+        // la foto sigue moviéndose en vez de quedarse parada esperando
+        if (part < 1f) {
+            float more = Math.min(1f, part * 1.6f);
+            dur = (long) (dur * (more / part));
+            part = more;
+        }
         for (int q = 1; q < 6; q += 2) m[q] = m[q - 1] + (m[q] - m[q - 1]) * part;
         if (edges) { startKenBurnsEdges(v, m, dur); return; }
         android.animation.ObjectAnimator an = android.animation.ObjectAnimator.ofPropertyValuesHolder(v,
@@ -1161,7 +1169,7 @@ class Slideshow {
                 try {   // fecha y lugar del vídeo (de sus metadatos) para mostrarlos sobre la barra
                     if (Prefs.showPlace(ctx) || Prefs.showDate(ctx)) {
                         double[] e = MetaFetcher.exif(ctx, t.item);
-                        t.date = e[2] > 0 ? MetaFetcher.formatDate((long) e[2]) : MetaFetcher.formatDate(t.item.ts, t.item.tz);
+                        t.date = MetaFetcher.formatDate(t.item.ts, MetaFetcher.tzFor(ctx, t.item));
                         if (Prefs.showPlace(ctx)) t.place = MetaFetcher.place(ctx, e[0], e[1]);
                     }
                 } catch (Throwable ignored) { }
@@ -1188,7 +1196,7 @@ class Slideshow {
                 h.post(new Runnable() {
                     public void run() {
                         if (sess != session || !running) return;
-                        t.date = MetaFetcher.formatDate(t.item.ts, t.item.tz);
+                        t.date = MetaFetcher.formatDate(t.item.ts, MetaFetcher.tzFor(ctx, t.item));
                         if (got != null) t.videoFile = got;
                         else if (hf != null) { t.streamUrl = streamFor(t.item, t.prog); t.hdFut = hf; }
                         else { t.video = false; t.state = 3; onBuilt(t); return; }
@@ -1420,7 +1428,7 @@ class Slideshow {
                                         v.videoFile = got;
                                         if (got == null && isLow) { v.prog = pr; v.streamUrl = streamFor(it, pr); }
                                         v.state = 2;
-                                        v.date = p != null && p.date != null ? p.date : MetaFetcher.formatDate(it.ts, it.tz);
+                                        v.date = p != null && p.date != null ? p.date : MetaFetcher.formatDate(it.ts, MetaFetcher.tzFor(ctx, it));
                                         v.place = p != null ? p.place : null;
                                         display(v, true);
                                         if (isLow && hdFut != null) {
@@ -1463,7 +1471,7 @@ class Slideshow {
                         v.videoFile = hd;
                         v.state = 2;
                         v.startMs = pos;
-                        v.date = meta != null && meta.date != null ? meta.date : MetaFetcher.formatDate(it.ts, it.tz);
+                        v.date = meta != null && meta.date != null ? meta.date : MetaFetcher.formatDate(it.ts, MetaFetcher.tzFor(ctx, it));
                         v.place = meta != null ? meta.place : null;
                         display(v, false);
                     }
@@ -1812,7 +1820,7 @@ class Slideshow {
         if (hideVideo) releasePlayer();
         startKenBurns(back);
         back.animate().alpha(1f).setDuration(hideVideo ? 800 : 1200)
-            .setInterpolator(new AccelerateDecelerateInterpolator()).withLayer()
+            .setInterpolator(new AccelerateDecelerateInterpolator())
             .withEndAction(new Runnable() {
                 public void run() {
                     front.setImageDrawable(null);
@@ -1896,7 +1904,7 @@ class Slideshow {
         overlaysToFront();
         videoUi(true);
         videoHolder.animate().alpha(1f).setDuration(1000)
-            .setInterpolator(new AccelerateDecelerateInterpolator()).withLayer().start();
+            .setInterpolator(new AccelerateDecelerateInterpolator()).start();
     }
 
     /** Álbum, fecha y lugar del vídeo (la hora no), según lo que se tenga activado en los ajustes. */
