@@ -706,8 +706,15 @@ class MetaFetcher {
         return null;
     }
 
+    /** «Día de la semana y hora» de la foto en la fecha del pase (función extra); lo fija el pase al empezar. */
+    static volatile boolean fullDate;
+
     static String formatDate(long ms) {
         if (ms <= 0) return null;
+        if (fullDate) {
+            String d = new SimpleDateFormat("EEEE d 'de' MMMM 'de' yyyy, HH:mm", ES).format(new java.util.Date(ms));
+            return Character.toUpperCase(d.charAt(0)) + d.substring(1);
+        }
         return new SimpleDateFormat("d 'de' MMMM 'de' yyyy", ES).format(new java.util.Date(ms));
     }
 

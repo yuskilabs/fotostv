@@ -3,6 +3,15 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.2
+- Búsqueda: la barra de la pantalla principal ya no es un campo de texto (con algunos mandos por RF no se podía salir de ella). Al pulsar OK se abre la búsqueda con el teclado; «Buscar» o Intro abre directamente los resultados, y ↓ baja a la lista.
+- Movimiento: dura exactamente el tiempo que cada foto está en pantalla, para que nunca se pare. «Velocidad» cambia lo que recorre. Nueva opción «solo zoom» (acercar y alejar).
+- Nuevas funciones extra: «Día y hora» (día de la semana y hora de la foto en la fecha del pase) y «Recuerdos de hoy: mezclados».
+- Dos verticales juntas: ahora siempre del mismo álbum.
+- Mosaico: iconos «Fecha» y «Mapa» con el mismo color que «Columnas»; «Fecha» ya no ocupa sitio en los botones. Menús de pulsación larga con letra más pequeña. Texto de colores junto al título mientras algo se hace en segundo plano (comprobar álbumes, recargar, buscar repetidas, revisar ubicaciones).
+- Los textos de los botones reducen la letra si no caben antes de recortarse.
+- Perfiles: el perfil en uso se ve junto a la versión y se explica mejor qué hace.
+
 ## 7.1.1
 - Bordes «a la vista»: al alejar, la foto empieza ampliada y termina entera (con sus bordes) justo cuando acaba su tiempo en pantalla.
 

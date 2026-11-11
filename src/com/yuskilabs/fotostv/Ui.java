@@ -66,7 +66,7 @@ class Ui {
 
     /** Botón para mando: el seleccionado se ve azul intenso con borde blanco. */
     static Button button(Context c, String label, View.OnClickListener l) {
-        return button(c, new Button(c), label, l);
+        return button(c, new FitButton(c), label, l);
     }
 
     static Button button(Context c, Button btn, String label, View.OnClickListener l) {
@@ -101,6 +101,39 @@ class Ui {
     }
 
     /** Pone un icono blanco a la izquierda del texto del botón. */
+    /** Botón que reduce un poco la letra (hasta 10 sp) si su texto no cabe, antes de recortarlo con «…». */
+    static class FitButton extends Button {
+        private float basePx;
+        FitButton(Context c) { super(c); }
+        @Override public void setText(CharSequence t, BufferType type) {
+            super.setText(t, type);
+            if (basePx > 0) { getPaint().setTextSize(basePx); post(fit); }
+        }
+        @Override public void setTextSize(int unit, float size) {
+            super.setTextSize(unit, size);
+            basePx = getTextSize();
+        }
+        private final Runnable fit = new Runnable() { public void run() { fitNow(); } };
+        @Override protected void onLayout(boolean changed, int l, int t, int r, int b) {
+            super.onLayout(changed, l, t, r, b);
+            if (basePx <= 0) basePx = getTextSize();
+            fitNow();
+        }
+        private void fitNow() {
+            int w = getWidth();
+            if (w <= 0 || basePx <= 0 || getText() == null) return;
+            int avail = w - getPaddingLeft() - getPaddingRight();
+            android.graphics.drawable.Drawable[] cd = getCompoundDrawables();
+            if (cd[0] != null) avail -= cd[0].getBounds().width() + getCompoundDrawablePadding();
+            float px = basePx, min = 10f * getResources().getDisplayMetrics().scaledDensity;
+            String s = getText().toString();
+            android.text.TextPaint tp = getPaint();
+            tp.setTextSize(px);
+            while (px > min && tp.measureText(s) > avail) { px -= 0.5f * getResources().getDisplayMetrics().scaledDensity; tp.setTextSize(px); }
+            invalidate();
+        }
+    }
+
     static Button icon(Button b, int res) {
         Context c = b.getContext();
         android.graphics.drawable.Drawable d = c.getResources().getDrawable(res);

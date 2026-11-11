@@ -86,6 +86,7 @@ final class FxLogic {
             if ("in".equals(style)) k = 0;
             else if ("out".equals(style)) k = 1;
             else if ("pan".equals(style)) k = 2 + r.nextInt(3);
+            else if ("zoom".equals(style)) k = r.nextInt(2);
             else k = r.nextInt(5);
             float ex = r.nextBoolean() ? 1f : -1f, ey = r.nextBoolean() ? 1f : -1f, p = 0.035f;
             switch (k) {
@@ -101,6 +102,7 @@ final class FxLogic {
         if ("in".equals(style)) kind = 0;
         else if ("out".equals(style)) kind = 1;
         else if ("pan".equals(style)) kind = 2 + r.nextInt(3);
+        else if ("zoom".equals(style)) kind = r.nextInt(2);
         else kind = r.nextInt(5);
         float sx = r.nextBoolean() ? 1f : -1f, sy = r.nextBoolean() ? 1f : -1f;
         switch (kind) {
@@ -144,6 +146,23 @@ final class FxLogic {
     private static int idx(int line, int i, int w, boolean horizontal) { return horizontal ? line * w + i : i * w + line; }
 
     // ------------------------------------------------------------ recuerdos de hoy
+    /**
+     * «Recuerdos de hoy» mezclados: las fotos de hoy (de años anteriores) salen alternadas con las demás, una sí y una no,
+     * hasta que se acaban; luego sigue el resto. Conserva el orden relativo de cada grupo.
+     */
+    static List<Item> mixToday(List<Item> order, java.util.Set<String> todayKeys) {
+        if (todayKeys == null || todayKeys.isEmpty()) return order;
+        List<Item> t = new ArrayList<Item>(), o = new ArrayList<Item>();
+        for (Item it : order) (todayKeys.contains(it.key()) ? t : o).add(it);
+        List<Item> out = new ArrayList<Item>(order.size());
+        int i = 0, j = 0;
+        while (i < t.size() || j < o.size()) {
+            if (i < t.size()) out.add(t.get(i++));
+            if (j < o.size()) out.add(o.get(j++));
+        }
+        return out;
+    }
+
     /** Fotos hechas un día como hoy (mismo día y mes) de años anteriores. */
     static List<Item> onThisDay(List<Item> all, long now, TimeZone tz) {
         Calendar today = Calendar.getInstance(tz), c = Calendar.getInstance(tz);

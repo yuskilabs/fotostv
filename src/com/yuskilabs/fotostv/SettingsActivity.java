@@ -94,19 +94,21 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         top.addView(logo, new LinearLayout.LayoutParams(-2, 0, 1f));
         // barra de búsqueda discreta (solo con «Buscar» activado en Funciones extra); se llega subiendo con el mando
         if (Extras.on(this, Extras.SEARCH)) {
-            searchBar = new android.widget.EditText(this);
-            searchBar.setSingleLine(true);
-            searchBar.setHint("Buscar lugar, álbum o fecha…");
-            searchBar.setHintTextColor(0xFF6F86A0);
-            searchBar.setTextColor(Color.WHITE);
-            searchBar.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-            searchBar.setTypeface(Ui.REG);
-            searchBar.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
-            searchBar.setPadding(dp(14), dp(4), dp(14), dp(4));
-            android.graphics.drawable.Drawable lens = getResources().getDrawable(R.drawable.ic_search);
-            lens.setBounds(0, 0, dp(16), dp(16));
-            searchBar.setCompoundDrawables(lens, null, null, null);
-            searchBar.setCompoundDrawablePadding(dp(10));
+            // no es un campo de texto de verdad (así ningún mando se queda «atrapado» dentro): al pulsar OK abre la búsqueda con el teclado
+            LinearLayout bar = new LinearLayout(this);
+            bar.setOrientation(LinearLayout.HORIZONTAL);
+            bar.setGravity(Gravity.CENTER_VERTICAL);
+            bar.setFocusable(true);
+            bar.setClickable(true);
+            bar.setPadding(dp(14), dp(4), dp(14), dp(4));
+            ImageView lens = new ImageView(this);
+            lens.setImageResource(R.drawable.ic_search);
+            lens.setAlpha(0.7f);
+            bar.addView(lens, new LinearLayout.LayoutParams(dp(16), dp(16)));
+            TextView hintTx = text("Buscar lugar, álbum o fecha…", 14, 0xFF8FA6C0);
+            hintTx.setSingleLine(true);
+            hintTx.setPadding(dp(10), 0, 0, 0);
+            bar.addView(hintTx, new LinearLayout.LayoutParams(0, -2, 1f));
             GradientDrawable sOff = new GradientDrawable();
             sOff.setColor(0x26FFFFFF);
             sOff.setCornerRadius(dp(18));
@@ -118,17 +120,13 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             StateListDrawable sBg = new StateListDrawable();
             sBg.addState(new int[]{android.R.attr.state_focused}, sOn);
             sBg.addState(new int[]{}, sOff);
-            searchBar.setBackground(sBg);
-            searchBar.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                public boolean onEditorAction(TextView v, int action, android.view.KeyEvent ev) {
-                    Intent in = new Intent(SettingsActivity.this, SearchActivity.class);
-                    String q = searchBar.getText().toString().trim();
-                    if (q.length() > 0) in.putExtra("q", q);
-                    searchBar.setText("");
-                    startActivity(in);
-                    return true;
+            bar.setBackground(sBg);
+            bar.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    startActivity(new Intent(SettingsActivity.this, SearchActivity.class).putExtra("kbd", true));
                 }
             });
+            searchBar = bar;
             LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(-1, dp(36));
             sp.setMargins(0, dp(6), 0, 0);
             top.addView(searchBar, sp);
@@ -149,7 +147,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(dp(1) + 1, dp(16));
         bp.setMargins(dp(10), 0, dp(10), 0);
         vrow.addView(bar, bp);
-        verInfo = text("Versión " + Updater.installed(this), 13, 0xFF7C93AD);
+        verInfo = text("Versión " + Updater.installed(this) + profileTag(), 13, 0xFF7C93AD);
         verInfo.setIncludeFontPadding(false);
         verInfo.setPadding(0, 0, 0, 0);
         vrow.addView(verInfo, new LinearLayout.LayoutParams(-2, -2));
@@ -413,7 +411,12 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     private String extrasSig;
-    private android.widget.EditText searchBar;
+    private View searchBar;
+
+    /** Con perfiles activados, el nombre del perfil en uso junto a la versión. */
+    private String profileTag() {
+        return Prefs.profilesOn(this) ? "  ·  Perfil «" + Prefs.PROFILE_NAMES[Prefs.profile(this)] + "»" : "";
+    }
 
     /** Qué botones extra hay que enseñar (si cambia al volver de Ajustes, la pantalla se rehace). */
     private String extrasSig() {

@@ -54,7 +54,7 @@ public abstract class SettingsBase extends Activity {
     }
 
     protected Button btn(String label, int icon, View.OnClickListener l) {
-        Button cb = new Button(this) {   // tras los dos puntos, la primera letra en mayúscula («Música: Apagada»)
+        Button cb = new Ui.FitButton(this) {   // tras los dos puntos, la primera letra en mayúscula («Música: Apagada»)
             @Override public void setText(CharSequence t, BufferType type) {
                 if (t != null) {
                     String s = t.toString();

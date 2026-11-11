@@ -79,8 +79,9 @@ public class ExtrasActivity extends SettingsBase {
             public void onClick(View v) { askCity(); }
         });
         describe(cityBtn, "Ciudad del tiempo. Escribe su nombre («Málaga», «Estepona»…).");
-        Button today = fx("Recuerdos de hoy", Extras.TODAY, R.drawable.ic_event,
-                "El salvapantallas enseña solo fotos de un día como hoy de años anteriores (si hay al menos 5), con «hace N años».");
+        Button today = todayBtn();
+        Button dateFull = fx("Día y hora", Extras.DATE_FULL, R.drawable.ic_schedule,
+                "La fecha de cada foto en el pase lleva también el día de la semana y la hora a la que se hizo (si la fecha está activada en Ajustes).");
         Button ken = motionBtn();
         Button speed = cycFx("Velocidad", Extras.KB_SPEED, new String[]{"slow", "normal"}, new String[]{"lenta", "normal"},
                 R.drawable.ic_timer, "Velocidad del movimiento. En las dos, el movimiento dura más que la foto: nunca se para a la vista.");
@@ -94,7 +95,7 @@ public class ExtrasActivity extends SettingsBase {
                 "Permite escribir un texto a cada foto (pulsación larga en el mosaico) y lo enseña en el pase y en la ficha.");
         cp.addView(row(bigClock, weather));
         cp.addView(row(cityBtn, today));
-        cp.addView(row(captions, null));
+        cp.addView(row(captions, dateFull));
 
         // --- cómo se ve cada foto
         LinearLayout cf = card("Movimiento y relleno", R.drawable.ic_fullscreen);
@@ -168,7 +169,7 @@ public class ExtrasActivity extends SettingsBase {
                 recreate();
             }
         });
-        describe(profilesBtn, "Dos perfiles («Familia» e «Invitados») con sus propios álbumes visibles y ajustes; se cambian desde la pantalla principal.");
+        describe(profilesBtn, "Aparece el botón «Perfil» en la pantalla principal para cambiar entre «Familia» e «Invitados». Cada uno recuerda sus propios ajustes y qué álbumes se ven (invitados empieza como copia de familia): cámbialos estando en Invitados y se quedan solo ahí.");
         Button remote = fx("Mando del móvil", Extras.REMOTE, R.drawable.ic_remote,
                 "La web de ajustes del móvil enseña un mando para pasar fotos, pausar o ver la anterior.");
         Button reload = cycInt("Recargar álbumes", Extras.RELOAD, new int[]{0, 6, 12, 24}, new String[]{"no", "cada 6 h", "cada 12 h", "cada 24 h"},
@@ -226,8 +227,8 @@ public class ExtrasActivity extends SettingsBase {
         return b;
     }
 
-    private static final String[] MOTION_VALS = {"off", "mix", "in", "out", "pan"};
-    private static final String[] MOTION_LABS = {"no", "variado", "acercar", "alejar", "desplazar"};
+    private static final String[] MOTION_VALS = {"off", "mix", "zoom", "in", "out", "pan"};
+    private static final String[] MOTION_LABS = {"no", "variado", "solo zoom", "acercar", "alejar", "desplazar"};
 
     private String motionNow() {
         return Extras.on(this, Extras.KEN_BURNS) ? Extras.str(this, Extras.KB_STYLE, "mix") : "off";
@@ -251,8 +252,30 @@ public class ExtrasActivity extends SettingsBase {
         });
         String cur = motionNow();
         for (int k = 0; k < MOTION_VALS.length; k++) if (MOTION_VALS[k].equals(cur)) self[0].setText("Movimiento: " + MOTION_LABS[k]);
-        describe(self[0], "Movimiento lento de cada foto: variado (al azar acercar, alejar, de lado, arriba y abajo o en diagonal) o siempre el mismo.");
+        describe(self[0], "Movimiento de cada foto, durante todo el tiempo que está en pantalla: variado (al azar acercar, alejar, de lado, arriba y abajo o en diagonal), solo zoom (acercar y alejar) o siempre el mismo.");
         return self[0];
+    }
+
+    /** Recuerdos de hoy: no → solo (únicamente fotos de un día como hoy) → mezclados (esas primero y también el resto). */
+    private Button todayBtn() {
+        final Button[] self = new Button[1];
+        self[0] = btn("Recuerdos de hoy", R.drawable.ic_event, new View.OnClickListener() {
+            public void onClick(View v) {
+                int nx = (todayState() + 1) % 3;
+                Prefs.sp(ExtrasActivity.this).edit().putBoolean(Extras.TODAY, nx > 0).putBoolean(Extras.TODAY_MIX, nx == 2).commit();
+                self[0].setText("Recuerdos de hoy: " + TODAY_LABS[nx]);
+            }
+        });
+        self[0].setText("Recuerdos de hoy: " + TODAY_LABS[todayState()]);
+        describe(self[0], "Solo: el salvapantallas enseña únicamente fotos de un día como hoy de años anteriores (si hay al menos 5). Mezclados: esas salen antes (una sí y una no) y también se ven todas las demás. En los dos, con «hace N años».");
+        return self[0];
+    }
+
+    private static final String[] TODAY_LABS = {"no", "solo", "mezclados"};
+
+    private int todayState() {
+        if (!Extras.on(this, Extras.TODAY)) return 0;
+        return Extras.on(this, Extras.TODAY_MIX) ? 2 : 1;
     }
 
     /** Sí/no con palabras propias («Movimiento: suave»). */

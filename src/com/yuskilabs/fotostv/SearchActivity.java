@@ -76,9 +76,15 @@ public class SearchActivity extends SettingsBase {
             public void afterTextChanged(Editable e) { h.removeCallbacks(update); h.postDelayed(update, 350); }
         });
         input.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            public boolean onEditorAction(TextView v, int action, KeyEvent ev) {
-                if (!rows.isEmpty()) { list.requestFocus(); list.setSelection(0); }
-                return true;
+            public boolean onEditorAction(TextView v, int action, KeyEvent ev) { return go(); }
+        });
+        // Intro del teclado (si no manda «Buscar») y ↓ del mando: dos maneras de salir del campo sin quedarse atrapado
+        input.setOnKeyListener(new View.OnKeyListener() {
+            public boolean onKey(View v, int code, KeyEvent ev) {
+                if (ev.getAction() != KeyEvent.ACTION_DOWN) return false;
+                if (code == KeyEvent.KEYCODE_ENTER || code == KeyEvent.KEYCODE_NUMPAD_ENTER) return go();
+                if (code == KeyEvent.KEYCODE_DPAD_DOWN && list.getCount() > 0) { list.requestFocus(); list.setSelection(0); return true; }
+                return false;
             }
         });
         bg.submit(new Runnable() {
@@ -99,7 +105,32 @@ public class SearchActivity extends SettingsBase {
         String q0 = getIntent().getStringExtra("q");
         if (q0 != null && q0.length() > 0) input.setText(q0);
         input.requestFocus();
+        input.setNextFocusDownId(View.NO_ID);
+        if (getIntent().getBooleanExtra("kbd", false)) {
+            h.postDelayed(new Runnable() {
+                public void run() {
+                    if (destroyed) return;
+                    try {
+                        ((android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(input, 0);
+                    } catch (Throwable ignored) { }
+                }
+            }, 350);
+        }
     }
+
+    private boolean openFirst;
+
+    /** «Buscar» / Intro: abre la primera sugerencia («Todas: …»); si aún no está calculada, en cuanto lo esté. */
+    private boolean go() {
+        if (input.getText().toString().trim().length() == 0) return true;
+        if (!rows.isEmpty() && input.getText().toString().equals(lastQ)) { open(0); return true; }
+        openFirst = true;
+        h.removeCallbacks(update);
+        update.run();
+        return true;
+    }
+
+    private String lastQ = "";
 
     private final Runnable update = new Runnable() {
         public void run() {
@@ -114,6 +145,7 @@ public class SearchActivity extends SettingsBase {
                     h.post(new Runnable() {
                         public void run() {
                             if (destroyed || g != gen) return;
+                            lastQ = q;
                             rows.clear();
                             rows.addAll(s);
                             shown.clear();
@@ -122,6 +154,10 @@ public class SearchActivity extends SettingsBase {
                                 shown.add(i > 0 ? new String[]{r[0].substring(0, i), r[0].substring(i + 5)} : new String[]{r[0], ""});
                             }
                             ((BaseAdapter) list.getAdapter()).notifyDataSetChanged();
+                            if (openFirst && q.equals(input.getText().toString())) {
+                                openFirst = false;
+                                if (!rows.isEmpty()) { open(0); return; }
+                            }
                             if (q.trim().length() > 0 && rows.isEmpty()) info.setText("No encuentro fotos con «" + q.trim() + "».");
                             else if (q.trim().length() > 0) info.setText("Baja con el mando para elegir.");
                         }

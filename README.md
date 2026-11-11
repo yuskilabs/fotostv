@@ -82,11 +82,12 @@ Están en **Ajustes → Funciones extra**. Todas vienen **apagadas**: con todo a
 **Pantalla del pase**
 - **Reloj grande**: hora más grande con el día de la semana y la fecha debajo.
 - **Tiempo**: temperatura y cielo de tu ciudad junto a la hora (Open-Meteo, cada media hora). La ciudad se escribe en «Ciudad».
-- **Recuerdos de hoy**: el salvapantallas enseña solo fotos de un día como hoy de años anteriores (si hay al menos 5), con «hace N años» junto a la fecha.
-- **Movimiento** (efecto Ken Burns): movimiento lento de cada foto, variado (al azar acercar, alejar, de lado, arriba y abajo o en diagonal) o siempre el mismo, con velocidad lenta o normal. La foto siempre está algo ampliada, así que nunca asoma un borde vacío.
+- **Recuerdos de hoy**: «solo» (el salvapantallas enseña únicamente fotos de un día como hoy de años anteriores, si hay al menos 5) o «mezclados» (esas salen antes, una sí y una no, y también se ven todas las demás; con orden aleatorio o inteligente). Con «hace N años» junto a la fecha.
+- **Día y hora**: la fecha de cada foto en el pase lleva también el día de la semana y la hora a la que se hizo.
+- **Movimiento** (efecto Ken Burns): movimiento lento de cada foto, variado (al azar acercar, alejar, de lado, arriba y abajo o en diagonal) «solo zoom» (acercar y alejar) o siempre el mismo. El movimiento dura justo lo que la foto está en pantalla, así que nunca se para; la velocidad (lenta o normal) cambia lo que recorre en ese tiempo. La foto siempre está algo ampliada, así que nunca asoma un borde vacío.
 - **Bordes**: «tapados» (la foto va ampliada y no se ve el relleno) o «a la vista» (la foto empieza entera, sin zoom, y al moverse se ve el relleno quieto detrás; al alejar empieza ampliada y acaba entera al terminar su tiempo).
 - **Relleno** de lo que la foto no llena (verticales, fotos con otra forma): negro, el color de la foto o la foto muy difuminada, en degradado suave.
-- **Dos verticales**: en el pase, dos fotos verticales seguidas se ven juntas.
+- **Dos verticales**: en el pase, dos fotos verticales seguidas del mismo álbum se ven juntas.
 - **Pies de foto**: con pulsación larga en el mosaico, «Pie de foto»; sale en el pase y en la ficha.
 
 **Noche, temporizador y música**
@@ -102,7 +103,7 @@ Están en **Ajustes → Funciones extra**. Todas vienen **apagadas**: con todo a
 **Explorador**
 - **Buscar** (barra discreta en la pantalla principal, encima de los botones; se llega subiendo con el mando): por lugar, nombre del álbum, mes o año («Zahara», «agosto 2025», «Lara 2024»).
 - **Álbumes virtuales**: el resultado de una búsqueda se guarda como álbum (botón «Guardar» del mosaico) y se actualiza solo. Se borran con pulsación larga.
-- **Saltar por fecha**: botón «Fecha» en el mosaico para ir directo a un mes.
+- **Saltar por fecha**: icono «Fecha» (junto al de «Mapa», arriba a la derecha del mosaico) para ir directo a un mes.
 - **Viajes** (botón en la pantalla principal): agrupa solas las fotos hechas en días seguidos, con su lugar y fechas.
 - **Varias portadas**: «Añadir a portadas» en varias fotos; cada vez que entras en los álbumes sale una de ellas.
 - **Marcar nuevas**: las fotos añadidas al álbum desde la última vez que lo abriste llevan «NUEVA», y el álbum dice cuántas hay.
@@ -110,7 +111,7 @@ Están en **Ajustes → Funciones extra**. Todas vienen **apagadas**: con todo a
 - **Estadísticas** (botón en la pantalla principal): fotos por año, lugar, álbum y cámara; cada fila abre sus fotos. «Leer cámaras» averigua la cámara de las fotos que aún no la tienen.
 
 **Casa y móvil**
-- **Perfiles**: «Familia» e «Invitados», cada uno con sus álbumes visibles, ocultas, favoritas y ajustes. Se cambia con el botón «Perfil» de la pantalla principal; «Invitados» empieza como una copia de «Familia».
+- **Perfiles**: «Familia» e «Invitados», cada uno con sus álbumes visibles, ocultas, favoritas y ajustes. Se cambia con el botón «Perfil» de la pantalla principal; «Invitados» empieza como una copia de «Familia»; el perfil en uso se ve junto a la versión.
 - **Mando del móvil**: la web de ajustes enseña un mando (anterior, pausa, siguiente) para el pase que esté en marcha.
 - **Recargar álbumes**: cada 6, 12 o 24 horas vuelve a leer los álbumes de Google mientras la app o el salvapantallas estén en marcha.
 

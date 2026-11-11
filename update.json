@@ -1,6 +1,6 @@
 {
-  "version": "7.1.1",
+  "version": "7.2",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 877803,
-  "notes": "- Bordes «a la vista»: al alejar, la foto empieza ampliada y termina entera (con sus bordes) justo cuando acaba su tiempo en pantalla."
+  "size": 881899,
+  "notes": "- Búsqueda: la barra de la pantalla principal ya no es un campo de texto (con algunos mandos por RF no se podía salir de ella). Al pulsar OK se abre la búsqueda con el teclado; «Buscar» o Intro abre directamente los resultados, y ↓ baja a la lista.\n- Movimiento: dura exactamente el tiempo que cada foto está en pantalla, para que nunca se pare. «Velocidad» cambia lo que recorre. Nueva opción «solo zoom» (acercar y alejar).\n- Nuevas funciones extra: «Día y hora» (día de la semana y hora de la foto en la fecha del pase) y «Recuerdos de hoy: mezclados».\n- Dos verticales juntas: ahora siempre del mismo álbum.\n- Mosaico: iconos «Fecha» y «Mapa» con el mismo color que «Columnas»; «Fecha» ya no ocupa sitio en los botones. Menús de pulsación larga con letra más pequeña. Texto de colores junto al título mientras algo se hace en segundo plano (comprobar álbumes, recargar, buscar repetidas, revisar ubicaciones).\n- Los textos de los botones reducen la letra si no caben antes de recortarse.\n- Perfiles: el perfil en uso se ve junto a la versión y se explica mejor qué hace."
 }

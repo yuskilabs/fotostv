@@ -86,6 +86,7 @@ class Slideshow {
     private TextView clockSub, tvCaption;
     private View nightView;            // velo del modo noche
     private boolean nightOn, todayMode;
+    private java.util.Set<String> todayKeys;      // recuerdos de hoy «mezclados»: claves de las fotos de hoy
     private long nightSnooze;
     private int todayDay = -1;         // día en que se eligieron los «recuerdos de hoy»          // tras tocar el mando de noche, el modo noche espera un rato
     /** Movimiento suave de cada una de las dos imágenes (la que sale sigue moviéndose mientras se funde). */
@@ -157,6 +158,7 @@ class Slideshow {
     void start() {
         if (running) return;
         running = true;
+        MetaFetcher.fullDate = Extras.on(ctx, Extras.DATE_FULL);
         // estado limpio en cada arranque: una carga a medias de la vez anterior no debe bloquear el pase
         session++;
         queue.clear();
@@ -565,7 +567,7 @@ class Slideshow {
                 items.addAll(all);
             }
             if (items.isEmpty()) newRound();
-            else Collections.shuffle(items);
+            else { Collections.shuffle(items); items = FxLogic.mixToday(items, todayKeys); }
             idx = -1;
             return;
         }
@@ -600,9 +602,13 @@ class Slideshow {
             } catch (Throwable ignored) { }
         }
         todayDay = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR);
+        todayKeys = null;
         if (Extras.on(ctx, Extras.TODAY)) {
             List<Item> t = FxLogic.onThisDay(l, System.currentTimeMillis(), java.util.TimeZone.getDefault());
-            if (t.size() >= 5) { l = t; todayMode = true; }
+            if (Extras.on(ctx, Extras.TODAY_MIX)) {
+                // mezclados: se ven todas las fotos, y las de hoy salen más pronto (una sí y una no, mientras haya)
+                if (!t.isEmpty()) { todayKeys = new java.util.HashSet<String>(); for (Item it : t) todayKeys.add(it.key()); }
+            } else if (t.size() >= 5) { l = t; todayMode = true; }
         }
         return l;
     }
@@ -624,6 +630,7 @@ class Slideshow {
         if (!unseen) { seen.clear(); Prefs.saveSeen(ctx, seen); }
         boolean boost = Extras.on(ctx, Extras.FAV_BOOST);
         List<Item> l = FxLogic.weightedOrder(all, seen, boost ? Prefs.favs(ctx) : null, boost, new java.util.Random());
+        l = FxLogic.mixToday(l, todayKeys);
         if (l.size() > 1 && cur != null && l.get(0).key().equals(cur.item.key())) Collections.swap(l, 0, l.size() - 1);
         return l;
     }
@@ -637,6 +644,7 @@ class Slideshow {
         }
         items = new ArrayList<Item>(all);
         Collections.shuffle(items);
+        items = FxLogic.mixToday(items, todayKeys);
         // que la primera de la vuelta nueva no sea la que se acaba de ver
         if (items.size() > 1 && cur != null && items.get(0).key().equals(cur.item.key()))
             Collections.swap(items, 0, items.size() - 1);
@@ -890,7 +898,7 @@ class Slideshow {
                 if (wantPlace) t.place = MetaFetcher.place(ctx, e[0], e[1]);
             }
             t.date = MetaFetcher.formatDate(date);
-            if (todayMode && date > 0) {
+            if ((todayMode || (todayKeys != null && todayKeys.contains(it.key()))) && date > 0) {
                 int n = FxLogic.yearsAgo(date, System.currentTimeMillis(), java.util.TimeZone.getDefault());
                 if (n > 0) t.date += "  \u00B7  hace " + n + (n == 1 ? " año" : " años");
             }
@@ -910,10 +918,17 @@ class Slideshow {
      * Al pasar a una foto vertical, si la que va justo detrás en la cola ya está lista y también es una foto vertical,
      * salen juntas (en el hilo de pantalla y en el orden de la lista: nunca se salta ni se desordena nada).
      */
+    private static boolean sameAlbum(Item x, Item y) {
+        if (x == null || y == null) return false;
+        if (x.akey != null && y.akey != null && x.akey.length() > 0 && y.akey.length() > 0) return x.akey.equals(y.akey);
+        return x.album != null && x.album.equals(y.album);
+    }
+
     private void pairWithNext(Slide s) {
         if (!collageOn() || s.video || s.item2 != null || !portrait(s.bmp) || queue.isEmpty()) return;
         Slide n = queue.get(0);
         if (n.state != 2 || n.video || n.bmp == null || !portrait(n.bmp) || Prefs.hidden(ctx).contains(n.item.key())) return;
+        if (!sameAlbum(s.item, n.item)) return;                 // las dos verticales, del mismo álbum
         try {
             Bitmap both = combine(s.bmp, n.bmp);
             queue.remove(0);
@@ -1017,9 +1032,12 @@ class Slideshow {
         if (!Extras.on(ctx, Extras.KEN_BURNS) || browse()) return;
         final boolean edges = "show".equals(Extras.str(ctx, Extras.KB_EDGE, "hide"));
         final float[] m = FxLogic.kenBurnsPath(Extras.str(ctx, Extras.KB_STYLE, "mix"), new java.util.Random(), edges);
-        long visible = Prefs.interval(ctx) * 1000L + 1500L;                     // tiempo en pantalla, con los fundidos
-        long dur = "normal".equals(Extras.str(ctx, Extras.KB_SPEED, "slow")) ? visible * 3 / 2 + 3000L : visible * 5 / 2 + 3000L;
-        if (edges && m[1] < m[0]) dur = visible;      // alejar: acaba con la foto entera justo cuando termina su tiempo en pantalla
+        // el movimiento dura justo lo que la foto está en pantalla (su tiempo más el fundido): nunca se queda quieta.
+        // La velocidad (lenta/normal) cambia cuánto recorre en ese tiempo; el alejar con los bordes a la vista siempre acaba entero.
+        long dur = Prefs.interval(ctx) * 1000L + 1200L;
+        float part = "normal".equals(Extras.str(ctx, Extras.KB_SPEED, "slow")) ? 0.8f : 0.5f;
+        if (edges && m[1] < m[0]) part = 1f;
+        for (int q = 1; q < 6; q += 2) m[q] = m[q - 1] + (m[q] - m[q - 1]) * part;
         if (edges) { startKenBurnsEdges(v, m, dur); return; }
         android.animation.ObjectAnimator an = android.animation.ObjectAnimator.ofPropertyValuesHolder(v,
                 android.animation.PropertyValuesHolder.ofFloat("scaleX", m[0], m[1]),
