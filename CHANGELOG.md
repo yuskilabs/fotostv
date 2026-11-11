@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.5
+- Ir a la fecha: el año va arriba del todo, debajo el mes y luego los días, así izquierda y derecha cambian el mes o el año según donde estés. El número de fotos de cada día es mucho más pequeño, entre paréntesis y de otro color, y los cuadros ya no se cortan.
+- Movimiento: el parón antes de pasar a un vídeo se debía a que la foto dejaba de moverse (y volvía a su posición inicial) mientras el vídeo cargaba. Ahora la foto sigue moviéndose hasta que el vídeo se ve.
+- Dos verticales: ahora solo se juntan dos fotos hechas con menos de 15 minutos de diferencia (del mismo álbum). Llevan un solo pie de foto y sin hora.
+- Nueva opción «Cuatro juntas» (Ajustes, Pase de fotos): de vez en cuando salen cuatro fotos hechas casi a la vez (menos de 15 minutos) en cuadrícula, con un solo pie de foto y sin hora. Las parejas y las cuadrículas se preparan en segundo plano y entran al pase cuando están listas.
+
 ## 7.4
 - Ajustes: ahora todo está en una sola pantalla, ordenado por temas (Pase de fotos, Movimiento y relleno, Información en pantalla, Noche y temporizador, Salvapantallas, Casa y móvil, Música, Vídeo y caché, Explorador, Ubicaciones). Ya no existe la pantalla «Funciones extra». Al pasar por un botón, abajo se explica qué hace.
 - Fecha: nueva opción «Fecha» con tres valores: larga («Miércoles 27 de diciembre de 2023 - 15:03»), corta («Mié, 27 dic 2023 - 15:03») o no. «Día y hora» sigue aparte y añade o quita el día de la semana y la hora en la larga y en la corta. El separador de la hora es ahora « - ». La ficha usa el mismo formato.

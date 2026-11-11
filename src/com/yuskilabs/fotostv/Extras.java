@@ -19,6 +19,7 @@ final class Extras {
     static final String NIGHT_MODE = "fx_nightMode";   // dim (tenue) | black (pantalla negra)
     static final String PLACE = "fx_place";            // salvapantallas de un solo lugar ("" = todos)
     static final String PLACE_REGION = "fx_placeRegion";   // el lugar es una provincia/isla/país entero
+    static final String GRID4 = "fx_grid4";            // cuatro fotos cercanas en el tiempo, en cuadrícula
     static final String COLLAGE = "fx_collage";        // dos fotos verticales juntas
     static final String KEN_BURNS = "fx_kenBurns";     // movimiento suave
     static final String KB_STYLE = "fx_kbStyle";       // mix (variado) | in (acercar) | out (alejar) | pan (desplazar)

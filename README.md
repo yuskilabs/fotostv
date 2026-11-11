@@ -87,7 +87,8 @@ Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde l
 - **Movimiento** (efecto Ken Burns): movimiento lento de cada foto, variado (al azar acercar, alejar, de lado, arriba y abajo o en diagonal) «solo zoom» (acercar y alejar) o siempre el mismo. El movimiento dura justo lo que la foto está en pantalla, así que nunca se para; la velocidad (lenta o normal) cambia lo que recorre en ese tiempo. La foto siempre está algo ampliada, así que nunca asoma un borde vacío.
 - **Bordes**: «tapados» (la foto va ampliada y no se ve el relleno) o «a la vista» (la foto empieza entera, sin zoom, y al moverse se ve el relleno quieto detrás; al alejar empieza ampliada y acaba entera al terminar su tiempo).
 - **Relleno** de lo que la foto no llena (verticales, fotos con otra forma): negro, el color de la foto o la foto muy difuminada, en degradado suave.
-- **Dos verticales**: en el pase, dos fotos verticales seguidas del mismo álbum se ven juntas.
+- **Dos verticales**: en el pase, dos fotos verticales del mismo álbum hechas con menos de 15 minutos de diferencia se ven juntas, con un solo pie de foto y sin hora.
+- **Cuatro juntas**: de vez en cuando, cuatro fotos hechas casi a la vez (menos de 15 minutos) salen en cuadrícula, con un solo pie de foto y sin hora. Se preparan en segundo plano y entran al pase cuando están listas.
 - **Pies de foto**: con pulsación larga en el mosaico, «Pie de foto»; sale en el pase y en la ficha.
 
 **Noche, temporizador y música**

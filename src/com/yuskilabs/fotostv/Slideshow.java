@@ -50,6 +50,7 @@ class Slideshow {
         int startMs;          // empezar el vídeo por aquí (al pasar de baja a alta calidad)
         int state;            // 0 preparando, 1 descargando vídeo, 2 lista, 3 fallida
         Item item2;           // «dos verticales»: la segunda foto que va al lado
+        java.util.List<Item> others;   // «cuatro en cuadrícula»: la tercera y la cuarta
         int bgColor = Color.BLACK;          // fondo de las fotos que no llenan la pantalla
         Bitmap bgSmall;       // fondo difuminado (la foto en miniatura, estirada)
     }
@@ -931,38 +932,114 @@ class Slideshow {
         try { if (t.bgSmall != null) t.bgSmall.prepareToDraw(); } catch (Throwable ignored) { }
     }
 
-    private void pairWithNext(Slide s) {
-        if (!collageOn() || s.video || s.item2 != null || !portrait(s.bmp) || queue.isEmpty()) return;
-        Slide n = queue.get(0);
-        if (n.state != 2 || n.video || n.bmp == null || !portrait(n.bmp) || Prefs.hidden(ctx).contains(n.item.key())) return;
-        if (!sameAlbum(s.item, n.item)) return;                 // las dos verticales, del mismo álbum
-        try {
-            Bitmap both = combine(s.bmp, n.bmp);
-            queue.remove(0);
-            s.bmp = both;
-            s.item2 = n.item;
-            s.bgColor = Color.BLACK;
-            s.bgSmall = null;
-            warm(s);
-        } catch (Throwable oom) { /* sin memoria para juntarlas: van una detrás de otra */ }
+    // ------------------------------------------------------------ grupos de fotos cercanas en el tiempo
+    private static final long GROUP_WINDOW_MS = 15L * 60 * 1000;
+    private static final int GRID_ODDS = 8;                 // «cuatro en cuadrícula» sale una de cada 8 fotos, más o menos
+    private final java.util.Random grpRnd = new java.util.Random();
+
+    private boolean gridOn() { return !manual() && Extras.on(ctx, Extras.GRID4); }
+
+    private static class G {
+        Item it;
+        Bitmap b;
+        G(Item it, Bitmap b) { this.it = it; this.b = b; }
     }
 
-    /** Las dos fotos, cada una en su mitad de la pantalla, enteras y centradas. */
-    private Bitmap combine(Bitmap l, Bitmap r) {
-        Bitmap out = Bitmap.createBitmap(w, hgt, Bitmap.Config.ARGB_8888);
+    /** Fotos del mismo álbum hechas con menos de 15 minutos de diferencia, las más cercanas primero. */
+    private List<Item> nearItems(final Item it) {
+        List<Item> out = new ArrayList<Item>();
+        if (it.ts <= 0) return out;
+        List<Item> snap = items;
+        java.util.Set<String> hid = Prefs.hidden(ctx);
+        try {
+            for (int i = 0; i < snap.size(); i++) {
+                Item q = snap.get(i);
+                if (q == it || q.ts <= 0 || Math.abs(q.ts - it.ts) > GROUP_WINDOW_MS || !sameAlbum(it, q)) continue;
+                if (q.key().equals(it.key()) || hid.contains(q.key())) continue;
+                Boolean v = MetaFetcher.cachedVideo(ctx, q);
+                if (v != null && v) continue;
+                out.add(q);
+            }
+        } catch (Throwable ignored) { }
+        Collections.sort(out, new java.util.Comparator<Item>() {
+            public int compare(Item x, Item y) { return Long.compare(Math.abs(x.ts - it.ts), Math.abs(y.ts - it.ts)); }
+        });
+        return out.size() > 8 ? new ArrayList<Item>(out.subList(0, 8)) : out;
+    }
+
+    private Bitmap lightBitmap(Item q) {
+        try {
+            byte[] d = photoBytes(q);
+            return BitmapFactory.decodeByteArray(d, 0, d.length);
+        } catch (Throwable t) { return null; }
+    }
+
+    /**
+     * En segundo plano: si esta foto puede ir con otras hechas casi a la vez, las baja y las junta en una sola imagen
+     * (dos verticales, o cuatro en cuadrícula de vez en cuando). Si no se consigue, la foto sale sola.
+     */
+    private void groupUp(Item it, Slide p) {
+        if (w < 1 || hgt < 1 || p.bmp == null || p.item2 != null) return;
+        if (gridOn() && grpRnd.nextInt(GRID_ODDS) == 0 && tryGroup(it, p, 3)) return;
+        if (collageOn() && portrait(p.bmp)) tryGroup(it, p, 1);
+    }
+
+    private boolean tryGroup(Item it, Slide p, int need) {
+        List<G> got = new ArrayList<G>();
+        got.add(new G(it, p.bmp));
+        for (Item q : nearItems(it)) {
+            if (got.size() > need) break;
+            Bitmap b = lightBitmap(q);
+            if (b == null) continue;
+            if (need == 1 && !portrait(b)) { b.recycle(); continue; }
+            got.add(new G(q, b));
+        }
+        if (got.size() < need + 1) {
+            for (int i = 1; i < got.size(); i++) got.get(i).b.recycle();
+            return false;
+        }
+        Collections.sort(got, new java.util.Comparator<G>() {
+            public int compare(G x, G y) { return Long.compare(x.it.ts, y.it.ts); }
+        });
+        Bitmap out;
+        try {
+            out = Bitmap.createBitmap(w, hgt, Bitmap.Config.ARGB_8888);
+        } catch (Throwable oom) {
+            for (int i = 0; i < got.size(); i++) if (got.get(i).b != p.bmp) got.get(i).b.recycle();
+            return false;
+        }
         android.graphics.Canvas c = new android.graphics.Canvas(out);
         c.drawColor(Color.BLACK);
-        int gapPx = dp(8), half = (w - gapPx) / 2;
         android.graphics.Paint pt = new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG);
-        drawFit(c, l, 0, half, pt);
-        drawFit(c, r, half + gapPx, w - half - gapPx, pt);
-        return out;
+        int gap = dp(8);
+        if (need == 1) {
+            int half = (w - gap) / 2;
+            drawFit(c, got.get(0).b, 0, 0, half, hgt, pt);
+            drawFit(c, got.get(1).b, half + gap, 0, w - half - gap, hgt, pt);
+        } else {
+            int cw = (w - gap) / 2, ch = (hgt - gap) / 2;
+            for (int i = 0; i < 4; i++)
+                drawFit(c, got.get(i).b, (i % 2) * (cw + gap), (i / 2) * (ch + gap), cw, ch, pt);
+        }
+        for (int i = 0; i < got.size(); i++) if (got.get(i).b != p.bmp) got.get(i).b.recycle();
+        p.bmp = out;
+        p.item2 = null;
+        p.others = null;
+        for (G g : got) {
+            if (g.it == it) continue;
+            if (p.item2 == null) p.item2 = g.it;
+            else { if (p.others == null) p.others = new ArrayList<Item>(); p.others.add(g.it); }
+        }
+        p.bgColor = Color.BLACK;
+        p.bgSmall = null;
+        if (p.date != null) p.date = p.date.replaceFirst(" - \\d{1,2}:\\d{2}", "");   // un solo pie de foto y sin hora
+        return true;
     }
 
-    private void drawFit(android.graphics.Canvas c, Bitmap b, int x0, int bw, android.graphics.Paint pt) {
-        float sc = Math.min(bw / (float) b.getWidth(), hgt / (float) b.getHeight());
+    private void drawFit(android.graphics.Canvas c, Bitmap b, int x0, int y0, int bw, int bh, android.graphics.Paint pt) {
+        float sc = Math.min(bw / (float) b.getWidth(), bh / (float) b.getHeight());
         int dw = Math.round(b.getWidth() * sc), dh = Math.round(b.getHeight() * sc);
-        int x = x0 + (bw - dw) / 2, y = (hgt - dh) / 2;
+        int x = x0 + (bw - dw) / 2, y = y0 + (bh - dh) / 2;
         c.drawBitmap(b, null, new android.graphics.Rect(x, y, x + dw, y + dh), pt);
     }
 
@@ -1144,11 +1221,13 @@ class Slideshow {
                     return;
                 }
                 final Slide p = buildPhoto(it);
+                if (p != null) { try { groupUp(it, p); } catch (Throwable ignored) { } }
                 h.post(new Runnable() {
                     public void run() {
                         if (sess != session || !running) return;
                         if (p == null) { t.state = 3; } else {
                             t.bmp = p.bmp; t.date = p.date; t.place = p.place; t.state = 2;
+                            t.item2 = p.item2; t.others = p.others;
                             t.bgColor = p.bgColor; t.bgSmall = p.bgSmall;
                             warm(t);
                         }
@@ -1489,7 +1568,6 @@ class Slideshow {
             Slide s = takeReady();
             if (s != null) {
                 gen++;
-                pairWithNext(s);
                 display(s, true);
                 prefetch();
             } else {
@@ -1550,6 +1628,7 @@ class Slideshow {
     private void display(Slide s, boolean append) {
         markShown(s.item);
         if (s.item2 != null) markShown(s.item2);
+        if (s.others != null) for (Item o : s.others) markShown(o);
         if (append) {
             hist.add(s.item);
             while (hist.size() > 200) hist.remove(0);
@@ -1904,7 +1983,8 @@ class Slideshow {
         overlaysToFront();
         videoUi(true);
         videoHolder.animate().alpha(1f).setDuration(1000)
-            .setInterpolator(new AccelerateDecelerateInterpolator()).start();
+            .setInterpolator(new AccelerateDecelerateInterpolator())
+            .withEndAction(new Runnable() { public void run() { if (revealed && playingVideo) kbStopAll(); } }).start();
     }
 
     /** Álbum, fecha y lugar del vídeo (la hora no), según lo que se tenga activado en los ajustes. */
@@ -1920,7 +2000,6 @@ class Slideshow {
     }
 
     private void playVideo(final Slide s) {
-        kbStopAll();
         setVidCaption(s);
         playingVideo = true;
         revealed = false;

@@ -54,11 +54,11 @@ class CalendarDialog {
 
     private TextView selector() {
         final TextView t = new TextView(c);
-        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 19);
         t.setTypeface(Ui.BTN);
         t.setGravity(Gravity.CENTER);
         t.setFocusable(true);
-        t.setPadding(dp(14), dp(10), dp(14), dp(10));
+        t.setPadding(dp(14), dp(6), dp(14), dp(6));
         t.setBackground(bg(0xFF22364F, 0xFF3D8BFD, 0xFF3A506B, Color.WHITE));
         t.setTextColor(Color.WHITE);
         return t;
@@ -83,23 +83,21 @@ class CalendarDialog {
     void show() {
         LinearLayout box = new LinearLayout(c);
         box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(dp(20), dp(12), dp(20), dp(8));
+        box.setPadding(dp(16), dp(6), dp(16), dp(4));
+        box.setMinimumWidth(dp(440));
 
-        LinearLayout top = new LinearLayout(c);
-        top.setOrientation(LinearLayout.HORIZONTAL);
-        top.setGravity(Gravity.CENTER);
         monthV = selector();
         yearV = selector();
-        LinearLayout.LayoutParams lm = new LinearLayout.LayoutParams(dp(210), -2), ly = new LinearLayout.LayoutParams(dp(150), -2);
-        ly.setMargins(dp(12), 0, 0, 0);
-        top.addView(monthV, lm);
-        top.addView(yearV, ly);
-        box.addView(top, new LinearLayout.LayoutParams(-1, -2));
+        monthV.setId(View.generateViewId());
+        LinearLayout.LayoutParams ly = new LinearLayout.LayoutParams(-1, -2), lm = new LinearLayout.LayoutParams(-1, -2);
+        lm.setMargins(0, dp(6), 0, 0);
+        box.addView(yearV, ly);
+        box.addView(monthV, lm);
 
         LinearLayout wd = new LinearLayout(c);
         wd.setOrientation(LinearLayout.HORIZONTAL);
-        wd.setPadding(0, dp(10), 0, dp(2));
-        for (String w : WD) wd.addView(label(w, 0xFF9FB3C8, 14), new LinearLayout.LayoutParams(dp(56), -2));
+        wd.setPadding(0, dp(8), 0, dp(2));
+        for (String w : WD) wd.addView(label(w, 0xFF9FB3C8, 13), new LinearLayout.LayoutParams(0, -2, 1f));
         box.addView(wd);
 
         grid = new LinearLayout(c);
@@ -129,7 +127,6 @@ class CalendarDialog {
         yearV.setOnClickListener(toGrid);
 
         AlertDialog.Builder b = new AlertDialog.Builder(c, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle("Ir a la fecha")
             .setView(box)
             .setNegativeButton("Cancelar", null);
         if (filtered) b.setNeutralButton("Ver todo", new DialogInterface.OnClickListener() {
@@ -182,9 +179,15 @@ class CalendarDialog {
                     Integer cnt = days.get(key);
                     TextView t = new TextView(c);
                     t.setGravity(Gravity.CENTER);
+                    t.setIncludeFontPadding(false);
                     t.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
                     if (cnt != null) {
-                        t.setText(d + "\n" + cnt);
+                        android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder(String.valueOf(d));
+                        int st = sb.length();
+                        sb.append("\n(").append(String.valueOf(cnt)).append(")");
+                        sb.setSpan(new android.text.style.RelativeSizeSpan(0.55f), st, sb.length(), 0);
+                        sb.setSpan(new android.text.style.ForegroundColorSpan(0xFF7FB2FF), st, sb.length(), 0);
+                        t.setText(sb);
                         t.setTextColor(Color.WHITE);
                         t.setFocusable(true);
                         t.setBackground(bg(0xFF22364F, 0xFF3D8BFD, 0xFF3A506B, Color.WHITE));
@@ -197,12 +200,16 @@ class CalendarDialog {
                     }
                     cell = t;
                 }
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(56), dp(52));
-                lp.setMargins(1, 1, 1, 1);
-                row.addView(cell, new LinearLayout.LayoutParams(dp(56), dp(52)));
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(44), 1f);
+                lp.setMargins(dp(2), dp(2), dp(2), dp(2));
+                row.addView(cell, lp);
                 if (firstDay == null && cell.isFocusable()) firstDay = cell;
             }
             grid.addView(row);
+        }
+        for (int r = 0; r < 1 && r < grid.getChildCount(); r++) {
+            LinearLayout row = (LinearLayout) grid.getChildAt(r);
+            for (int i = 0; i < row.getChildCount(); i++) row.getChildAt(i).setNextFocusUpId(monthV.getId());
         }
         if (firstDay != null) {
             firstDay.setId(View.generateViewId());

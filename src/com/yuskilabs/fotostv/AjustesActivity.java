@@ -219,7 +219,9 @@ public class AjustesActivity extends SettingsBase {
         Button fav = fx("Más favoritas", Extras.FAV_BOOST, R.drawable.ic_star,
                 "Con el orden «inteligente», las favoritas salen tres veces más a menudo.");
         Button collage = fx("Dos verticales", Extras.COLLAGE, R.drawable.ic_photo,
-                "En el pase, dos fotos verticales seguidas del mismo álbum se ven juntas, una al lado de otra.");
+                "En el pase, dos fotos verticales hechas casi a la vez (menos de 15 minutos) se ven juntas, una al lado de otra, con un solo pie de foto y sin hora.");
+        Button grid4 = fx("Cuatro juntas", Extras.GRID4, R.drawable.ic_albums,
+                "De vez en cuando, cuatro fotos hechas casi a la vez (menos de 15 minutos) salen juntas en cuadrícula, con un solo pie de foto y sin hora. Se preparan en segundo plano y entran al pase cuando están listas.");
         cp.addView(row(
             cyc("Orden", "order", false, new String[]{"random", "norepeat", "smart", "asc", "desc"},
                 new String[]{"aleatorio", "sin repetir", "inteligente", "por fecha ↑", "por fecha ↓"}, R.drawable.ic_shuffle,
@@ -233,7 +235,8 @@ public class AjustesActivity extends SettingsBase {
                 new Cur() { public String get() { return Prefs.fit(AjustesActivity.this); } }),
             tog("Continuar", "resume", R.drawable.ic_check, new Bool() { public boolean get() { return Prefs.resume(AjustesActivity.this); } })));
         cp.addView(row(todayBtn(), fav));
-        cp.addView(row(collage, placeBtn));
+        cp.addView(row(collage, grid4));
+        cp.addView(row(placeBtn, null));
 
         // --- movimiento y relleno
         LinearLayout cf = card("Movimiento y relleno", R.drawable.ic_fullscreen);
