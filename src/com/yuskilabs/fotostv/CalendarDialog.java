@@ -24,7 +24,7 @@ import java.util.TreeSet;
  */
 class CalendarDialog {
     interface Listener {
-        void onDay(int dayKey);
+        void onRange(int lo, int hi);       // un día, un mes o un año (claves de día)
         void onAll();
     }
 
@@ -46,8 +46,9 @@ class CalendarDialog {
         this.listener = l;
         this.filtered = filtered;
         for (int k : days.keySet()) months.add(k / 10000 * 12 + (k / 100) % 100);
-        int sk = days.containsKey(startDay) ? startDay : days.lastKey();
+        int sk = startDay >= 0 ? startDay : days.lastKey();
         cur = sk / 10000 * 12 + (sk / 100) % 100;
+        if (!months.contains(cur)) { sk = days.lastKey(); cur = sk / 10000 * 12 + (sk / 100) % 100; }
     }
 
     private int dp(int v) { return Ui.dp(c, v); }
@@ -104,6 +105,9 @@ class CalendarDialog {
         grid = new LinearLayout(c);
         grid.setOrientation(LinearLayout.VERTICAL);
         box.addView(grid);
+        TextView tip = label("OK en el año o en el mes: todas sus fotos. OK en un día: solo ese día.", 0xFF7C93AD, 11);
+        tip.setPadding(0, dp(2), 0, 0);
+        box.addView(tip);
 
         monthV.setOnKeyListener(new View.OnKeyListener() {
             public boolean onKey(View v, int code, KeyEvent e) {
@@ -121,11 +125,21 @@ class CalendarDialog {
                 return false;
             }
         });
-        View.OnClickListener toGrid = new View.OnClickListener() {
-            public void onClick(View v) { View f = grid.findFocus(); if (f == null) focusFirstDay(); }
-        };
-        monthV.setOnClickListener(toGrid);
-        yearV.setOnClickListener(toGrid);
+        // OK en el mes: todas las de ese mes; OK en el año: todas las de ese año
+        monthV.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                int y = cur / 12, m = cur % 12;
+                dlg.dismiss();
+                listener.onRange(y * 10000 + m * 100 + 1, y * 10000 + m * 100 + 31);
+            }
+        });
+        yearV.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                int y = cur / 12;
+                dlg.dismiss();
+                listener.onRange(y * 10000, y * 10000 + 1231);
+            }
+        });
 
         AlertDialog.Builder b = new AlertDialog.Builder(c, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setView(box)
@@ -197,7 +211,7 @@ class CalendarDialog {
                         t.setFocusable(true);
                         t.setBackground(bg(0xFF22364F, 0xFF3D8BFD, 0xFF3A506B, Color.WHITE));
                         t.setOnClickListener(new View.OnClickListener() {
-                            public void onClick(View v) { dlg.dismiss(); listener.onDay(key); }
+                            public void onClick(View v) { dlg.dismiss(); listener.onRange(key, key); }
                         });
                     } else {
                         t.setText(String.valueOf(d));

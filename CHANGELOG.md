@@ -3,6 +3,14 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.7
+- Movimiento: el fundido entre fotos dura ahora 2 segundos y el movimiento se alarga lo mismo, así las dos fotos se solapan y la ligera parada del final queda disimulada.
+- Mosaicos sin bordes: «Dos verticales» (dos fotos verticales una al lado de otra), nueva «Tres verticales» (tres verticales juntas) y «Cuatro juntas» (cuatro horizontales en cuadrícula) se unen sin bordes ni huecos. Siempre con fotos del mismo álbum hechas con menos de 15 minutos de diferencia respecto a la primera, un solo pie de foto y sin hora.
+- Al ir hacia atrás en el pase, el mosaico vuelve a salir completo (antes solo salía una foto).
+- Nueva opción «Autor» (Ajustes, Información en pantalla): marca de agua muy sutil abajo a la derecha, en gris y con letra de mano: «© Lola» (iPhone 12 o 13), «© Alex» (iPhone 14 Pro), «© Pepe» (cámara que no es móvil: Leica, Nikon…) o «© Lara» (archivo que empieza por PIC). En las demás, nada.
+- Salvapantallas: en la ficha, Atrás vuelve al pase por donde iba en vez de cerrarlo.
+- Ir a la fecha: corregido que al elegir un día de otro mes o año no hiciera nada y se siguiera viendo el filtro anterior. Pulsar OK en el mes muestra todas las fotos de ese mes y OK en el año, las de ese año.
+
 ## 7.6
 - Movimiento: cambio de fondo. Antes lo movía el hilo de la pantalla, y cualquier trabajo pesado en ese momento (cargar un vídeo, preparar la foto siguiente, escribir ajustes) lo dejaba parado un par de segundos. Ahora lo mueve la tarjeta gráfica, que no depende de ese hilo. El relleno va en una vista aparte y se queda quieto (con «Bordes a la vista» se ve detrás de la foto). Además, la subida de la foto siguiente a la tarjeta gráfica y el guardado de lo ya visto se hacen en segundo plano.
 - Dos verticales y cuatro juntas: el hueco entre fotos se rellena con el relleno elegido (difuminado o color), ya no sale negro.

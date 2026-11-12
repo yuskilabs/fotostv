@@ -26,6 +26,16 @@ class MetaFetcher {
     }
 
     /** true/false si ya se sabe si es vídeo; null si todavía no. */
+    /** Cámara («Apple iPhone 13») si ya se leyó antes; null si no se sabe. */
+    static String cachedCam(Context c, Item it) {
+        try {
+            String j = Prefs.meta(c).getString("d1_" + it.key(), null);
+            if (j == null) return null;
+            JSONObject o = new JSONObject(j);
+            return GeoIndex.camName(o.optString("make", ""), o.optString("model", ""));
+        } catch (Throwable t) { return null; }
+    }
+
     static Boolean cachedVideo(Context c, Item it) {
         SharedPreferences m = Prefs.meta(c);
         String k = "v2_" + it.key();

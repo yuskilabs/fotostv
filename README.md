@@ -87,8 +87,10 @@ Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde l
 - **Movimiento** (efecto Ken Burns): movimiento lento de cada foto, variado (al azar acercar, alejar, de lado, arriba y abajo o en diagonal) «solo zoom» (acercar y alejar) o siempre el mismo. El movimiento dura justo lo que la foto está en pantalla, así que nunca se para; la velocidad (lenta o normal) cambia lo que recorre en ese tiempo. La foto siempre está algo ampliada, así que nunca asoma un borde vacío.
 - **Bordes**: «tapados» (la foto va ampliada y no se ve el relleno) o «a la vista» (la foto empieza entera, sin zoom, y al moverse se ve el relleno quieto detrás; al alejar empieza ampliada y acaba entera al terminar su tiempo).
 - **Relleno** de lo que la foto no llena (verticales, fotos con otra forma): negro, el color de la foto o la foto muy difuminada, en degradado suave.
-- **Dos verticales**: en el pase, dos fotos verticales del mismo álbum hechas con menos de 15 minutos de diferencia se ven juntas, con un solo pie de foto y sin hora.
-- **Cuatro juntas**: de vez en cuando, cuatro fotos hechas casi a la vez (menos de 15 minutos) salen en cuadrícula, con un solo pie de foto y sin hora. Se preparan en segundo plano y entran al pase cuando están listas.
+- **Dos verticales**: en el pase, dos fotos verticales del mismo álbum hechas con menos de 15 minutos de diferencia se ven juntas, una al lado de otra y sin bordes, con un solo pie de foto y sin hora.
+- **Tres verticales**: de vez en cuando, tres fotos verticales hechas casi a la vez (menos de 15 minutos) salen juntas, sin bordes, con un solo pie de foto y sin hora.
+- **Cuatro juntas**: de vez en cuando, cuatro fotos horizontales hechas casi a la vez (menos de 15 minutos) salen en cuadrícula, sin bordes, con un solo pie de foto y sin hora.
+- **Autor**: marca de agua muy sutil abajo a la derecha («© Lola» iPhone 12/13, «© Alex» iPhone 14 Pro, «© Pepe» cámaras que no son móvil, «© Lara» archivos que empiezan por PIC). Se preparan en segundo plano y entran al pase cuando están listas.
 - **Pies de foto**: con pulsación larga en el mosaico, «Pie de foto»; sale en el pase y en la ficha.
 
 **Noche, temporizador y música**
@@ -104,7 +106,7 @@ Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde l
 **Explorador**
 - **Buscar** (barra discreta en la pantalla principal, encima de los botones; se llega subiendo con el mando): por lugar, nombre del álbum, mes o año («Zahara», «agosto 2025», «Lara 2024»).
 - **Álbumes virtuales**: el resultado de una búsqueda se guarda como álbum (botón «Guardar» del mosaico) y se actualiza solo. Se borran con pulsación larga.
-- **Saltar por fecha**: icono «Fecha» (junto al de «Mapa», arriba a la derecha del mosaico) que abre un calendario mensual: izquierda/derecha cambia de mes (o de año, si lo seleccionas) y al elegir un día se ven solo sus fotos.
+- **Saltar por fecha**: icono «Fecha» (junto al de «Mapa», arriba a la derecha del mosaico) que abre un calendario mensual: izquierda/derecha cambia de mes (o de año, si lo seleccionas) y al elegir un día se ven solo sus fotos; OK en el mes o en el año muestra todas las de ese mes o año.
 - **Viajes** (botón en la pantalla principal): agrupa solas las fotos hechas en días seguidos, con su lugar y fechas.
 - **Varias portadas**: «Añadir a portadas» en varias fotos; cada vez que entras en los álbumes sale una de ellas.
 - **Marcar nuevas**: las fotos añadidas al álbum desde la última vez que lo abriste llevan «NUEVA», y el álbum dice cuántas hay.

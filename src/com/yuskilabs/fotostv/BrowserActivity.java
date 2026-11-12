@@ -51,21 +51,23 @@ public class BrowserActivity extends Activity {
         boolean onlyVideos;       // filtro «Vídeos»
         List<Item> vids = new ArrayList<Item>();
 
-        int dayKey = -1;          // filtro «Ir a la fecha»: solo las de ese día (-1 = todas)
+        int dayLo = -1, dayHi = -1;   // filtro «Ir a la fecha»: de un día, un mes o un año (claves de día; -1 = todas)
         private List<Item> dayOf, dayList;
-        private int dayN = -1;
+        private int dayN = -1, dayCLo = -2, dayCHi = -2;
 
         List<Item> base() { return onlyVideos ? vids : (view != null ? view : items); }
 
         List<Item> shown() {
             List<Item> b = base();
-            if (dayKey < 0) return b;
-            if (dayOf != b || dayN != b.size() || dayList == null) {
+            if (dayLo < 0) return b;
+            if (dayOf != b || dayN != b.size() || dayList == null || dayCLo != dayLo || dayCHi != dayHi) {
                 java.util.TimeZone tz = java.util.TimeZone.getDefault();
                 List<Item> r = new ArrayList<Item>();
-                for (Item it : b) if (FxLogic.dayKey(it.ts, tz) == dayKey) r.add(it);
+                for (Item it : b) { int k = FxLogic.dayKey(it.ts, tz); if (k >= dayLo && k <= dayHi) r.add(it); }
                 dayOf = b;
                 dayN = b.size();
+                dayCLo = dayLo;
+                dayCHi = dayHi;
                 dayList = r;
             }
             return dayList;
@@ -1447,7 +1449,8 @@ public class BrowserActivity extends Activity {
         albumPos = pos;
         current = entries.get(pos);
         current.onlyVideos = false;
-        current.dayKey = -1;
+        current.dayLo = -1;
+        current.dayHi = -1;
         scanGen++;
         if (pendingDupes == current && pendingDupeKeys != null) {   // repetidas que se encontraron mientras estabas en otro sitio
             Set<String> k = pendingDupeKeys;
@@ -1733,15 +1736,15 @@ public class BrowserActivity extends Activity {
             days.put(k, n == null ? 1 : n + 1);
         }
         if (days.isEmpty()) { showToast("Este álbum no tiene fotos con fecha."); return; }
-        int start = e.dayKey;
+        int start = e.dayLo;
         if (start < 0 && photoGrid != null) {
             int p = photoGrid.getSelectedItemPosition();
             List<Item> sh = e.shown();
             if (p >= 0 && p < sh.size()) start = FxLogic.dayKey(sh.get(p).ts, tz);
         }
-        new CalendarDialog(this, days, start, e.dayKey >= 0, new CalendarDialog.Listener() {
-            public void onDay(int key) { e.dayKey = key; showPhotos(0); }
-            public void onAll() { e.dayKey = -1; showPhotos(0); }
+        new CalendarDialog(this, days, start, e.dayLo >= 0, new CalendarDialog.Listener() {
+            public void onRange(int lo, int hi) { e.dayLo = lo; e.dayHi = hi; showPhotos(0); }
+            public void onAll() { e.dayLo = -1; e.dayHi = -1; showPhotos(0); }
         }).show();
     }
 
@@ -1838,9 +1841,13 @@ public class BrowserActivity extends Activity {
         } else {
             t = "  \u00B7  " + current.items.size() + " elementos";
         }
-        if (current.dayKey >= 0) {
-            int dk = current.dayKey;
-            t += "  \u00B7  " + (dk % 100) + " " + FxLogic.MONTHS[(dk / 100) % 100] + " " + (dk / 10000) + ": " + current.shown().size();
+        if (current.dayLo >= 0) {
+            int lo = current.dayLo, hi = current.dayHi;
+            String lab;
+            if (lo == hi) lab = (lo % 100) + " " + FxLogic.MONTHS[(lo / 100) % 100] + " " + (lo / 10000);
+            else if (lo / 100 == hi / 100) lab = FxLogic.MONTHS[(lo / 100) % 100] + " " + (lo / 10000);
+            else lab = String.valueOf(lo / 10000);
+            t += "  \u00B7  " + lab + ": " + current.shown().size();
         }
         if (pSel) t += "  \u00B7  " + pKeys.size() + " seleccionados";
         countView.setText(t);

@@ -219,9 +219,13 @@ public class AjustesActivity extends SettingsBase {
         Button fav = fx("Más favoritas", Extras.FAV_BOOST, R.drawable.ic_star,
                 "Con el orden «inteligente», las favoritas salen tres veces más a menudo.");
         Button collage = fx("Dos verticales", Extras.COLLAGE, R.drawable.ic_photo,
-                "En el pase, dos fotos verticales hechas casi a la vez (menos de 15 minutos) se ven juntas, una al lado de otra, con un solo pie de foto y sin hora.");
+                "En el pase, dos fotos verticales hechas casi a la vez (menos de 15 minutos) se ven juntas, una al lado de otra y sin bordes, con un solo pie de foto y sin hora.");
         Button grid4 = fx("Cuatro juntas", Extras.GRID4, R.drawable.ic_albums,
-                "De vez en cuando, cuatro fotos hechas casi a la vez (menos de 15 minutos) salen juntas en cuadrícula, con un solo pie de foto y sin hora. Se preparan en segundo plano y entran al pase cuando están listas.");
+                "De vez en cuando, cuatro fotos horizontales hechas casi a la vez (menos de 15 minutos) salen juntas, en cuadrícula y sin bordes, con un solo pie de foto y sin hora. Se preparan en segundo plano y entran al pase cuando están listas.");
+        Button trio3 = fx("Tres verticales", Extras.TRIO3, R.drawable.ic_albums,
+                "De vez en cuando, tres fotos verticales hechas casi a la vez (menos de 15 minutos) salen juntas, una al lado de otra y sin bordes, con un solo pie de foto y sin hora.");
+        Button credit = fx("Autor", Extras.CREDIT, R.drawable.ic_person,
+                "Marca de agua muy sutil abajo a la derecha: «© Lola» (iPhone 12 o 13), «© Alex» (iPhone 14 Pro), «© Pepe» (cámara que no es móvil: Leica, Nikon…) o «© Lara» (archivo que empieza por PIC). En las demás, nada."); 
         cp.addView(row(
             cyc("Orden", "order", false, new String[]{"random", "norepeat", "smart", "asc", "desc"},
                 new String[]{"aleatorio", "sin repetir", "inteligente", "por fecha ↑", "por fecha ↓"}, R.drawable.ic_shuffle,
@@ -235,8 +239,8 @@ public class AjustesActivity extends SettingsBase {
                 new Cur() { public String get() { return Prefs.fit(AjustesActivity.this); } }),
             tog("Continuar", "resume", R.drawable.ic_check, new Bool() { public boolean get() { return Prefs.resume(AjustesActivity.this); } })));
         cp.addView(row(todayBtn(), fav));
-        cp.addView(row(collage, grid4));
-        cp.addView(row(placeBtn, null));
+        cp.addView(row(collage, trio3));
+        cp.addView(row(grid4, placeBtn));
 
         // --- movimiento y relleno
         LinearLayout cf = card("Movimiento y relleno", R.drawable.ic_fullscreen);
@@ -280,7 +284,7 @@ public class AjustesActivity extends SettingsBase {
             tog("Hora", "clock", R.drawable.ic_schedule, new Bool() { public boolean get() { return Prefs.clock(AjustesActivity.this); } }),
             bigClock));
         ci.addView(row(weather, cityBtn));
-        ci.addView(row(captions, null));
+        ci.addView(row(captions, credit));
 
         // --- noche y temporizador
         LinearLayout cn = card("Noche y temporizador", R.drawable.ic_moon);

@@ -51,7 +51,8 @@ class Slideshow {
         int startMs;          // empezar el vídeo por aquí (al pasar de baja a alta calidad)
         int state;            // 0 preparando, 1 descargando vídeo, 2 lista, 3 fallida
         Item item2;           // «dos verticales»: la segunda foto que va al lado
-        java.util.List<Item> others;   // «cuatro en cuadrícula»: la tercera y la cuarta
+        java.util.List<Item> others;   // «tres/cuatro juntas»: la tercera y la cuarta
+        String credit = "";           // marca de agua: quién la hizo
         int bgColor = Color.BLACK;          // fondo de las fotos que no llenan la pantalla
         Bitmap bgSmall;       // fondo difuminado (la foto en miniatura, estirada)
     }
@@ -88,6 +89,7 @@ class Slideshow {
     private LinearLayout clockBox;     // hora (y, con las funciones extra, la fecha y el tiempo debajo)
     private TextView clockSub, tvCaption;
     private View nightView;            // velo del modo noche
+    private TextView creditView;       // marca de agua con quién hizo la foto (esquina inferior derecha)
     private boolean nightOn, todayMode;
     private java.util.Set<String> todayKeys;      // recuerdos de hoy «mezclados»: claves de las fotos de hoy
     private long nightSnooze;
@@ -398,6 +400,15 @@ class Slideshow {
         nightView.setBackgroundColor(Color.BLACK);
         nightView.setVisibility(View.GONE);
         root.addView(nightView, new FrameLayout.LayoutParams(-1, -1));
+        creditView = new TextView(ctx);
+        creditView.setTypeface(Ui.HAND);
+        creditView.setTextColor(0x99B4B4B4);
+        creditView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        creditView.setIncludeFontPadding(false);
+        creditView.setVisibility(View.GONE);
+        FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
+        clp.setMargins(0, 0, Ui.dp(ctx, 5), Ui.dp(ctx, 1));
+        root.addView(creditView, clp);
 
         shade.setVisibility(anyText() ? View.VISIBLE : View.GONE);
         info.setVisibility(View.INVISIBLE);
@@ -412,6 +423,7 @@ class Slideshow {
         toast.bringToFront();
         progRow.bringToFront();
         vidCaption.bringToFront();
+        if (creditView != null) creditView.bringToFront();
         nightView.bringToFront();
     }
 
@@ -508,7 +520,55 @@ class Slideshow {
         return (int) (v * ctx.getResources().getDisplayMetrics().density);
     }
 
+    /** Marca de agua «© Lola» abajo a la derecha (función extra «Autor»). */
+    private void setCredit(Slide s) {
+        creditView.animate().cancel();
+        String c = s == null ? "" : s.credit;
+        if (!Extras.on(ctx, Extras.CREDIT) || c == null || c.length() == 0 || nightOn) { creditView.setVisibility(View.GONE); return; }
+        creditView.setText("\u00A9 " + c);
+        creditView.setAlpha(0f);
+        creditView.setVisibility(View.VISIBLE);
+        creditView.animate().alpha(1f).setStartDelay(600).setDuration(1200).start();
+    }
+
+    /** Quién hizo esa foto, o "" (se calcula en segundo plano y se recuerda). */
+    private String creditOf(Item it) {
+        try {
+            android.content.SharedPreferences m = Prefs.meta(ctx);
+            String k = "cr2_" + it.key();
+            String c = m.getString(k, null);
+            if (c != null) return c;
+            Boolean v = MetaFetcher.cachedVideo(ctx, it);
+            if (v != null && v) return "";
+            String cam = MetaFetcher.cachedCam(ctx, it);
+            if (cam == null) {
+                String[] box = new String[]{null};
+                if (MetaFetcher.quickGps(it, box) == null) return "";      // no se pudo mirar: no se recuerda
+                cam = box[0];
+            }
+            String name = FxLogic.credit(cam, null);
+            if (name.length() == 0 && it.id.length() > 0 && it.akey.length() > 0)
+                name = FxLogic.credit(null, AlbumFetcher.fileName(it.id, it.akey));
+            m.edit().putString(k, name).apply();
+            return name;
+        } catch (Throwable t) { return ""; }
+    }
+
+    /** Autores de las fotos de esta diapositiva (si es un mosaico, los distintos). */
+    private void fillCredit(Slide p) {
+        if (!Extras.on(ctx, Extras.CREDIT) || p == null || p.item == null) return;
+        java.util.LinkedHashSet<String> names = new java.util.LinkedHashSet<String>();
+        String c = creditOf(p.item);
+        if (c.length() > 0) names.add(c);
+        if (p.item2 != null) { c = creditOf(p.item2); if (c.length() > 0) names.add(c); }
+        if (p.others != null) for (Item o : p.others) { c = creditOf(o); if (c.length() > 0) names.add(c); }
+        StringBuilder sb = new StringBuilder();
+        for (String n : names) { if (sb.length() > 0) sb.append(" \u00B7 "); sb.append(n); }
+        p.credit = sb.toString();
+    }
+
     private void setInfo(final Slide s) {
+        setCredit(s);
         info.animate().cancel();
         final Runnable apply = new Runnable() {
             public void run() {
@@ -974,15 +1034,20 @@ class Slideshow {
     private static final long GROUP_WINDOW_MS = 15L * 60 * 1000;
     private static final int GRID_ODDS = 8;                 // «cuatro en cuadrícula» sale una de cada 8 fotos, más o menos
     private final java.util.concurrent.Executor io = Executors.newSingleThreadExecutor();
+    private static final long FADE_MS = 2000;     // fundido entre fotos: largo, para que el final del movimiento no se note
     private final java.util.Random grpRnd = new java.util.Random();
 
     private boolean gridOn() { return !manual() && Extras.on(ctx, Extras.GRID4); }
+    private boolean trioOn() { return !manual() && Extras.on(ctx, Extras.TRIO3); }
 
     private static class G {
         Item it;
         Bitmap b;
         G(Item it, Bitmap b) { this.it = it; this.b = b; }
     }
+
+    // para que al volver atrás con «Anterior» siga saliendo el mismo mosaico: foto principal -> las que iban con ella
+    private final java.util.Map<String, List<Item>> groups = new java.util.concurrent.ConcurrentHashMap<String, List<Item>>();
 
     /** Fotos del mismo álbum hechas con menos de 15 minutos de diferencia, las más cercanas primero. */
     private List<Item> nearItems(final Item it) {
@@ -1014,29 +1079,61 @@ class Slideshow {
     }
 
     /**
-     * En segundo plano: si esta foto puede ir con otras hechas casi a la vez, las baja y las junta en una sola imagen
-     * (dos verticales, o cuatro en cuadrícula de vez en cuando). Si no se consigue, la foto sale sola.
+     * En segundo plano: si esta foto puede ir con otras hechas casi a la vez, las baja y las junta en una sola imagen, sin
+     * bordes: dos verticales, tres verticales (de vez en cuando) o cuatro horizontales en cuadrícula (de vez en cuando).
+     * Si no se consigue, la foto sale sola.
      */
     private void groupUp(Item it, Slide p) {
         if (w < 1 || hgt < 1 || p.bmp == null || p.item2 != null) return;
-        if (gridOn() && grpRnd.nextInt(GRID_ODDS) == 0 && tryGroup(it, p, 3)) return;
-        if (collageOn() && portrait(p.bmp)) tryGroup(it, p, 1);
+        boolean port = portrait(p.bmp);
+        if (!port) {
+            if (gridOn() && grpRnd.nextInt(GRID_ODDS) == 0) tryGroup(it, p, 3, false);
+            return;
+        }
+        if (trioOn() && grpRnd.nextInt(GRID_ODDS) == 0 && tryGroup(it, p, 2, true)) return;
+        if (collageOn()) tryGroup(it, p, 1, true);
     }
 
-    private boolean tryGroup(Item it, Slide p, int need) {
+    private boolean tryGroup(Item it, Slide p, int need, boolean wantPortrait) {
         List<G> got = new ArrayList<G>();
         got.add(new G(it, p.bmp));
         for (Item q : nearItems(it)) {
             if (got.size() > need) break;
             Bitmap b = lightBitmap(q);
             if (b == null) continue;
-            if (need == 1 && !portrait(b)) { b.recycle(); continue; }
+            if (wantPortrait ? !portrait(b) : b.getWidth() <= b.getHeight()) { b.recycle(); continue; }
             got.add(new G(q, b));
         }
         if (got.size() < need + 1) {
             for (int i = 1; i < got.size(); i++) got.get(i).b.recycle();
             return false;
         }
+        if (!compose(p, got)) return false;
+        List<Item> others = new ArrayList<Item>();
+        for (G g : got) if (g.it != it) others.add(g.it);
+        groups.put(it.key(), others);
+        return true;
+    }
+
+    /** Al volver a una foto que salió en mosaico: vuelve a montarlo igual. */
+    private void regroup(Item it, Slide p) {
+        List<Item> others = groups.get(it.key());
+        if (others == null || p.bmp == null || p.item2 != null || w < 1 || hgt < 1) return;
+        List<G> got = new ArrayList<G>();
+        got.add(new G(it, p.bmp));
+        for (Item q : others) {
+            Bitmap b = lightBitmap(q);
+            if (b == null) {
+                for (int i = 1; i < got.size(); i++) got.get(i).b.recycle();
+                return;
+            }
+            got.add(new G(q, b));
+        }
+        compose(p, got);
+    }
+
+    /** Junta 2, 3 o 4 fotos (por orden de hora) en una sola imagen a pantalla completa, sin bordes ni huecos. */
+    private boolean compose(Slide p, List<G> got) {
         Collections.sort(got, new java.util.Comparator<G>() {
             public int compare(G x, G y) { return Long.compare(x.it.ts, y.it.ts); }
         });
@@ -1044,28 +1141,31 @@ class Slideshow {
         try {
             out = Bitmap.createBitmap(w, hgt, Bitmap.Config.ARGB_8888);
         } catch (Throwable oom) {
-            for (int i = 0; i < got.size(); i++) if (got.get(i).b != p.bmp) got.get(i).b.recycle();
+            for (G g : got) if (g.b != p.bmp) g.b.recycle();
             return false;
         }
         android.graphics.Canvas c = new android.graphics.Canvas(out);
-        c.drawColor(Color.TRANSPARENT, android.graphics.PorterDuff.Mode.CLEAR);   // el relleno (negro, color o difuminado) va detrás, aparte
         android.graphics.Paint pt = new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG);
-        int gap = dp(8);
-        if (need == 1) {
-            int half = (w - gap) / 2;
-            drawFit(c, got.get(0).b, 0, 0, half, hgt, pt);
-            drawFit(c, got.get(1).b, half + gap, 0, w - half - gap, hgt, pt);
+        int n = got.size();
+        if (n == 4) {
+            int x1 = w / 2, y1 = hgt / 2;
+            drawCover(c, got.get(0).b, 0, 0, x1, y1, pt);
+            drawCover(c, got.get(1).b, x1, 0, w - x1, y1, pt);
+            drawCover(c, got.get(2).b, 0, y1, x1, hgt - y1, pt);
+            drawCover(c, got.get(3).b, x1, y1, w - x1, hgt - y1, pt);
         } else {
-            int cw = (w - gap) / 2, ch = (hgt - gap) / 2;
-            for (int i = 0; i < 4; i++)
-                drawFit(c, got.get(i).b, (i % 2) * (cw + gap), (i / 2) * (ch + gap), cw, ch, pt);
+            for (int i = 0; i < n; i++) {
+                int x0 = w * i / n, x1 = w * (i + 1) / n;
+                drawCover(c, got.get(i).b, x0, 0, x1 - x0, hgt, pt);
+            }
         }
-        for (int i = 0; i < got.size(); i++) if (got.get(i).b != p.bmp) got.get(i).b.recycle();
+        Item anchor = p.item;
+        for (G g : got) if (g.b != p.bmp) g.b.recycle();
         p.bmp = out;
         p.item2 = null;
         p.others = null;
         for (G g : got) {
-            if (g.it == it) continue;
+            if (g.it == anchor || (anchor != null && g.it.key().equals(anchor.key()))) continue;
             if (p.item2 == null) p.item2 = g.it;
             else { if (p.others == null) p.others = new ArrayList<Item>(); p.others.add(g.it); }
         }
@@ -1073,11 +1173,13 @@ class Slideshow {
         return true;
     }
 
-    private void drawFit(android.graphics.Canvas c, Bitmap b, int x0, int y0, int bw, int bh, android.graphics.Paint pt) {
-        float sc = Math.min(bw / (float) b.getWidth(), bh / (float) b.getHeight());
-        int dw = Math.round(b.getWidth() * sc), dh = Math.round(b.getHeight() * sc);
-        int x = x0 + (bw - dw) / 2, y = y0 + (bh - dh) / 2;
-        c.drawBitmap(b, null, new android.graphics.Rect(x, y, x + dw, y + dh), pt);
+    /** La foto llena el hueco entero; lo que sobra se recorta por el centro. */
+    private void drawCover(android.graphics.Canvas c, Bitmap b, int x0, int y0, int bw, int bh, android.graphics.Paint pt) {
+        float sc = Math.max(bw / (float) b.getWidth(), bh / (float) b.getHeight());
+        float sw = bw / sc, sh = bh / sc;
+        int sx = Math.max(0, Math.round((b.getWidth() - sw) / 2f)), sy = Math.max(0, Math.round((b.getHeight() - sh) / 2f));
+        c.drawBitmap(b, new android.graphics.Rect(sx, sy, Math.min(b.getWidth(), Math.round(sx + sw)), Math.min(b.getHeight(), Math.round(sy + sh))),
+                new android.graphics.Rect(x0, y0, x0 + bw, y0 + bh), pt);
     }
 
     // ------------------------------------------------------------ fondo de las verticales (función extra)
@@ -1196,7 +1298,7 @@ class Slideshow {
         final float[] m = FxLogic.kenBurnsPath(Extras.str(ctx, Extras.KB_STYLE, "mix"), new java.util.Random(), edges);
         // el movimiento dura lo que la foto está en pantalla (su tiempo más el fundido) y un 60 % más, a la misma velocidad.
         // La velocidad (lenta/normal) cambia cuánto recorre en ese tiempo; el alejar con los bordes a la vista siempre acaba entero.
-        long dur = Prefs.interval(ctx) * 1000L + 1200L;
+        long dur = Prefs.interval(ctx) * 1000L + FADE_MS;
         float part = "normal".equals(Extras.str(ctx, Extras.KB_SPEED, "slow")) ? 0.65f : 0.4f;
         if (edges && m[1] < m[0]) part = 1f;
         if (part < 1f) {
@@ -1270,13 +1372,13 @@ class Slideshow {
                     return;
                 }
                 final Slide p = buildPhoto(it);
-                if (p != null) { try { groupUp(it, p); } catch (Throwable ignored) { } warm(p); }   // la subida a la tarjeta gráfica, aquí y no en el hilo de pantalla
+                if (p != null) { try { groupUp(it, p); } catch (Throwable ignored) { } fillCredit(p); warm(p); }   // la subida a la tarjeta gráfica, aquí y no en el hilo de pantalla
                 h.post(new Runnable() {
                     public void run() {
                         if (sess != session || !running) return;
                         if (p == null) { t.state = 3; } else {
                             t.bmp = p.bmp; t.date = p.date; t.place = p.place; t.state = 2;
-                            t.item2 = p.item2; t.others = p.others;
+                            t.item2 = p.item2; t.others = p.others; t.credit = p.credit;
                             t.bgColor = p.bgColor; t.bgSmall = p.bgSmall;
                         }
                         onBuilt(t);
@@ -1654,6 +1756,7 @@ class Slideshow {
         ex.submit(new Runnable() {
             public void run() {
                 final Slide s = buildSlide(it);
+                if (s != null && !s.video && s.bmp != null) { try { regroup(it, s); fillCredit(s); } catch (Throwable ignored) { } warm(s); }
                 h.post(new Runnable() {
                     public void run() {
                         if (!running || sess != session || myGen != gen) return;
@@ -1922,6 +2025,7 @@ class Slideshow {
         overlaysToFront();
         if (browse()) {
             // paso manual por el álbum: cambio inmediato, sin fundido
+            setCredit(s);
             slideAlpha(back, 1f);
             front.setImageDrawable(null);
             slideAlpha(front, 0f);
@@ -1950,7 +2054,7 @@ class Slideshow {
         android.animation.ObjectAnimator fb = android.animation.ObjectAnimator.ofFloat(bgOf(back), View.ALPHA, 1f);
         final android.animation.AnimatorSet fade = new android.animation.AnimatorSet();
         fade.playTogether(fa, fb);
-        fade.setDuration(hideVideo ? 800 : 1200);
+        fade.setDuration(hideVideo ? 800 : FADE_MS);
         fade.setInterpolator(new AccelerateDecelerateInterpolator());
         fade.addListener(new android.animation.AnimatorListenerAdapter() {
             boolean cancelled;

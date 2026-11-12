@@ -27,11 +27,18 @@ public class PhotoDream extends DreamService {
         show.setKeyListener(new Runnable() { public void run() { armStop(); } });   // el mando del móvil también cuenta
     }
 
+    private boolean eatBackUp;     // Atrás cerró la ficha: al soltarla no debe salir del salvapantallas
+
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
+        int kc0 = e.getKeyCode();
+        if (eatBackUp && (kc0 == KeyEvent.KEYCODE_BACK || kc0 == KeyEvent.KEYCODE_ESCAPE)) {
+            if (e.getAction() == KeyEvent.ACTION_UP) eatBackUp = false;
+            return true;
+        }
         if (show != null && show.infoOpen()) {                                      // ficha abierta: Atrás vuelve al pase; las flechas y OK mueven y pulsan sus botones
             int kc = e.getKeyCode();
             if (kc == KeyEvent.KEYCODE_BACK || kc == KeyEvent.KEYCODE_ESCAPE) {
-                if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
+                if (e.getAction() == KeyEvent.ACTION_DOWN) { show.closeInfo(); eatBackUp = true; }
                 return true;
             }
             return super.dispatchKeyEvent(e);

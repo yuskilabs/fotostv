@@ -416,6 +416,24 @@ final class FxLogic {
         return extra;
     }
 
+    // ------------------------------------------------------------ quién hizo la foto
+    private static final String[] BIG_CAMS = {"leica", "nikon", "canon", "fujifilm", "panasonic", "olympus", "om digital",
+            "pentax", "ricoh", "sigma", "hasselblad"};
+
+    /**
+     * Quién hizo la foto: «Lola» (iPhone 12 o 13), «Alex» (iPhone 14 Pro), «Pepe» (cámara que no es un móvil: Leica, Nikon…),
+     * «Lara» (el nombre del archivo empieza por PIC). "" si no encaja en nada.
+     */
+    static String credit(String cam, String fileName) {
+        String c = cam == null ? "" : cam.toLowerCase(java.util.Locale.ROOT);
+        if (c.contains("iphone 12") || c.contains("iphone 13")) return "Lola";
+        if (c.contains("iphone 14 pro")) return "Alex";
+        for (String b : BIG_CAMS) if (c.contains(b)) return "Pepe";
+        if (c.contains("sony") && !c.contains("xperia")) return "Pepe";
+        if (fileName != null && fileName.toUpperCase(java.util.Locale.ROOT).startsWith("PIC")) return "Lara";
+        return "";
+    }
+
     // ------------------------------------------------------------ calendario («Ir a la fecha»)
     /** Clave de día año*10000+mes(0-11)*100+día en la zona dada; -1 si no hay fecha. */
     static int dayKey(long ts, java.util.TimeZone tz) {

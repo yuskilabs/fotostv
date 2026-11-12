@@ -49,11 +49,18 @@ public class PreviewActivity extends Activity {
     }
     @Override protected void onPause() { hh.removeCallbacks(stopper); hh.removeCallbacks(timerEnd); show.stop(); Music.stop(); super.onPause(); }
 
+    private boolean eatBackUp;     // Atrás cerró la ficha: al soltarla no debe cerrar la vista previa
+
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
+        int kc0 = e.getKeyCode();
+        if (eatBackUp && (kc0 == KeyEvent.KEYCODE_BACK || kc0 == KeyEvent.KEYCODE_ESCAPE)) {
+            if (e.getAction() == KeyEvent.ACTION_UP) eatBackUp = false;
+            return true;
+        }
         if (show.infoOpen()) {                                      // ficha abierta: Atrás vuelve al pase; las flechas y OK mueven y pulsan sus botones
             int kc = e.getKeyCode();
             if (kc == KeyEvent.KEYCODE_BACK || kc == KeyEvent.KEYCODE_ESCAPE) {
-                if (e.getAction() == KeyEvent.ACTION_DOWN) show.closeInfo();
+                if (e.getAction() == KeyEvent.ACTION_DOWN) { show.closeInfo(); eatBackUp = true; }
                 return true;
             }
             return super.dispatchKeyEvent(e);
