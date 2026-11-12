@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.8
+- Movimiento: al alejar con «Bordes a la vista», el movimiento dura un 60 % más (como los demás) para que no se pare al final.
+- Mosaicos: salen menos (dos verticales, una de cada 6 fotos verticales; tres verticales y cuatro juntas, una de cada 14) y nunca llevan vídeos.
+- Autor: ahora la detecta casi siempre (usa la cámara ya guardada o la lee de la cabecera de la foto). Una sola vez, al actualizar, se olvidan los autores guardados con el fallo anterior.
+
 ## 7.7
 - Movimiento: el fundido entre fotos dura ahora 2 segundos y el movimiento se alarga lo mismo, así las dos fotos se solapan y la ligera parada del final queda disimulada.
 - Mosaicos sin bordes: «Dos verticales» (dos fotos verticales una al lado de otra), nueva «Tres verticales» (tres verticales juntas) y «Cuatro juntas» (cuatro horizontales en cuadrícula) se unen sin bordes ni huecos. Siempre con fotos del mismo álbum hechas con menos de 15 minutos de diferencia respecto a la primera, un solo pie de foto y sin hora.

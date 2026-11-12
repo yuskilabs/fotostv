@@ -49,6 +49,12 @@ class GeoIndex extends SQLiteOpenHelper {
         return mk + " " + md;
     }
 
+    /** Cámara guardada de esa foto, o "" si no se sabe. */
+    String camOf(String k) {
+        Cursor q = getReadableDatabase().rawQuery("SELECT cam FROM cams WHERE k=?", new String[]{k});
+        try { return q.moveToFirst() ? q.getString(0) : ""; } finally { q.close(); }
+    }
+
     void putCam(String k, String cam) {
         ContentValues v = new ContentValues();
         v.put("k", k);

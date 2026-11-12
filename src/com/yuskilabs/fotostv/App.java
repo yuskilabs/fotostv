@@ -47,6 +47,11 @@ public class App extends Application {
                         ed.putString("geoLocalidad3", "1").apply();
                         try { GeoIndex.get(App.this).getWritableDatabase().execSQL("UPDATE photos SET place=NULL"); } catch (Throwable ignored) { }
                     }
+                    if (!"1".equals(m.getString("creditReset", ""))) {   // una sola vez: se olvida el autor guardado (se calculaba mal)
+                        android.content.SharedPreferences.Editor ed = m.edit();
+                        for (String key : new java.util.ArrayList<String>(m.getAll().keySet())) if (key.startsWith("cr2_")) ed.remove(key);
+                        ed.putString("creditReset", "1").apply();
+                    }
                     GeoService.start(App.this);
                 } catch (Throwable ignored) { }
             }

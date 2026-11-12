@@ -88,7 +88,7 @@ Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde l
 - **Bordes**: «tapados» (la foto va ampliada y no se ve el relleno) o «a la vista» (la foto empieza entera, sin zoom, y al moverse se ve el relleno quieto detrás; al alejar empieza ampliada y acaba entera al terminar su tiempo).
 - **Relleno** de lo que la foto no llena (verticales, fotos con otra forma): negro, el color de la foto o la foto muy difuminada, en degradado suave.
 - **Dos verticales**: en el pase, dos fotos verticales del mismo álbum hechas con menos de 15 minutos de diferencia se ven juntas, una al lado de otra y sin bordes, con un solo pie de foto y sin hora.
-- **Tres verticales**: de vez en cuando, tres fotos verticales hechas casi a la vez (menos de 15 minutos) salen juntas, sin bordes, con un solo pie de foto y sin hora.
+- **Tres verticales**: de vez en cuando, tres fotos verticales hechas casi a la vez (menos de 15 minutos) salen juntas, sin bordes, con un solo pie de foto y sin hora (una de cada 14 fotos más o menos; nunca con vídeos).
 - **Cuatro juntas**: de vez en cuando, cuatro fotos horizontales hechas casi a la vez (menos de 15 minutos) salen en cuadrícula, sin bordes, con un solo pie de foto y sin hora.
 - **Autor**: marca de agua muy sutil abajo a la derecha («© Lola» iPhone 12/13, «© Alex» iPhone 14 Pro, «© Pepe» cámaras que no son móvil, «© Lara» archivos que empiezan por PIC). Se preparan en segundo plano y entran al pase cuando están listas.
 - **Pies de foto**: con pulsación larga en el mosaico, «Pie de foto»; sale en el pase y en la ficha.

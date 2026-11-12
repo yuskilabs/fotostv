@@ -541,10 +541,14 @@ class Slideshow {
             Boolean v = MetaFetcher.cachedVideo(ctx, it);
             if (v != null && v) return "";
             String cam = MetaFetcher.cachedCam(ctx, it);
-            if (cam == null) {
+            if (cam == null || cam.length() == 0) {
+                try { cam = GeoIndex.get(ctx).camOf(it.key()); } catch (Throwable ignored) { cam = null; }
+            }
+            if (cam == null || cam.length() == 0) {
                 String[] box = new String[]{null};
                 if (MetaFetcher.quickGps(it, box) == null) return "";      // no se pudo mirar: no se recuerda
                 cam = box[0];
+                try { if (cam != null) GeoIndex.get(ctx).putCam(it.key(), cam); } catch (Throwable ignored) { }
             }
             String name = FxLogic.credit(cam, null);
             if (name.length() == 0 && it.id.length() > 0 && it.akey.length() > 0)
@@ -1032,7 +1036,8 @@ class Slideshow {
 
     // ------------------------------------------------------------ grupos de fotos cercanas en el tiempo
     private static final long GROUP_WINDOW_MS = 15L * 60 * 1000;
-    private static final int GRID_ODDS = 8;                 // «cuatro en cuadrícula» sale una de cada 8 fotos, más o menos
+    private static final int GRID_ODDS = 14;                // tres/cuatro juntas: una de cada 14 fotos, más o menos
+    private static final int PAIR_ODDS = 6;                 // dos verticales: una de cada 6 fotos verticales, más o menos
     private final java.util.concurrent.Executor io = Executors.newSingleThreadExecutor();
     private static final long FADE_MS = 2000;     // fundido entre fotos: largo, para que el final del movimiento no se note
     private final java.util.Random grpRnd = new java.util.Random();
@@ -1060,15 +1065,19 @@ class Slideshow {
                 Item q = snap.get(i);
                 if (q == it || q.ts <= 0 || Math.abs(q.ts - it.ts) > GROUP_WINDOW_MS || !sameAlbum(it, q)) continue;
                 if (q.key().equals(it.key()) || hid.contains(q.key())) continue;
-                Boolean v = MetaFetcher.cachedVideo(ctx, q);
-                if (v != null && v) continue;
                 out.add(q);
             }
         } catch (Throwable ignored) { }
         Collections.sort(out, new java.util.Comparator<Item>() {
             public int compare(Item x, Item y) { return Long.compare(Math.abs(x.ts - it.ts), Math.abs(y.ts - it.ts)); }
         });
-        return out.size() > 8 ? new ArrayList<Item>(out.subList(0, 8)) : out;
+        // nunca vídeos en un mosaico: se comprueba uno a uno (lo ya sabido es instantáneo; si no se puede saber, se descarta)
+        List<Item> ok = new ArrayList<Item>();
+        for (Item q : out) {
+            if (ok.size() >= 8) break;
+            try { if (!MetaFetcher.isVideoStrict(ctx, q)) ok.add(q); } catch (Throwable ignored) { }
+        }
+        return ok;
     }
 
     private Bitmap lightBitmap(Item q) {
@@ -1085,13 +1094,14 @@ class Slideshow {
      */
     private void groupUp(Item it, Slide p) {
         if (w < 1 || hgt < 1 || p.bmp == null || p.item2 != null) return;
+        try { if (MetaFetcher.isVideoStrict(ctx, it)) return; } catch (Throwable t) { return; }
         boolean port = portrait(p.bmp);
         if (!port) {
             if (gridOn() && grpRnd.nextInt(GRID_ODDS) == 0) tryGroup(it, p, 3, false);
             return;
         }
         if (trioOn() && grpRnd.nextInt(GRID_ODDS) == 0 && tryGroup(it, p, 2, true)) return;
-        if (collageOn()) tryGroup(it, p, 1, true);
+        if (collageOn() && grpRnd.nextInt(PAIR_ODDS) == 0) tryGroup(it, p, 1, true);
     }
 
     private boolean tryGroup(Item it, Slide p, int need, boolean wantPortrait) {
@@ -1305,6 +1315,10 @@ class Slideshow {
             float more = Math.min(1f, part * 1.6f);
             dur = (long) (dur * (more / part));
             part = more;
+        } else {
+            // alejar con los bordes a la vista: también dura un 60 % más (a la misma velocidad) para que no se pare al final
+            dur = (long) (dur * 1.6f);
+            for (int q = 1; q < 6; q += 2) m[q] = m[q - 1] + (m[q] - m[q - 1]) * 1.6f;
         }
         for (int q = 1; q < 6; q += 2) m[q] = m[q - 1] + (m[q] - m[q - 1]) * part;
         if (edges) {

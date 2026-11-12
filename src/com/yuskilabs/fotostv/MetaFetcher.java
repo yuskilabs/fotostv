@@ -36,6 +36,27 @@ class MetaFetcher {
         } catch (Throwable t) { return null; }
     }
 
+    /** Como isVideo, pero sin depender del ajuste de vídeo y diciendo true si no se puede saber (para no meter vídeos en mosaicos). */
+    static boolean isVideoStrict(Context c, Item it) {
+        Boolean v = cachedVideo(c, it);
+        if (v != null) return v;
+        SharedPreferences m = Prefs.meta(c);
+        try {
+            if (it.id.length() > 0 && it.akey.length() > 0) {
+                String name = AlbumFetcher.fileName(it.id, it.akey);
+                if (name.length() > 0) {
+                    boolean r = isVideoName(name);
+                    m.edit().putBoolean("v2_" + it.key(), r).apply();
+                    return r;
+                }
+            }
+            String t = AlbumFetcher.contentType(it.url + "=dv");
+            boolean r = t.startsWith("video/");
+            if (r || t.startsWith("image/")) m.edit().putBoolean("v2_" + it.key(), r).apply();
+            return r || !t.startsWith("image/");
+        } catch (Throwable e) { return true; }
+    }
+
     static Boolean cachedVideo(Context c, Item it) {
         SharedPreferences m = Prefs.meta(c);
         String k = "v2_" + it.key();
