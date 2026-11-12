@@ -454,6 +454,20 @@ class MetaFetcher {
         } catch (Throwable t) { return null; }
     }
 
+    /**
+     * Cámara de una foto leyendo el principio de su descarga (también si viene empaquetada en un ZIP, como las Live Photos
+     * de iPhone). "" si no la lleva (vídeo, sin EXIF); null si no se ha podido leer (sin red, error).
+     */
+    static String fetchCam(Item it) {
+        try {
+            byte[] head = AlbumFetcher.get(it.url + "=d", HEAD_BYTES);
+            byte[] img = imageBytes(head);
+            ExifInterface ex = (ExifInterface) ExifInterface.class        // JPEG, o HEIC si el sistema lo sabe leer
+                    .getConstructor(InputStream.class).newInstance(new ByteArrayInputStream(img));
+            return GeoIndex.camName(tag(ex, "Make"), tag(ex, "Model"));
+        } catch (Throwable t) { return null; }
+    }
+
     /** Cámara («Apple iPhone 13») según el EXIF del principio de una foto; "" si no es JPEG o no la lleva. */
     static String camFromHead(byte[] head) {
         try {

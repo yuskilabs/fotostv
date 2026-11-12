@@ -53,6 +53,7 @@ class Slideshow {
         Item item2;           // «dos verticales»: la segunda foto que va al lado
         java.util.List<Item> others;   // «tres/cuatro juntas»: la tercera y la cuarta
         String credit = "";           // marca de agua: quién la hizo
+        boolean creditPending;         // falta mirar el autor de alguna foto
         int bgColor = Color.BLACK;          // fondo de las fotos que no llenan la pantalla
         Bitmap bgSmall;       // fondo difuminado (la foto en miniatura, estirada)
     }
@@ -531,8 +532,13 @@ class Slideshow {
         creditView.animate().alpha(1f).setStartDelay(600).setDuration(1200).start();
     }
 
-    /** Quién hizo esa foto, o "" (se calcula en segundo plano y se recuerda). */
-    private String creditOf(Item it) {
+    private final java.util.concurrent.Executor crx = Executors.newSingleThreadExecutor();
+
+    /**
+     * Quién hizo esa foto: "" si nadie encaja; null si todavía no se sabe (y no se puede mirar ahora: net = false).
+     * Se recuerda solo cuando la respuesta es segura.
+     */
+    private String creditOf(Item it, boolean net) {
         try {
             android.content.SharedPreferences m = Prefs.meta(ctx);
             String k = "cr2_" + it.key();
@@ -544,31 +550,63 @@ class Slideshow {
             if (cam == null || cam.length() == 0) {
                 try { cam = GeoIndex.get(ctx).camOf(it.key()); } catch (Throwable ignored) { cam = null; }
             }
-            if (cam == null || cam.length() == 0) {
-                String[] box = new String[]{null};
-                if (MetaFetcher.quickGps(it, box) == null) return "";      // no se pudo mirar: no se recuerda
-                cam = box[0];
-                try { if (cam != null) GeoIndex.get(ctx).putCam(it.key(), cam); } catch (Throwable ignored) { }
+            boolean camKnown = cam != null && cam.length() > 0;
+            String name = camKnown ? FxLogic.credit(cam, null) : "";
+            if (name.length() > 0) { m.edit().putString(k, name).apply(); return name; }
+            if (!net) return null;
+            if (!camKnown) {
+                String got = MetaFetcher.fetchCam(it);       // null = no se pudo leer
+                if (got != null && got.length() > 0) {
+                    camKnown = true;
+                    try { GeoIndex.get(ctx).putCam(it.key(), got); } catch (Throwable ignored) { }
+                    name = FxLogic.credit(got, null);
+                    if (name.length() > 0) { m.edit().putString(k, name).apply(); return name; }
+                }
             }
-            String name = FxLogic.credit(cam, null);
-            if (name.length() == 0 && it.id.length() > 0 && it.akey.length() > 0)
-                name = FxLogic.credit(null, AlbumFetcher.fileName(it.id, it.akey));
-            m.edit().putString(k, name).apply();
+            boolean fileOk = false;
+            if (it.id.length() > 0 && it.akey.length() > 0) {
+                try {
+                    String fn = AlbumFetcher.fileName(it.id, it.akey);
+                    if (fn.length() > 0) { fileOk = true; name = FxLogic.credit(null, fn); }
+                } catch (Throwable ignored) { }
+            }
+            if (name.length() > 0 || camKnown || fileOk) m.edit().putString(k, name).apply();
             return name;
         } catch (Throwable t) { return ""; }
     }
 
-    /** Autores de las fotos de esta diapositiva (si es un mosaico, los distintos). */
-    private void fillCredit(Slide p) {
+    /** Autores de las fotos de esta diapositiva (si es un mosaico, los distintos). Con net = false solo usa lo ya guardado. */
+    private void fillCredit(Slide p, boolean net) {
         if (!Extras.on(ctx, Extras.CREDIT) || p == null || p.item == null) return;
         java.util.LinkedHashSet<String> names = new java.util.LinkedHashSet<String>();
-        String c = creditOf(p.item);
-        if (c.length() > 0) names.add(c);
-        if (p.item2 != null) { c = creditOf(p.item2); if (c.length() > 0) names.add(c); }
-        if (p.others != null) for (Item o : p.others) { c = creditOf(o); if (c.length() > 0) names.add(c); }
+        List<Item> all = new ArrayList<Item>();
+        all.add(p.item);
+        if (p.item2 != null) all.add(p.item2);
+        if (p.others != null) all.addAll(p.others);
+        boolean pending = false;
+        for (Item o : all) {
+            String c = creditOf(o, net);
+            if (c == null) pending = true; else if (c.length() > 0) names.add(c);
+        }
         StringBuilder sb = new StringBuilder();
         for (String n : names) { if (sb.length() > 0) sb.append(" \u00B7 "); sb.append(n); }
         p.credit = sb.toString();
+        p.creditPending = pending;
+    }
+
+    /** Lo que falta por saber del autor se mira en segundo plano y, si esa foto sigue en pantalla, aparece al terminar. */
+    private void creditLater(final Slide t) {
+        if (t == null || !t.creditPending || !Extras.on(ctx, Extras.CREDIT)) return;
+        t.creditPending = false;
+        crx.execute(new Runnable() {
+            public void run() {
+                try { fillCredit(t, true); } catch (Throwable ignored) { }
+                t.creditPending = false;
+                h.post(new Runnable() {
+                    public void run() { if (running && cur == t) setCredit(t); }
+                });
+            }
+        });
     }
 
     private void setInfo(final Slide s) {
@@ -1386,16 +1424,17 @@ class Slideshow {
                     return;
                 }
                 final Slide p = buildPhoto(it);
-                if (p != null) { try { groupUp(it, p); } catch (Throwable ignored) { } fillCredit(p); warm(p); }   // la subida a la tarjeta gráfica, aquí y no en el hilo de pantalla
+                if (p != null) { try { groupUp(it, p); } catch (Throwable ignored) { } fillCredit(p, false); warm(p); }   // la subida a la tarjeta gráfica, aquí y no en el hilo de pantalla
                 h.post(new Runnable() {
                     public void run() {
                         if (sess != session || !running) return;
                         if (p == null) { t.state = 3; } else {
                             t.bmp = p.bmp; t.date = p.date; t.place = p.place; t.state = 2;
-                            t.item2 = p.item2; t.others = p.others; t.credit = p.credit;
+                            t.item2 = p.item2; t.others = p.others; t.credit = p.credit; t.creditPending = p.creditPending;
                             t.bgColor = p.bgColor; t.bgSmall = p.bgSmall;
                         }
                         onBuilt(t);
+                        creditLater(t);
                     }
                 });
             }
@@ -1770,7 +1809,7 @@ class Slideshow {
         ex.submit(new Runnable() {
             public void run() {
                 final Slide s = buildSlide(it);
-                if (s != null && !s.video && s.bmp != null) { try { regroup(it, s); fillCredit(s); } catch (Throwable ignored) { } warm(s); }
+                if (s != null && !s.video && s.bmp != null) { try { regroup(it, s); fillCredit(s, false); } catch (Throwable ignored) { } warm(s); }
                 h.post(new Runnable() {
                     public void run() {
                         if (!running || sess != session || myGen != gen) return;
@@ -1784,6 +1823,7 @@ class Slideshow {
                         }
                         histPos = p;
                         display(s, false);
+                        creditLater(s);
                     }
                 });
             }

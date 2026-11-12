@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.9
+- Autor: arreglada la detección. Ahora lee también las fotos en HEIC de iPhone y las Live Photos empaquetadas, mira siempre el nombre del archivo (PIC… es de Lara) aunque no se pueda leer la cámara, y solo recuerda «sin autor» cuando está seguro. La foto sale al momento y el autor se calcula en segundo plano: si termina con la foto en pantalla, la marca aparece entonces.
+
 ## 7.8
 - Movimiento: al alejar con «Bordes a la vista», el movimiento dura un 60 % más (como los demás) para que no se pare al final.
 - Mosaicos: salen menos (dos verticales, una de cada 6 fotos verticales; tres verticales y cuatro juntas, una de cada 14) y nunca llevan vídeos.
