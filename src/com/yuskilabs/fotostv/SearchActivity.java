@@ -35,7 +35,7 @@ public class SearchActivity extends SettingsBase {
     private EditText input;
     private ListView list;
     private TextView info;
-    private int gen;
+    private volatile int gen;
     private boolean destroyed;
 
     @Override protected void onCreate(Bundle b) {
@@ -44,7 +44,7 @@ public class SearchActivity extends SettingsBase {
         input = new EditText(this) {
             // Atrás llega aquí antes que al teclado: así se sale aunque el teclado (el de Fire TV, por ejemplo) no lo suelte
             @Override public boolean onKeyPreIme(int code, KeyEvent ev) {
-                if (code == KeyEvent.KEYCODE_BACK && ev.getAction() == KeyEvent.ACTION_UP) { leave(); return true; }
+                if (code == KeyEvent.KEYCODE_BACK) { if (ev.getAction() == KeyEvent.ACTION_UP) back(); return true; }
                 return super.onKeyPreIme(code, ev);
             }
         };
@@ -69,12 +69,12 @@ public class SearchActivity extends SettingsBase {
         bgd.addState(new int[]{}, off);
         input.setBackground(bgd);
         root.addView(input, new LinearLayout.LayoutParams(-1, -2));
-        Button go = btn("Buscar", R.drawable.ic_search, new View.OnClickListener() {
+        goBtn = btn("Buscar", R.drawable.ic_search, new View.OnClickListener() {
             public void onClick(View v) { go(); }
         });
         LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(-1, -2);
         glp.topMargin = dp(8);
-        root.addView(go, glp);
+        root.addView(goBtn, glp);
         info = text("Cargando tus fotos…", 13, 0xFF9FB3C8);
         info.setPadding(0, dp(8), 0, dp(8));
         root.addView(info);
@@ -134,6 +134,7 @@ public class SearchActivity extends SettingsBase {
     }
 
     private boolean openFirst;
+    private Button goBtn;
     private long lastGo;
 
     /** «Buscar», Intro o «Siguiente»: busca lo escrito y abre el resultado; si no hay nada, lo dice. */
@@ -151,13 +152,20 @@ public class SearchActivity extends SettingsBase {
             return true;
         }
         openFirst = false;
+        gen++;                                   // las sugerencias pendientes ya no hacen falta
+        h.removeCallbacks(update);
         info.setText("Buscando «" + text + "»…");
         bg.submit(new Runnable() {
             public void run() {
-                final List<Item> res = Search.filter(a, p, text);
+                List<Item> r0 = null;
+                String err0 = null;
+                try { r0 = Search.filter(a, p, text); } catch (Throwable t) { err0 = String.valueOf(t); }
+                final List<Item> res = r0 == null ? new ArrayList<Item>() : r0;
+                final String err = err0;
                 h.post(new Runnable() {
                     public void run() {
                         if (destroyed) return;
+                        if (err != null) { info.setText("No se ha podido buscar: " + err); return; }
                         if (res.isEmpty()) {
                             info.setText("No encuentro fotos con «" + text + "».");
                             android.widget.Toast.makeText(SearchActivity.this, "No encuentro fotos con «" + text + "».", android.widget.Toast.LENGTH_SHORT).show();
@@ -172,6 +180,19 @@ public class SearchActivity extends SettingsBase {
         return true;
     }
 
+    /** Atrás: la primera vez cierra el teclado y deja el foco en el botón «Buscar»; la segunda sale. */
+    private void back() {
+        if (input.hasFocus()) {
+            try {
+                ((android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+                        .hideSoftInputFromWindow(input.getWindowToken(), 0);
+            } catch (Throwable ignored) { }
+            goBtn.requestFocus();
+            return;
+        }
+        leave();
+    }
+
     private void leave() {
         try {
             ((android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
@@ -183,7 +204,7 @@ public class SearchActivity extends SettingsBase {
     @Override public boolean dispatchKeyEvent(KeyEvent ev) {
         int c = ev.getKeyCode();
         if (ev.getAction() == KeyEvent.ACTION_UP && (c == KeyEvent.KEYCODE_BACK || c == KeyEvent.KEYCODE_ESCAPE
-                || c == KeyEvent.KEYCODE_MEDIA_PREVIOUS)) { leave(); return true; }
+                || c == KeyEvent.KEYCODE_MEDIA_PREVIOUS)) { back(); return true; }
         if (ev.getAction() == KeyEvent.ACTION_DOWN && (c == KeyEvent.KEYCODE_BACK || c == KeyEvent.KEYCODE_ESCAPE
                 || c == KeyEvent.KEYCODE_MEDIA_PREVIOUS)) return true;
         return super.dispatchKeyEvent(ev);
@@ -200,6 +221,7 @@ public class SearchActivity extends SettingsBase {
             final int g = ++gen;
             bg.submit(new Runnable() {
                 public void run() {
+                    if (g != gen) return;          // ya se ha escrito otra cosa: no se pierde tiempo con ésta
                     final List<String[]> s = Search.suggest(a, p, q);
                     h.post(new Runnable() {
                         public void run() {

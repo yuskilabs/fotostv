@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.11
+- Buscar: se quedaba en «Buscando…» porque la búsqueda esperaba detrás de las sugerencias de cada letra, que repasaban todas las fotos de una forma muy lenta. Ahora es mucho más rápida, al dar a «Buscar» se descartan las sugerencias pendientes y, si algo falla, lo dice en pantalla.
+- Buscar: Atrás cierra primero el teclado y deja el foco en el botón «Buscar»; la segunda vez sale.
+
 ## 7.10
 - Buscar: arreglado que al dar a «Buscar» (o «Siguiente» en el teclado de Fire TV) no pasara nada. Ahora busca directamente lo escrito y abre las fotos; si no hay ninguna, lo dice. Hay además un botón «Buscar» bajo el campo, por si el teclado no manda la orden.
 - Buscar: Atrás (y Anterior) del mando sale siempre de la pantalla, también con el teclado de Fire TV, que antes dejaba atascado.

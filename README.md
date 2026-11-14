@@ -104,7 +104,7 @@ Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde l
 - **Más favoritas**: con el orden «inteligente», las favoritas salen tres veces más a menudo.
 
 **Explorador**
-- **Buscar** (barra discreta en la pantalla principal, encima de los botones; se llega subiendo con el mando): por lugar, nombre del álbum, mes o año («Zahara», «agosto 2025», «Lara 2024»). Se lanza con «Buscar» del teclado, Intro, «Siguiente» o el botón «Buscar» de la pantalla; Atrás siempre sale.
+- **Buscar** (barra discreta en la pantalla principal, encima de los botones; se llega subiendo con el mando): por lugar, nombre del álbum, mes o año («Zahara», «agosto 2025», «Lara 2024»). Se lanza con «Buscar» del teclado, Intro, «Siguiente» o el botón «Buscar» de la pantalla; Atrás cierra el teclado y, a la segunda, sale.
 - **Álbumes virtuales**: el resultado de una búsqueda se guarda como álbum (botón «Guardar» del mosaico) y se actualiza solo. Se borran con pulsación larga.
 - **Saltar por fecha**: icono «Fecha» (junto al de «Mapa», arriba a la derecha del mosaico) que abre un calendario mensual: izquierda/derecha cambia de mes (o de año, si lo seleccionas) y al elegir un día se ven solo sus fotos; OK en el mes o en el año muestra todas las de ese mes o año.
 - **Viajes** (botón en la pantalla principal): agrupa solas las fotos hechas en días seguidos, con su lugar y fechas.

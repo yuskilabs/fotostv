@@ -43,6 +43,17 @@ final class Search {
         return filter(allVisible(c), places(c), text);
     }
 
+    // textos ya normalizados (sin tildes, en minúsculas): hay pocos lugares y álbumes distintos, y normalizar en cada foto
+    // hacía que buscar entre miles tardase minutos en una tele
+    private static final java.util.concurrent.ConcurrentHashMap<String, String> NORM = new java.util.concurrent.ConcurrentHashMap<String, String>();
+
+    private static String n(String s) {
+        if (s == null || s.length() == 0) return "";
+        String r = NORM.get(s);
+        if (r == null) { r = FxLogic.norm(s); if (NORM.size() < 20000) NORM.put(s, r); }
+        return r;
+    }
+
     static List<Item> filter(List<Item> all, Map<String, String> placeOf, String text) {
         FxLogic.Query q = FxLogic.parse(text);
         List<Item> out = new ArrayList<Item>();
@@ -50,7 +61,7 @@ final class Search {
         TimeZone tz = TimeZone.getDefault();
         for (Item it : all) {
             if (!FxLogic.dateMatches(q, it.ts, tz)) continue;
-            if (!FxLogic.wordsMatch(q, placeOf.get(it.key()), it.album)) continue;
+            if (!q.words.isEmpty() && !FxLogic.wordsIn(q, n(placeOf.get(it.key())) + " " + n(it.album))) continue;
             out.add(it);
         }
         return out;
@@ -68,11 +79,12 @@ final class Search {
         for (Item it : all) {
             if (!FxLogic.dateMatches(q, it.ts, tz)) continue;
             String p = placeOf.get(it.key());
-            if (!FxLogic.wordsMatch(q, p, it.album)) continue;
+            if (q.words.isEmpty()) { total++; continue; }
+            String np = n(p), na = n(it.album);
+            if (!FxLogic.wordsIn(q, np + " " + na)) continue;
             total++;
-            if (q.words.isEmpty()) continue;
-            if (p != null && FxLogic.wordsMatch(q, p, null)) inc(byPlace, p);
-            if (FxLogic.wordsMatch(q, null, it.album)) inc(byAlbum, it.album);
+            if (p != null && FxLogic.wordsIn(q, np)) inc(byPlace, p);
+            if (FxLogic.wordsIn(q, na)) inc(byAlbum, it.album);
         }
         if (total == 0) return out;
         out.add(new String[]{"Todas: «" + text.trim() + "»  ·  " + total + " fotos", text.trim(), String.valueOf(total)});

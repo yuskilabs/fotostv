@@ -229,7 +229,15 @@ final class FxLogic {
     static String norm(String s) {
         if (s == null) return "";
         String n = java.text.Normalizer.normalize(s.toLowerCase(Locale.ROOT), java.text.Normalizer.Form.NFD);
-        return n.replaceAll("\\p{M}+", "");
+        return MARKS.matcher(n).replaceAll("");
+    }
+
+    private static final java.util.regex.Pattern MARKS = java.util.regex.Pattern.compile("\\p{M}+");
+
+    /** Como wordsMatch, pero con el texto ya normalizado (para no repetir ese trabajo en cada foto). */
+    static boolean wordsIn(Query q, String normHay) {
+        for (String w : q.words) if (!normHay.contains(w)) return false;
+        return true;
     }
 
     static final class Query {
