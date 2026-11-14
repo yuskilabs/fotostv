@@ -12,6 +12,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -40,7 +41,13 @@ public class SearchActivity extends SettingsBase {
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         LinearLayout root = screen("Buscar", "Escribe un lugar, el nombre de un álbum, un mes o un año («Zahara», «agosto 2025», «Lara 2024»).", R.drawable.ic_search);
-        input = new EditText(this);
+        input = new EditText(this) {
+            // Atrás llega aquí antes que al teclado: así se sale aunque el teclado (el de Fire TV, por ejemplo) no lo suelte
+            @Override public boolean onKeyPreIme(int code, KeyEvent ev) {
+                if (code == KeyEvent.KEYCODE_BACK && ev.getAction() == KeyEvent.ACTION_UP) { leave(); return true; }
+                return super.onKeyPreIme(code, ev);
+            }
+        };
         input.setSingleLine(true);
         input.setTextColor(Color.WHITE);
         input.setHintTextColor(0xFF7C93AD);
@@ -62,6 +69,12 @@ public class SearchActivity extends SettingsBase {
         bgd.addState(new int[]{}, off);
         input.setBackground(bgd);
         root.addView(input, new LinearLayout.LayoutParams(-1, -2));
+        Button go = btn("Buscar", R.drawable.ic_search, new View.OnClickListener() {
+            public void onClick(View v) { go(); }
+        });
+        LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(-1, -2);
+        glp.topMargin = dp(8);
+        root.addView(go, glp);
         info = text("Cargando tus fotos…", 13, 0xFF9FB3C8);
         info.setPadding(0, dp(8), 0, dp(8));
         root.addView(info);
@@ -82,8 +95,10 @@ public class SearchActivity extends SettingsBase {
         input.setOnKeyListener(new View.OnKeyListener() {
             public boolean onKey(View v, int code, KeyEvent ev) {
                 if (ev.getAction() != KeyEvent.ACTION_DOWN) return false;
-                if (code == KeyEvent.KEYCODE_ENTER || code == KeyEvent.KEYCODE_NUMPAD_ENTER) return go();
-                if (code == KeyEvent.KEYCODE_DPAD_DOWN && list.getCount() > 0) { list.requestFocus(); list.setSelection(0); return true; }
+                // Intro, «Siguiente» (teclados que lo mandan como tecla) y «Buscar»: lanzan la búsqueda
+                if (code == KeyEvent.KEYCODE_ENTER || code == KeyEvent.KEYCODE_NUMPAD_ENTER || code == KeyEvent.KEYCODE_TAB
+                        || code == 261 /* NAVIGATE_NEXT */ || code == KeyEvent.KEYCODE_SEARCH) return go();
+                if (code == KeyEvent.KEYCODE_DPAD_DOWN) { View nx = input.focusSearch(View.FOCUS_DOWN); if (nx != null) { nx.requestFocus(); return true; } }
                 return false;
             }
         });
@@ -97,7 +112,7 @@ public class SearchActivity extends SettingsBase {
                         all = a;
                         places = p;
                         info.setText(a.size() + " fotos en tus álbumes (" + p.size() + " con lugar conocido).");
-                        update.run();
+                        if (openFirst) go(); else update.run();
                     }
                 });
             }
@@ -119,15 +134,59 @@ public class SearchActivity extends SettingsBase {
     }
 
     private boolean openFirst;
+    private long lastGo;
 
-    /** «Buscar» / Intro: abre la primera sugerencia («Todas: …»); si aún no está calculada, en cuanto lo esté. */
+    /** «Buscar», Intro o «Siguiente»: busca lo escrito y abre el resultado; si no hay nada, lo dice. */
     private boolean go() {
-        if (input.getText().toString().trim().length() == 0) return true;
-        if (!rows.isEmpty() && input.getText().toString().equals(lastQ)) { open(0); return true; }
-        openFirst = true;
-        h.removeCallbacks(update);
-        update.run();
+        final String text = input.getText().toString().trim();
+        if (text.length() == 0) return true;
+        long now = System.currentTimeMillis();
+        if (now - lastGo < 800) return true;       // Intro y «Buscar» pueden llegar los dos: una sola vez
+        lastGo = now;
+        final List<Item> a = all;
+        final HashMap<String, String> p = places;
+        if (a == null || p == null) {          // las fotos aún se están cargando: se busca en cuanto estén
+            openFirst = true;
+            info.setText("Cargando tus fotos… en cuanto estén, busco «" + text + "».");
+            return true;
+        }
+        openFirst = false;
+        info.setText("Buscando «" + text + "»…");
+        bg.submit(new Runnable() {
+            public void run() {
+                final List<Item> res = Search.filter(a, p, text);
+                h.post(new Runnable() {
+                    public void run() {
+                        if (destroyed) return;
+                        if (res.isEmpty()) {
+                            info.setText("No encuentro fotos con «" + text + "».");
+                            android.widget.Toast.makeText(SearchActivity.this, "No encuentro fotos con «" + text + "».", android.widget.Toast.LENGTH_SHORT).show();
+                        } else {
+                            info.setText(res.size() + " fotos con «" + text + "».");
+                            openMosaic(text, res, text);
+                        }
+                    }
+                });
+            }
+        });
         return true;
+    }
+
+    private void leave() {
+        try {
+            ((android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+                    .hideSoftInputFromWindow(input.getWindowToken(), 0);
+        } catch (Throwable ignored) { }
+        finish();
+    }
+
+    @Override public boolean dispatchKeyEvent(KeyEvent ev) {
+        int c = ev.getKeyCode();
+        if (ev.getAction() == KeyEvent.ACTION_UP && (c == KeyEvent.KEYCODE_BACK || c == KeyEvent.KEYCODE_ESCAPE
+                || c == KeyEvent.KEYCODE_MEDIA_PREVIOUS)) { leave(); return true; }
+        if (ev.getAction() == KeyEvent.ACTION_DOWN && (c == KeyEvent.KEYCODE_BACK || c == KeyEvent.KEYCODE_ESCAPE
+                || c == KeyEvent.KEYCODE_MEDIA_PREVIOUS)) return true;
+        return super.dispatchKeyEvent(ev);
     }
 
     private String lastQ = "";

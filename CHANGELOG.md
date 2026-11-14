@@ -3,6 +3,10 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.10
+- Buscar: arreglado que al dar a «Buscar» (o «Siguiente» en el teclado de Fire TV) no pasara nada. Ahora busca directamente lo escrito y abre las fotos; si no hay ninguna, lo dice. Hay además un botón «Buscar» bajo el campo, por si el teclado no manda la orden.
+- Buscar: Atrás (y Anterior) del mando sale siempre de la pantalla, también con el teclado de Fire TV, que antes dejaba atascado.
+
 ## 7.9
 - Autor: arreglada la detección. Ahora lee también las fotos en HEIC de iPhone y las Live Photos empaquetadas, mira siempre el nombre del archivo (PIC… es de Lara) aunque no se pueda leer la cámara, y solo recuerda «sin autor» cuando está seguro. La foto sale al momento y el autor se calcula en segundo plano: si termina con la foto en pantalla, la marca aparece entonces.
 
