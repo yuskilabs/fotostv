@@ -50,6 +50,7 @@ class Slideshow {
         String streamUrl;     // vídeo en directo (versión ligera) mientras baja la buena
         int startMs;          // empezar el vídeo por aquí (al pasar de baja a alta calidad)
         int state;            // 0 preparando, 1 descargando vídeo, 2 lista, 3 fallida
+        long born = System.currentTimeMillis();   // cuándo se empezó a preparar (para detectar las que se quedan colgadas)
         Item item2;           // «dos verticales»: la segunda foto que va al lado
         java.util.List<Item> others;   // «tres/cuatro juntas»: la tercera y la cuarta
         String credit = "";           // marca de agua: quién la hizo
@@ -165,6 +166,8 @@ class Slideshow {
     void start() {
         if (running) return;
         running = true;
+        h.removeCallbacks(watchdog);
+        h.postDelayed(watchdog, 20000);
         MetaFetcher.fullDate = Extras.on(ctx, Extras.DATE_FULL);
         MetaFetcher.shortDate = "short".equals(Extras.str(ctx, Extras.DATE_FMT, "long"));
         // estado limpio en cada arranque: una carga a medias de la vez anterior no debe bloquear el pase
@@ -1390,8 +1393,40 @@ class Slideshow {
     }
 
     /** Mantiene varias diapositivas preparadas por delante. Los vídeos largos se bajan aparte y no frenan las fotos. */
+    private static final long STUCK_MS = 90000;
+
+    /**
+     * Una foto que lleva más de minuto y medio «preparándose» está colgada (un fallo al montarla o la red sin responder):
+     * se quita de la cola para que el pase siga; si no, no dejaba preparar más y el pase se quedaba parado para siempre.
+     */
+    private void dropStuck() {
+        long now = System.currentTimeMillis();
+        boolean dropped = false;
+        for (int i = queue.size() - 1; i >= 0; i--) {
+            Slide q = queue.get(i);
+            if (q.state == 0 && now - q.born > STUCK_MS) { queue.remove(i); dropped = true; }
+            else if (q.state == 1 && now - q.born > 300000) queue.remove(i);      // un vídeo que no termina de llegar
+        }
+        if (dropped) {      // los hilos que las preparaban pueden seguir bloqueados: se sustituyen por otros nuevos
+            try { ex.shutdownNow(); } catch (Throwable ignored) { }
+            ex = Executors.newFixedThreadPool(2);
+        }
+    }
+
+    /** Vigilante: cada 20 s comprueba que el pase no se ha quedado esperando a una foto colgada. */
+    private final Runnable watchdog = new Runnable() {
+        public void run() {
+            if (!running) return;
+            h.postDelayed(this, 20000);
+            if (browse()) return;
+            prefetch();
+            if (waiting && !paused && !asleep() && count(2) > 0) { waiting = false; goNext(); }
+        }
+    };
+
     private void prefetch() {
         if (!running || browse()) return;
+        dropStuck();
         int guard = 0;
         while (running && guard++ < 50 && count(2) < AHEAD && count(0) < 2 && count(1) < 2 && queue.size() < 8) {
             Item it = nextItem();
@@ -1410,7 +1445,7 @@ class Slideshow {
         ex.submit(new Runnable() {
             public void run() {
                 boolean isVid = false;
-                try { isVid = Prefs.video(ctx) && MetaFetcher.isVideo(ctx, it); } catch (Exception ignored) { }
+                try { isVid = Prefs.video(ctx) && MetaFetcher.isVideo(ctx, it); } catch (Throwable ignored) { }
                 if (isVid) {
                     h.post(new Runnable() {
                         public void run() {
@@ -1423,8 +1458,15 @@ class Slideshow {
                     });
                     return;
                 }
-                final Slide p = buildPhoto(it);
-                if (p != null) { try { groupUp(it, p); } catch (Throwable ignored) { } fillCredit(p, false); warm(p); }   // la subida a la tarjeta gráfica, aquí y no en el hilo de pantalla
+                // pase lo que pase (falta de memoria incluida) la foto termina como «lista» o «fallida»: nunca se queda a medias
+                Slide p0 = null;
+                try { p0 = buildPhoto(it); } catch (Throwable e) { p0 = null; }
+                if (p0 != null) {
+                    try { groupUp(it, p0); } catch (Throwable ignored) { }
+                    try { fillCredit(p0, false); } catch (Throwable ignored) { }
+                    try { warm(p0); } catch (Throwable ignored) { }   // la subida a la tarjeta gráfica, aquí y no en el hilo de pantalla
+                }
+                final Slide p = p0;
                 h.post(new Runnable() {
                     public void run() {
                         if (sess != session || !running) return;

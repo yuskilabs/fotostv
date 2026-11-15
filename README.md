@@ -28,6 +28,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Fundidos suaves** entre fotos horizontales, verticales y vídeos. En el pase, un vídeo solo entra cuando ya tiene unos segundos listos, para que no se pare.
 - **Paso manual instantáneo** en el visor, sin fundido: decenas de fotos se descargan por adelantado para que ◀ ▶ respondan al momento.
 - **Precarga**: las siguientes fotos y vídeos se preparan antes de que toquen.
+- **Pase que no se atasca**: si una foto falla o se queda colgada al prepararse, se descarta y el pase sigue con otra.
 - **Seguir donde se quedó**: el álbum se reanuda en la última foto vista (opcional).
 
 ### Vídeos
