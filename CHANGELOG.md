@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.14
+- Ajustes: «Ubicaciones» pasa a ser la última tarjeta de la derecha (y la que se estira un poco, para que quepa el texto mientras comprueba) y «Salvapantallas» queda justo encima.
+
 ## 7.13
 - Ajustes: «Salvapantallas» pasa abajo a la derecha, «Ubicaciones» ya no se estira hasta ser enorme y las dos columnas acaban alineadas.
 - Música: el volumen sube de 10 % en 10 % (10, 20, 30… 100).

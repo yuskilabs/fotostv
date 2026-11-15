@@ -1,6 +1,6 @@
 {
-  "version": "7.13",
+  "version": "7.14",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 902664,
-  "notes": "- Ajustes: «Salvapantallas» pasa abajo a la derecha, «Ubicaciones» ya no se estira hasta ser enorme y las dos columnas acaban alineadas.\n- Música: el volumen sube de 10 % en 10 % (10, 20, 30… 100).\n- Música: «Emisora» y «Carpeta: elegir» intercambian su sitio."
+  "notes": "- Ajustes: «Ubicaciones» pasa a ser la última tarjeta de la derecha (y la que se estira un poco, para que quepa el texto mientras comprueba) y «Salvapantallas» queda justo encima."
 }

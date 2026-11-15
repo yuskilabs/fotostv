@@ -349,8 +349,8 @@ public class AjustesActivity extends SettingsBase {
         right.addView(cm);
         right.addView(cv);
         right.addView(ce);
-        right.addView(cg);
-        right.addView(cs, new LinearLayout.LayoutParams(-1, 0, 1f));
+        right.addView(cs);
+        right.addView(cg, new LinearLayout.LayoutParams(-1, 0, 1f));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1f);
         lp.setMargins(0, 0, dp(8), 0);
         cols.addView(left, lp);
