@@ -98,7 +98,7 @@ public class AjustesActivity extends SettingsBase {
         });
         volBtn = btn(volLabel(), R.drawable.ic_tune, new View.OnClickListener() {
             public void onClick(View v) {
-                int[] o = {10, 20, 30, 40, 60, 80, 100};
+                int[] o = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
                 int cur = Prefs.musicVol(AjustesActivity.this), nx = o[0];
                 for (int i = 0; i < o.length; i++) if (o[i] > cur) { nx = o[i]; break; }
                 Prefs.sp(AjustesActivity.this).edit().putInt("musicVol", nx).commit();
@@ -122,7 +122,7 @@ public class AjustesActivity extends SettingsBase {
         Button duck = twoFx("Con vídeo", Extras.SOFT_DUCK, "callar música", "bajar música",
                 R.drawable.ic_video, "Cuando suena un vídeo con sonido, la música se calla (como siempre) o solo baja de volumen.");
         cm.addView(row(musicBtn, volBtn));
-        cm.addView(row(folderBtn, radioBtn));
+        cm.addView(row(radioBtn, folderBtn));
         cm.addView(row(dreamMusicBtn, albumMusic));
         cm.addView(row(duck, null));
         
@@ -345,12 +345,12 @@ public class AjustesActivity extends SettingsBase {
         left.addView(cf);
         left.addView(ci);
         left.addView(cn);
-        left.addView(cs);
         left.addView(ch, new LinearLayout.LayoutParams(-1, 0, 1f));
         right.addView(cm);
         right.addView(cv);
         right.addView(ce);
-        right.addView(cg, new LinearLayout.LayoutParams(-1, 0, 1f));
+        right.addView(cg);
+        right.addView(cs, new LinearLayout.LayoutParams(-1, 0, 1f));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1f);
         lp.setMargins(0, 0, dp(8), 0);
         cols.addView(left, lp);

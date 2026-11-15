@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.13
+- Ajustes: «Salvapantallas» pasa abajo a la derecha, «Ubicaciones» ya no se estira hasta ser enorme y las dos columnas acaban alineadas.
+- Música: el volumen sube de 10 % en 10 % (10, 20, 30… 100).
+- Música: «Emisora» y «Carpeta: elegir» intercambian su sitio.
+
 ## 7.12
 - Pase: corregido que a veces se quedara parado para siempre en una foto (sin poder avanzar, aunque sí retroceder). Si al preparar las fotos siguientes algo fallaba a medias (por ejemplo, falta de memoria al montar un mosaico), esas fotos se quedaban «preparándose» sin fin y no dejaban preparar más. Ahora un fallo así cuenta como foto fallida y se pasa a otra, y un vigilante revisa cada 20 segundos que el pase no esté esperando a una foto colgada.
 

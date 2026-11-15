@@ -57,7 +57,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Revisar ubicaciones** (Ajustes, menú largo de un álbum o de una foto): vuelve a mirar solo lo pendiente. Pulsación larga sobre el contador: rehacer los nombres.
 
 ### Música
-- Apagada, **emisora de internet** o **carpeta** de canciones (de la tele o de un USB), con **volumen propio**.
+- Apagada, **emisora de internet** o **carpeta** de canciones (de la tele o de un USB), con **volumen propio** (de 10 % en 10 %).
 - Lista de emisoras por estilos y épocas (relax, pop, años 80 y 90, rock, Navidad…), con **escucha previa**: al abrir la lista suena la elegida y, al bajar, suena cada emisora sobre la que te posas. También se puede pegar la dirección de una emisora propia desde la web.
 - Suena en los pases que abres tú y, si quieres, en el salvapantallas. Se calla mientras suena el audio de un vídeo.
 
