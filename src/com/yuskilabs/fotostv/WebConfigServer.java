@@ -271,6 +271,11 @@ class WebConfigServer extends Thread {
         android.content.SharedPreferences.Editor e = Prefs.sp(ctx).edit();
         if (f.containsKey("albumMode")) e.putString("albumMode", f.get("albumMode"));
         if (f.containsKey("albumSort")) e.putString("albumSort", f.get("albumSort"));
+        if (f.containsKey("creditRules")) {
+            String cr = f.get("creditRules").replace("\r", "").trim();
+            if (cr.length() == 0 || cr.equals(FxLogic.DEFAULT_CREDIT_RULES.trim())) e.remove(Extras.CREDIT_RULES);
+            else e.putString(Extras.CREDIT_RULES, cr);
+        }
         if (f.containsKey("musicRadio")) {
             String mr = val(f, "musicRadio");
             // vacío = no tocar si hay una emisora de la lista elegida; solo borra si había una propia
@@ -711,6 +716,10 @@ class WebConfigServer extends Thread {
         sb.append("<h2>Emisora propia</h2><p class='muted'>La música (apagada, radio o carpeta, volumen…) se elige en la tele, en Ajustes. Aquí solo hace falta pegar la dirección de una emisora que no esté en la lista.</p>")
           .append("<input name='musicRadio' type='url' placeholder='https://… (dirección de la emisora)' value='")
           .append(esc(customRadio(ctx))).append("'>");
+        sb.append("<h2>Autor de las fotos</h2><p class='muted'>Con la opción «Autor» activada en Ajustes, la tele pone «© nombre» abajo a la derecha. Aquí se decide quién es cada foto: una regla por línea, gana la primera que encaje. «cámara:» mira el nombre de la cámara (con «-» delante, lo que no debe llevar); «archivo:» mira con qué empieza el nombre del archivo. Para volver a las reglas de partida, borra todo y guarda.</p>")
+          .append("<textarea name='creditRules' rows='12' spellcheck='false'>")
+          .append(esc(Extras.str(ctx, Extras.CREDIT_RULES, "").length() > 0 ? Extras.str(ctx, Extras.CREDIT_RULES, "") : FxLogic.DEFAULT_CREDIT_RULES))
+          .append("</textarea>");
         sb.append("<button type='submit'>💾 Guardar</button>");
         StringBuilder alb = new StringBuilder();
         alb.append("<h2>Álbumes</h2>");

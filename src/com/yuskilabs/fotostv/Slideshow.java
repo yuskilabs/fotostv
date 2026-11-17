@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -60,17 +59,24 @@ class Slideshow {
     }
 
     private final Context ctx;
+    private final VideoCache vcache;
+    private final Mosaic mosaic;
     private final FrameLayout root;
     private final Handler h = new Handler(Looper.getMainLooper());
     private ExecutorService ex, vex, bex, hdEx;
     private java.util.concurrent.Future<?> browseLoad, upLoad;
     private volatile String browseKey;
     private volatile boolean detecting;
-    private Item aheadItem;
-    private final Runnable aheadRun = new Runnable() {
-        public void run() { if (running && aheadItem != null) browseAhead(aheadItem); }
-    };
     private int session;
+
+    /** Vídeos que no se pueden borrar de la caché: el de ahora, los de la cola y el que se está cargando. */
+    private java.util.Set<String> keepVideos() {
+        java.util.Set<String> keep = new java.util.HashSet<String>();
+        if (cur != null && cur.item != null) keep.add(cur.item.key());
+        for (Slide q : new ArrayList<Slide>(queue)) keep.add(q.item.key());
+        if (loadingKey != null) keep.add(loadingKey);
+        return keep;
+    }
     private String loadingKey;
     private final List<Slide> queue = new ArrayList<Slide>();
     private static final int AHEAD = 3;
@@ -144,6 +150,14 @@ class Slideshow {
 
     Slideshow(Context ctx, FrameLayout root, boolean showHint, Config cfg) {
         this.ctx = ctx;
+        this.vcache = new VideoCache(ctx);
+        this.mosaic = new Mosaic(ctx, new Mosaic.Host() {
+            public List<Item> items() { return items; }
+            public int width() { return w; }
+            public int height() { return hgt; }
+            public boolean manual() { return Slideshow.this.manual(); }
+            public byte[] photoBytes(Item it) throws Exception { return Slideshow.this.photoBytes(it); }
+        });
         this.root = root;
         this.showHint = showHint;
         this.cfg = cfg;
@@ -185,6 +199,7 @@ class Slideshow {
         vex = Executors.newSingleThreadExecutor();
         bex = Executors.newSingleThreadExecutor();
         hdEx = Executors.newSingleThreadExecutor();
+        crx = Executors.newSingleThreadExecutor();
         pex = Executors.newFixedThreadPool(4, new java.util.concurrent.ThreadFactory() {
             public Thread newThread(final Runnable r) {
                 return new Thread(new Runnable() {
@@ -206,7 +221,7 @@ class Slideshow {
         if (Extras.on(ctx, Extras.WEATHER)) h.post(weatherTick);
         active = this;
         if (Extras.on(ctx, Extras.REMOTE)) openRemote();
-        cleanVideos();
+        vcache.clean(keepVideos());
 
         if (cfg != null) {
             paused = cfg.manual;
@@ -240,12 +255,13 @@ class Slideshow {
         if (bex != null) bex.shutdownNow();
         if (hdEx != null) hdEx.shutdownNow();
         if (pex != null) pex.shutdownNow();
+        if (crx != null) crx.shutdownNow();
         synchronized (bcache) { bcache.clear(); }
         synchronized (bytesCache) { bytesCache.clear(); bytesTotal = 0; }
         releasePlayer();
         queue.clear();
         cur = null;
-        cleanVideos();
+        vcache.clean(keepVideos());
         if (a != null) a.setImageDrawable(null);
         if (b != null) b.setImageDrawable(null);
     }
@@ -535,75 +551,16 @@ class Slideshow {
         creditView.animate().alpha(1f).setStartDelay(600).setDuration(1200).start();
     }
 
-    private final java.util.concurrent.Executor crx = Executors.newSingleThreadExecutor();
-
-    /**
-     * Quién hizo esa foto: "" si nadie encaja; null si todavía no se sabe (y no se puede mirar ahora: net = false).
-     * Se recuerda solo cuando la respuesta es segura.
-     */
-    private String creditOf(Item it, boolean net) {
-        try {
-            android.content.SharedPreferences m = Prefs.meta(ctx);
-            String k = "cr2_" + it.key();
-            String c = m.getString(k, null);
-            if (c != null) return c;
-            Boolean v = MetaFetcher.cachedVideo(ctx, it);
-            if (v != null && v) return "";
-            String cam = MetaFetcher.cachedCam(ctx, it);
-            if (cam == null || cam.length() == 0) {
-                try { cam = GeoIndex.get(ctx).camOf(it.key()); } catch (Throwable ignored) { cam = null; }
-            }
-            boolean camKnown = cam != null && cam.length() > 0;
-            String name = camKnown ? FxLogic.credit(cam, null) : "";
-            if (name.length() > 0) { m.edit().putString(k, name).apply(); return name; }
-            if (!net) return null;
-            if (!camKnown) {
-                String got = MetaFetcher.fetchCam(it);       // null = no se pudo leer
-                if (got != null && got.length() > 0) {
-                    camKnown = true;
-                    try { GeoIndex.get(ctx).putCam(it.key(), got); } catch (Throwable ignored) { }
-                    name = FxLogic.credit(got, null);
-                    if (name.length() > 0) { m.edit().putString(k, name).apply(); return name; }
-                }
-            }
-            boolean fileOk = false;
-            if (it.id.length() > 0 && it.akey.length() > 0) {
-                try {
-                    String fn = AlbumFetcher.fileName(it.id, it.akey);
-                    if (fn.length() > 0) { fileOk = true; name = FxLogic.credit(null, fn); }
-                } catch (Throwable ignored) { }
-            }
-            if (name.length() > 0 || camKnown || fileOk) m.edit().putString(k, name).apply();
-            return name;
-        } catch (Throwable t) { return ""; }
-    }
-
-    /** Autores de las fotos de esta diapositiva (si es un mosaico, los distintos). Con net = false solo usa lo ya guardado. */
-    private void fillCredit(Slide p, boolean net) {
-        if (!Extras.on(ctx, Extras.CREDIT) || p == null || p.item == null) return;
-        java.util.LinkedHashSet<String> names = new java.util.LinkedHashSet<String>();
-        List<Item> all = new ArrayList<Item>();
-        all.add(p.item);
-        if (p.item2 != null) all.add(p.item2);
-        if (p.others != null) all.addAll(p.others);
-        boolean pending = false;
-        for (Item o : all) {
-            String c = creditOf(o, net);
-            if (c == null) pending = true; else if (c.length() > 0) names.add(c);
-        }
-        StringBuilder sb = new StringBuilder();
-        for (String n : names) { if (sb.length() > 0) sb.append(" \u00B7 "); sb.append(n); }
-        p.credit = sb.toString();
-        p.creditPending = pending;
-    }
+    private ExecutorService crx;       // autor de las fotos, en segundo plano
 
     /** Lo que falta por saber del autor se mira en segundo plano y, si esa foto sigue en pantalla, aparece al terminar. */
     private void creditLater(final Slide t) {
         if (t == null || !t.creditPending || !Extras.on(ctx, Extras.CREDIT)) return;
         t.creditPending = false;
+        if (crx == null || crx.isShutdown()) return;
         crx.execute(new Runnable() {
             public void run() {
-                try { fillCredit(t, true); } catch (Throwable ignored) { }
+                try { Credit.fill(ctx, t, true); } catch (Throwable ignored) { }
                 t.creditPending = false;
                 h.post(new Runnable() {
                     public void run() { if (running && cur == t) setCredit(t); }
@@ -860,125 +817,13 @@ class Slideshow {
         });
     }
 
-    // ------------------------------------------------------------ caché temporal de vídeos
-    private static final long MAX_VIDEO = 600L * 1024 * 1024;
-
-    private java.io.File videoDir() {
-        java.io.File dir = new java.io.File(ctx.getCacheDir(), "videos");
-        dir.mkdirs();
-        return dir;
-    }
-
-    /** Mantiene la caché de vídeos: se conservan los más usados hasta el tope de espacio y se borra solo lo más antiguo. */
-    private void cleanVideos() {
-        java.io.File[] fs = videoDir().listFiles();
-        if (fs == null) return;
-        java.util.Set<String> keep = new java.util.HashSet<String>();
-        if (cur != null && cur.item != null) keep.add(cur.item.key());
-        for (Slide q : queue) keep.add(q.item.key());
-        if (loadingKey != null) keep.add(loadingKey);
-        List<java.io.File> old = new ArrayList<java.io.File>();
-        long now = System.currentTimeMillis();
-        for (java.io.File f : fs) {
-            String n = f.getName();
-            if (n.endsWith(".part")) {                       // descargas a medias: fuera las de hace rato
-                if (now - f.lastModified() > 15 * 60 * 1000L) f.delete();
-                continue;
-            }
-            int d = n.indexOf('.');
-            String k = d > 0 ? n.substring(0, d) : n;
-            if (!keep.contains(k)) old.add(f);
-        }
-        java.util.Collections.sort(old, new java.util.Comparator<java.io.File>() {
-            public int compare(java.io.File x, java.io.File y) {
-                return x.lastModified() < y.lastModified() ? 1 : (x.lastModified() > y.lastModified() ? -1 : 0);
-            }
-        });
-        long total = 0;
-        for (java.io.File f : fs) {
-            String n = f.getName();
-            int d = n.indexOf('.');
-            if (!n.endsWith(".part") && keep.contains(d > 0 ? n.substring(0, d) : n)) total += f.length();
-        }
-        long cap = Prefs.videoMB(ctx) * 1024L * 1024L;
-        for (java.io.File f : old) {
-            total += f.length();
-            if (total > cap) f.delete();
-        }
-    }
-
-    private java.io.File hdFile(Item it) { return new java.io.File(videoDir(), it.key() + ".mp4"); }
-    private java.io.File lqFile(Item it) { return new java.io.File(videoDir(), it.key() + ".lq.mp4"); }
-
-    private static boolean ready(java.io.File f) {
-        if (!f.exists() || f.length() <= 10000) return false;
-        f.setLastModified(System.currentTimeMillis());      // usado hace poco: se borra el último
-        return true;
-    }
-
-    /** Alta calidad (1080p, si no 720p). readMs: cuánto esperar a que Google prepare el vídeo. */
-    private java.io.File loadHd(Item it, int readMs) { return loadHd(it, readMs, null); }
-
-    private java.io.File loadHd(Item it, int readMs, VideoProxy.Prog prog) {
-        java.io.File f = hdFile(it);
-        if (ready(f)) { if (prog != null) { prog.len = f.length(); prog.written = f.length(); prog.done = true; } return f; }
-        java.io.File part = new java.io.File(videoDir(), it.key() + ".mp4.part");
-        for (String v : Prefs.videoSd(ctx) ? new String[]{"=m22", "=m37"} : new String[]{"=m37", "=m22"}) {
-            if (Thread.currentThread().isInterrupted()) break;
-            if (AlbumFetcher.downloadVideo(it.url + v, part, MAX_VIDEO, readMs, prog) && part.renameTo(f)) { if (prog != null) prog.done = true; return f; }
-        }
-        part.delete();
-        if (prog != null) prog.failed = true;
-        return null;
-    }
-
-    /** Dirección para ver el vídeo mientras se descarga (con todo lo bajado como búfer). */
-    private String streamFor(Item it, VideoProxy.Prog pr) {
-        String u = VideoProxy.get().register(new java.io.File(videoDir(), it.key() + ".mp4.part"), hdFile(it), pr);
-        return u != null ? u : it.url + "=m37";
-    }
-
-    private volatile String lqNote = "";
-
-    /** Versión ligera (360p, si no 720p): pesa poco y llega antes. Se guarda aparte para no confundirla con la buena. */
-    private java.io.File loadLq(Item it, int readMs) {
-        java.io.File f = lqFile(it);
-        if (ready(f)) return f;
-        java.io.File part = new java.io.File(videoDir(), it.key() + ".lq.part");
-        StringBuilder why = new StringBuilder();
-        for (String v : new String[]{"=m18", "=m22"}) {
-            if (Thread.currentThread().isInterrupted()) break;
-            if (AlbumFetcher.downloadVideo(it.url + v, part, MAX_VIDEO, readMs) && part.renameTo(f)) return f;
-            why.append(v).append(": ").append(AlbumFetcher.lastVideoErr).append("  ");
-        }
-        part.delete();
-        lqNote = why.toString().trim();
-        return null;
-    }
-
-    /** Pase y vídeo suelto: la mejor calidad disponible; si no hay otra, la baja; y por último el original. */
-    private java.io.File loadVideo(Item it) { return loadVideo(it, null); }
-
-    private java.io.File loadVideo(Item it, VideoProxy.Prog prog) {
-        java.io.File f = loadHd(it, 60000, prog);
-        if (f != null) return f;
-        f = loadLq(it, 30000);
-        if (f != null) return f;
-        java.io.File hd = hdFile(it);
-        java.io.File part = new java.io.File(videoDir(), it.key() + ".mp4.part");
-        if (!Thread.currentThread().isInterrupted()
-                && AlbumFetcher.downloadVideo(it.url + "=dv", part, MAX_VIDEO, 30000) && part.renameTo(hd)) return hd;
-        part.delete();
-        return null;
-    }
-
     // ------------------------------------------------------------ carga de una diapositiva
     /** Versión síncrona (navegación hacia atrás): vídeo o foto. */
     private Slide buildSlide(Item it) {
         try {
             if (Prefs.video(ctx) && MetaFetcher.isVideo(ctx, it)) {
                 loadingKey = it.key();
-                java.io.File f = loadVideo(it);
+                java.io.File f = vcache.loadVideo(it);
                 if (f != null) {
                     Slide t = new Slide();
                     t.item = it;
@@ -990,7 +835,8 @@ class Slideshow {
                 }
             }
             return buildPhoto(it);
-        } catch (Exception e) {
+        } catch (Throwable e) {     // también la falta de memoria: se da por fallida y el pase sigue
+            Diag.e("cargar vídeo o foto", e);
             return null;
         }
     }
@@ -1049,188 +895,20 @@ class Slideshow {
             }
             fillBackground(t);
             return t;
-        } catch (Exception e) {
+        } catch (Throwable e) {     // también la falta de memoria: se da por fallida y el pase sigue
+            Diag.e("preparar foto", e);
             return null;
         }
     }
 
-    // ------------------------------------------------------------ dos verticales juntas (función extra)
-    private boolean collageOn() { return !manual() && Extras.on(ctx, Extras.COLLAGE); }
-
-    private static boolean portrait(Bitmap b) { return b != null && b.getHeight() > b.getWidth() * 1.05f; }
-
-    /**
-     * Al pasar a una foto vertical, si la que va justo detrás en la cola ya está lista y también es una foto vertical,
-     * salen juntas (en el hilo de pantalla y en el orden de la lista: nunca se salta ni se desordena nada).
-     */
-    private static boolean sameAlbum(Item x, Item y) {
-        if (x == null || y == null) return false;
-        if (x.akey != null && y.akey != null && x.akey.length() > 0 && y.akey.length() > 0) return x.akey.equals(y.akey);
-        return x.album != null && x.album.equals(y.album);
-    }
+    // ------------------------------------------------------------ utilidades de la diapositiva
+    private static final long FADE_MS = 2000;     // fundido entre fotos: largo, para que el final del movimiento no se note
+    private final java.util.concurrent.Executor io = Executors.newSingleThreadExecutor();
 
     /** Sube la foto a la tarjeta gráfica con antelación, para que el cambio de foto no provoque un tirón en el movimiento. */
     private static void warm(Slide t) {
         try { if (t.bmp != null) t.bmp.prepareToDraw(); } catch (Throwable ignored) { }
         try { if (t.bgSmall != null) t.bgSmall.prepareToDraw(); } catch (Throwable ignored) { }
-    }
-
-    // ------------------------------------------------------------ grupos de fotos cercanas en el tiempo
-    private static final long GROUP_WINDOW_MS = 15L * 60 * 1000;
-    private static final int GRID_ODDS = 14;                // tres/cuatro juntas: una de cada 14 fotos, más o menos
-    private static final int PAIR_ODDS = 6;                 // dos verticales: una de cada 6 fotos verticales, más o menos
-    private final java.util.concurrent.Executor io = Executors.newSingleThreadExecutor();
-    private static final long FADE_MS = 2000;     // fundido entre fotos: largo, para que el final del movimiento no se note
-    private final java.util.Random grpRnd = new java.util.Random();
-
-    private boolean gridOn() { return !manual() && Extras.on(ctx, Extras.GRID4); }
-    private boolean trioOn() { return !manual() && Extras.on(ctx, Extras.TRIO3); }
-
-    private static class G {
-        Item it;
-        Bitmap b;
-        G(Item it, Bitmap b) { this.it = it; this.b = b; }
-    }
-
-    // para que al volver atrás con «Anterior» siga saliendo el mismo mosaico: foto principal -> las que iban con ella
-    private final java.util.Map<String, List<Item>> groups = new java.util.concurrent.ConcurrentHashMap<String, List<Item>>();
-
-    /** Fotos del mismo álbum hechas con menos de 15 minutos de diferencia, las más cercanas primero. */
-    private List<Item> nearItems(final Item it) {
-        List<Item> out = new ArrayList<Item>();
-        if (it.ts <= 0) return out;
-        List<Item> snap = items;
-        java.util.Set<String> hid = Prefs.hidden(ctx);
-        try {
-            for (int i = 0; i < snap.size(); i++) {
-                Item q = snap.get(i);
-                if (q == it || q.ts <= 0 || Math.abs(q.ts - it.ts) > GROUP_WINDOW_MS || !sameAlbum(it, q)) continue;
-                if (q.key().equals(it.key()) || hid.contains(q.key())) continue;
-                out.add(q);
-            }
-        } catch (Throwable ignored) { }
-        Collections.sort(out, new java.util.Comparator<Item>() {
-            public int compare(Item x, Item y) { return Long.compare(Math.abs(x.ts - it.ts), Math.abs(y.ts - it.ts)); }
-        });
-        // nunca vídeos en un mosaico: se comprueba uno a uno (lo ya sabido es instantáneo; si no se puede saber, se descarta)
-        List<Item> ok = new ArrayList<Item>();
-        for (Item q : out) {
-            if (ok.size() >= 8) break;
-            try { if (!MetaFetcher.isVideoStrict(ctx, q)) ok.add(q); } catch (Throwable ignored) { }
-        }
-        return ok;
-    }
-
-    private Bitmap lightBitmap(Item q) {
-        try {
-            byte[] d = photoBytes(q);
-            return BitmapFactory.decodeByteArray(d, 0, d.length);
-        } catch (Throwable t) { return null; }
-    }
-
-    /**
-     * En segundo plano: si esta foto puede ir con otras hechas casi a la vez, las baja y las junta en una sola imagen, sin
-     * bordes: dos verticales, tres verticales (de vez en cuando) o cuatro horizontales en cuadrícula (de vez en cuando).
-     * Si no se consigue, la foto sale sola.
-     */
-    private void groupUp(Item it, Slide p) {
-        if (w < 1 || hgt < 1 || p.bmp == null || p.item2 != null) return;
-        try { if (MetaFetcher.isVideoStrict(ctx, it)) return; } catch (Throwable t) { return; }
-        boolean port = portrait(p.bmp);
-        if (!port) {
-            if (gridOn() && grpRnd.nextInt(GRID_ODDS) == 0) tryGroup(it, p, 3, false);
-            return;
-        }
-        if (trioOn() && grpRnd.nextInt(GRID_ODDS) == 0 && tryGroup(it, p, 2, true)) return;
-        if (collageOn() && grpRnd.nextInt(PAIR_ODDS) == 0) tryGroup(it, p, 1, true);
-    }
-
-    private boolean tryGroup(Item it, Slide p, int need, boolean wantPortrait) {
-        List<G> got = new ArrayList<G>();
-        got.add(new G(it, p.bmp));
-        for (Item q : nearItems(it)) {
-            if (got.size() > need) break;
-            Bitmap b = lightBitmap(q);
-            if (b == null) continue;
-            if (wantPortrait ? !portrait(b) : b.getWidth() <= b.getHeight()) { b.recycle(); continue; }
-            got.add(new G(q, b));
-        }
-        if (got.size() < need + 1) {
-            for (int i = 1; i < got.size(); i++) got.get(i).b.recycle();
-            return false;
-        }
-        if (!compose(p, got)) return false;
-        List<Item> others = new ArrayList<Item>();
-        for (G g : got) if (g.it != it) others.add(g.it);
-        groups.put(it.key(), others);
-        return true;
-    }
-
-    /** Al volver a una foto que salió en mosaico: vuelve a montarlo igual. */
-    private void regroup(Item it, Slide p) {
-        List<Item> others = groups.get(it.key());
-        if (others == null || p.bmp == null || p.item2 != null || w < 1 || hgt < 1) return;
-        List<G> got = new ArrayList<G>();
-        got.add(new G(it, p.bmp));
-        for (Item q : others) {
-            Bitmap b = lightBitmap(q);
-            if (b == null) {
-                for (int i = 1; i < got.size(); i++) got.get(i).b.recycle();
-                return;
-            }
-            got.add(new G(q, b));
-        }
-        compose(p, got);
-    }
-
-    /** Junta 2, 3 o 4 fotos (por orden de hora) en una sola imagen a pantalla completa, sin bordes ni huecos. */
-    private boolean compose(Slide p, List<G> got) {
-        Collections.sort(got, new java.util.Comparator<G>() {
-            public int compare(G x, G y) { return Long.compare(x.it.ts, y.it.ts); }
-        });
-        Bitmap out;
-        try {
-            out = Bitmap.createBitmap(w, hgt, Bitmap.Config.ARGB_8888);
-        } catch (Throwable oom) {
-            for (G g : got) if (g.b != p.bmp) g.b.recycle();
-            return false;
-        }
-        android.graphics.Canvas c = new android.graphics.Canvas(out);
-        android.graphics.Paint pt = new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG);
-        int n = got.size();
-        if (n == 4) {
-            int x1 = w / 2, y1 = hgt / 2;
-            drawCover(c, got.get(0).b, 0, 0, x1, y1, pt);
-            drawCover(c, got.get(1).b, x1, 0, w - x1, y1, pt);
-            drawCover(c, got.get(2).b, 0, y1, x1, hgt - y1, pt);
-            drawCover(c, got.get(3).b, x1, y1, w - x1, hgt - y1, pt);
-        } else {
-            for (int i = 0; i < n; i++) {
-                int x0 = w * i / n, x1 = w * (i + 1) / n;
-                drawCover(c, got.get(i).b, x0, 0, x1 - x0, hgt, pt);
-            }
-        }
-        Item anchor = p.item;
-        for (G g : got) if (g.b != p.bmp) g.b.recycle();
-        p.bmp = out;
-        p.item2 = null;
-        p.others = null;
-        for (G g : got) {
-            if (g.it == anchor || (anchor != null && g.it.key().equals(anchor.key()))) continue;
-            if (p.item2 == null) p.item2 = g.it;
-            else { if (p.others == null) p.others = new ArrayList<Item>(); p.others.add(g.it); }
-        }
-        if (p.date != null) p.date = p.date.replaceFirst(" - \\d{1,2}:\\d{2}", "");   // un solo pie de foto y sin hora
-        return true;
-    }
-
-    /** La foto llena el hueco entero; lo que sobra se recorta por el centro. */
-    private void drawCover(android.graphics.Canvas c, Bitmap b, int x0, int y0, int bw, int bh, android.graphics.Paint pt) {
-        float sc = Math.max(bw / (float) b.getWidth(), bh / (float) b.getHeight());
-        float sw = bw / sc, sh = bh / sc;
-        int sx = Math.max(0, Math.round((b.getWidth() - sw) / 2f)), sy = Math.max(0, Math.round((b.getHeight() - sh) / 2f));
-        c.drawBitmap(b, new android.graphics.Rect(sx, sy, Math.min(b.getWidth(), Math.round(sx + sw)), Math.min(b.getHeight(), Math.round(sy + sh))),
-                new android.graphics.Rect(x0, y0, x0 + bw, y0 + bh), pt);
     }
 
     // ------------------------------------------------------------ fondo de las verticales (función extra)
@@ -1407,7 +1085,9 @@ class Slideshow {
             if (q.state == 0 && now - q.born > STUCK_MS) { queue.remove(i); dropped = true; }
             else if (q.state == 1 && now - q.born > 300000) queue.remove(i);      // un vídeo que no termina de llegar
         }
-        if (dropped) {      // los hilos que las preparaban pueden seguir bloqueados: se sustituyen por otros nuevos
+        if (dropped) {
+            Diag.i("pase", "foto colgada: descartada tras " + (STUCK_MS / 1000) + " s");
+            // los hilos que las preparaban pueden seguir bloqueados: se sustituyen por otros nuevos
             try { ex.shutdownNow(); } catch (Throwable ignored) { }
             ex = Executors.newFixedThreadPool(2);
         }
@@ -1460,10 +1140,10 @@ class Slideshow {
                 }
                 // pase lo que pase (falta de memoria incluida) la foto termina como «lista» o «fallida»: nunca se queda a medias
                 Slide p0 = null;
-                try { p0 = buildPhoto(it); } catch (Throwable e) { p0 = null; }
+                try { p0 = buildPhoto(it); } catch (Throwable e) { Diag.e("preparar foto", e); p0 = null; }
                 if (p0 != null) {
-                    try { groupUp(it, p0); } catch (Throwable ignored) { }
-                    try { fillCredit(p0, false); } catch (Throwable ignored) { }
+                    try { mosaic.groupUp(it, p0); } catch (Throwable ignored) { }
+                    try { Credit.fill(ctx, p0, false); } catch (Throwable ignored) { }
                     try { warm(p0); } catch (Throwable ignored) { }   // la subida a la tarjeta gráfica, aquí y no en el hilo de pantalla
                 }
                 final Slide p = p0;
@@ -1498,9 +1178,9 @@ class Slideshow {
                     }
                 } catch (Throwable ignored) { }
                 try {
-                    if (ready(hdFile(t.item))) f = hdFile(t.item);
+                    if (VideoCache.ready(vcache.hdFile(t.item))) f = vcache.hdFile(t.item);
                     else fut = hdEx.submit(new java.util.concurrent.Callable<java.io.File>() {
-                        public java.io.File call() { return loadVideo(t.item, pr); }
+                        public java.io.File call() { return vcache.loadVideo(t.item, pr); }
                     });
                 } catch (Exception ignored) { }
                 // el vídeo solo entra en el pase cuando ya hay unos segundos descargados: mientras, siguen las fotos
@@ -1522,7 +1202,7 @@ class Slideshow {
                         if (sess != session || !running) return;
                         t.date = MetaFetcher.formatDate(t.item.ts, MetaFetcher.tzFor(ctx, t.item));
                         if (got != null) t.videoFile = got;
-                        else if (hf != null) { t.streamUrl = streamFor(t.item, t.prog); t.hdFut = hf; }
+                        else if (hf != null) { t.streamUrl = vcache.streamFor(t.item, t.prog); t.hdFut = hf; }
                         else { t.video = false; t.state = 3; onBuilt(t); return; }
                         t.state = 2;
                         onBuilt(t);
@@ -1695,7 +1375,7 @@ class Slideshow {
         ex.submit(new Runnable() {
             public void run() {
                 boolean vid = false;
-                try { vid = Prefs.video(ctx) && MetaFetcher.isVideo(ctx, it); } catch (Exception ignored) { }
+                try { vid = Prefs.video(ctx) && MetaFetcher.isVideo(ctx, it); } catch (Throwable ignored) { }
                 final boolean isVid = vid;
                 Slide cached = bcacheGet(it.key());
                 if (cached == null) {
@@ -1721,11 +1401,11 @@ class Slideshow {
                                 java.util.concurrent.Future<java.io.File> hdF = null;
                                 final VideoProxy.Prog pr = new VideoProxy.Prog();
                                 try {
-                                    f = ready(hdFile(it)) ? hdFile(it) : null;
+                                    f = VideoCache.ready(vcache.hdFile(it)) ? vcache.hdFile(it) : null;
                                     if (f == null) {
                                         // la alta calidad se baja aparte; si no llega enseguida, se empieza con la baja
                                         hdF = hdEx.submit(new java.util.concurrent.Callable<java.io.File>() {
-                                            public java.io.File call() { return loadHd(it, 120000, pr); }
+                                            public java.io.File call() { return vcache.loadHd(it, 120000, pr); }
                                         });
                                         // se empieza ya en directo con la versión ligera y la buena baja aparte
                                         low = true;
@@ -1750,7 +1430,7 @@ class Slideshow {
                                         v.album = it.album;
                                         v.video = true;
                                         v.videoFile = got;
-                                        if (got == null && isLow) { v.prog = pr; v.streamUrl = streamFor(it, pr); }
+                                        if (got == null && isLow) { v.prog = pr; v.streamUrl = vcache.streamFor(it, pr); }
                                         v.state = 2;
                                         v.date = p != null && p.date != null ? p.date : MetaFetcher.formatDate(it.ts, MetaFetcher.tzFor(ctx, it));
                                         v.place = p != null ? p.place : null;
@@ -1851,7 +1531,7 @@ class Slideshow {
         ex.submit(new Runnable() {
             public void run() {
                 final Slide s = buildSlide(it);
-                if (s != null && !s.video && s.bmp != null) { try { regroup(it, s); fillCredit(s, false); } catch (Throwable ignored) { } warm(s); }
+                if (s != null && !s.video && s.bmp != null) { try { mosaic.regroup(it, s); Credit.fill(ctx, s, false); warm(s); } catch (Throwable ignored) { } }
                 h.post(new Runnable() {
                     public void run() {
                         if (!running || sess != session || myGen != gen) return;
@@ -1886,7 +1566,7 @@ class Slideshow {
         status.setText("");
         cur = s;
         loadingKey = null;
-        cleanVideos();
+        vcache.clean(keepVideos());
         if (s.video) {
             playVideo(s);
         } else {
@@ -2513,6 +2193,7 @@ class Slideshow {
     private void setNight(boolean on) {
         nightOn = on;
         Music.night(on);
+        setCredit(cur);                                 // la marca de autor se oculta de noche y vuelve de día
         if (player != null) {                           // de noche, los vídeos sin sonido
             try {
                 if (on) { player.setVolume(0f, 0f); Music.duck(false); }

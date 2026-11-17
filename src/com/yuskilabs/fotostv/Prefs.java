@@ -239,9 +239,6 @@ class Prefs {
     /** Orden de los álbumes en el explorador de la tele: manual | newest | oldest (por la fecha de captura de su última foto). */
     static String albumSort(Context c) { return sp(c).getString("albumSort", "manual"); }
 
-    /** Columnas del mosaico de álbumes y de fotos del explorador, y formato de las miniaturas de fotos: square | wide | full. */
-    static String photoFmt(Context c) { return sp(c).getString("photoFmt", "square"); }
-
     static int interval(Context c) { return sp(c).getInt("interval", 60); }
     static String fit(Context c) { return sp(c).getString("fit", "auto"); }
     /** random | norepeat | asc | desc */

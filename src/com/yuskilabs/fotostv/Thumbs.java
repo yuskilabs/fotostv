@@ -146,13 +146,6 @@ class Thumbs {
         return freed;
     }
 
-    long diskUsage() {
-        synchronized (diskLock) {
-            if (diskBytes < 0) diskBytes = scan();
-            return diskBytes;
-        }
-    }
-
     // ------------------------------------------------------------ interno
     private void loop() {
         while (true) {

@@ -248,8 +248,4 @@ class Guest {
         return min + " min";
     }
 
-    /** Marca a los elementos de un temporal para que la app los trate como «de invitado». */
-    static boolean isGuestItem(Context c, Item it) {
-        return idOfBase(c, it.url) != null;
-    }
 }

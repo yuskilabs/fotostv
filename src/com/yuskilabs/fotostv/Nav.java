@@ -100,26 +100,6 @@ class Nav {
         }).start();
     }
 
-    /** Abre un pase con las fotos de un lugar (o de una región entera). */
-    static void openPlace(final Context ctx, final String want, final boolean region) {
-        new Thread(new Runnable() {
-            public void run() {
-                final List<Item> list = GeoIndex.items(ctx, want, region);
-                ui.post(new Runnable() { public void run() { go(ctx, PLACE_TOWN, null, null, list); } });
-            }
-        }).start();
-    }
-
-    /** Abre un pase con las fotos de un rectángulo del mapa. */
-    static void openBox(final Context ctx, final double minLat, final double maxLat, final double minLon, final double maxLon) {
-        new Thread(new Runnable() {
-            public void run() {
-                final List<Item> list = GeoIndex.itemsOf(ctx, GeoIndex.get(ctx).keysIn(minLat, maxLat, minLon, maxLon));
-                ui.post(new Runnable() { public void run() { go(ctx, PLACE_TOWN, null, null, list); } });
-            }
-        }).start();
-    }
-
     /** Abre el mosaico (como un álbum) con las fotos de un lugar, o de un rectángulo del mapa si box != null. */
     static void openMosaic(Context ctx, String title, String want, boolean region, double[] box) {
         openMosaic(ctx, title, want, region, box, null);

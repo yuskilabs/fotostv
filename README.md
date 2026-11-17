@@ -91,7 +91,7 @@ Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde l
 - **Dos verticales**: en el pase, dos fotos verticales del mismo álbum hechas con menos de 15 minutos de diferencia se ven juntas, una al lado de otra y sin bordes, con un solo pie de foto y sin hora.
 - **Tres verticales**: de vez en cuando, tres fotos verticales hechas casi a la vez (menos de 15 minutos) salen juntas, sin bordes, con un solo pie de foto y sin hora (una de cada 14 fotos más o menos; nunca con vídeos).
 - **Cuatro juntas**: de vez en cuando, cuatro fotos horizontales hechas casi a la vez (menos de 15 minutos) salen en cuadrícula, sin bordes, con un solo pie de foto y sin hora.
-- **Autor**: marca de agua muy sutil abajo a la derecha («© Lola» iPhone 12/13, «© Alex» iPhone 14 Pro, «© Pepe» cámaras que no son móvil, «© Lara» archivos que empiezan por PIC). Se preparan en segundo plano y entran al pase cuando están listas.
+- **Autor**: marca de agua muy sutil abajo a la derecha («© Lola» iPhone 12/13, «© Alex» iPhone 14 Pro, «© Pepe» cámaras que no son móvil, «© Lara» archivos que empiezan por PIC); las reglas se editan en la web. Se preparan en segundo plano y entran al pase cuando están listas.
 - **Pies de foto**: con pulsación larga en el mosaico, «Pie de foto»; sale en el pase y en la ficha.
 
 **Noche, temporizador y música**
@@ -237,12 +237,14 @@ src/com/yuskilabs/fotostv/
   PhotoDream, PreviewActivity   salvapantallas y vista previa
   Music                      música de fondo (emisora o carpeta)
   Slideshow                  motor del pase: precarga, fundidos, vídeo, mando
+  VideoCache, Mosaic, Credit   piezas del motor: caché de vídeo, mosaicos y autor
+  Diag, DiagActivity         registro y pantalla de Diagnóstico (últimos errores)
   VideoProxy                 servidor local para ver vídeos mientras se descargan
   InfoPanel                  ficha de información con mapa y botones
   Nav                        saltos desde la ficha (álbum, pase del álbum, lugar, zona o día)
   PlacesActivity, MapView, MapTiles   pantalla Lugares y mapa de OpenStreetMap
   GeoIndex, GeoService       índice de ubicaciones en segundo plano
-  AjustesActivity, SettingsBase   pantalla de ajustes única, con todo por temas (y piezas comunes)
+  AjustesActivity, SettingsBase   pantalla de ajustes única: temas a la izquierda, panel a la derecha (y piezas comunes)
   Extras                     claves de las funciones extra (7.0)
   CalendarDialog             calendario mensual de «Ir a la fecha» (7.4)
   FxLogic                    lógica pura de las funciones extra (noche, búsqueda, viajes, repetidas…)
@@ -256,6 +258,7 @@ src/com/yuskilabs/fotostv/
   Thumbs                     caché de miniaturas (memoria y disco, con desenfoque)
   WebConfigServer            página de ajustes servida desde la tele
   Updater                    búsqueda e instalación de actualizaciones
+  App, InstallReceiver, ReopenReceiver   arranque de la app y vuelta tras actualizarse
   Prefs, Item, Session, Ui   utilidades
   io/nayuki/qrcodegen        generador del código QR (Project Nayuki, MIT)
 tools/publish.py             publica la APK en dist/ y genera update.json

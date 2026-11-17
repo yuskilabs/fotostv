@@ -179,16 +179,6 @@ class AlbumFetcher {
         return out;
     }
 
-    /** Sigue las redirecciones y devuelve la dirección final del vídeo. */
-    static String resolve(String url) throws IOException {
-        String[] fin = new String[1];
-        HttpURLConnection c = open(url, fin);
-        String type = c.getContentType();
-        c.disconnect();
-        if (type != null && type.startsWith("text/")) throw new IOException("No es un vídeo (" + type + ")");
-        return fin[0];
-    }
-
     /**
      * Descarga un vídeo a un archivo temporal. Devuelve false si esa dirección no da un vídeo.
      * Se aborta si supera maxBytes.

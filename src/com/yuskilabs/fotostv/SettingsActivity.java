@@ -2,7 +2,6 @@ package com.yuskilabs.fotostv;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.view.Gravity;
@@ -21,7 +20,6 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -572,12 +570,6 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         } catch (Throwable t) {
             qrView.setVisibility(View.GONE);
         }
-    }
-
-    private TextView line(String s) {
-        TextView t = text(s, 12, 0xFFBBCCDD);
-        t.setPadding(0, dp(2), 0, dp(2));
-        return t;
     }
 
     @Override protected void onStart() {

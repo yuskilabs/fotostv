@@ -7,6 +7,7 @@ import android.graphics.Typeface;
 public class App extends Application {
     @Override public void onCreate() {
         super.onCreate();
+        Diag.init(this);
         try {
             Ui.BLACK = Typeface.createFromAsset(getAssets(), "fonts/Figtree-Bold.ttf");
             Ui.BTN = Typeface.createFromAsset(getAssets(), "fonts/Figtree-Regular.ttf");
@@ -46,11 +47,6 @@ public class App extends Application {
                         for (String key : new java.util.ArrayList<String>(m.getAll().keySet())) if (key.startsWith("p8_")) ed.remove(key);
                         ed.putString("geoLocalidad3", "1").apply();
                         try { GeoIndex.get(App.this).getWritableDatabase().execSQL("UPDATE photos SET place=NULL"); } catch (Throwable ignored) { }
-                    }
-                    if (!"1".equals(m.getString("creditReset", ""))) {   // una sola vez: se olvida el autor guardado (se calculaba mal)
-                        android.content.SharedPreferences.Editor ed = m.edit();
-                        for (String key : new java.util.ArrayList<String>(m.getAll().keySet())) if (key.startsWith("cr2_")) ed.remove(key);
-                        ed.putString("creditReset", "1").apply();
                     }
                     GeoService.start(App.this);
                 } catch (Throwable ignored) { }

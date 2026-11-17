@@ -54,18 +54,6 @@ final class FxLogic {
         return "\u2601";                                                                  // nube
     }
 
-    static String weatherText(int code) {
-        if (code == 0) return "Despejado";
-        if (code == 1 || code == 2) return "Poco nuboso";
-        if (code == 3) return "Nublado";
-        if (code == 45 || code == 48) return "Niebla";
-        if (code >= 51 && code <= 57) return "Llovizna";
-        if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return "Lluvia";
-        if ((code >= 71 && code <= 77) || code == 85 || code == 86) return "Nieve";
-        if (code >= 95) return "Tormenta";
-        return "";
-    }
-
     // ------------------------------------------------------------ movimiento suave (Ken Burns)
     static final float KB_ZOOM = 0.14f;   // la foto, como mucho, un 14 % más grande
 
@@ -285,14 +273,6 @@ final class FxLogic {
         return true;
     }
 
-    /** Todas las palabras aparecen en el lugar o en el nombre del álbum. */
-    static boolean wordsMatch(Query q, String place, String album) {
-        if (q.words.isEmpty()) return true;
-        String hay = norm((place == null ? "" : place) + " " + (album == null ? "" : album));
-        for (String w : q.words) if (!hay.contains(w)) return false;
-        return true;
-    }
-
     // ------------------------------------------------------------ viajes y salidas
     static final class Trip {
         final List<Item> items = new ArrayList<Item>();
@@ -425,20 +405,59 @@ final class FxLogic {
     }
 
     // ------------------------------------------------------------ quién hizo la foto
-    private static final String[] BIG_CAMS = {"leica", "nikon", "canon", "fujifilm", "panasonic", "olympus", "om digital",
-            "pentax", "ricoh", "sigma", "hasselblad"};
+    /** Reglas de partida (una por línea). Se pueden cambiar desde la web de la tele. */
+    static final String DEFAULT_CREDIT_RULES =
+            "# Una regla por línea. Gana la primera que encaje.\n"
+          + "# cámara: lo que lleva el nombre de la cámara (varios términos separados por comas; con «-» delante, lo que NO debe llevar)\n"
+          + "# archivo: con lo que empieza el nombre del archivo\n"
+          + "cámara: iphone 12 = Lola\n"
+          + "cámara: iphone 13 = Lola\n"
+          + "cámara: iphone 14 pro = Alex\n"
+          + "cámara: leica = Pepe\n"
+          + "cámara: nikon = Pepe\n"
+          + "cámara: canon = Pepe\n"
+          + "cámara: sony, -xperia = Pepe\n"
+          + "cámara: fujifilm = Pepe\n"
+          + "cámara: panasonic = Pepe\n"
+          + "cámara: olympus = Pepe\n"
+          + "cámara: om digital = Pepe\n"
+          + "cámara: pentax = Pepe\n"
+          + "cámara: ricoh = Pepe\n"
+          + "cámara: sigma = Pepe\n"
+          + "cámara: hasselblad = Pepe\n"
+          + "archivo: PIC = Lara\n";
+
+    private static final java.util.regex.Pattern CREDIT_LINE =
+            java.util.regex.Pattern.compile("^(c[aá]mara|camera|cam|archivo|file)\\s*:\\s*(.+?)\\s*=\\s*(.+?)\\s*$", java.util.regex.Pattern.CASE_INSENSITIVE);
 
     /**
-     * Quién hizo la foto: «Lola» (iPhone 12 o 13), «Alex» (iPhone 14 Pro), «Pepe» (cámara que no es un móvil: Leica, Nikon…),
-     * «Lara» (el nombre del archivo empieza por PIC). "" si no encaja en nada.
+     * Quién hizo la foto según las reglas. cam: nombre de la cámara (o null); fileName: nombre del archivo (o null).
+     * Solo se aplican las reglas del dato que se da. "" si no encaja en ninguna.
      */
-    static String credit(String cam, String fileName) {
-        String c = cam == null ? "" : cam.toLowerCase(java.util.Locale.ROOT);
-        if (c.contains("iphone 12") || c.contains("iphone 13")) return "Lola";
-        if (c.contains("iphone 14 pro")) return "Alex";
-        for (String b : BIG_CAMS) if (c.contains(b)) return "Pepe";
-        if (c.contains("sony") && !c.contains("xperia")) return "Pepe";
-        if (fileName != null && fileName.toUpperCase(java.util.Locale.ROOT).startsWith("PIC")) return "Lara";
+    static String credit(String cam, String fileName, String rules) {
+        String c = cam == null ? "" : cam.toLowerCase(Locale.ROOT);
+        String f = fileName == null ? "" : fileName.toLowerCase(Locale.ROOT);
+        if (c.length() == 0 && f.length() == 0) return "";
+        for (String line : (rules == null || rules.trim().length() == 0 ? DEFAULT_CREDIT_RULES : rules).split("\n")) {
+            line = line.trim();
+            if (line.length() == 0 || line.startsWith("#")) continue;
+            java.util.regex.Matcher m = CREDIT_LINE.matcher(line);
+            if (!m.matches()) continue;
+            boolean isFile = m.group(1).toLowerCase(Locale.ROOT).startsWith("a") || m.group(1).equalsIgnoreCase("file");
+            String name = m.group(3);
+            if (isFile) {
+                if (f.length() > 0 && f.startsWith(m.group(2).toLowerCase(Locale.ROOT))) return name;
+            } else if (c.length() > 0) {
+                boolean ok = true;
+                for (String t : m.group(2).toLowerCase(Locale.ROOT).split(",")) {
+                    t = t.trim();
+                    if (t.length() == 0) continue;
+                    if (t.startsWith("-")) { if (c.contains(t.substring(1).trim())) ok = false; }
+                    else if (!c.contains(t)) ok = false;
+                }
+                if (ok) return name;
+            }
+        }
         return "";
     }
 

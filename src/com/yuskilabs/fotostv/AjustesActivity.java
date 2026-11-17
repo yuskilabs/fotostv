@@ -1,6 +1,5 @@
 package com.yuskilabs.fotostv;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.widget.EditText;
@@ -19,7 +18,9 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -82,9 +83,6 @@ public class AjustesActivity extends SettingsBase {
 
         LinearLayout cols = new LinearLayout(this);
         cols.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout left = new LinearLayout(this), right = new LinearLayout(this);
-        left.setOrientation(LinearLayout.VERTICAL);
-        right.setOrientation(LinearLayout.VERTICAL);
 
         // --- música
         LinearLayout cm = card("Música del pase", R.drawable.ic_play);
@@ -225,7 +223,7 @@ public class AjustesActivity extends SettingsBase {
         Button trio3 = fx("Tres verticales", Extras.TRIO3, R.drawable.ic_albums,
                 "De vez en cuando, tres fotos verticales hechas casi a la vez (menos de 15 minutos) salen juntas, una al lado de otra y sin bordes, con un solo pie de foto y sin hora.");
         Button credit = fx("Autor", Extras.CREDIT, R.drawable.ic_person,
-                "Marca de agua muy sutil abajo a la derecha: «© Lola» (iPhone 12 o 13), «© Alex» (iPhone 14 Pro), «© Pepe» (cámara que no es móvil: Leica, Nikon…) o «© Lara» (archivo que empieza por PIC). En las demás, nada."); 
+                "Marca de agua muy sutil abajo a la derecha: «© Lola» (iPhone 12 o 13), «© Alex» (iPhone 14 Pro), «© Pepe» (cámara que no es móvil: Leica, Nikon…) o «© Lara» (archivo que empieza por PIC). En las demás, nada. Las reglas se pueden cambiar desde la web de configuración (campo «Autor de las fotos»).");
         cp.addView(row(
             cyc("Orden", "order", false, new String[]{"random", "norepeat", "smart", "asc", "desc"},
                 new String[]{"aleatorio", "sin repetir", "inteligente", "por fecha ↑", "por fecha ↓"}, R.drawable.ic_shuffle,
@@ -338,36 +336,95 @@ public class AjustesActivity extends SettingsBase {
         Button reload = cycInt("Recargar álbumes", Extras.RELOAD, new int[]{0, 6, 12, 24}, new String[]{"no", "cada 6 h", "cada 12 h", "cada 24 h"},
                 R.drawable.ic_refresh, "Mientras la app esté abierta o en el salvapantallas, vuelve a leer los álbumes de Google cada cierto tiempo.");
         ch.addView(row(profilesBtn, remote));
-        ch.addView(row(reload, null));
+        Button diag = btn("Diagnóstico", R.drawable.ic_info, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(AjustesActivity.this, DiagActivity.class)); }
+        });
+        describe(diag, "Últimos errores del pase, la búsqueda, los vídeos y el autor, con su hora. Sirve para ver qué falla si algo se queda parado.");
+        ch.addView(row(reload, diag));
 
-        // orden de lectura de cada columna, de arriba abajo; la última tarjeta se estira para que acaben a la misma altura
-        left.addView(cp);
-        left.addView(cf);
-        left.addView(ci);
-        left.addView(cn);
-        left.addView(ch, new LinearLayout.LayoutParams(-1, 0, 1f));
-        right.addView(cm);
-        right.addView(cv);
-        right.addView(ce);
-        right.addView(cs);
-        right.addView(cg, new LinearLayout.LayoutParams(-1, 0, 1f));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1f);
-        lp.setMargins(0, 0, dp(8), 0);
-        cols.addView(left, lp);
-        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(0, -1, 1f);
-        rp.setMargins(dp(8), 0, 0, 0);
-        cols.addView(right, rp);
+        // temas a la izquierda, un solo panel a la derecha
+        final LinearLayout[] cards = {cp, cf, ci, cn, cm, cv, ce, cs, cg, ch};
+        String[] names = {"Pase de fotos", "Movimiento y relleno", "Información", "Noche y temporizador", "Música",
+            "Vídeo y caché", "Explorador", "Salvapantallas", "Ubicaciones", "Casa y móvil"};
+        int[] icons = {R.drawable.ic_photo, R.drawable.ic_fullscreen, R.drawable.ic_info, R.drawable.ic_moon,
+            R.drawable.ic_play, R.drawable.ic_video, R.drawable.ic_albums, R.drawable.ic_tv, R.drawable.ic_place,
+            R.drawable.ic_guest};
+        panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        topics = new Button[cards.length];
+        LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        for (int i = 0; i < cards.length; i++) {
+            final int k = i;
+            final LinearLayout cd = cards[i];
+            Button tb = btn(names[i], icons[i], new View.OnClickListener() {
+                public void onClick(View v) { cd.requestFocus(); }
+            });
+            tb.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                public void onFocusChange(View v, boolean has) {
+                    if (has) { showTopic(k); if (hint != null) hint.setText(HINT0); }
+                }
+            });
+            LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(-1, dp(44));
+            tl.setMargins(0, 0, 0, dp(6));
+            list.addView(tb, tl);
+            topics[i] = tb;
+        }
+        cardList = cards;
+        ScrollView ls = new ScrollView(this);
+        ls.setVerticalScrollBarEnabled(false);
+        ls.addView(list);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(250), -1);
+        lp.setMargins(0, 0, dp(14), 0);
+        cols.addView(ls, lp);
         ScrollView sv = new ScrollView(this);
         sv.setVerticalScrollBarEnabled(false);
-        sv.setFillViewport(true);
-        sv.addView(cols);
-        root.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
+        sv.addView(panel, new ViewGroup.LayoutParams(-1, -2));
+        cols.addView(sv, new LinearLayout.LayoutParams(0, -1, 1f));
+        showTopic(0);
+        root.addView(cols, new LinearLayout.LayoutParams(-1, 0, 1f));
         hint = text(HINT0, 13, 0xFFBBD0E6);
         hint.setPadding(0, dp(6), 0, 0);
         hint.setMinLines(2);
         root.addView(hint);
         setContentView(root);
-        musicBtn.requestFocus();
+        topics[0].requestFocus();
+    }
+
+    private LinearLayout panel;
+    private Button[] topics;
+    private LinearLayout[] cardList;
+    private int topicSel = -1;
+
+    private void showTopic(int i) {
+        if (i == topicSel) return;
+        topicSel = i;
+        panel.removeAllViews();
+        panel.addView(cardList[i], new LinearLayout.LayoutParams(-1, -2));
+        for (int k = 0; k < topics.length; k++) topics[k].setAlpha(k == i ? 1f : 0.65f);
+    }
+
+    private boolean inPanel(View v) {
+        while (v != null) {
+            if (v == panel) return true;
+            android.view.ViewParent p = v.getParent();
+            v = p instanceof View ? (View) p : null;
+        }
+        return false;
+    }
+
+    @Override public boolean dispatchKeyEvent(KeyEvent e) {
+        if (e.getAction() == KeyEvent.ACTION_DOWN && topics != null) {
+            View f = getCurrentFocus();
+            if (f != null && e.getKeyCode() == KeyEvent.KEYCODE_DPAD_LEFT && inPanel(f)) {
+                View n = f.focusSearch(View.FOCUS_LEFT);
+                if (n == null || !inPanel(n)) { topics[Math.max(0, topicSel)].requestFocus(); return true; }
+            } else if (f != null && e.getKeyCode() == KeyEvent.KEYCODE_DPAD_RIGHT && !inPanel(f)) {
+                cardList[Math.max(0, topicSel)].requestFocus();
+                return true;
+            }
+        }
+        return super.dispatchKeyEvent(e);
     }
 
     @Override protected Button btn(String label, int icon, View.OnClickListener l) {
@@ -597,6 +654,11 @@ public class AjustesActivity extends SettingsBase {
     }
 
     @Override protected void onPause() { stopPreview(); super.onPause(); }
+
+    @Override protected void onDestroy() {
+        try { prevExec.shutdown(); } catch (Throwable ignored) { }   // deja terminar la suelta del reproductor y cierra su hilo
+        super.onDestroy();
+    }
 
     private void pickFolder() {
         final java.util.List<String> fs = Music.suggestFolders();

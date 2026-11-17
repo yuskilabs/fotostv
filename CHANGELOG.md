@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.15
+- Ajustes rediseñados: los temas van en una lista a la izquierda y a la derecha se ve un solo panel, el del tema elegido. Con el mando: derecha entra al panel e izquierda vuelve a los temas.
+- Nuevo «Diagnóstico» (Ajustes › Casa y móvil): lista los últimos errores del pase, la búsqueda, los vídeos y el autor.
+- Autor: las reglas (qué cámara o archivo da qué nombre) se pueden editar desde la web de configuración.
+- Por dentro: el motor del pase se reparte en piezas más pequeñas (caché de vídeo, mosaicos y autor) y se ha limpiado código sin uso.
+
 ## 7.14
 - Ajustes: «Ubicaciones» pasa a ser la última tarjeta de la derecha (y la que se estira un poco, para que quepa el texto mientras comprueba) y «Salvapantallas» queda justo encima.
 

@@ -3,8 +3,6 @@ package com.yuskilabs.fotostv;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.pm.PackageInstaller;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.content.Intent;
 import android.net.Uri;
 import java.io.ByteArrayOutputStream;
@@ -144,17 +142,6 @@ class Updater {
             throw e;
         } finally {
             s.close();
-        }
-    }
-
-    /** ¿Puede esta app instalar paquetes? (Android 8+: permiso «instalar apps desconocidas» por app). */
-    static boolean canInstall(Context c) {
-        if (Build.VERSION.SDK_INT < 26) return true;
-        try {
-            Object r = PackageManager.class.getMethod("canRequestPackageInstalls").invoke(c.getPackageManager());
-            return r instanceof Boolean && (Boolean) r;
-        } catch (Throwable t) {
-            return true;
         }
     }
 

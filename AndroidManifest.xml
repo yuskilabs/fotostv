@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.yuskilabs.fotostv" android:versionCode="183" android:versionName="7.14">
+    package="com.yuskilabs.fotostv" android:versionCode="184" android:versionName="7.15">
     <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="23" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -33,6 +33,8 @@
         <activity android:name=".TripsActivity" android:exported="false"
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
         <activity android:name=".StatsActivity" android:exported="false"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+        <activity android:name=".DiagActivity" android:exported="false"
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
         <activity android:name=".PlayerActivity" android:exported="false"
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen" />

@@ -2225,13 +2225,6 @@ public class BrowserActivity extends Activity {
         public void run() { runFlags(); }
     };
 
-    private void wantFlag(Item it) {
-        if (it.id.length() == 0 || it.akey.length() == 0) return;
-        if (!flagTried.add(it.key())) return;
-        synchronized (flagPending) { flagPending.add(it); }
-        scheduleFlags();
-    }
-
     private void scheduleFlags() {
         h.removeCallbacks(flagRun);
         h.postDelayed(flagRun, 400);

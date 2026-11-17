@@ -26,7 +26,6 @@ import java.util.Map;
 /** «Estadísticas» (función extra): fotos por año, lugar, álbum y cámara; cada fila abre sus fotos. */
 public class StatsActivity extends SettingsBase {
     private final Handler h = new Handler(Looper.getMainLooper());
-    private final List<List<Item>> groups = new ArrayList<List<Item>>();     // fotos de cada fila, por columna
     private final List<List<String[]>> shown = new ArrayList<List<String[]>>();
     private final List<List<List<Item>>> rowItems = new ArrayList<List<List<Item>>>();
     private final List<ListView> lists = new ArrayList<ListView>();

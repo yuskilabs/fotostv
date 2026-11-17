@@ -14,7 +14,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.Calendar;
-import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -160,16 +159,6 @@ class CalendarDialog {
         v.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         v.setGravity(Gravity.CENTER);
         return v;
-    }
-
-    private void focusFirstDay() {
-        for (int r = 0; r < grid.getChildCount(); r++) {
-            LinearLayout row = (LinearLayout) grid.getChildAt(r);
-            for (int i = 0; i < row.getChildCount(); i++) {
-                View cell = ((android.view.ViewGroup) row.getChildAt(i)).getChildAt(0);
-                if (cell.isFocusable()) { cell.requestFocus(); return; }
-            }
-        }
     }
 
     private void refresh() {

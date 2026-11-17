@@ -210,7 +210,6 @@ public class SearchActivity extends SettingsBase {
         return super.dispatchKeyEvent(ev);
     }
 
-    private String lastQ = "";
 
     private final Runnable update = new Runnable() {
         public void run() {
@@ -226,7 +225,6 @@ public class SearchActivity extends SettingsBase {
                     h.post(new Runnable() {
                         public void run() {
                             if (destroyed || g != gen) return;
-                            lastQ = q;
                             rows.clear();
                             rows.addAll(s);
                             shown.clear();
@@ -235,10 +233,6 @@ public class SearchActivity extends SettingsBase {
                                 shown.add(i > 0 ? new String[]{r[0].substring(0, i), r[0].substring(i + 5)} : new String[]{r[0], ""});
                             }
                             ((BaseAdapter) list.getAdapter()).notifyDataSetChanged();
-                            if (openFirst && q.equals(input.getText().toString())) {
-                                openFirst = false;
-                                if (!rows.isEmpty()) { open(0); return; }
-                            }
                             if (q.trim().length() > 0 && rows.isEmpty()) info.setText("No encuentro fotos con «" + q.trim() + "».");
                             else if (q.trim().length() > 0) info.setText("Baja con el mando para elegir.");
                         }
