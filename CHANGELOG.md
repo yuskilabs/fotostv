@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.20
+- Buscar repetidas: los avisos se quedan unos 3 segundos más en pantalla.
+- Buscar repetidas: al marcar, el álbum se ordena con cada foto que se queda (sin marcar) seguida de sus repetidas (marcadas), todas al principio, para compararlas. El resto sigue en su orden, y al terminar (ocultar, cancelar o salir) todo vuelve al orden de siempre.
+- Por dentro: los diálogos del explorador (menú con iconos, pedir un nombre, música del álbum) pasan a su propio archivo.
+
 ## 7.19
 - Ajustes: al llegar al borde del panel de la derecha ya no salta a la lista de temas (solo «izquierda» vuelve). Los temas pasan a ser filas de icono y texto, con una barra de color en el elegido, para que no parezcan botones.
 - Autor: ahora también sale al ver las fotos a pantalla completa desde el explorador (antes solo en el pase y el salvapantallas).

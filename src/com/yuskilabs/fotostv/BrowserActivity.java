@@ -20,8 +20,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -575,6 +573,7 @@ public class BrowserActivity extends Activity {
         }
         pSel = false;
         pKeys.clear();
+        endDupeView();
         level = 0;
         photoGrid = null;
         computeLayout();
@@ -666,32 +665,6 @@ public class BrowserActivity extends Activity {
         return l;
     }
 
-    /** Pulsación larga en un álbum: pase, pase con música, recargar, ocultar, borrar o empezar a seleccionar. */
-    /** Menú de la pulsación larga con iconos (el mismo estilo para álbumes y fotos). */
-    private void iconMenu(String title, final String[] labels, final int[] icons, android.content.DialogInterface.OnClickListener l) {
-        android.widget.ListAdapter ad = new android.widget.ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, labels) {
-            @Override public View getView(int i, View cv, ViewGroup parent) {
-                TextView tv = (TextView) super.getView(i, cv, parent);
-                tv.setTypeface(Ui.REG);
-                tv.setTextColor(Color.WHITE);
-                tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);     // menús más compactos: caben sin desplazar
-                tv.setMinHeight(Ui.dp(BrowserActivity.this, 36));
-                tv.setMinimumHeight(Ui.dp(BrowserActivity.this, 36));
-                tv.setPadding(tv.getPaddingLeft(), Ui.dp(BrowserActivity.this, 6), tv.getPaddingRight(), Ui.dp(BrowserActivity.this, 6));
-                android.graphics.drawable.Drawable d = getResources().getDrawable(icons[i]).mutate();
-                int sz = Ui.dp(BrowserActivity.this, 18);
-                d.setBounds(0, 0, sz, sz);
-                tv.setCompoundDrawables(d, null, null, null);
-                tv.setCompoundDrawablePadding(Ui.dp(BrowserActivity.this, 14));
-                tv.setGravity(Gravity.CENTER_VERTICAL);
-                return tv;
-            }
-        };
-        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK);
-        if (title != null && title.length() > 0) b.setTitle(title);
-        b.setAdapter(ad, l).show();
-    }
 
     // ---- reordenar álbumes (con el mando)
     private Entry moveEntry;
@@ -778,12 +751,12 @@ public class BrowserActivity extends Activity {
     private void virtualMenu(final Entry e) {
         final List<Entry> one = new ArrayList<Entry>();
         one.add(e);
-        iconMenu(e.title, new String[]{"Pase", "Cambiar nombre", "Borrar álbum virtual"},
+        Dialogs.iconMenu(BrowserActivity.this, e.title, new String[]{"Pase", "Cambiar nombre", "Borrar álbum virtual"},
                 new int[]{R.drawable.ic_play, R.drawable.ic_tune, R.drawable.ic_delete},
                 new android.content.DialogInterface.OnClickListener() {
                     public void onClick(android.content.DialogInterface d, int w) {
                         if (w == 0) startPase(one, false);
-                        else if (w == 1) askName("Nombre del álbum virtual", e.title, new NameDone() {
+                        else if (w == 1) Dialogs.askName(BrowserActivity.this, "Nombre del álbum virtual", e.title, new Dialogs.NameDone() {
                             public void done(String name) { renameVirtual(e, name); }
                         });
                         else {
@@ -808,28 +781,11 @@ public class BrowserActivity extends Activity {
         if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
     }
 
-    interface NameDone { void done(String name); }
-
-    private void askName(String title, String current, final NameDone done) {
-        final android.widget.EditText in = new android.widget.EditText(this);
-        in.setSingleLine(true);
-        in.setTextColor(Color.WHITE);
-        in.setText(current);
-        in.setSelection(in.getText().length());
-        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle(title)
-            .setView(in)
-            .setPositiveButton("Guardar", new android.content.DialogInterface.OnClickListener() {
-                public void onClick(android.content.DialogInterface d, int w) { done.done(in.getText().toString().trim()); }
-            })
-            .setNegativeButton("Cancelar", null)
-            .show();
-    }
 
     /** Guarda el mosaico de una búsqueda como álbum virtual (sale en la lista de álbumes y se actualiza solo). */
     private void saveVirtual() {
         if (current == null || current.query == null) return;
-        askName("Guardar como álbum virtual", current.title, new NameDone() {
+        Dialogs.askName(BrowserActivity.this, "Guardar como álbum virtual", current.title, new Dialogs.NameDone() {
             public void done(String name) {
                 if (name.length() == 0) return;
                 List<String[]> l = Extras.virtualAlbums(BrowserActivity.this);
@@ -842,31 +798,6 @@ public class BrowserActivity extends Activity {
         });
     }
 
-    /** Emisora propia del álbum (suena en el pase de ese álbum). */
-    private void pickAlbumMusic(final Entry e) {
-        final List<String[]> rows = new ArrayList<String[]>();
-        rows.add(new String[]{"La de Ajustes (sin emisora propia)", ""});
-        String own = Prefs.musicRadio(this);
-        boolean ownIsPreset = false;
-        for (String[] pr : Music.PRESETS) if (pr[1] != null && pr[1].equals(own)) ownIsPreset = true;
-        if (own.length() > 0 && !ownIsPreset) rows.add(new String[]{"Tu emisora (la de la web)", own});
-        for (String[] pr : Music.PRESETS) if (pr[1] != null) rows.add(new String[]{Music.shortName(pr[0]), pr[1]});
-        String cur = Prefs.sp(this).getString("amusic_" + e.url, "");
-        int sel = 0;
-        String[] labels = new String[rows.size()];
-        for (int i = 0; i < labels.length; i++) { labels[i] = rows.get(i)[0]; if (rows.get(i)[1].equals(cur)) sel = i; }
-        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle("Música del álbum «" + e.title + "»")
-            .setSingleChoiceItems(labels, sel, new android.content.DialogInterface.OnClickListener() {
-                public void onClick(android.content.DialogInterface d, int w) {
-                    Extras.setAlbumMusic(BrowserActivity.this, e.url, rows.get(w)[1]);
-                    d.dismiss();
-                    showToast(w == 0 ? "El pase de este álbum usará la música de Ajustes." : "El pase de este álbum sonará con «" + rows.get(w)[0] + "».");
-                }
-            })
-            .setNegativeButton("Cancelar", null)
-            .show();
-    }
 
     // ------------------------------------------------------------ fotos repetidas (función extra)
     private volatile boolean dupBusy;
@@ -879,7 +810,7 @@ public class BrowserActivity extends Activity {
         final List<Item> base = new ArrayList<Item>(e.items);
         act.submit(new Runnable() {
             public void run() {
-                final Set<String> extra = DupeScan.scan(BrowserActivity.this, base, new DupeScan.Cancel() {
+                final DupeScan.Result extra = DupeScan.scan(BrowserActivity.this, base, new DupeScan.Cancel() {
                     public boolean cancelled() { return destroyed; }
                 });
                 h.post(new Runnable() {
@@ -887,19 +818,19 @@ public class BrowserActivity extends Activity {
                         dupBusy = false;
                         busyEnd("Buscando repetidas…");
                         if (destroyed) return;
-                        if (extra.isEmpty()) { showToast("No he encontrado fotos repetidas en «" + e.title + "»."); return; }
+                        if (extra.dups.isEmpty()) { showToastLong("No he encontrado fotos repetidas en «" + e.title + "»."); return; }
                         int pos = entries.indexOf(e);
                         if (pos < 0) return;
                         if (level != 0 || selMode || moveEntry != null) {   // mientras, has abierto otra cosa: no se cambia de pantalla
                             pendingDupes = e;
                             pendingDupeKeys = extra;
-                            showToast(extra.size() + (extra.size() == 1 ? " foto repetida" : " fotos repetidas") + " en «" + e.title + "»: ábrelo para verlas marcadas.");
+                            showToastLong(extra.dups.size() + (extra.dups.size() == 1 ? " foto repetida" : " fotos repetidas") + " en «" + e.title + "»: ábrelo para verlas marcadas.");
                             return;
                         }
                         openEntry(pos);
                         markDupes(extra);
-                        showToast(extra.size() + (extra.size() == 1 ? " foto repetida marcada" : " fotos repetidas marcadas")
-                                + " (se queda la primera de cada grupo). Pulsa «Ocultar» para quitarlas o desmarca las que quieras.");
+                        showToastLong(extra.dups.size() + (extra.dups.size() == 1 ? " foto repetida marcada" : " fotos repetidas marcadas")
+                                + " (se queda la primera de cada grupo, que sale sin marcar justo antes de las suyas). Pulsa «Ocultar» para quitarlas o desmarca las que quieras.");
                     }
                 });
             }
@@ -907,14 +838,33 @@ public class BrowserActivity extends Activity {
     }
 
     private Entry pendingDupes;
-    private Set<String> pendingDupeKeys;
+    private DupeScan.Result pendingDupeKeys;
 
     /** Deja marcadas las repetidas en el mosaico abierto (modo de selección, listas para «Ocultar»). */
-    private void markDupes(Set<String> keys) {
+    private void markDupes(DupeScan.Result r) {
         pSel = true;
         pKeys.clear();
-        pKeys.addAll(keys);
+        pKeys.addAll(r.dups);
+        // para comparar: cada foto que se queda, con sus repetidas al lado, al principio; el resto sigue en su orden
+        if (current != null) {
+            current.dupFront = null;
+            List<Item> base = current.base();
+            java.util.HashSet<String> there = new java.util.HashSet<String>();
+            for (Item it : base) there.add(it.key());
+            java.util.HashSet<String> used = new java.util.HashSet<String>();
+            List<Item> front = new ArrayList<Item>(base.size());
+            for (List<Item> g : r.groups) {
+                for (Item it : g) if (there.contains(it.key()) && used.add(it.key())) front.add(it);
+            }
+            for (Item it : base) if (!used.contains(it.key())) front.add(it);
+            current.dupFront = front;
+        }
         showPhotos(0);
+    }
+
+    /** Vuelve al orden de siempre tras comparar repetidas. */
+    private void endDupeView() {
+        if (current != null) current.dupFront = null;
     }
 
     private boolean albumMenu(int pos) {
@@ -938,7 +888,7 @@ public class BrowserActivity extends Activity {
             lb.add("Borrar álbum"); ic.add(R.drawable.ic_delete);
             int[] ia = new int[ic.size()];
             for (int i = 0; i < ia.length; i++) ia[i] = ic.get(i);
-            iconMenu(e.title, lb.toArray(new String[0]), ia,
+            Dialogs.iconMenu(BrowserActivity.this, e.title, lb.toArray(new String[0]), ia,
                 new android.content.DialogInterface.OnClickListener() {
                     public void onClick(android.content.DialogInterface d, int w) {
                         String a = lb.get(w);
@@ -947,7 +897,7 @@ public class BrowserActivity extends Activity {
                         else if (a.equals("Pase con música")) startPase(one, true);
                         else if (a.equals("Recargar álbum")) reloadAlbum(e);
                         else if (a.equals("Revisar ubicaciones")) recheckPlaces(one);
-                        else if (a.equals("Música del álbum")) pickAlbumMusic(e);
+                        else if (a.equals("Música del álbum")) Dialogs.albumMusic(BrowserActivity.this, e);
                         else if (a.equals("Buscar repetidas")) findDupes(e);
                         else if (a.equals("Quitar portada") || a.equals("Quitar portadas")) {
                             Extras.setCovers(BrowserActivity.this, e.url, null);   // vuelve a ser al azar (como siempre)
@@ -1111,6 +1061,19 @@ public class BrowserActivity extends Activity {
         });
     }
 
+    /** Aviso que se queda unos segundos más que el normal (el texto largo da tiempo a leerlo). */
+    private void showToastLong(final String s) {
+        final android.widget.Toast t1 = android.widget.Toast.makeText(this, s, android.widget.Toast.LENGTH_LONG);
+        t1.show();
+        h.postDelayed(new Runnable() {
+            public void run() {
+                if (destroyed) return;
+                t1.cancel();
+                android.widget.Toast.makeText(BrowserActivity.this, s, android.widget.Toast.LENGTH_LONG).show();
+            }
+        }, 3000);
+    }
+
     private void showToast(String s) {
         android.widget.Toast.makeText(this, s, android.widget.Toast.LENGTH_LONG).show();
     }
@@ -1142,7 +1105,7 @@ public class BrowserActivity extends Activity {
         current.dayHi = -1;
         scanGen++;
         if (pendingDupes == current && pendingDupeKeys != null) {   // repetidas que se encontraron mientras estabas en otro sitio
-            Set<String> k = pendingDupeKeys;
+            DupeScan.Result k = pendingDupeKeys;
             pendingDupes = null;
             pendingDupeKeys = null;
             markDupes(k);
@@ -1388,7 +1351,7 @@ public class BrowserActivity extends Activity {
                         showToast(a.equals("Quitar de portadas") ? "Quitada de las portadas del álbum."
                                 : multi ? "Añadida a las portadas del álbum (" + current.coverKeys.size() + ")." : "Portada del álbum fijada.");
                     } else if (a.equals("Pie de foto")) {
-                        askName("Pie de foto (vacío para quitarlo)", Extras.rawCaption(BrowserActivity.this, it.key()), new NameDone() {
+                        Dialogs.askName(BrowserActivity.this, "Pie de foto (vacío para quitarlo)", Extras.rawCaption(BrowserActivity.this, it.key()), new Dialogs.NameDone() {
                             public void done(String text) {
                                 Extras.setCaption(BrowserActivity.this, it.key(), text);
                                 showToast(text.length() == 0 ? "Pie de foto quitado." : "Pie de foto guardado: sale en el pase y en la ficha.");
@@ -1449,9 +1412,10 @@ public class BrowserActivity extends Activity {
     }
 
     private void exitPSel() {
-        int fp = photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0;
+        int fp = current != null && current.dupFront != null ? 0 : (photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
         pSel = false;
         pKeys.clear();
+        endDupeView();
         showPhotos(fp);
     }
 
@@ -1475,12 +1439,13 @@ public class BrowserActivity extends Activity {
     private void applyPhotoSel(int what) {
         if (pKeys.isEmpty()) { showToast("Marca primero alguna foto o vídeo."); return; }
         List<String> ks = new ArrayList<String>(pKeys);
-        int fp = photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0;
+        int fp = current != null && current.dupFront != null ? 0 : (photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
         if (what == 0) Prefs.hideAll(this, ks, current.kind != 3);
         else Prefs.favAll(this, ks, what == 1);
         showToast(ks.size() + (ks.size() == 1 ? " elemento cambiado." : " elementos cambiados."));
         pSel = false;
         pKeys.clear();
+        endDupeView();
         refreshAfterChange(fp);
         if (level == 1 && current != null && entries.contains(current)) showPhotos(fp);
     }

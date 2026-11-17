@@ -1,6 +1,6 @@
 {
-  "version": "7.19",
+  "version": "7.20",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 906760,
-  "notes": "- Ajustes: al llegar al borde del panel de la derecha ya no salta a la lista de temas (solo «izquierda» vuelve). Los temas pasan a ser filas de icono y texto, con una barra de color en el elegido, para que no parezcan botones.\n- Autor: ahora también sale al ver las fotos a pantalla completa desde el explorador (antes solo en el pase y el salvapantallas).\n- Temporizador y «Cerrar pase»: cuando cierran el pase, el inicio automático no lo vuelve a abrir hasta que abras la app.\n- «Buscar repetidas» y «Recargar álbum» ya no se quedan esperando detrás de la carga de álbumes. Se quita un icono giratorio que nunca se veía.\n- Explorador: nuevo botón «Álbumes: orden manual / recientes primero / antiguos primero» en la lista de álbumes.\n- Búsquedas guardadas: el botón «Guardar» sale siempre en el mosaico de una búsqueda y activa los álbumes virtuales al guardar la primera.\n- Buscar: ahora también por autor («Lola», «Alex 2024», «motril 2022 Alex»), con sugerencias «Fotos de…».\n- Estadísticas: «Leer cámaras» sigue en segundo plano, con la app cerrada o la pantalla apagada, y se retoma si el sistema lo corta.\n- Diagnóstico: ya no apunta como fallo los cortes al saltar de foto, y los fallos de vídeo dicen la causa."
+  "size": 910856,
+  "notes": "- Buscar repetidas: los avisos se quedan unos 3 segundos más en pantalla.\n- Buscar repetidas: al marcar, el álbum se ordena con cada foto que se queda (sin marcar) seguida de sus repetidas (marcadas), todas al principio, para compararlas. El resto sigue en su orden, y al terminar (ocultar, cancelar o salir) todo vuelve al orden de siempre.\n- Por dentro: los diálogos del explorador (menú con iconos, pedir un nombre, música del álbum) pasan a su propio archivo."
 }

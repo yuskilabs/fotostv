@@ -29,7 +29,9 @@ class Entry {
     private List<Item> dayOf, dayList;
     private int dayN = -1, dayCLo = -2, dayCHi = -2;
 
-    List<Item> base() { return onlyVideos ? vids : (view != null ? view : items); }
+    List<Item> dupFront;      // «Buscar repetidas»: las que se quedan, cada una con sus repetidas al lado, y luego el resto (null = orden normal)
+
+    List<Item> base() { return onlyVideos ? vids : (dupFront != null ? dupFront : (view != null ? view : items)); }
 
     List<Item> shown() {
         List<Item> b = base();
