@@ -239,6 +239,7 @@ src/com/yuskilabs/fotostv/
   Music                      música de fondo (emisora o carpeta)
   Slideshow                  motor del pase: precarga, fundidos, vídeo, mando
   VideoCache, Mosaic, Credit   piezas del motor: caché de vídeo, mosaicos y autor
+  CamScanService             lectura de cámaras en segundo plano (Estadísticas)
   Diag, DiagActivity         registro y pantalla de Diagnóstico (últimos errores)
   VideoProxy                 servidor local para ver vídeos mientras se descargan
   InfoPanel                  ficha de información con mapa y botones

@@ -3,6 +3,17 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.19
+- Ajustes: al llegar al borde del panel de la derecha ya no salta a la lista de temas (solo «izquierda» vuelve). Los temas pasan a ser filas de icono y texto, con una barra de color en el elegido, para que no parezcan botones.
+- Autor: ahora también sale al ver las fotos a pantalla completa desde el explorador (antes solo en el pase y el salvapantallas).
+- Temporizador y «Cerrar pase»: cuando cierran el pase, el inicio automático no lo vuelve a abrir hasta que abras la app.
+- «Buscar repetidas» y «Recargar álbum» ya no se quedan esperando detrás de la carga de álbumes. Se quita un icono giratorio que nunca se veía.
+- Explorador: nuevo botón «Álbumes: orden manual / recientes primero / antiguos primero» en la lista de álbumes.
+- Búsquedas guardadas: el botón «Guardar» sale siempre en el mosaico de una búsqueda y activa los álbumes virtuales al guardar la primera.
+- Buscar: ahora también por autor («Lola», «Alex 2024», «motril 2022 Alex»), con sugerencias «Fotos de…».
+- Estadísticas: «Leer cámaras» sigue en segundo plano, con la app cerrada o la pantalla apagada, y se retoma si el sistema lo corta.
+- Diagnóstico: ya no apunta como fallo los cortes al saltar de foto, y los fallos de vídeo dicen la causa.
+
 ## 7.18
 - Por dentro: la parte del explorador que crea los álbumes, los ordena, elige portadas, marca las fotos nuevas y arma los álbumes virtuales pasa a su propio archivo. Todo funciona igual.
 

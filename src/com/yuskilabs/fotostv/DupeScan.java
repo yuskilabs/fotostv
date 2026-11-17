@@ -33,7 +33,7 @@ final class DupeScan {
                 if (!ok) continue;
                 for (int i : FxLogic.similarToEarlier(hs, 10)) extra.add(photos.get(i).key());
             }
-        } catch (Throwable ignored) { }
+        } catch (Throwable t) { Diag.e("repetidas", t); }
         return extra;
     }
 

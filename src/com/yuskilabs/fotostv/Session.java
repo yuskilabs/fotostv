@@ -10,6 +10,8 @@ class Session {
     static String startKey;           // foto por la que empezar (visor)
     static boolean guest;             // el pase es de un álbum temporal de invitado
     static String guestId;            // cuál (para cerrar el pase cuando caduque)
+    static volatile long autoClosedAt;    // cuándo (para distinguir la vuelta al cerrarse de abrir la app de verdad)
+    static volatile boolean autoClosed;  // el pase lo cerró el temporizador o «Cerrar pase»: el inicio automático no lo reabre hasta que se abra la app
     static volatile boolean playerOn;  // hay un pase abierto (el inicio automático no debe tapar un pase manual)
     static int music;                 // 0 = según los ajustes, 1 = con música aunque esté desactivada (menú «Pase con música»)
     static String musicUrl;           // emisora propia del álbum del pase (función extra «Música por álbum»); null = la de Ajustes

@@ -108,7 +108,7 @@ final class VideoCache {
         if (!Thread.currentThread().isInterrupted()
                 && AlbumFetcher.downloadVideo(it.url + "=dv", part, MAX_VIDEO, 30000) && part.renameTo(hd)) return hd;
         part.delete();
-        Diag.i("vídeo", "no se pudo bajar " + it.key() + " (" + AlbumFetcher.lastVideoErr + ")");
+        if (!Thread.currentThread().isInterrupted()) Diag.i("vídeo", "no se pudo bajar " + it.key() + " (" + (AlbumFetcher.lastVideoErr == null || AlbumFetcher.lastVideoErr.length() == 0 ? "sin respuesta del servidor" : AlbumFetcher.lastVideoErr) + ")");
         return null;
     }
 }

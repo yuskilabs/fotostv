@@ -11,7 +11,7 @@ public class PlayerActivity extends Activity {
     private Slideshow show;
     private String guestId;
     private final android.os.Handler gh = new android.os.Handler();
-    private final Runnable timerEnd = new Runnable() { public void run() { finish(); } };   // temporizador (función extra)
+    private final Runnable timerEnd = new Runnable() { public void run() { Session.autoClosed = true; Session.autoClosedAt = System.currentTimeMillis(); finish(); } };   // temporizador (función extra)
     private final Runnable guestCheck = new Runnable() {
         public void run() {
             if (guestId == null) return;

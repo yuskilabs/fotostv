@@ -32,6 +32,7 @@ import java.util.concurrent.Executors;
 public class BrowserActivity extends Activity {
     private final Handler h = new Handler(Looper.getMainLooper());
     private final ExecutorService bg = Executors.newSingleThreadExecutor();
+    private final ExecutorService act = Executors.newSingleThreadExecutor();   // acciones que pide el usuario (no esperan detrás de la carga de álbumes)
     private boolean placeMode;
     private final List<Entry> entries = new ArrayList<Entry>();
     private FrameLayout root;
@@ -59,6 +60,7 @@ public class BrowserActivity extends Activity {
     private float photoRatio = 1f;
     private android.widget.Button colsMinus, colsPlus, shapeBtn;
     private String refocus;
+    private android.widget.Button sortBtn;
     private static final int[] ALBUM_COLS_RANGE = {2, 10};
     private static final int[] PHOTO_COLS_RANGE = {2, 14};
     private static final int TITLE_COLOR = 0xFFFFFFFF;
@@ -295,6 +297,7 @@ public class BrowserActivity extends Activity {
         destroyed = true;
         h.removeCallbacksAndMessages(null);
         bg.shutdownNow();
+        act.shutdownNow();
         scanExec.shutdownNow();
         super.onDestroy();
     }
@@ -340,7 +343,7 @@ public class BrowserActivity extends Activity {
     }
 
     private void loadEntries() {
-        bg.submit(new Runnable() {
+        act.submit(new Runnable() {
             public void run() {
                 final List<Entry> list = new ArrayList<Entry>();
                 for (Prefs.Album al : Prefs.albums(BrowserActivity.this)) {
@@ -600,7 +603,18 @@ public class BrowserActivity extends Activity {
             head.addView(sbtn("Cancelar", R.drawable.ic_close, new View.OnClickListener() {
                 public void onClick(View v) { exitSel(); }
             }));
-        } else head.addView(colsControl("album", ALBUM_COLS_RANGE, albumCols, "albumCols", true));
+        } else {
+            if (!placeMode) head.addView(sortBtn = sbtn(albumSortLabel(), R.drawable.ic_down, new View.OnClickListener() {
+                public void onClick(View v) {
+                    String m = Prefs.albumSort(BrowserActivity.this);
+                    String n = "manual".equals(m) ? "newest" : "newest".equals(m) ? "oldest" : "manual";
+                    Prefs.sp(BrowserActivity.this).edit().putString("albumSort", n).commit();
+                    refocus = "sort";
+                    loadEntries();
+                }
+            }));
+            head.addView(colsControl("album", ALBUM_COLS_RANGE, albumCols, "albumCols", true));
+        }
         col.addView(head, headParams());
 
         albumGrid = makeGrid(albumCols);
@@ -618,8 +632,14 @@ public class BrowserActivity extends Activity {
         albumGrid.setSelection(Math.min(albumPos, Math.max(0, entries.size() - 1)));
         if ("minus".equals(refocus)) colsMinus.requestFocus();
         else if ("plus".equals(refocus)) colsPlus.requestFocus();
+        else if ("sort".equals(refocus) && sortBtn != null) sortBtn.requestFocus();
         else albumGrid.requestFocus();
         refocus = null;
+    }
+
+    private String albumSortLabel() {
+        String m = Prefs.albumSort(this);
+        return "Álbumes: " + ("newest".equals(m) ? "recientes primero" : "oldest".equals(m) ? "antiguos primero" : "orden manual");
     }
 
     private boolean selMode;
@@ -816,6 +836,7 @@ public class BrowserActivity extends Activity {
                 for (int i = l.size() - 1; i >= 0; i--) if (l.get(i)[1].equals(current.query)) l.remove(i);
                 l.add(new String[]{name, current.query});
                 Extras.saveVirtualAlbums(BrowserActivity.this, l);
+                Extras.sp(BrowserActivity.this).edit().putBoolean(Extras.VIRTUAL, true).commit();   // al guardar la primera, la función se activa
                 showToast("Guardado: «" + name + "» sale en la lista de álbumes.");
             }
         });
@@ -856,7 +877,7 @@ public class BrowserActivity extends Activity {
         dupBusy = true;
         busyStart("Buscando repetidas…");
         final List<Item> base = new ArrayList<Item>(e.items);
-        bg.submit(new Runnable() {
+        act.submit(new Runnable() {
             public void run() {
                 final Set<String> extra = DupeScan.scan(BrowserActivity.this, base, new DupeScan.Cancel() {
                     public boolean cancelled() { return destroyed; }
@@ -1043,41 +1064,14 @@ public class BrowserActivity extends Activity {
     }
 
     private boolean reloading;
-    private android.widget.Button reloadBtn;
-    private Spin reloadSpin;
-    private android.animation.ValueAnimator spinAnim;
-
-    private void startSpin() {
-        if (reloadBtn == null || reloadSpin == null) return;
-        if (spinAnim != null) spinAnim.cancel();
-        spinAnim = android.animation.ValueAnimator.ofFloat(0f, 360f);
-        spinAnim.setDuration(900);
-        spinAnim.setInterpolator(new android.view.animation.LinearInterpolator());
-        spinAnim.setRepeatCount(android.animation.ValueAnimator.INFINITE);
-        spinAnim.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
-            public void onAnimationUpdate(android.animation.ValueAnimator a) {
-                reloadSpin.angle = ((Float) a.getAnimatedValue()).floatValue();
-                reloadSpin.invalidateSelf();
-                if (reloadBtn != null) reloadBtn.invalidate();
-            }
-        });
-        spinAnim.start();
-    }
-
-    private void stopSpin() {
-        if (spinAnim != null) { spinAnim.cancel(); spinAnim = null; }
-        if (reloadSpin != null) { reloadSpin.angle = 0; reloadSpin.invalidateSelf(); }
-        if (reloadBtn != null) reloadBtn.invalidate();
-    }
 
     /** Vuelve a leer un solo álbum: fotos nuevas, título y ubicaciones que faltaban. */
     private void reloadAlbum(final Entry e) {
         if (e == null || e.kind != 0 || reloading) return;
         reloading = true;
-        startSpin();
         busyStart("Recargando álbum…");
         final List<Item> old = new ArrayList<Item>(e.src);
-        bg.submit(new Runnable() {
+        act.submit(new Runnable() {
             public void run() {
                 String msg;
                 AlbumFetcher.AlbumData d = null;
@@ -1091,7 +1085,8 @@ public class BrowserActivity extends Activity {
                         msg = "\u2714 «" + e.title + "» recargado: " + d.items.size() + " elementos"
                                 + (regps > 0 ? ". Se vuelve a buscar la ubicación de " + regps + "." : ".");
                     }
-                } catch (Exception ex) {
+                } catch (Throwable ex) {
+                    Diag.e("recargar álbum", ex);
                     msg = "No se ha podido recargar (¿hay conexión?).";
                 }
                 final AlbumFetcher.AlbumData fd = d;
@@ -1099,7 +1094,6 @@ public class BrowserActivity extends Activity {
                 h.post(new Runnable() {
                     public void run() {
                         reloading = false;
-                        stopSpin();
                         busyEnd("Recargando álbum…");
                         if (destroyed) return;
                         if (fd != null) {
@@ -1206,7 +1200,7 @@ public class BrowserActivity extends Activity {
             }
         });
         row.addView(orderBtn);
-        if (current.kind == 5 && current.query != null && Extras.on(this, Extras.VIRTUAL)) {
+        if (current.kind == 5 && current.query != null) {
             row.addView(sbtn("Guardar", R.drawable.ic_albums, new View.OnClickListener() {
                 public void onClick(View v) { saveVirtual(); }
             }));

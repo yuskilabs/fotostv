@@ -8,6 +8,7 @@ public class App extends Application {
     @Override public void onCreate() {
         super.onCreate();
         Diag.init(this);
+        try { CamScan.resumeIfWanted(this); } catch (Throwable ignored) { }
         try {
             Ui.BLACK = Typeface.createFromAsset(getAssets(), "fonts/Figtree-Bold.ttf");
             Ui.BTN = Typeface.createFromAsset(getAssets(), "fonts/Figtree-Regular.ttf");

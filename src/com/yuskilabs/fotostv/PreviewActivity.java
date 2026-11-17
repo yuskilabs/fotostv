@@ -9,8 +9,8 @@ import android.widget.FrameLayout;
 public class PreviewActivity extends Activity {
     private Slideshow show;
     private final android.os.Handler hh = new android.os.Handler();
-    private final Runnable stopper = new Runnable() { public void run() { finish(); } };
-    private final Runnable timerEnd = new Runnable() { public void run() { finish(); } };   // temporizador (función extra)
+    private final Runnable stopper = new Runnable() { public void run() { Session.autoClosed = true; Session.autoClosedAt = System.currentTimeMillis(); finish(); } };
+    private final Runnable timerEnd = new Runnable() { public void run() { Session.autoClosed = true; Session.autoClosedAt = System.currentTimeMillis(); finish(); } };   // temporizador (función extra)
 
     /** El pase abierto solo por inactividad se cierra tras un rato sin tocar el mando (por si la tele está apagada). */
     private void armStop() {

@@ -35,7 +35,36 @@ final class Search {
     }
 
     static HashMap<String, String> places(Context c) {
+        refreshAuthors(c);
         try { return GeoIndex.get(c).placeMap(); } catch (Throwable t) { return new HashMap<String, String>(); }
+    }
+
+    // ---- autor de cada foto (lo ya calculado para la marca de agua, o deducido de la cámara ya leída con las reglas del usuario)
+    private static volatile HashMap<String, String> credits = new HashMap<String, String>();
+    private static volatile HashMap<String, String> cams = new HashMap<String, String>();
+    private static volatile String rulesText = "";
+
+    private static void refreshAuthors(Context c) {
+        try {
+            HashMap<String, String> cr = new HashMap<String, String>();
+            for (Map.Entry<String, ?> e : Prefs.meta(c).getAll().entrySet()) {
+                String k = e.getKey();
+                if (k.startsWith("cr2_") && e.getValue() instanceof String && ((String) e.getValue()).length() > 0)
+                    cr.put(k.substring(4), (String) e.getValue());
+            }
+            credits = cr;
+            cams = GeoIndex.get(c).camMap();
+            rulesText = Extras.str(c, Extras.CREDIT_RULES, "");
+        } catch (Throwable t) { Diag.e("autores", t); }
+    }
+
+    /** Quién hizo la foto, o "" si no se sabe (todavía) o no encaja ninguna regla. */
+    static String authorOf(String key) {
+        String a = credits.get(key);
+        if (a != null) return a;
+        String cam = cams.get(key);
+        if (cam == null || cam.length() == 0) return "";
+        try { return FxLogic.credit(cam, null, rulesText); } catch (Throwable t) { return ""; }
     }
 
     /** Fotos que encajan con el texto («Zahara», «agosto 2025», «Lara 2024»). */
@@ -61,7 +90,7 @@ final class Search {
         TimeZone tz = TimeZone.getDefault();
         for (Item it : all) {
             if (!FxLogic.dateMatches(q, it.ts, tz)) continue;
-            if (!q.words.isEmpty() && !FxLogic.wordsIn(q, n(placeOf.get(it.key())) + " " + n(it.album))) continue;
+            if (!q.words.isEmpty() && !FxLogic.wordsIn(q, n(placeOf.get(it.key())) + " " + n(it.album) + " " + n(authorOf(it.key())))) continue;
             out.add(it);
         }
         return out;
@@ -75,14 +104,16 @@ final class Search {
         TimeZone tz = TimeZone.getDefault();
         LinkedHashMap<String, Integer> byPlace = new LinkedHashMap<String, Integer>();
         LinkedHashMap<String, Integer> byAlbum = new LinkedHashMap<String, Integer>();
+        LinkedHashMap<String, Integer> byAuthor = new LinkedHashMap<String, Integer>();
         int total = 0;
         for (Item it : all) {
             if (!FxLogic.dateMatches(q, it.ts, tz)) continue;
             String p = placeOf.get(it.key());
             if (q.words.isEmpty()) { total++; continue; }
-            String np = n(p), na = n(it.album);
-            if (!FxLogic.wordsIn(q, np + " " + na)) continue;
+            String np = n(p), na = n(it.album), au = authorOf(it.key()), nau = n(au);
+            if (!FxLogic.wordsIn(q, np + " " + na + " " + nau)) continue;
             total++;
+            if (au.length() > 0 && FxLogic.wordsIn(q, nau)) inc(byAuthor, au);
             if (p != null && FxLogic.wordsIn(q, np)) inc(byPlace, p);
             if (FxLogic.wordsIn(q, na)) inc(byAlbum, it.album);
         }
@@ -92,6 +123,9 @@ final class Search {
         for (Map.Entry<String, Integer> e : top(byPlace, 12))
             out.add(new String[]{e.getKey() + (date.length() > 0 ? " " + date : "") + "  ·  " + e.getValue() + " fotos",
                     "\u0001" + e.getKey() + "\u0001" + date, String.valueOf(e.getValue())});
+        for (Map.Entry<String, Integer> e : top(byAuthor, 4))
+            out.add(new String[]{"Fotos de " + e.getKey() + (date.length() > 0 ? " " + date : "") + "  ·  " + e.getValue() + " fotos",
+                    "\u0003" + e.getKey() + "\u0003" + date, String.valueOf(e.getValue())});
         for (Map.Entry<String, Integer> e : top(byAlbum, 8))
             out.add(new String[]{"Álbum «" + e.getKey() + "»" + (date.length() > 0 ? " " + date : "") + "  ·  " + e.getValue() + " fotos",
                     "\u0002" + e.getKey() + "\u0002" + date, String.valueOf(e.getValue())});
@@ -100,16 +134,16 @@ final class Search {
 
     /** Lanza una sugerencia: búsqueda normal, o un lugar / álbum exacto (con la fecha si la había). */
     static List<Item> runSuggestion(List<Item> all, Map<String, String> placeOf, String s) {
-        if (s.length() > 0 && (s.charAt(0) == '\u0001' || s.charAt(0) == '\u0002')) {
-            boolean place = s.charAt(0) == '\u0001';
-            String[] p = s.substring(1).split(place ? "\u0001" : "\u0002", -1);
+        if (s.length() > 0 && (s.charAt(0) == '\u0001' || s.charAt(0) == '\u0002' || s.charAt(0) == '\u0003')) {
+            boolean place = s.charAt(0) == '\u0001', auth = s.charAt(0) == '\u0003';
+            String[] p = s.substring(1).split(place ? "\u0001" : auth ? "\u0003" : "\u0002", -1);
             String name = p[0];
             FxLogic.Query q = FxLogic.parse(p.length > 1 ? p[1] : "");
             TimeZone tz = TimeZone.getDefault();
             List<Item> out = new ArrayList<Item>();
             for (Item it : all) {
                 if (!FxLogic.dateMatches(q, it.ts, tz)) continue;
-                if (place ? name.equals(placeOf.get(it.key())) : name.equals(it.album)) out.add(it);
+                if (place ? name.equals(placeOf.get(it.key())) : auth ? name.equals(authorOf(it.key())) : name.equals(it.album)) out.add(it);
             }
             return out;
         }

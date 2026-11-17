@@ -44,6 +44,8 @@ final class Diag {
     private static synchronized void write(String where, Throwable t, String msg) {
         File f = file();
         if (f == null) return;
+        for (Throwable x = t; x != null; x = x.getCause())
+            if (x instanceof java.io.InterruptedIOException || x instanceof InterruptedException) return;   // se saltó de foto o se cerró: no es un fallo
         String what = msg != null ? msg : (t instanceof OutOfMemoryError ? "falta de memoria" : String.valueOf(t));
         String key = where + "|" + what;
         long now = System.currentTimeMillis();

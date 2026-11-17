@@ -109,7 +109,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             lens.setImageResource(R.drawable.ic_search);
             lens.setAlpha(0.7f);
             bar.addView(lens, new LinearLayout.LayoutParams(dp(16), dp(16)));
-            TextView hintTx = text("Buscar lugar, álbum o fecha…", 14, 0xFF8FA6C0);
+            TextView hintTx = text("Buscar lugar, álbum, autor o fecha…", 14, 0xFF8FA6C0);
             hintTx.setSingleLine(true);
             hintTx.setPadding(dp(10), 0, 0, 0);
             bar.addView(hintTx, new LinearLayout.LayoutParams(0, -2, 1f));
@@ -574,6 +574,8 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     @Override protected void onStart() {
         super.onStart();
+        // abrir la app de verdad rearma el inicio automático (no la vuelta justo después de que el pase se cierre solo)
+        if (Session.autoClosed && System.currentTimeMillis() - Session.autoClosedAt > 4000) Session.autoClosed = false;
         if (extrasSig != null && !extrasSig.equals(extrasSig())) { recreate(); return; }
         Guest.purgeExpired(this);
         if ("folder".equals(Prefs.musicMode(this)) && android.os.Build.VERSION.SDK_INT >= 23

@@ -1338,6 +1338,7 @@ class Slideshow {
                             Slide t = buildPhoto(it);
                             if (t != null && sess == session) {
                                 try { t.bmp.prepareToDraw(); } catch (Throwable ignored) { }   // sube la imagen a la GPU ya
+                                try { Credit.fill(ctx, t, false); } catch (Throwable ignored) { }   // autor (lo que ya se sabe)
                                 bcachePut(it.key(), t);
                             }
                         } else if (!hasBytes(it.key())) {
@@ -1380,13 +1381,16 @@ class Slideshow {
                 Slide cached = bcacheGet(it.key());
                 if (cached == null) {
                     cached = buildPhoto(it);   // la foto, o la imagen fija del vídeo
-                    if (cached != null) bcachePut(it.key(), cached);
+                    if (cached != null) {
+                        try { Credit.fill(ctx, cached, false); } catch (Throwable ignored) { }   // autor (lo que ya se sabe)
+                        bcachePut(it.key(), cached);
+                    }
                 }
                 final Slide p = cached;
                 h.post(new Runnable() {
                     public void run() {
                         if (!running || sess != session || myGen != gen) return;
-                        if (p != null) display(p, !isVid);
+                        if (p != null) { display(p, !isVid); creditLater(p); }
                         browseAhead(it);
                         if (!isVid) {
                             if (p == null) flash("No se pudo cargar esta foto", 2500);

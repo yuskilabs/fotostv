@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** «Buscar» (función extra): fotos por lugar, nombre del álbum, mes o año. */
+/** «Buscar» (función extra): fotos por lugar, nombre del álbum, autor, mes o año. */
 public class SearchActivity extends SettingsBase {
     private final Handler h = new Handler(Looper.getMainLooper());
     private final ExecutorService bg = Executors.newSingleThreadExecutor();
@@ -51,7 +51,7 @@ public class SearchActivity extends SettingsBase {
         input.setSingleLine(true);
         input.setTextColor(Color.WHITE);
         input.setHintTextColor(0xFF7C93AD);
-        input.setHint("Lugar, álbum, mes o año…");
+        input.setHint("Lugar, álbum, autor, mes o año…");
         input.setTypeface(Ui.REG);
         input.setTextSize(20);
         input.setImeOptions(EditorInfo.IME_ACTION_SEARCH);

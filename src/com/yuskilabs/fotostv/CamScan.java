@@ -12,7 +12,20 @@ final class CamScan {
     static volatile int done, total;
     static volatile long finishedAt;
 
-    static synchronized void start(Context ctx) {
+    /** Pide la lectura: la hace un servicio (con la pantalla apagada o fuera de la app) y se reanuda sola si el sistema la corta. */
+    static void start(Context ctx) {
+        if (running) return;
+        Prefs.sp(ctx).edit().putBoolean("camScanOn", true).commit();
+        try { ctx.getApplicationContext().startService(new android.content.Intent(ctx.getApplicationContext(), CamScanService.class)); }
+        catch (Throwable t) { Diag.e("leer cámaras", t); begin(ctx, null); }
+    }
+
+    /** Al arrancar la app: si la lectura estaba en marcha y el sistema mató el proceso, sigue. */
+    static void resumeIfWanted(Context ctx) {
+        if (!running && Prefs.sp(ctx).getBoolean("camScanOn", false)) start(ctx);
+    }
+
+    static synchronized void begin(Context ctx, final Runnable onEnd) {
         if (running) return;
         running = true;
         done = 0;
@@ -46,14 +59,19 @@ final class CamScan {
                         g.putCam(it.key(), MetaFetcher.camFromHead(head));
                         done++;
                     }
-                } catch (Throwable ignored) {
+                } catch (Throwable t) {
+                    Diag.e("leer cámaras", t);
                 } finally {
+                    boolean wanted = running;        // false = la paró el usuario
                     running = false;
                     finishedAt = System.currentTimeMillis();
+                    if (wanted) Prefs.sp(c).edit().putBoolean("camScanOn", false).commit();
+                    if (onEnd != null) onEnd.run();
                 }
             }
         }, "cam-scan").start();
     }
 
     static void stop() { running = false; }
+    static void stop(Context c) { running = false; Prefs.sp(c).edit().putBoolean("camScanOn", false).commit(); }
 }

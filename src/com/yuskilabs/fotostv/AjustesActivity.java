@@ -292,14 +292,14 @@ public class AjustesActivity extends SettingsBase {
         Button nightMode = cycFx("De noche", Extras.NIGHT_MODE, new String[]{"dim", "black"}, new String[]{"tenue", "pantalla negra"},
                 R.drawable.ic_moon, "Tenue: fotos muy oscuras, sin textos. Pantalla negra: el salvapantallas no enseña nada a esas horas.");
         Button timer = cycInt("Temporizador", Extras.TIMER, new int[]{0, 15, 30, 60, 90}, new String[]{"no", "15 min", "30 min", "1 h", "1 h 30"},
-                R.drawable.ic_timer, "Cualquier pase (también el salvapantallas) se cierra solo pasado ese tiempo, aunque se use el mando.");
+                R.drawable.ic_timer, "Cualquier pase (también el salvapantallas) se cierra solo pasado ese tiempo, aunque se use el mando. Después el inicio automático no lo vuelve a abrir hasta que abras la app. «Cerrar pase» (pantalla principal) es distinto: cierra el pase abierto solo si no tocas el mando en ese rato.");
         cn.addView(row(night, nightMode));
         cn.addView(row(timer, null));
 
         // --- explorador
         LinearLayout ce = card("Explorador", R.drawable.ic_albums);
         Button search = fx("Buscar", Extras.SEARCH, R.drawable.ic_search,
-                "Barra de búsqueda en la pantalla principal (encima de los botones; se llega subiendo con el mando): por lugar, álbum o fecha («Zahara», «agosto 2025»).");
+                "Barra de búsqueda en la pantalla principal (encima de los botones; se llega subiendo con el mando): por lugar, álbum, autor o fecha («Zahara», «agosto 2025», «Lola 2024»). El autor sale de la cámara de cada foto: cuantas más cámaras leas en Estadísticas, más fotos encuentra.");
         Button virt = fx("Álbumes virtuales", Extras.VIRTUAL, R.drawable.ic_albums,
                 "Guarda una búsqueda como álbum («Zahara 2025») y sale en la lista de álbumes; se actualiza solo.");
         Button jump = fx("Saltar por fecha", Extras.DATE_JUMP, R.drawable.ic_event,
@@ -351,24 +351,27 @@ public class AjustesActivity extends SettingsBase {
             R.drawable.ic_guest};
         panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
-        topics = new Button[cards.length];
+        topics = new TopicRow[cards.length];
         LinearLayout list = new LinearLayout(this);
         list.setOrientation(LinearLayout.VERTICAL);
+        topicList = list;
         for (int i = 0; i < cards.length; i++) {
             final int k = i;
             final LinearLayout cd = cards[i];
-            Button tb = btn(names[i], icons[i], new View.OnClickListener() {
+            TopicRow tr = new TopicRow(this, names[i], icons[i]);
+            tr.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) { cd.requestFocus(); }
             });
-            tb.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            tr.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 public void onFocusChange(View v, boolean has) {
                     if (has) { showTopic(k); if (hint != null) hint.setText(HINT0); }
+                    ((TopicRow) v).setFocusedLook(has);
                 }
             });
-            LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(-1, dp(44));
-            tl.setMargins(0, 0, 0, dp(6));
-            list.addView(tb, tl);
-            topics[i] = tb;
+            LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(-1, dp(42));
+            tl.setMargins(0, 0, 0, dp(2));
+            list.addView(tr, tl);
+            topics[i] = tr;
         }
         cardList = cards;
         ScrollView ls = new ScrollView(this);
@@ -392,7 +395,8 @@ public class AjustesActivity extends SettingsBase {
     }
 
     private LinearLayout panel;
-    private Button[] topics;
+    private TopicRow[] topics;
+    private LinearLayout topicList;
     private LinearLayout[] cardList;
     private int topicSel = -1;
 
@@ -401,7 +405,7 @@ public class AjustesActivity extends SettingsBase {
         topicSel = i;
         panel.removeAllViews();
         panel.addView(cardList[i], new LinearLayout.LayoutParams(-1, -2));
-        for (int k = 0; k < topics.length; k++) topics[k].setAlpha(k == i ? 1f : 0.65f);
+        for (int k = 0; k < topics.length; k++) topics[k].setSelectedLook(k == i);
     }
 
     private boolean inPanel(View v) {
@@ -416,12 +420,22 @@ public class AjustesActivity extends SettingsBase {
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
         if (e.getAction() == KeyEvent.ACTION_DOWN && topics != null) {
             View f = getCurrentFocus();
-            if (f != null && e.getKeyCode() == KeyEvent.KEYCODE_DPAD_LEFT && inPanel(f)) {
-                View n = f.focusSearch(View.FOCUS_LEFT);
-                if (n == null || !inPanel(n)) { topics[Math.max(0, topicSel)].requestFocus(); return true; }
-            } else if (f != null && e.getKeyCode() == KeyEvent.KEYCODE_DPAD_RIGHT && !inPanel(f)) {
-                cardList[Math.max(0, topicSel)].requestFocus();
-                return true;
+            int kc = e.getKeyCode();
+            int dir = kc == KeyEvent.KEYCODE_DPAD_LEFT ? View.FOCUS_LEFT : kc == KeyEvent.KEYCODE_DPAD_RIGHT ? View.FOCUS_RIGHT
+                    : kc == KeyEvent.KEYCODE_DPAD_UP ? View.FOCUS_UP : kc == KeyEvent.KEYCODE_DPAD_DOWN ? View.FOCUS_DOWN : 0;
+            if (f != null && dir != 0) {
+                if (inPanel(f)) {
+                    View n = f.focusSearch(dir);
+                    if (n == null || !inPanel(n)) {          // borde del panel: izquierda vuelve a los temas; el resto, se queda
+                        if (dir == View.FOCUS_LEFT) topics[Math.max(0, topicSel)].requestFocus();
+                        return true;
+                    }
+                } else if (f.getParent() == topicList) {
+                    if (dir == View.FOCUS_RIGHT) { cardList[Math.max(0, topicSel)].requestFocus(); return true; }
+                    if (dir == View.FOCUS_LEFT) return true;
+                    View n = f.focusSearch(dir);
+                    if (n == null || n.getParent() != topicList) return true;   // primer o último tema: se queda
+                }
             }
         }
         return super.dispatchKeyEvent(e);
@@ -1094,5 +1108,51 @@ public class AjustesActivity extends SettingsBase {
                 public void onClick(DialogInterface d, int w) { manageProfiles(); }
             })
             .show();
+    }
+
+    /** Fila de un tema: icono y texto sueltos (sin aspecto de botón); el elegido lleva una barra de color a la izquierda. */
+    private static class TopicRow extends LinearLayout {
+        private final View bar;
+        private final ImageView ic;
+        private final TextView tv;
+        private boolean sel, foc;
+
+        TopicRow(android.content.Context c, String name, int icon) {
+            super(c);
+            setOrientation(HORIZONTAL);
+            setGravity(Gravity.CENTER_VERTICAL);
+            setFocusable(true);
+            float d = c.getResources().getDisplayMetrics().density;
+            bar = new View(c);
+            addView(bar, new LinearLayout.LayoutParams((int) (3 * d), (int) (22 * d)));
+            ic = new ImageView(c);
+            ic.setImageResource(icon);
+            LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams((int) (20 * d), (int) (20 * d));
+            ip.setMargins((int) (12 * d), 0, (int) (12 * d), 0);
+            addView(ic, ip);
+            tv = new TextView(c);
+            tv.setText(name);
+            tv.setTextSize(16);
+            tv.setSingleLine(true);
+            tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            addView(tv, new LinearLayout.LayoutParams(0, -2, 1f));
+            paint();
+        }
+
+        void setSelectedLook(boolean s) { sel = s; paint(); }
+        void setFocusedLook(boolean f) { foc = f; paint(); }
+
+        private void paint() {
+            bar.setBackgroundColor(sel ? 0xFF3D8BFD : 0x00000000);
+            tv.setTextColor(sel ? Color.WHITE : 0xFF9FB3C8);
+            tv.setTypeface(sel ? Ui.BLACK : Ui.REG);
+            ic.setColorFilter(sel ? 0xFF7FB2FF : 0xFF6F86A0);
+            if (foc) {
+                GradientDrawable g = new GradientDrawable();
+                g.setColor(0x33FFFFFF);
+                g.setCornerRadius(8 * getResources().getDisplayMetrics().density);
+                setBackground(g);
+            } else setBackground(null);
+        }
     }
 }

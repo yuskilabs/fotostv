@@ -201,10 +201,10 @@ public class StatsActivity extends SettingsBase {
     private long shownAt = System.currentTimeMillis();
 
     private void camAction() {
-        if (CamScan.running) { CamScan.stop(); return; }
+        if (CamScan.running) { CamScan.stop(this); return; }
         new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle("Leer la cámara de cada foto")
-            .setMessage("Se lee el principio de cada foto (unos 160 KB por foto) para saber con qué cámara se hizo. Con muchas fotos puede tardar y gastar bastantes datos. Puedes pararlo cuando quieras; sigue mientras la app esté abierta.")
+            .setMessage("Se lee el principio de cada foto (unos 160 KB por foto) para saber con qué cámara se hizo. Con muchas fotos puede tardar y gastar bastantes datos. Puedes pararlo cuando quieras. Sigue en segundo plano aunque salgas de la app o apagues la tele, y se retoma solo si el sistema lo corta.")
             .setPositiveButton("Empezar", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dlg, int w) { CamScan.start(StatsActivity.this); h.removeCallbacks(camTick); h.post(camTick); }
             })
