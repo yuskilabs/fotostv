@@ -1,6 +1,6 @@
 {
-  "version": "7.20",
+  "version": "7.21",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 910856,
-  "notes": "- Buscar repetidas: los avisos se quedan unos 3 segundos más en pantalla.\n- Buscar repetidas: al marcar, el álbum se ordena con cada foto que se queda (sin marcar) seguida de sus repetidas (marcadas), todas al principio, para compararlas. El resto sigue en su orden, y al terminar (ocultar, cancelar o salir) todo vuelve al orden de siempre.\n- Por dentro: los diálogos del explorador (menú con iconos, pedir un nombre, música del álbum) pasan a su propio archivo."
+  "notes": "- Por dentro: el explorador reparte en archivos propios la construcción de la pantalla (botones, cabecera, rótulos) y de las cuadrículas y casillas de álbumes y fotos. Todo funciona igual."
 }

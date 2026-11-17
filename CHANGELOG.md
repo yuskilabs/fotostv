@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.21
+- Por dentro: el explorador reparte en archivos propios la construcción de la pantalla (botones, cabecera, rótulos) y de las cuadrículas y casillas de álbumes y fotos. Todo funciona igual.
+
 ## 7.20
 - Buscar repetidas: los avisos se quedan unos 3 segundos más en pantalla.
 - Buscar repetidas: al marcar, el álbum se ordena con cada foto que se queda (sin marcar) seguida de sus repetidas (marcadas), todas al principio, para compararlas. El resto sigue en su orden, y al terminar (ocultar, cancelar o salir) todo vuelve al orden de siempre.

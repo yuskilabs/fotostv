@@ -74,17 +74,6 @@ public class BrowserActivity extends Activity {
         photoTileH = (int) (photoTile * photoRatio);
     }
 
-    private android.widget.Button sbtn(String label, int icon, View.OnClickListener l) {
-        android.widget.Button b = Ui.button(this, label, l);
-        b.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        if (icon != 0) Ui.icon(b, icon);
-        b.setPadding(Ui.dp(this, 9), Ui.dp(this, 6), Ui.dp(this, 9), Ui.dp(this, 6));
-        b.setMinHeight(0); b.setMinimumHeight(0); b.setMinWidth(0); b.setMinimumWidth(0);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-2, -2);
-        lp.setMargins(0, 0, Ui.dp(this, 4), 0);
-        b.setLayoutParams(lp);
-        return b;
-    }
 
     /** Control «−  Columnas: N  +» con dos botones y la etiqueta en medio (sin foco). */
     private LinearLayout colsControl(final String key, final int[] range, final int cur, final String prefKey,
@@ -92,8 +81,8 @@ public class BrowserActivity extends Activity {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.HORIZONTAL);
         box.setGravity(Gravity.CENTER_VERTICAL);
-        android.widget.Button minus = sbtn("", R.drawable.ic_remove, null);
-        android.widget.Button plus = sbtn("", R.drawable.ic_add, null);
+        android.widget.Button minus = BrowserUi.sbtn(BrowserActivity.this, "", R.drawable.ic_remove, null);
+        android.widget.Button plus = BrowserUi.sbtn(BrowserActivity.this, "", R.drawable.ic_add, null);
         minus.setCompoundDrawablePadding(0);
         plus.setCompoundDrawablePadding(0);
         minus.setPadding(Ui.dp(this, 8), Ui.dp(this, 6), Ui.dp(this, 8), Ui.dp(this, 6));
@@ -104,7 +93,7 @@ public class BrowserActivity extends Activity {
         LinearLayout.LayoutParams z2 = new LinearLayout.LayoutParams(-2, -2);
         z2.setMargins(0, 0, 0, 0);
         plus.setLayoutParams(z2);
-        TextView lab = text("Columnas: " + cur, 13, 0xFFD0DBE8);
+        TextView lab = BrowserUi.text(BrowserActivity.this, "Columnas: " + cur, 13, 0xFFD0DBE8);
         lab.setPadding(Ui.dp(this, 6), 0, Ui.dp(this, 6), 0);
         lab.setFocusable(false);
         minus.setOnClickListener(new View.OnClickListener() {
@@ -128,57 +117,8 @@ public class BrowserActivity extends Activity {
         if (albums) showAlbums(); else showPhotos(photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
     }
 
-    private ImageView logoView(int hdp) {
-        ImageView v = new ImageView(this);
-        v.setImageResource(R.drawable.logo_full);
-        v.setAdjustViewBounds(true);
-        v.setLayoutParams(new LinearLayout.LayoutParams(-2, Ui.dp(this, hdp)));
-        return v;
-    }
 
-    /** Cabecera común de las dos pantallas (misma altura, logo y separador gris). */
-    private LinearLayout header() {
-        LinearLayout head = new LinearLayout(this);
-        head.setOrientation(LinearLayout.HORIZONTAL);
-        head.setGravity(Gravity.CENTER_VERTICAL);
-        head.addView(logoView(44));
-        View sep = new View(this);
-        sep.setBackgroundColor(0xFF6B7C90);
-        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(Ui.dp(this, 2), Ui.dp(this, 32));
-        sp.setMargins(Ui.dp(this, 16), 0, Ui.dp(this, 16), 0);
-        head.addView(sep, sp);
-        return head;
-    }
 
-    /** Icono con su rótulo debajo (como «Mapa» y «Fecha»), para la esquina de arriba a la derecha. */
-    private View iconBox(int icon, String label, View.OnClickListener click) {
-        LinearLayout box = new LinearLayout(this);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setGravity(Gravity.CENTER_HORIZONTAL);
-        box.setFocusable(true);
-        box.setClickable(true);
-        int pd = Ui.dp(this, 4);
-        box.setPadding(Ui.dp(this, 6), pd, Ui.dp(this, 6), pd);
-        box.setMinimumWidth(Ui.dp(this, 68));
-        android.graphics.drawable.StateListDrawable sl = new android.graphics.drawable.StateListDrawable();
-        GradientDrawable on = new GradientDrawable();
-        on.setColor(0xFF3D8BFD);
-        on.setCornerRadius(Ui.dp(this, 8));
-        sl.addState(new int[]{android.R.attr.state_focused}, on);
-        box.setBackground(sl);
-        ImageView ic = new ImageView(this);
-        ic.setImageResource(icon);
-        box.addView(ic, new LinearLayout.LayoutParams(Ui.dp(this, 26), Ui.dp(this, 26)));
-        TextView lb = text(label, 12, 0xFF9FB3C8);          // gris, como el texto de los botones
-        lb.setPadding(Ui.dp(this, 5), 0, Ui.dp(this, 5), 0);     // holgura a los lados: la última letra no se recorta
-        lb.setGravity(Gravity.CENTER);
-        lb.setSingleLine(true);
-        lb.setEllipsize(null);
-        lb.setIncludeFontPadding(false);
-        box.addView(lb, new LinearLayout.LayoutParams(-2, -2));
-        box.setOnClickListener(click);
-        return box;
-    }
 
     /** Arriba a la derecha: «Fecha» (si está activada) y «Mapa» (lugares y mapa de calor de las fotos de este álbum). */
     private View mapButton() {
@@ -190,11 +130,11 @@ public class BrowserActivity extends Activity {
         lp.setMargins(Ui.dp(this, 4), 0, 0, 0);                // los iconos, juntos
         lp2.setMargins(Ui.dp(this, 4), 0, 0, 0);
         if (Extras.on(this, Extras.DATE_JUMP)) {
-            wrap.addView(iconBox(R.drawable.ic_event, "Fecha", new View.OnClickListener() {
+            wrap.addView(BrowserUi.iconBox(BrowserActivity.this, R.drawable.ic_event, "Fecha", new View.OnClickListener() {
                 public void onClick(View v) { dateJump(); }
             }), lp);
         }
-        wrap.addView(iconBox(R.drawable.ic_map, "Mapa", new View.OnClickListener() {
+        wrap.addView(BrowserUi.iconBox(BrowserActivity.this, R.drawable.ic_map, "Mapa", new View.OnClickListener() {
             public void onClick(View v) {
                 if (current == null) return;
                 java.util.HashSet<String> ks = new java.util.HashSet<String>();
@@ -560,7 +500,7 @@ public class BrowserActivity extends Activity {
         albumGrid = null;
         photoGrid = null;
         root.removeAllViews();
-        TextView t = text(msg, 26, Color.WHITE);
+        TextView t = BrowserUi.text(BrowserActivity.this, msg, 26, Color.WHITE);
         t.setGravity(Gravity.CENTER);
         root.addView(t, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
     }
@@ -580,30 +520,30 @@ public class BrowserActivity extends Activity {
         root.removeAllViews();
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout head = header();
-        TextView title = text(selMode ? sel.size() + (sel.size() == 1 ? " álbum seleccionado" : " álbumes seleccionados") : "Álbumes", selMode ? 20 : 26, Color.WHITE);
+        LinearLayout head = BrowserUi.header(BrowserActivity.this);
+        TextView title = BrowserUi.text(BrowserActivity.this, selMode ? sel.size() + (sel.size() == 1 ? " álbum seleccionado" : " álbumes seleccionados") : "Álbumes", selMode ? 20 : 26, Color.WHITE);
         title.setTypeface(Ui.BLACK);
         title.setPadding(0, 0, 0, 0);
         selTitle = selMode ? title : null;
         head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
         if (selMode) {
-            head.addView(sbtn("Pase", R.drawable.ic_play, new View.OnClickListener() {
+            head.addView(BrowserUi.sbtn(BrowserActivity.this, "Pase", R.drawable.ic_play, new View.OnClickListener() {
                 public void onClick(View v) { if (!sel.isEmpty()) startPase(selected(), false); }
             }));
-            head.addView(sbtn("Con música", R.drawable.ic_play, new View.OnClickListener() {
+            head.addView(BrowserUi.sbtn(BrowserActivity.this, "Con música", R.drawable.ic_play, new View.OnClickListener() {
                 public void onClick(View v) { if (!sel.isEmpty()) startPase(selected(), true); }
             }));
-            head.addView(sbtn("Ocultar", R.drawable.ic_visibility_off, new View.OnClickListener() {
+            head.addView(BrowserUi.sbtn(BrowserActivity.this, "Ocultar", R.drawable.ic_visibility_off, new View.OnClickListener() {
                 public void onClick(View v) { if (!sel.isEmpty()) hideEntries(selected(), false); }
             }));
-            head.addView(sbtn("Borrar", R.drawable.ic_delete, new View.OnClickListener() {
+            head.addView(BrowserUi.sbtn(BrowserActivity.this, "Borrar", R.drawable.ic_delete, new View.OnClickListener() {
                 public void onClick(View v) { if (!sel.isEmpty()) confirmDelete(selected()); }
             }));
-            head.addView(sbtn("Cancelar", R.drawable.ic_close, new View.OnClickListener() {
+            head.addView(BrowserUi.sbtn(BrowserActivity.this, "Cancelar", R.drawable.ic_close, new View.OnClickListener() {
                 public void onClick(View v) { exitSel(); }
             }));
         } else {
-            if (!placeMode) head.addView(sortBtn = sbtn(albumSortLabel(), R.drawable.ic_down, new View.OnClickListener() {
+            if (!placeMode) head.addView(sortBtn = BrowserUi.sbtn(BrowserActivity.this, albumSortLabel(), R.drawable.ic_down, new View.OnClickListener() {
                 public void onClick(View v) {
                     String m = Prefs.albumSort(BrowserActivity.this);
                     String n = "manual".equals(m) ? "newest" : "newest".equals(m) ? "oldest" : "manual";
@@ -616,7 +556,7 @@ public class BrowserActivity extends Activity {
         }
         col.addView(head, headParams());
 
-        albumGrid = makeGrid(albumCols);
+        albumGrid = Tiles.makeGrid(BrowserActivity.this, gap, margin, albumCols);
         albumGrid.setAdapter(new AlbumAdapter());
         albumGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
@@ -1122,15 +1062,15 @@ public class BrowserActivity extends Activity {
         root.removeAllViews();
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout head = header();
-        TextView nm = text(current.title, 26, TITLE_COLOR);
+        LinearLayout head = BrowserUi.header(BrowserActivity.this);
+        TextView nm = BrowserUi.text(BrowserActivity.this, current.title, 26, TITLE_COLOR);
         nm.setTypeface(Ui.BLACK);
         nm.setPadding(0, 0, 0, 0);
         nm.setSingleLine(true);
         nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
         nm.setMaxWidth(getResources().getDisplayMetrics().widthPixels * 38 / 100);
         head.addView(nm, new LinearLayout.LayoutParams(-2, -2));
-        countView = text("", 20, 0xFFD0DBE8);
+        countView = BrowserUi.text(BrowserActivity.this, "", 20, 0xFFD0DBE8);
         countView.setPadding(0, 0, 0, 0);
         countView.setSingleLine(true);
         head.addView(countView);
@@ -1140,7 +1080,7 @@ public class BrowserActivity extends Activity {
             LinearLayout w2 = new LinearLayout(this);
             w2.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             w2.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
-            w2.addView(iconBox(R.drawable.ic_event, "Fecha", new View.OnClickListener() {
+            w2.addView(BrowserUi.iconBox(BrowserActivity.this, R.drawable.ic_event, "Fecha", new View.OnClickListener() {
                 public void onClick(View v) { dateJump(); }
             }));
             head.addView(w2);
@@ -1150,25 +1090,25 @@ public class BrowserActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 4));
-        playBtn = sbtn("Pase", R.drawable.ic_play, play());
+        playBtn = BrowserUi.sbtn(BrowserActivity.this, "Pase", R.drawable.ic_play, play());
         row.addView(playBtn);
-        kindBtn = sbtn(current.onlyVideos ? "Vídeos" : "Todo", current.onlyVideos ? R.drawable.ic_video : R.drawable.ic_photo,
+        kindBtn = BrowserUi.sbtn(BrowserActivity.this, current.onlyVideos ? "Vídeos" : "Todo", current.onlyVideos ? R.drawable.ic_video : R.drawable.ic_photo,
                 new View.OnClickListener() {
             public void onClick(View v) { toggleKind(); }
         });
         row.addView(kindBtn);
-        orderBtn = sbtn("", R.drawable.ic_down, new View.OnClickListener() {
+        orderBtn = BrowserUi.sbtn(BrowserActivity.this, "", R.drawable.ic_down, new View.OnClickListener() {
             public void onClick(View v) {
                 if (current != null) setOrder(BrowseUtil.nextOrder(current.order));
             }
         });
         row.addView(orderBtn);
         if (current.kind == 5 && current.query != null) {
-            row.addView(sbtn("Guardar", R.drawable.ic_albums, new View.OnClickListener() {
+            row.addView(BrowserUi.sbtn(BrowserActivity.this, "Guardar", R.drawable.ic_albums, new View.OnClickListener() {
                 public void onClick(View v) { saveVirtual(); }
             }));
         }
-        shapeBtn = sbtn(BrowseUtil.shapeLabel(photoShape), R.drawable.ic_format, new View.OnClickListener() {
+        shapeBtn = BrowserUi.sbtn(BrowserActivity.this, BrowseUtil.shapeLabel(photoShape), R.drawable.ic_format, new View.OnClickListener() {
             public void onClick(View v) {
                 String n = "square".equals(photoShape) ? "wide" : ("wide".equals(photoShape) ? "full" : "square");
                 Prefs.sp(BrowserActivity.this).edit().putString("photoShape", n).commit();
@@ -1177,7 +1117,7 @@ public class BrowserActivity extends Activity {
             }
         });
         row.addView(shapeBtn);
-        fitBtn = sbtn(BrowseUtil.fitLabel(Prefs.fit(this)), R.drawable.ic_fullscreen, new View.OnClickListener() {
+        fitBtn = BrowserUi.sbtn(BrowserActivity.this, BrowseUtil.fitLabel(Prefs.fit(this)), R.drawable.ic_fullscreen, new View.OnClickListener() {
             public void onClick(View v) {
                 String n = BrowseUtil.nextFit(Prefs.fit(BrowserActivity.this));
                 Prefs.sp(BrowserActivity.this).edit().putString("fit", n).commit();
@@ -1189,23 +1129,23 @@ public class BrowserActivity extends Activity {
         refreshOrderButtons();
         if (pSel) {
             row.removeAllViews();
-            row.addView(sbtn("Todas", R.drawable.ic_check, new View.OnClickListener() {
+            row.addView(BrowserUi.sbtn(BrowserActivity.this, "Todas", R.drawable.ic_check, new View.OnClickListener() {
                 public void onClick(View v) {
                     for (Item it : current.shown()) pKeys.add(it.key());
                     refreshPhotoSel();
                 }
             }));
-            row.addView(sbtn(current.kind == 3 ? "Mostrar" : "Ocultar", current.kind == 3 ? R.drawable.ic_visibility : R.drawable.ic_visibility_off,
+            row.addView(BrowserUi.sbtn(BrowserActivity.this, current.kind == 3 ? "Mostrar" : "Ocultar", current.kind == 3 ? R.drawable.ic_visibility : R.drawable.ic_visibility_off,
                     new View.OnClickListener() {
                 public void onClick(View v) { applyPhotoSel(0); }
             }));
-            row.addView(sbtn("A favoritos", R.drawable.ic_star, new View.OnClickListener() {
+            row.addView(BrowserUi.sbtn(BrowserActivity.this, "A favoritos", R.drawable.ic_star, new View.OnClickListener() {
                 public void onClick(View v) { applyPhotoSel(1); }
             }));
-            row.addView(sbtn("Quitar de favoritos", R.drawable.ic_star_border, new View.OnClickListener() {
+            row.addView(BrowserUi.sbtn(BrowserActivity.this, "Quitar de favoritos", R.drawable.ic_star_border, new View.OnClickListener() {
                 public void onClick(View v) { applyPhotoSel(2); }
             }));
-            row.addView(sbtn("Revisar ubicación", R.drawable.ic_place, new View.OnClickListener() {
+            row.addView(BrowserUi.sbtn(BrowserActivity.this, "Revisar ubicación", R.drawable.ic_place, new View.OnClickListener() {
                 public void onClick(View v) {
                     if (pKeys.isEmpty()) { showToast("Marca primero alguna foto o vídeo."); return; }
                     List<Item> l = new ArrayList<Item>();
@@ -1214,7 +1154,7 @@ public class BrowserActivity extends Activity {
                     recheckItems(l);
                 }
             }));
-            row.addView(sbtn("Cancelar", R.drawable.ic_close, new View.OnClickListener() {
+            row.addView(BrowserUi.sbtn(BrowserActivity.this, "Cancelar", R.drawable.ic_close, new View.OnClickListener() {
                 public void onClick(View v) { exitPSel(); }
             }));
         }
@@ -1233,7 +1173,7 @@ public class BrowserActivity extends Activity {
         rp.setMargins(margin, 0, margin, 0);
         col.addView(row, rp);
 
-        photoGrid = makeGrid(photoCols);
+        photoGrid = Tiles.makeGrid(BrowserActivity.this, gap, margin, photoCols);
         photoGrid.setAdapter(new PhotoAdapter());
         final LinearLayout frow = row;
         photoGrid.setOnKeyListener(new View.OnKeyListener() {
@@ -1261,7 +1201,7 @@ public class BrowserActivity extends Activity {
         col.addView(photoGrid, new LinearLayout.LayoutParams(-1, 0, 1f));
         root.addView(col, new FrameLayout.LayoutParams(-1, -1));
         if (current.items.isEmpty()) {
-            TextView t = text("Este álbum no tiene fotos.", 22, Color.WHITE);
+            TextView t = BrowserUi.text(BrowserActivity.this, "Este álbum no tiene fotos.", 22, Color.WHITE);
             root.addView(t, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
         }
         if (sel > 0) photoGrid.setSelection(sel);
@@ -1625,45 +1565,7 @@ public class BrowserActivity extends Activity {
         startActivity(new Intent(this, PlayerActivity.class));
     }
 
-    // ------------------------------------------------------------ cuadrícula
-    private GridView makeGrid(int cols) {
-        GridView g = new GridView(this);
-        g.setNumColumns(cols);
-        g.setHorizontalSpacing(gap);
-        g.setVerticalSpacing(gap);
-        g.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);
-        g.setPadding(margin, gap, margin, margin);
-        g.setClipToPadding(false);
-        g.setVerticalScrollBarEnabled(false);
-        g.setCacheColorHint(Color.TRANSPARENT);
-        g.setFocusable(true);
-        GradientDrawable sel = new GradientDrawable();
-        sel.setColor(0x22FFFFFF);
-        sel.setStroke(Ui.dp(this, 4), Color.WHITE);
-        sel.setCornerRadius(0);   // miniaturas cuadradas: recuadro con esquinas rectas
-        final GradientDrawable selOn = sel;
-        final android.graphics.drawable.ColorDrawable selOff = new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT);
-        g.setSelector(sel);
-        g.setDrawSelectorOnTop(true);
-        // al subir a los botones, el recuadro blanco de la foto desaparece para que se vea dónde está el foco
-        g.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            public void onFocusChange(View v, boolean has) {
-                ((GridView) v).setSelector(has ? selOn : selOff);
-                v.invalidate();
-            }
-        });
-        return g;
-    }
 
-    private TextView text(String s, int sp, int color) {
-        TextView t = new TextView(this);
-        t.setTypeface(Ui.REG);
-        t.setText(s);
-        t.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
-        t.setTextColor(color);
-        t.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 4));
-        return t;
-    }
 
     private static int r32(int v) { return ((v + 31) / 32) * 32; }
 
@@ -1673,7 +1575,7 @@ public class BrowserActivity extends Activity {
         public long getItemId(int i) { return i; }
 
         public View getView(int pos, View cv, ViewGroup parent) {
-            Tile t = cv instanceof Tile ? (Tile) cv : newAlbumTile();
+            Tile t = cv instanceof Tile ? (Tile) cv : Tiles.albumTile(BrowserActivity.this, albumTileH);
             Entry e = entries.get(pos);
             boolean isSel = selMode && sel.contains(e);
             t.name.setText(isSel ? "\u2713 " + e.title : e.title);
@@ -1710,44 +1612,6 @@ public class BrowserActivity extends Activity {
         }
     }
 
-    private Tile newAlbumTile() {
-        Tile t = new Tile(this, 0.66f);
-        t.setBackgroundColor(0xFF1B2D44);
-        t.img = new ImageView(this);
-        t.img.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        t.addView(t.img, new FrameLayout.LayoutParams(-1, -1));
-        t.shade = new View(this);
-        t.shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
-                new int[]{0xD9000000, 0xA6000000, 0x66000000, 0x2B000000, 0x00000000}));
-        t.addView(t.shade, new FrameLayout.LayoutParams(-1, albumTileH * 6 / 10, Gravity.BOTTOM));
-        LinearLayout box = new LinearLayout(this);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 4));
-        t.name = text("", 16, Color.WHITE);
-        t.name.setPadding(0, 0, 0, 0);
-        t.name.setSingleLine(true);
-        t.name.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        t.name.setTypeface(Ui.BLACK);
-        t.name.setShadowLayer(6f, 0f, 2f, 0xCC000000);
-        t.count = text("", 13, 0xFFD0DBE8);
-        t.count.setPadding(0, 0, 0, 0);
-        t.count.setShadowLayer(6f, 0f, 2f, 0xCC000000);
-        box.addView(t.name);
-        box.addView(t.count);
-        t.addView(box, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
-        t.pin = new ImageView(this);
-        t.pin.setImageResource(R.drawable.ic_move);
-        t.pin.setColorFilter(Color.WHITE);
-        GradientDrawable mbg = new GradientDrawable();
-        mbg.setShape(GradientDrawable.OVAL);
-        mbg.setColor(0xCC3D8BFD);
-        t.pin.setBackground(mbg);
-        int mp = Ui.dp(this, 8);
-        t.pin.setPadding(mp, mp, mp, mp);
-        t.addView(t.pin, new FrameLayout.LayoutParams(Ui.dp(this, 48), Ui.dp(this, 48), Gravity.CENTER));
-        t.pin.setVisibility(View.GONE);
-        return t;
-    }
 
     private class PhotoAdapter extends BaseAdapter {
         public int getCount() { return current == null ? 0 : current.shown().size(); }
@@ -1755,7 +1619,7 @@ public class BrowserActivity extends Activity {
         public long getItemId(int i) { return i; }
 
         public View getView(int pos, View cv, ViewGroup parent) {
-            Tile t = cv instanceof Tile ? (Tile) cv : newPhotoTile();
+            Tile t = cv instanceof Tile ? (Tile) cv : Tiles.photoTile(BrowserActivity.this, photoRatio);
             Item it = current.shown().get(pos);
             boolean crop = !"full".equals(photoShape);
             t.img.setScaleType(crop ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.FIT_CENTER);
@@ -1792,65 +1656,6 @@ public class BrowserActivity extends Activity {
         return selFrameD;
     }
 
-    private Tile newPhotoTile() {
-        Tile t = new Tile(this, photoRatio);
-        t.setBackgroundColor(0xFF1B2D44);
-        t.img = new ImageView(this);
-        t.img.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        t.addView(t.img, new FrameLayout.LayoutParams(-1, -1));
-        // marca de vídeo: círculo oscuro con ▶ abajo a la izquierda
-        t.badge = new TextView(this);
-        t.badge.setTypeface(Ui.BLACK);
-        t.badge.setText("▶");
-        t.badge.setTextColor(Color.WHITE);
-        t.badge.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
-        t.badge.setGravity(Gravity.CENTER);
-        GradientDrawable circle = new GradientDrawable();
-        circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(0xB3000000);
-        circle.setStroke(Ui.dp(this, 2), Color.WHITE);
-        t.badge.setBackground(circle);
-        FrameLayout.LayoutParams bp = new FrameLayout.LayoutParams(Ui.dp(this, 36), Ui.dp(this, 36),
-                Gravity.BOTTOM | Gravity.START);
-        bp.setMargins(Ui.dp(this, 8), 0, 0, Ui.dp(this, 8));
-        t.addView(t.badge, bp);
-        t.badge.setVisibility(View.GONE);
-        t.fav = new ImageView(this);
-        t.fav.setImageResource(R.drawable.ic_star);
-        t.fav.setColorFilter(0xFFFFC83D);
-        FrameLayout.LayoutParams fp = new FrameLayout.LayoutParams(Ui.dp(this, 24), Ui.dp(this, 24), Gravity.TOP | Gravity.END);
-        fp.setMargins(0, Ui.dp(this, 6), Ui.dp(this, 6), 0);
-        t.addView(t.fav, fp);
-        t.fav.setVisibility(View.GONE);
-        t.pin = new ImageView(this);
-        t.pin.setImageResource(R.drawable.ic_photo);
-        t.pin.setColorFilter(Color.WHITE);
-        GradientDrawable pbg = new GradientDrawable();
-        pbg.setShape(GradientDrawable.OVAL);
-        pbg.setColor(0xB3000000);
-        t.pin.setBackground(pbg);
-        int pp = Ui.dp(this, 5);
-        t.pin.setPadding(pp, pp, pp, pp);
-        FrameLayout.LayoutParams pl = new FrameLayout.LayoutParams(Ui.dp(this, 28), Ui.dp(this, 28), Gravity.TOP | Gravity.START);
-        pl.setMargins(Ui.dp(this, 6), Ui.dp(this, 6), 0, 0);
-        t.addView(t.pin, pl);
-        t.pin.setVisibility(View.GONE);
-        t.fresh = new TextView(this);                 // «NUEVA» (función extra)
-        t.fresh.setTypeface(Ui.BLACK);
-        t.fresh.setText("NUEVA");
-        t.fresh.setTextColor(0xFF0A1424);
-        t.fresh.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
-        t.fresh.setPadding(Ui.dp(this, 7), Ui.dp(this, 2), Ui.dp(this, 7), Ui.dp(this, 2));
-        GradientDrawable nb = new GradientDrawable();
-        nb.setColor(0xFF7CE08A);
-        nb.setCornerRadius(Ui.dp(this, 9));
-        t.fresh.setBackground(nb);
-        FrameLayout.LayoutParams nl = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
-        nl.setMargins(0, 0, Ui.dp(this, 6), Ui.dp(this, 6));
-        t.addView(t.fresh, nl);
-        t.fresh.setVisibility(View.GONE);
-        return t;
-    }
 
     // ------------------------------------------------------------ marcas de vídeo (por lotes)
 }
