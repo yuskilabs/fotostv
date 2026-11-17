@@ -1,6 +1,6 @@
 {
-  "version": "7.16",
+  "version": "7.17",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 906760,
-  "notes": "- Por dentro: el explorador de álbumes se reparte en piezas más pequeñas (entradas, casillas, icono giratorio y funciones sueltas). Todo funciona igual."
+  "notes": "- Por dentro: el explorador sigue repartiéndose en piezas (aviso de «trabajando…», búsqueda de repetidas) y se ha quitado un repaso de marcas de vídeo al desplazarse que ya no hacía nada. Todo funciona igual."
 }

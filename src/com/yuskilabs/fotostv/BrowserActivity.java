@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -33,11 +32,8 @@ import java.util.concurrent.Executors;
 public class BrowserActivity extends Activity {
     private final Handler h = new Handler(Looper.getMainLooper());
     private final ExecutorService bg = Executors.newSingleThreadExecutor();
-    private final ExecutorService flagExec = Executors.newSingleThreadExecutor();
     private boolean placeMode;
     private final List<Entry> entries = new ArrayList<Entry>();
-    private final LinkedHashSet<Item> flagPending = new LinkedHashSet<Item>();
-    private final Set<String> flagTried = new HashSet<String>();
     private FrameLayout root;
     private List<Entry> real = new ArrayList<Entry>();
     private Entry allE, favE, hidE;
@@ -49,7 +45,7 @@ public class BrowserActivity extends Activity {
     private int level;            // 0 = álbumes, 1 = fotos de un álbum
     private int albumPos;
     private int W, margin, gap, albumTileW, albumTileH, photoTile;
-    private boolean destroyed, flagBusy, loaded;
+    private boolean destroyed, loaded;
     private int prefetched = -1;
     private static final int AHEAD = 150;
     private android.widget.Button orderBtn, fitBtn, kindBtn;
@@ -299,7 +295,6 @@ public class BrowserActivity extends Activity {
         destroyed = true;
         h.removeCallbacksAndMessages(null);
         bg.shutdownNow();
-        flagExec.shutdownNow();
         scanExec.shutdownNow();
         super.onDestroy();
     }
@@ -664,50 +659,11 @@ public class BrowserActivity extends Activity {
 
 
     // ------------------------------------------------------------ tareas en segundo plano (texto de colores junto al título)
-    private final java.util.LinkedHashMap<String, Integer> busy = new java.util.LinkedHashMap<String, Integer>();
-    private TextView busyView;
+    private final BusyBar busyBar = new BusyBar(this);
 
-    private void busyStart(String label) {
-        Integer n = busy.get(label);
-        busy.put(label, n == null ? 1 : n + 1);
-        busyUpdate();
-    }
+    private void busyStart(String label) { busyBar.start(label); }
 
-    private void busyEnd(String label) {
-        Integer n = busy.get(label);
-        if (n == null) return;
-        if (n <= 1) busy.remove(label); else busy.put(label, n - 1);
-        busyUpdate();
-    }
-
-    /** Aviso fijo abajo en el centro (donde salen los avisos), que no se quita mientras algo sigue en marcha. */
-    private void ensureBusyView() {
-        if (busyView != null) return;
-        busyView = text("", 16, Color.WHITE);
-        busyView.setTypeface(Ui.REG);
-        busyView.setSingleLine(true);
-        busyView.setGravity(Gravity.CENTER);
-        busyView.setPadding(Ui.dp(this, 22), Ui.dp(this, 10), Ui.dp(this, 22), Ui.dp(this, 10));
-        GradientDrawable bgd = new GradientDrawable();
-        bgd.setColor(0xE6323232);
-        bgd.setCornerRadius(Ui.dp(this, 24));
-        busyView.setBackground(bgd);
-        busyView.setVisibility(View.GONE);
-        android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(-2, -2,
-                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        lp.bottomMargin = Ui.dp(this, 56);
-        addContentView(busyView, lp);
-    }
-
-    private void busyUpdate() {
-        ensureBusyView();
-        if (busy.isEmpty()) { busyView.setVisibility(View.GONE); return; }
-        StringBuilder sb = new StringBuilder();
-        for (String k : busy.keySet()) { if (sb.length() > 0) sb.append("  ·  "); sb.append(k); }
-        busyView.setText(sb.toString());
-        busyView.setVisibility(View.VISIBLE);
-        busyView.bringToFront();
-    }
+    private void busyEnd(String label) { busyBar.end(label); }
 
     /** «Revisando ubicaciones…» hasta que las fotos revisadas vuelven a tener lugar (o pasan 10 minutos). */
     private void watchGeo(final Set<String> keys) {
@@ -1031,26 +987,9 @@ public class BrowserActivity extends Activity {
         final List<Item> base = new ArrayList<Item>(e.items);
         bg.submit(new Runnable() {
             public void run() {
-                final Set<String> extra = new HashSet<String>();
-                try {
-                    for (List<Item> burst : FxLogic.bursts(base, 4000)) {
-                        if (destroyed) return;
-                        List<Item> photos = new ArrayList<Item>();
-                        for (Item it : burst) {
-                            Boolean v = MetaFetcher.cachedVideo(BrowserActivity.this, it);
-                            if (v == null || !v.booleanValue()) photos.add(it);
-                        }
-                        if (photos.size() < 2) continue;
-                        long[] hs = new long[photos.size()];
-                        boolean ok = true;
-                        for (int i = 0; i < hs.length && ok; i++) {
-                            Long hv = dhashOf(photos.get(i));
-                            if (hv == null) ok = false; else hs[i] = hv;
-                        }
-                        if (!ok) continue;
-                        for (int i : FxLogic.similarToEarlier(hs, 10)) extra.add(photos.get(i).key());
-                    }
-                } catch (Throwable ignored) { }
+                final Set<String> extra = DupeScan.scan(BrowserActivity.this, base, new DupeScan.Cancel() {
+                    public boolean cancelled() { return destroyed; }
+                });
                 h.post(new Runnable() {
                     public void run() {
                         dupBusy = false;
@@ -1084,26 +1023,6 @@ public class BrowserActivity extends Activity {
         pKeys.clear();
         pKeys.addAll(keys);
         showPhotos(0);
-    }
-
-    /** Huella dHash de la miniatura (9×8 en grises); null si no se pudo bajar. */
-    private Long dhashOf(Item it) {
-        try {
-            byte[] d = AlbumFetcher.get(it.url + "=w96-h96");
-            android.graphics.Bitmap b = android.graphics.BitmapFactory.decodeByteArray(d, 0, d.length);
-            if (b == null) return null;
-            android.graphics.Bitmap s9 = android.graphics.Bitmap.createScaledBitmap(b, 9, 8, true);
-            int[] g = new int[72];
-            for (int y = 0; y < 8; y++) for (int x = 0; x < 9; x++) {
-                int c = s9.getPixel(x, y);
-                g[y * 9 + x] = (Color.red(c) * 299 + Color.green(c) * 587 + Color.blue(c) * 114) / 1000;
-            }
-            if (s9 != b) s9.recycle();
-            b.recycle();
-            return FxLogic.dhash(g);
-        } catch (Throwable t) {
-            return null;
-        }
     }
 
     private boolean albumMenu(int pos) {
@@ -1371,8 +1290,6 @@ public class BrowserActivity extends Activity {
         level = 1;
         albumGrid = null;
         computeLayout();
-        synchronized (flagPending) { flagPending.clear(); }
-        flagTried.clear();
         prefetched = -1;
         root.removeAllViews();
         LinearLayout col = new LinearLayout(this);
@@ -1511,13 +1428,6 @@ public class BrowserActivity extends Activity {
             public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) {
                 if (pSel) togglePhoto(pos); else itemMenu(pos);
                 return true;
-            }
-        });
-        photoGrid.setOnScrollListener(new android.widget.AbsListView.OnScrollListener() {
-            public void onScrollStateChanged(android.widget.AbsListView v, int st) { }
-            public void onScroll(android.widget.AbsListView v, int first, int visible, int total) {
-                // cada vez que se mueve la vista se revisa qué miniaturas aún no tienen marca de vídeo
-                scheduleFlags();
             }
         });
         col.addView(photoGrid, new LinearLayout.LayoutParams(-1, 0, 1f));
@@ -2113,60 +2023,4 @@ public class BrowserActivity extends Activity {
     }
 
     // ------------------------------------------------------------ marcas de vídeo (por lotes)
-    private final Runnable flagRun = new Runnable() {
-        public void run() { runFlags(); }
-    };
-
-    private void scheduleFlags() {
-        h.removeCallbacks(flagRun);
-        h.postDelayed(flagRun, 400);
-    }
-
-    private void runFlags() {
-        if (destroyed || photoGrid == null || current == null) return;
-        if (flagBusy) { h.postDelayed(flagRun, 400); return; }
-        // solo los que están a la vista (con un margen); los demás se pedirán al verlos
-        int first = Math.max(0, photoGrid.getFirstVisiblePosition() - photoCols * 2);
-        int last = Math.min(current.items.size() - 1, photoGrid.getLastVisiblePosition() + photoCols * 2);
-        Set<String> vis = new HashSet<String>();
-        for (int i = first; i <= last; i++) vis.add(current.items.get(i).key());
-        final List<Item> batch = new ArrayList<Item>();
-        List<Item> keep = new ArrayList<Item>();
-        synchronized (flagPending) {
-            for (Item it : flagPending) {
-                if (!vis.contains(it.key())) flagTried.remove(it.key());
-                else if (batch.size() < 20) batch.add(it);
-                else keep.add(it);
-            }
-            flagPending.clear();
-            flagPending.addAll(keep);
-        }
-        if (!keep.isEmpty()) h.postDelayed(flagRun, 600);
-        if (batch.isEmpty()) return;
-        flagBusy = true;
-        flagExec.submit(new Runnable() {
-            public void run() {
-                try { MetaFetcher.detectVideos(BrowserActivity.this, batch); } catch (Throwable ignored) { }
-                h.post(new Runnable() {
-                    public void run() {
-                        flagBusy = false;
-                        if (!destroyed) updateBadges();
-                    }
-                });
-            }
-        });
-    }
-
-    /** Pone o quita la marca de vídeo de las casillas visibles sin recargar las miniaturas. */
-    private void updateBadges() {
-        if (photoGrid == null || current == null) return;
-        int first = photoGrid.getFirstVisiblePosition();
-        for (int i = 0; i < photoGrid.getChildCount(); i++) {
-            View v = photoGrid.getChildAt(i);
-            int pos = first + i;
-            if (!(v instanceof Tile) || pos >= current.items.size()) continue;
-            Boolean vid = MetaFetcher.cachedVideo(this, current.items.get(pos));
-            ((Tile) v).badge.setVisibility(vid != null && vid.booleanValue() ? View.VISIBLE : View.GONE);
-        }
-    }
 }
