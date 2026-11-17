@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.16
+- Por dentro: el explorador de álbumes se reparte en piezas más pequeñas (entradas, casillas, icono giratorio y funciones sueltas). Todo funciona igual.
+
 ## 7.15
 - Ajustes rediseñados: los temas van en una lista a la izquierda y a la derecha se ve un solo panel, el del tema elegido. Con el mando: derecha entra al panel e izquierda vuelve a los temas.
 - Nuevo «Diagnóstico» (Ajustes › Casa y móvil): lista los últimos errores del pase, la búsqueda, los vídeos y el autor.

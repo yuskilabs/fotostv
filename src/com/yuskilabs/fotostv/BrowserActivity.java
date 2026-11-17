@@ -31,69 +31,6 @@ import java.util.concurrent.Executors;
 
 /** Explorador: mosaico de álbumes → mosaico de fotos → pantalla completa. */
 public class BrowserActivity extends Activity {
-    private static class Entry {
-        String title = "";
-        String url = "";
-        int kind;                 // 0 álbum normal, 1 Todas, 2 Favoritos, 3 Ocultas, 4 temporal de invitado, 5 lugar o búsqueda, 6 álbum virtual
-        String gid = "";          // (temporal) identificador
-        long expires;             // (temporal) cuándo caduca
-        List<Item> src = new ArrayList<Item>();     // todo lo del álbum
-        List<Item> items = new ArrayList<Item>();   // lo que se ve (sin las ocultas, salvo en «Ocultas»)
-        List<Item> view;          // lista ordenada (null = tal cual la da Google)
-        String order = "desc";   // random | asc | desc: por defecto, recientes primero
-        boolean orderSet;        // el usuario eligió el orden (si no, el pase del álbum va aleatorio)
-        Item cover;
-        boolean coverPinned;     // portada fijada por el usuario (si no, al azar)
-        List<String> coverKeys = new ArrayList<String>();   // portadas fijadas (varias con la función extra)
-        String query;            // búsqueda que genera el álbum (virtual, o mosaico que viene de «Buscar»)
-        Set<String> newKeys = new HashSet<String>();      // fotos nuevas desde la última visita (función extra)
-
-        boolean onlyVideos;       // filtro «Vídeos»
-        List<Item> vids = new ArrayList<Item>();
-
-        int dayLo = -1, dayHi = -1;   // filtro «Ir a la fecha»: de un día, un mes o un año (claves de día; -1 = todas)
-        private List<Item> dayOf, dayList;
-        private int dayN = -1, dayCLo = -2, dayCHi = -2;
-
-        List<Item> base() { return onlyVideos ? vids : (view != null ? view : items); }
-
-        List<Item> shown() {
-            List<Item> b = base();
-            if (dayLo < 0) return b;
-            if (dayOf != b || dayN != b.size() || dayList == null || dayCLo != dayLo || dayCHi != dayHi) {
-                java.util.TimeZone tz = java.util.TimeZone.getDefault();
-                List<Item> r = new ArrayList<Item>();
-                for (Item it : b) { int k = FxLogic.dayKey(it.ts, tz); if (k >= dayLo && k <= dayHi) r.add(it); }
-                dayOf = b;
-                dayN = b.size();
-                dayCLo = dayLo;
-                dayCHi = dayHi;
-                dayList = r;
-            }
-            return dayList;
-        }
-    }
-
-    /** Casilla con proporción fija (alto = ancho × ratio) para las cuadrículas. */
-    private static class Tile extends FrameLayout {
-        final float ratio;
-        ImageView img;
-        TextView name, count, badge, fresh;
-        ImageView fav, pin;
-        View shade;
-
-        Tile(android.content.Context c, float ratio) {
-            super(c);
-            this.ratio = ratio;
-        }
-
-        @Override protected void onMeasure(int wSpec, int hSpec) {
-            int w = MeasureSpec.getSize(wSpec);
-            super.onMeasure(MeasureSpec.makeMeasureSpec(w, MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec((int) (w * ratio), MeasureSpec.EXACTLY));
-        }
-    }
-
     private final Handler h = new Handler(Looper.getMainLooper());
     private final ExecutorService bg = Executors.newSingleThreadExecutor();
     private final ExecutorService flagExec = Executors.newSingleThreadExecutor();
@@ -280,9 +217,6 @@ public class BrowserActivity extends Activity {
         return hp;
     }
 
-    private static String shapeLabel(String sh) {
-        return "wide".equals(sh) ? "Miniaturas: apaisadas" : ("full".equals(sh) ? "Miniaturas: completas" : "Miniaturas: cuadradas");
-    }
 
     // ------------------------------------------------------------ ciclo de vida
     @Override protected void onCreate(Bundle b) {
@@ -308,7 +242,7 @@ public class BrowserActivity extends Activity {
             Session.placeTitle = null;
             Session.searchQuery = null;
             favSet = Prefs.favs(this);
-            e.items = visible(e.src, Prefs.hidden(this));
+            e.items = BrowseUtil.visible(e.src, Prefs.hidden(this));
             applyOrder(e);
             pickCover(e);
             entries.add(e);
@@ -334,7 +268,7 @@ public class BrowserActivity extends Activity {
         if (placeMode) {
             if (current != null && photoGrid != null) {
                 favSet = Prefs.favs(this);
-                current.items = visible(current.src, Prefs.hidden(this));
+                current.items = BrowseUtil.visible(current.src, Prefs.hidden(this));
                 reapply(current);
                 ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
                 updateCount();
@@ -537,12 +471,6 @@ public class BrowserActivity extends Activity {
     }
 
     /** Añade delante la entrada «Todos» (todas las fotos de todos los álbumes). */
-    /** Fecha de captura de la foto más reciente del álbum (0 si no se conoce). */
-    private static long lastTs(Entry e) {
-        long m = 0;
-        for (Item it : e.items) if (it.ts > m) m = it.ts;
-        return m;
-    }
 
     /** Aplica el orden elegido: el de la lista (manual) o por la fecha de la última foto de cada álbum. */
     private List<Entry> sortEntries(List<Entry> list) {
@@ -550,7 +478,7 @@ public class BrowserActivity extends Activity {
         if (!"newest".equals(mode) && !"oldest".equals(mode)) return list;
         final boolean newest = "newest".equals(mode);
         final java.util.Map<Entry, Long> ts = new java.util.IdentityHashMap<Entry, Long>();
-        for (Entry e : list) ts.put(e, lastTs(e));
+        for (Entry e : list) ts.put(e, BrowseUtil.lastTs(e));
         List<Entry> l = new ArrayList<Entry>(list);
         Collections.sort(l, new Comparator<Entry>() {
             public int compare(Entry a, Entry b) {
@@ -577,11 +505,6 @@ public class BrowserActivity extends Activity {
         } else applyOrder(e);
     }
 
-    private static List<Item> visible(List<Item> src, java.util.Set<String> hid) {
-        List<Item> out = new ArrayList<Item>(src.size());
-        for (Item it : src) if (!hid.contains(it.key())) out.add(it);
-        return out;
-    }
 
     /**
      * Portada fijada por el usuario si existe y la foto se ve (con varias, una de ellas al azar, que se mantiene
@@ -611,7 +534,7 @@ public class BrowserActivity extends Activity {
         java.util.Set<String> hid = Prefs.hidden(this);
         favSet = Prefs.favs(this);
         for (Entry e : real) {
-            e.items = visible(e.src, hid);
+            e.items = BrowseUtil.visible(e.src, hid);
             reapply(e);
             applyCover(e, hid);
         }
@@ -674,7 +597,7 @@ public class BrowserActivity extends Activity {
         entries.addAll(real);
         if (Extras.on(this, Extras.VIRTUAL)) {
             for (Entry v : virt) {
-                v.items = visible(v.src, hid);
+                v.items = BrowseUtil.visible(v.src, hid);
                 reapply(v);
                 if (v.cover == null || hid.contains(v.cover.key()) || !v.items.contains(v.cover)) pickCover(v);
                 entries.add(v);
@@ -1279,7 +1202,7 @@ public class BrowserActivity extends Activity {
         Session.startKey = null;
         Session.lastKey = null;
         Session.music = music ? 1 : 0;
-        Session.musicUrl = es.size() == 1 && es.get(0).kind == 0 ? nullIfEmpty(Extras.albumMusic(this, es.get(0).url)) : null;
+        Session.musicUrl = es.size() == 1 && es.get(0).kind == 0 ? BrowseUtil.nullIfEmpty(Extras.albumMusic(this, es.get(0).url)) : null;
         selMode = false;
         sel.clear();
         startActivity(new Intent(this, PlayerActivity.class));
@@ -1333,24 +1256,6 @@ public class BrowserActivity extends Activity {
     private android.widget.Button reloadBtn;
     private Spin reloadSpin;
     private android.animation.ValueAnimator spinAnim;
-
-    /** Icono que gira mientras se recarga. */
-    private static class Spin extends android.graphics.drawable.Drawable {
-        final android.graphics.drawable.Drawable d;
-        float angle;
-        Spin(android.graphics.drawable.Drawable d) { this.d = d; }
-        @Override public void draw(android.graphics.Canvas c) {
-            android.graphics.Rect b = getBounds();
-            c.save();
-            c.rotate(angle, b.exactCenterX(), b.exactCenterY());
-            d.setBounds(b);
-            d.draw(c);
-            c.restore();
-        }
-        @Override public void setAlpha(int a) { d.setAlpha(a); }
-        @Override public void setColorFilter(android.graphics.ColorFilter f) { d.setColorFilter(f); }
-        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
-    }
 
     private void startSpin() {
         if (reloadBtn == null || reloadSpin == null) return;
@@ -1509,7 +1414,7 @@ public class BrowserActivity extends Activity {
         row.addView(kindBtn);
         orderBtn = sbtn("", R.drawable.ic_down, new View.OnClickListener() {
             public void onClick(View v) {
-                if (current != null) setOrder(nextOrder(current.order));
+                if (current != null) setOrder(BrowseUtil.nextOrder(current.order));
             }
         });
         row.addView(orderBtn);
@@ -1518,7 +1423,7 @@ public class BrowserActivity extends Activity {
                 public void onClick(View v) { saveVirtual(); }
             }));
         }
-        shapeBtn = sbtn(shapeLabel(photoShape), R.drawable.ic_format, new View.OnClickListener() {
+        shapeBtn = sbtn(BrowseUtil.shapeLabel(photoShape), R.drawable.ic_format, new View.OnClickListener() {
             public void onClick(View v) {
                 String n = "square".equals(photoShape) ? "wide" : ("wide".equals(photoShape) ? "full" : "square");
                 Prefs.sp(BrowserActivity.this).edit().putString("photoShape", n).commit();
@@ -1527,11 +1432,11 @@ public class BrowserActivity extends Activity {
             }
         });
         row.addView(shapeBtn);
-        fitBtn = sbtn(fitLabel(Prefs.fit(this)), R.drawable.ic_fullscreen, new View.OnClickListener() {
+        fitBtn = sbtn(BrowseUtil.fitLabel(Prefs.fit(this)), R.drawable.ic_fullscreen, new View.OnClickListener() {
             public void onClick(View v) {
-                String n = nextFit(Prefs.fit(BrowserActivity.this));
+                String n = BrowseUtil.nextFit(Prefs.fit(BrowserActivity.this));
                 Prefs.sp(BrowserActivity.this).edit().putString("fit", n).commit();
-                fitBtn.setText(fitLabel(n));
+                fitBtn.setText(BrowseUtil.fitLabel(n));
             }
         });
         row.addView(fitBtn);
@@ -1937,22 +1842,9 @@ public class BrowserActivity extends Activity {
         else { orderBtn.setText("Recientes primero"); Ui.icon(orderBtn, R.drawable.ic_down); }
     }
 
-    /** Aleatorio → Antiguas primero → Recientes primero → Aleatorio… (el orden de partida equivale a «Recientes»). */
-    private static String nextOrder(String o) {
-        if ("random".equals(o)) return "asc";
-        if ("asc".equals(o)) return "desc";
-        return "random";
-    }
 
-    private static String nextFit(String f) {
-        return "auto".equals(f) ? "crop" : ("crop".equals(f) ? "fit" : "auto");
-    }
 
-    private static String fitLabel(String f) {
-        return "crop".equals(f) ? "Pantalla: rellenar" : ("fit".equals(f) ? "Pantalla: original" : "Pantalla: automática");
-    }
 
-    private static String nullIfEmpty(String s) { return s == null || s.length() == 0 ? null : s; }
 
     private View.OnClickListener play() { return play(false); }
 
@@ -1973,7 +1865,7 @@ public class BrowserActivity extends Activity {
                 Session.startKey = null;
                 Session.lastKey = null;
                 Session.music = music ? 1 : 0;
-                Session.musicUrl = current.kind == 0 ? nullIfEmpty(Extras.albumMusic(BrowserActivity.this, current.url)) : null;
+                Session.musicUrl = current.kind == 0 ? BrowseUtil.nullIfEmpty(Extras.albumMusic(BrowserActivity.this, current.url)) : null;
                 startActivity(new Intent(BrowserActivity.this, PlayerActivity.class));
             }
         };

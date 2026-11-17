@@ -1,6 +1,6 @@
 {
-  "version": "7.15",
+  "version": "7.16",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 906760,
-  "notes": "- Ajustes rediseñados: los temas van en una lista a la izquierda y a la derecha se ve un solo panel, el del tema elegido. Con el mando: derecha entra al panel e izquierda vuelve a los temas.\n- Nuevo «Diagnóstico» (Ajustes › Casa y móvil): lista los últimos errores del pase, la búsqueda, los vídeos y el autor.\n- Autor: las reglas (qué cámara o archivo da qué nombre) se pueden editar desde la web de configuración.\n- Por dentro: el motor del pase se reparte en piezas más pequeñas (caché de vídeo, mosaicos y autor) y se ha limpiado código sin uso."
+  "notes": "- Por dentro: el explorador de álbumes se reparte en piezas más pequeñas (entradas, casillas, icono giratorio y funciones sueltas). Todo funciona igual."
 }
