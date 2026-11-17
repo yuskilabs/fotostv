@@ -465,7 +465,7 @@ class WebConfigServer extends Thread {
         e.apply();
     }
 
-    private String importJson(Map<String, String> f) {
+    String importJson(Map<String, String> f) {
         try {
             org.json.JSONObject o = new org.json.JSONObject(val(f, "data"));
             if (!o.has("fotostv")) return "ER\nEse texto no parece una copia de FotosTV.";

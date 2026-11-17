@@ -116,7 +116,7 @@ final class BrowserActions {
         final List<Entry> one = new ArrayList<Entry>();
         one.add(e);
         Dialogs.iconMenu(host, e.title, new String[]{"Pase", "Cambiar nombre", "Borrar álbum virtual"},
-                new int[]{R.drawable.ic_play, R.drawable.ic_tune, R.drawable.ic_delete},
+                new int[]{R.drawable.ic_play, R.drawable.ic_format, R.drawable.ic_delete},
                 new android.content.DialogInterface.OnClickListener() {
                     public void onClick(android.content.DialogInterface d, int w) {
                         if (w == 0) startPase(one, false);
@@ -235,13 +235,13 @@ final class BrowserActions {
             final boolean pinned = e.coverPinned;
             final List<String> lb = new ArrayList<String>(java.util.Arrays.asList("Seleccionar", "Pase", "Pase con música", "Recargar álbum",
                     off ? "Mostrar álbum" : "Ocultar álbum", "Revisar ubicaciones"));
-            final List<Integer> ic = new ArrayList<Integer>(java.util.Arrays.asList(R.drawable.ic_check, R.drawable.ic_play, R.drawable.ic_tune,
+            final List<Integer> ic = new ArrayList<Integer>(java.util.Arrays.asList(R.drawable.ic_check, R.drawable.ic_play, R.drawable.ic_music,
                     R.drawable.ic_refresh, off ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_place));
-            if (Extras.on(host, Extras.ALBUM_MUSIC)) { lb.add("Música del álbum"); ic.add(R.drawable.ic_music); }
+            if (Extras.on(host, Extras.ALBUM_MUSIC)) { lb.add("Música del álbum"); ic.add(R.drawable.ic_volume); }
             if (Extras.on(host, Extras.DUPES)) { lb.add("Buscar repetidas"); ic.add(R.drawable.ic_copy); }
             if (pinned) { lb.add(e.coverKeys.size() > 1 ? "Quitar portadas" : "Quitar portada"); ic.add(R.drawable.ic_photo); }
             lb.add("Reordenar álbum"); ic.add(R.drawable.ic_move);
-            lb.add("Cambiar nombre"); ic.add(R.drawable.ic_tune);
+            lb.add("Cambiar nombre"); ic.add(R.drawable.ic_format);
             lb.add("Borrar álbum"); ic.add(R.drawable.ic_delete);
             int[] ia = new int[ic.size()];
             for (int i = 0; i < ia.length; i++) ia[i] = ic.get(i);

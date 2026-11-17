@@ -3,6 +3,19 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.23
+- Estilos del pase: «Tranquilo», «Fiesta» y «Solo recuerdos» cambian de golpe los ajustes del pase. Se guardan en cada perfil, pasan a «Personalizado» si cambias algo a mano y «Deshacer estilo» lo devuelve todo a como estaba.
+- Buscar con la voz: botón con micrófono en «Buscar» (usa el dictado de la tele); el texto dictado sale en el campo con sus opciones.
+- Recuerdos de hoy: nueva opción «Semana entera», con las fotos de los 3 días antes y después de hoy de años anteriores.
+- Transición entre fotos a elegir: fundido, corte o cortinilla.
+- Copiar de otra tele (Ajustes › Casa y móvil): trae los álbumes y ajustes de otra tele por la wifi con su dirección y PIN, sin archivos.
+- Novedades: al abrir la app tras actualizar se enseña lo nuevo, una sola vez; también hay un botón «Novedades» en Ajustes.
+- Los tres botones de mosaicos (dos verticales, tres verticales, cuatro juntas) pasan a uno solo, «Mosaicos»: no, pocos, normal o muchos. Quien los tenía encendidos empieza en «normal».
+- Fecha y hora: «Reloj grande» desaparece y «Fecha» incluye ahora la opción «con día y hora» (antes era un botón aparte).
+- Los iconos de cada pantalla ya no se repiten (Ajustes, menús del explorador, ficha de información), con iconos nuevos.
+- Buscar: «Siguiente» en el teclado ya no abre nada después por su cuenta; si hay opciones debajo, pasa a elegirlas.
+- Por dentro: pruebas automáticas de la lógica en `tools/test` (`./tools/test/run.sh`).
+
 ## 7.22
 - Por dentro: las acciones del explorador (menús de álbum y de foto, selección, mover, renombrar, borrar, buscar repetidas y recargar) pasan a su propio archivo. El explorador queda en la mitad de líneas. Todo funciona igual.
 

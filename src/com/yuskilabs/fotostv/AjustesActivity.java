@@ -63,7 +63,7 @@ public class AjustesActivity extends SettingsBase {
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setGravity(Gravity.CENTER_VERTICAL);
         ImageView ic = new ImageView(this);
-        ic.setImageResource(R.drawable.ic_tune);
+        ic.setImageResource(R.drawable.ic_settings);
         ic.setColorFilter(0xFF7FB2FF);
         head.addView(ic, new LinearLayout.LayoutParams(dp(34), dp(34)));
         LinearLayout tt = new LinearLayout(this);
@@ -85,7 +85,7 @@ public class AjustesActivity extends SettingsBase {
         cols.setOrientation(LinearLayout.HORIZONTAL);
 
         // --- música
-        LinearLayout cm = card("Música del pase", R.drawable.ic_play);
+        LinearLayout cm = card("Música del pase", R.drawable.ic_music);
         musicBtn = btn(musicLabel(), R.drawable.ic_tune, new View.OnClickListener() {
             public void onClick(View v) {
                 String m = Prefs.musicMode(AjustesActivity.this);
@@ -94,7 +94,7 @@ public class AjustesActivity extends SettingsBase {
                 refreshMusic();
             }
         });
-        volBtn = btn(volLabel(), R.drawable.ic_tune, new View.OnClickListener() {
+        volBtn = btn(volLabel(), R.drawable.ic_volume, new View.OnClickListener() {
             public void onClick(View v) {
                 int[] o = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
                 int cur = Prefs.musicVol(AjustesActivity.this), nx = o[0];
@@ -106,19 +106,19 @@ public class AjustesActivity extends SettingsBase {
         radioBtn = btn(radioLabel(), R.drawable.ic_play, new View.OnClickListener() {
             public void onClick(View v) { pickRadio(); }
         });
-        folderBtn = btn(folderLabel(), R.drawable.ic_albums, new View.OnClickListener() {
+        folderBtn = btn(folderLabel(), R.drawable.ic_folder, new View.OnClickListener() {
             public void onClick(View v) { pickFolder(); }
         });
-        dreamMusicBtn = btn(dreamMusicLabel(), R.drawable.ic_tv, new View.OnClickListener() {
+        dreamMusicBtn = btn(dreamMusicLabel(), R.drawable.ic_preview, new View.OnClickListener() {
             public void onClick(View v) {
                 Prefs.sp(AjustesActivity.this).edit().putBoolean("musicDream", !Prefs.musicDream(AjustesActivity.this)).commit();
                 refreshMusic();
             }
         });
-        Button albumMusic = fx("Música por álbum", Extras.ALBUM_MUSIC, R.drawable.ic_music,
+        Button albumMusic = fx("Música por álbum", Extras.ALBUM_MUSIC, R.drawable.ic_notes,
                 "Cada álbum puede tener su emisora (pulsación larga en el álbum, «Música del álbum»); suena en el pase de ese álbum.");
         Button duck = twoFx("Con vídeo", Extras.SOFT_DUCK, "callar música", "bajar música",
-                R.drawable.ic_video, "Cuando suena un vídeo con sonido, la música se calla (como siempre) o solo baja de volumen.");
+                R.drawable.ic_down, "Cuando suena un vídeo con sonido, la música se calla (como siempre) o solo baja de volumen.");
         cm.addView(row(musicBtn, volBtn));
         cm.addView(row(radioBtn, folderBtn));
         cm.addView(row(dreamMusicBtn, albumMusic));
@@ -148,7 +148,7 @@ public class AjustesActivity extends SettingsBase {
                 h.postDelayed(geoTick, 1500);
             }
         });
-        Button rebuild = btn("Rehacer nombres", R.drawable.ic_place, new View.OnClickListener() {
+        Button rebuild = btn("Rehacer nombres", R.drawable.ic_format, new View.OnClickListener() {
             public void onClick(View v) { rebuildDialog(); }
         });
         cg.addView(row(geoBtn, rebuild));
@@ -156,7 +156,7 @@ public class AjustesActivity extends SettingsBase {
 
         // --- salvapantallas
         LinearLayout cs = card("Salvapantallas", R.drawable.ic_tv);
-        Button dream = btn("Elegir salvapantallas", R.drawable.ic_tv, new View.OnClickListener() {
+        Button dream = btn("Elegir salvapantallas", R.drawable.ic_cast, new View.OnClickListener() {
             public void onClick(View v) { openDreamSettings(); }
         });
         Button proj = btn("Fondo para Projectivy", R.drawable.ic_wallpaper, new View.OnClickListener() {
@@ -179,14 +179,14 @@ public class AjustesActivity extends SettingsBase {
         });
         cv.addView(row(
             tog("Reproducir vídeos", "video", R.drawable.ic_play, new Bool() { public boolean get() { return Prefs.video(AjustesActivity.this); } }),
-            tog("Con sonido", "sound", R.drawable.ic_video, new Bool() { public boolean get() { return Prefs.sound(AjustesActivity.this); } })));
+            tog("Con sonido", "sound", R.drawable.ic_volume, new Bool() { public boolean get() { return Prefs.sound(AjustesActivity.this); } })));
         cv.addView(row(vqBtn, cache));
         cv.addView(row(
             cyc("Miniaturas", "thumbMB", true, new String[]{"100", "150", "250", "500", "1000", "2000"},
-                new String[]{"100 MB", "150 MB", "250 MB", "500 MB", "1 GB", "2 GB"}, R.drawable.ic_photo,
+                new String[]{"100 MB", "150 MB", "250 MB", "500 MB", "1 GB", "2 GB"}, R.drawable.ic_grid,
                 new Cur() { public String get() { return String.valueOf(Prefs.thumbMB(AjustesActivity.this)); } }),
             cyc("Vídeos", "videoMB", true, new String[]{"300", "500", "1000", "1500", "3000"},
-                new String[]{"300 MB", "500 MB", "1 GB", "1,5 GB", "3 GB"}, R.drawable.ic_video,
+                new String[]{"300 MB", "500 MB", "1 GB", "1,5 GB", "3 GB"}, R.drawable.ic_file,
                 new Cur() { public String get() { return String.valueOf(Prefs.videoMB(AjustesActivity.this)); } })));
         final int nh = Prefs.hidden(this).size();
         Button unhide = btn(nh == 0 ? "No hay fotos ocultas" : "Mostrar de nuevo las " + nh + " ocultas", R.drawable.ic_visibility, new View.OnClickListener() {
@@ -210,20 +210,26 @@ public class AjustesActivity extends SettingsBase {
 
         // --- pase de fotos
         LinearLayout cp = card("Pase de fotos", R.drawable.ic_photo);
-        placeBtn = btn(placeLabel(), R.drawable.ic_place, new View.OnClickListener() {
+        placeBtn = btn(placeLabel(), R.drawable.ic_map, new View.OnClickListener() {
             public void onClick(View v) { pickPlace(); }
         });
         describe(placeBtn, "El pase y el salvapantallas enseñan solo las fotos de un lugar (de las que ya tienen ubicación).");
         Button fav = fx("Más favoritas", Extras.FAV_BOOST, R.drawable.ic_star,
                 "Con el orden «inteligente», las favoritas salen tres veces más a menudo.");
-        Button collage = fx("Dos verticales", Extras.COLLAGE, R.drawable.ic_photo,
-                "En el pase, dos fotos verticales hechas casi a la vez (menos de 15 minutos) se ven juntas, una al lado de otra y sin bordes, con un solo pie de foto y sin hora.");
-        Button grid4 = fx("Cuatro juntas", Extras.GRID4, R.drawable.ic_albums,
-                "De vez en cuando, cuatro fotos horizontales hechas casi a la vez (menos de 15 minutos) salen juntas, en cuadrícula y sin bordes, con un solo pie de foto y sin hora. Se preparan en segundo plano y entran al pase cuando están listas.");
-        Button trio3 = fx("Tres verticales", Extras.TRIO3, R.drawable.ic_albums,
-                "De vez en cuando, tres fotos verticales hechas casi a la vez (menos de 15 minutos) salen juntas, una al lado de otra y sin bordes, con un solo pie de foto y sin hora.");
+        Button mosaics = cyc("Mosaicos", Extras.MOSAICS, false, new String[]{"off", "few", "normal", "many"},
+                new String[]{"no", "pocos", "normal", "muchos"}, R.drawable.ic_grid,
+                new Cur() { public String get() { return Extras.mosaics(AjustesActivity.this); } });
+        describe(mosaics, "Fotos hechas casi a la vez (menos de 15 minutos) salen juntas, sin bordes: dos o tres verticales, o cuatro horizontales en cuadrícula, con un solo pie de foto y sin hora. «Pocos»: algo menos que lo normal; «muchos»: el doble. Nunca con vídeos.");
+        Button transition = cycFx("Transición", Extras.TRANSITION, new String[]{"fade", "cut", "wipe"},
+                new String[]{"fundido", "corte", "cortinilla"}, R.drawable.ic_swap,
+                "Cómo pasa una foto a la siguiente: fundido suave, corte directo o cortinilla (la nueva aparece desde la derecha).");
+        Button preset = presetBtn();
+        Button presetUndo = presetUndoBtn();
+        Button todayWeek = fx("Semana entera", Extras.TODAY_WEEK, R.drawable.ic_date_range,
+                "Con «Recuerdos de hoy», incluye también las fotos de los 3 días antes y después de hoy en años anteriores, no solo del día exacto.");
         Button credit = fx("Autor", Extras.CREDIT, R.drawable.ic_person,
                 "Marca de agua muy sutil abajo a la derecha: «© Lola» (iPhone 12 o 13), «© Alex» (iPhone 14 Pro), «© Pepe» (cámara que no es móvil: Leica, Nikon…) o «© Lara» (archivo que empieza por PIC). En las demás, nada. Las reglas se pueden cambiar desde la web de configuración (campo «Autor de las fotos»).");
+        cp.addView(row(preset, presetUndo));
         cp.addView(row(
             cyc("Orden", "order", false, new String[]{"random", "norepeat", "smart", "asc", "desc"},
                 new String[]{"aleatorio", "sin repetir", "inteligente", "por fecha ↑", "por fecha ↓"}, R.drawable.ic_shuffle,
@@ -233,19 +239,19 @@ public class AjustesActivity extends SettingsBase {
                 new Cur() { public String get() { return String.valueOf(Prefs.interval(AjustesActivity.this)); } })));
         cp.addView(row(
             cyc("Encuadre", "fit", false, new String[]{"auto", "crop", "fit"},
-                new String[]{"auto", "llenar", "completo"}, R.drawable.ic_fullscreen,
+                new String[]{"auto", "llenar", "completo"}, R.drawable.ic_single,
                 new Cur() { public String get() { return Prefs.fit(AjustesActivity.this); } }),
             tog("Continuar", "resume", R.drawable.ic_check, new Bool() { public boolean get() { return Prefs.resume(AjustesActivity.this); } })));
-        cp.addView(row(todayBtn(), fav));
-        cp.addView(row(collage, trio3));
-        cp.addView(row(grid4, placeBtn));
+        cp.addView(row(todayBtn(), todayWeek));
+        cp.addView(row(fav, mosaics));
+        cp.addView(row(transition, placeBtn));
 
         // --- movimiento y relleno
         LinearLayout cf = card("Movimiento y relleno", R.drawable.ic_fullscreen);
         Button speed = cycFx("Velocidad", Extras.KB_SPEED, new String[]{"slow", "normal"}, new String[]{"lenta", "normal"},
                 R.drawable.ic_timer, "Velocidad del movimiento. En las dos, el movimiento dura más que la foto: nunca se para a la vista.");
         Button edge = cycFx("Bordes", Extras.KB_EDGE, new String[]{"hide", "show"}, new String[]{"tapados", "a la vista"},
-                R.drawable.ic_fullscreen, "Tapados: la foto va algo ampliada y no se ve el relleno. A la vista: la foto empieza entera, sin zoom, y al moverse se ve el relleno (negro, color o difuminado).");
+                R.drawable.ic_terrain, "Tapados: la foto va algo ampliada y no se ve el relleno. A la vista: la foto empieza entera, sin zoom, y al moverse se ve el relleno (negro, color o difuminado).");
         Button bg = cycFx("Relleno", Extras.BACKGROUND, new String[]{"black", "color", "blur"}, new String[]{"negro", "color", "difuminado"},
                 R.drawable.ic_wallpaper, "Lo que se ve donde la foto no llena la pantalla (verticales, fotos con otra forma, y al moverse): negro, el color de la foto o la foto muy difuminada.");
         cf.addView(row(motionBtn(), speed));
@@ -254,10 +260,6 @@ public class AjustesActivity extends SettingsBase {
         // --- información en pantalla
         LinearLayout ci = card("Información en pantalla", R.drawable.ic_info);
         Button dateFmt = dateFmtBtn();
-        Button dateFull = fx("Día y hora", Extras.DATE_FULL, R.drawable.ic_schedule,
-                "Añade a la fecha de cada foto el día de la semana y la hora a la que se hizo; apagado, solo la fecha. Funciona con la fecha larga y con la corta.");
-        Button bigClock = fx("Reloj grande", Extras.BIG_CLOCK, R.drawable.ic_schedule,
-                "Reloj más grande, con el día de la semana y la fecha debajo (si la hora está activada).");
         Button weather = fx("Tiempo", Extras.WEATHER, R.drawable.ic_cloud,
                 "Temperatura y cielo de tu ciudad junto a la hora, si la hora está activada (de Open-Meteo, cada media hora).");
         weather.setOnClickListener(new View.OnClickListener() {
@@ -268,29 +270,27 @@ public class AjustesActivity extends SettingsBase {
                 if (now && Extras.str(AjustesActivity.this, Extras.CITY, "").length() == 0) askCity();
             }
         });
-        cityBtn = btn(cityLabel(), R.drawable.ic_place, new View.OnClickListener() {
+        cityBtn = btn(cityLabel(), R.drawable.ic_home, new View.OnClickListener() {
             public void onClick(View v) { askCity(); }
         });
         describe(cityBtn, "Ciudad del tiempo. Escribe su nombre («Málaga», «Estepona»…).");
         Button captions = fx("Pies de foto", Extras.CAPTIONS, R.drawable.ic_notes,
                 "Permite escribir un texto a cada foto (pulsación larga en el mosaico) y lo enseña en el pase y en la ficha.");
         ci.addView(row(
-            tog("Álbum", "showAlbum", R.drawable.ic_albums, new Bool() { public boolean get() { return Prefs.showAlbum(AjustesActivity.this); } }),
-            tog("Lugar", "showPlace", R.drawable.ic_place, new Bool() { public boolean get() { return Prefs.showPlace(AjustesActivity.this); } })));
-        ci.addView(row(dateFmt, dateFull));
-        ci.addView(row(
-            tog("Hora", "clock", R.drawable.ic_schedule, new Bool() { public boolean get() { return Prefs.clock(AjustesActivity.this); } }),
-            bigClock));
+            tog("Álbum", "showAlbum", R.drawable.ic_folder, new Bool() { public boolean get() { return Prefs.showAlbum(AjustesActivity.this); } }),
+            tog("Lugar", "showPlace", R.drawable.ic_map, new Bool() { public boolean get() { return Prefs.showPlace(AjustesActivity.this); } })));
+        ci.addView(row(dateFmt,
+            tog("Hora", "clock", R.drawable.ic_schedule, new Bool() { public boolean get() { return Prefs.clock(AjustesActivity.this); } })));
         ci.addView(row(weather, cityBtn));
         ci.addView(row(captions, credit));
 
         // --- noche y temporizador
         LinearLayout cn = card("Noche y temporizador", R.drawable.ic_moon);
         Button night = cycFx("Modo noche", Extras.NIGHT, new String[]{"off", "22-8", "23-7", "0-7"},
-                new String[]{"no", "22 a 8 h", "23 a 7 h", "0 a 7 h"}, R.drawable.ic_moon,
+                new String[]{"no", "22 a 8 h", "23 a 7 h", "0 a 7 h"}, R.drawable.ic_schedule,
                 "Durante esas horas el salvapantallas se atenúa (o se apaga) y la música se calla.");
         Button nightMode = cycFx("De noche", Extras.NIGHT_MODE, new String[]{"dim", "black"}, new String[]{"tenue", "pantalla negra"},
-                R.drawable.ic_moon, "Tenue: fotos muy oscuras, sin textos. Pantalla negra: el salvapantallas no enseña nada a esas horas.");
+                R.drawable.ic_visibility_off, "Tenue: fotos muy oscuras, sin textos. Pantalla negra: el salvapantallas no enseña nada a esas horas.");
         Button timer = cycInt("Temporizador", Extras.TIMER, new int[]{0, 15, 30, 60, 90}, new String[]{"no", "15 min", "30 min", "1 h", "1 h 30"},
                 R.drawable.ic_timer, "Cualquier pase (también el salvapantallas) se cierra solo pasado ese tiempo, aunque se use el mando. Después el inicio automático no lo vuelve a abrir hasta que abras la app. «Cerrar pase» (pantalla principal) es distinto: cierra el pase abierto solo si no tocas el mando en ese rato.");
         cn.addView(row(night, nightMode));
@@ -300,13 +300,13 @@ public class AjustesActivity extends SettingsBase {
         LinearLayout ce = card("Explorador", R.drawable.ic_albums);
         Button search = fx("Buscar", Extras.SEARCH, R.drawable.ic_search,
                 "Barra de búsqueda en la pantalla principal (encima de los botones; se llega subiendo con el mando): por lugar, álbum, autor o fecha («Zahara», «agosto 2025», «Lola 2024»). El autor sale de la cámara de cada foto: cuantas más cámaras leas en Estadísticas, más fotos encuentra.");
-        Button virt = fx("Álbumes virtuales", Extras.VIRTUAL, R.drawable.ic_albums,
+        Button virt = fx("Álbumes virtuales", Extras.VIRTUAL, R.drawable.ic_folder,
                 "Guarda una búsqueda como álbum («Zahara 2025») y sale en la lista de álbumes; se actualiza solo.");
         Button jump = fx("Saltar por fecha", Extras.DATE_JUMP, R.drawable.ic_event,
                 "Botón «Fecha» en el mosaico de un álbum: un calendario mensual para ir a un día y ver solo sus fotos.");
         Button trips = fx("Viajes", Extras.TRIPS, R.drawable.ic_flight,
                 "Botón «Viajes» en la pantalla principal: agrupa solas las fotos seguidas en el tiempo, con su lugar y fechas.");
-        Button covers = fx("Varias portadas", Extras.MULTI_COVER, R.drawable.ic_photo,
+        Button covers = fx("Varias portadas", Extras.MULTI_COVER, R.drawable.ic_wallpaper,
                 "Puedes fijar varias portadas por álbum; cada vez que entras sale una de ellas.");
         Button news = fx("Marcar nuevas", Extras.NEW_BADGE, R.drawable.ic_add,
                 "Las fotos añadidas al álbum desde la última vez que lo abriste llevan la marca «NUEVA».");
@@ -336,18 +336,27 @@ public class AjustesActivity extends SettingsBase {
         Button reload = cycInt("Recargar álbumes", Extras.RELOAD, new int[]{0, 6, 12, 24}, new String[]{"no", "cada 6 h", "cada 12 h", "cada 24 h"},
                 R.drawable.ic_refresh, "Mientras la app esté abierta o en el salvapantallas, vuelve a leer los álbumes de Google cada cierto tiempo.");
         ch.addView(row(profilesBtn, remote));
-        Button diag = btn("Diagnóstico", R.drawable.ic_info, new View.OnClickListener() {
+        Button diag = btn("Diagnóstico", R.drawable.ic_terrain, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(AjustesActivity.this, DiagActivity.class)); }
         });
         describe(diag, "Últimos errores del pase, la búsqueda, los vídeos y el autor, con su hora. Sirve para ver qué falla si algo se queda parado.");
         ch.addView(row(reload, diag));
+        Button copyTv = btn("Copiar de otra tele", R.drawable.ic_cast, new View.OnClickListener() {
+            public void onClick(View v) { copyFromTvDialog(); }
+        });
+        describe(copyTv, "Trae a esta tele los álbumes y todos los ajustes de otra tele con FotosTV, por la wifi y sin archivos. Hace falta su dirección y su PIN (salen en su pantalla principal).");
+        Button novBtn = btn("Novedades", R.drawable.ic_new_releases, new View.OnClickListener() {
+            public void onClick(View v) { Novedades.showLatest(AjustesActivity.this); }
+        });
+        describe(novBtn, "Lo que ha cambiado en las últimas versiones. También se enseña solo, una vez, al abrir la app después de actualizar.");
+        ch.addView(row(copyTv, novBtn));
 
         // temas a la izquierda, un solo panel a la derecha
         final LinearLayout[] cards = {cp, cf, ci, cn, cm, cv, ce, cs, cg, ch};
         String[] names = {"Pase de fotos", "Movimiento y relleno", "Información", "Noche y temporizador", "Música",
             "Vídeo y caché", "Explorador", "Salvapantallas", "Ubicaciones", "Casa y móvil"};
         int[] icons = {R.drawable.ic_photo, R.drawable.ic_fullscreen, R.drawable.ic_info, R.drawable.ic_moon,
-            R.drawable.ic_play, R.drawable.ic_video, R.drawable.ic_albums, R.drawable.ic_tv, R.drawable.ic_place,
+            R.drawable.ic_music, R.drawable.ic_video, R.drawable.ic_albums, R.drawable.ic_tv, R.drawable.ic_place,
             R.drawable.ic_guest};
         panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -391,7 +400,9 @@ public class AjustesActivity extends SettingsBase {
         hint.setMinLines(2);
         root.addView(hint);
         setContentView(root);
-        topics[0].requestFocus();
+        int kt = keepTopic;
+        keepTopic = -1;
+        topics[kt >= 0 && kt < topics.length ? kt : 0].requestFocus();
     }
 
     private LinearLayout panel;
@@ -699,29 +710,105 @@ public class AjustesActivity extends SettingsBase {
     }
 
 
-    private static final String[] DATE_LABS = {"larga", "corta", "no"};
+    private static final String[] DATE_LABS = {"larga", "corta", "no", "con día y hora"};
 
+    /** 0 larga, 1 corta, 2 no se enseña, 3 larga con el día de la semana y la hora. */
     private int dateState() {
         if (!Prefs.showDate(this)) return 2;
+        if (Extras.on(this, Extras.DATE_FULL)) return 3;
         return "short".equals(Extras.str(this, Extras.DATE_FMT, "long")) ? 1 : 0;
     }
 
-    /** Fecha de cada foto: larga → corta → no. «Día y hora» (aparte) añade o quita el día de la semana y la hora. */
+    /** Fecha de cada foto: larga → corta → no → larga con día y hora. */
     private Button dateFmtBtn() {
         final Button[] self = new Button[1];
         self[0] = btn("Fecha", R.drawable.ic_event, new View.OnClickListener() {
             public void onClick(View v) {
-                int nx = (dateState() + 1) % 3;
+                int nx = (dateState() + 1) % 4;
                 android.content.SharedPreferences.Editor e = Prefs.sp(AjustesActivity.this).edit();
                 e.putBoolean("showDate", nx != 2);
                 if (nx != 2) e.putString(Extras.DATE_FMT, nx == 1 ? "short" : "long");
+                e.putBoolean(Extras.DATE_FULL, nx == 3);
                 e.commit();
                 self[0].setText("Fecha: " + DATE_LABS[nx]);
             }
         });
         self[0].setText("Fecha: " + DATE_LABS[dateState()]);
-        describe(self[0], "Fecha de cada foto en el pase. Larga: «Miércoles 27 de diciembre de 2023 - 15:03». Corta: «Mié, 27 dic 2023 - 15:03». O no enseñarla. «Día y hora» añade o quita el día de la semana y la hora.");
+        describe(self[0], "Fecha de cada foto en el pase. Larga: «27 de diciembre de 2023». Corta: «27 dic 2023». Con día y hora: añade el día de la semana y la hora a la que se hizo («Miércoles 27 de diciembre de 2023 - 15:03»). O no enseñarla.");
         return self[0];
+    }
+
+    private static int keepTopic = -1;
+
+    /** Pide la dirección y el PIN de la otra tele y trae su copia de seguridad por la red. */
+    private void copyFromTvDialog() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(24), dp(8), dp(24), 0);
+        final android.widget.EditText ip = new android.widget.EditText(this);
+        ip.setSingleLine(true);
+        ip.setHint("Dirección, por ejemplo 192.168.1.20");
+        ip.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
+        final android.widget.EditText pin = new android.widget.EditText(this);
+        pin.setSingleLine(true);
+        pin.setHint("PIN de la otra tele");
+        pin.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        box.addView(ip);
+        box.addView(pin);
+        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Copiar de otra tele")
+            .setMessage("En la otra tele abre FotosTV (pantalla principal): arriba salen su dirección y su PIN. Los álbumes y ajustes de esta tele se sustituirán por los de aquella.")
+            .setView(box)
+            .setPositiveButton("Copiar", new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    final String a = ip.getText().toString(), p = pin.getText().toString();
+                    Toast.makeText(AjustesActivity.this, "Pidiendo la copia a la otra tele…", Toast.LENGTH_LONG).show();
+                    new Thread(new Runnable() {
+                        public void run() {
+                            final String r = TvCopy.pull(getApplicationContext(), a, p);
+                            h.post(new Runnable() {
+                                public void run() {
+                                    if (isFinishing()) return;
+                                    boolean ok = r.startsWith("OK");
+                                    Toast.makeText(AjustesActivity.this, r.substring(Math.min(3, r.length())), Toast.LENGTH_LONG).show();
+                                    if (ok) { keepTopic = topicSel; recreate(); }
+                                }
+                            });
+                        }
+                    }).start();
+                }
+            })
+            .setNegativeButton("Cancelar", null).show();
+    }
+
+    /** Preajuste: ciclo personalizado → Tranquilo → Fiesta → Solo recuerdos; al elegir uno se cambian los ajustes del pase. */
+    private Button presetBtn() {
+        final Button b = btn("Estilo: " + FxLogic.presetName(Presets.current(this)), R.drawable.ic_sparkle, new View.OnClickListener() {
+            public void onClick(View v) {
+                String nx = FxLogic.nextPreset(Presets.current(AjustesActivity.this));
+                Presets.apply(AjustesActivity.this, nx);
+                Toast.makeText(AjustesActivity.this, "Estilo «" + FxLogic.presetName(nx) + "» aplicado. Con «Deshacer estilo» vuelve todo a como estaba.", Toast.LENGTH_LONG).show();
+                keepTopic = topicSel;
+                recreate();
+            }
+        });
+        describe(b, "Elige un estilo, que cambia de golpe varios ajustes del pase: Tranquilo (lento, sin mosaicos, solo zoom suave), Fiesta (rápido, muchos mosaicos, cortinilla) o Solo recuerdos (fotos de esta semana de otros años). Se guarda en este perfil; si cambias algo a mano pasa a «Personalizado».");
+        return b;
+    }
+
+    private Button presetUndoBtn() {
+        final boolean can = Presets.canRevert(this);
+        Button b = btn(can ? "Deshacer estilo" : "Sin estilo aplicado", R.drawable.ic_undo, new View.OnClickListener() {
+            public void onClick(View v) {
+                if (!Presets.canRevert(AjustesActivity.this)) return;
+                Presets.revert(AjustesActivity.this);
+                Toast.makeText(AjustesActivity.this, "Todo vuelve a como estaba antes del primer estilo.", Toast.LENGTH_LONG).show();
+                keepTopic = topicSel;
+                recreate();
+            }
+        });
+        describe(b, "Devuelve los ajustes que cambian los estilos (orden, tiempo, movimiento, mosaicos, transición, recuerdos e información) a como estaban antes de aplicar el primer estilo.");
+        return b;
     }
 
     // ---- botones con su explicación
@@ -756,7 +843,7 @@ public class AjustesActivity extends SettingsBase {
     /** Movimiento: no → variado → acercar → alejar → desplazar (de lado, arriba/abajo o en diagonal). */
     private Button motionBtn() {
         final Button[] self = new Button[1];
-        self[0] = btn("Movimiento", R.drawable.ic_fullscreen, new View.OnClickListener() {
+        self[0] = btn("Movimiento", R.drawable.ic_move, new View.OnClickListener() {
             public void onClick(View v) {
                 String cur = motionNow();
                 int i = 0;

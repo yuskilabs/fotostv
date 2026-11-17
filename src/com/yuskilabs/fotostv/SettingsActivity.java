@@ -65,6 +65,9 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        getWindow().getDecorView().post(new Runnable() {
+            public void run() { if (!isFinishing()) Novedades.showIfNew(SettingsActivity.this); }
+        });
         String extra = getIntent().getStringExtra("url");
         if (extra != null && extra.trim().length() > 0) {
             List<Prefs.Album> l = Prefs.albums(this);
@@ -274,7 +277,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         Button proj = side("Fondo para Projectivy", R.drawable.ic_wallpaper, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, ProjectivyActivity.class)); }
         });
-        Button check = side("Recargar álbumes", R.drawable.ic_check, new View.OnClickListener() {
+        Button check = side("Recargar álbumes", R.drawable.ic_refresh, new View.OnClickListener() {
             public void onClick(View v) { checkAlbum(); }
         });
         cacheBtn = side("Vaciar caché", R.drawable.ic_sweep, new View.OnClickListener() {
@@ -287,7 +290,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
         Button places = side("Lugares", R.drawable.ic_place, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, PlacesActivity.class)); }
         });
-        Button ajBtn = side("Ajustes", R.drawable.ic_tune, new View.OnClickListener() {
+        Button ajBtn = side("Ajustes", R.drawable.ic_settings, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(SettingsActivity.this, AjustesActivity.class)); }
         });
         left.addView(pair(preview, browse));

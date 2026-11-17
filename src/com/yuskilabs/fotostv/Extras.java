@@ -11,7 +11,6 @@ final class Extras {
     private Extras() { }
 
     // pase y salvapantallas
-    static final String BIG_CLOCK = "fx_bigClock";     // reloj grande con la fecha
     static final String WEATHER = "fx_weather";        // tiempo junto al reloj
     static final String CITY = "fx_city";              // ciudad del tiempo (texto)
     static final String TODAY = "fx_today";            // recuerdos de hoy en el salvapantallas
@@ -29,6 +28,11 @@ final class Extras {
     static final String KB_SPEED = "fx_kbSpeed";       // slow (lenta) | normal
     static final String DATE_FMT = "fx_dateFmt";       // formato de fecha: long (por defecto) o short
     static final String DATE_FULL = "fx_dateFull";     // fecha del pase con día de la semana y hora
+    static final String TODAY_WEEK = "fx_todayWeek";   // recuerdos de «esta semana» (3 días antes y después) y no solo del día exacto
+    static final String MOSAICS = "fx_mosaics";        // mosaicos: off | few | normal | many (sustituye a collage / trio3 / grid4)
+    static final String TRANSITION = "fx_transition";  // paso de una foto a otra: fade | cut | slide
+    static final String PRESET = "fx_preset";          // preajuste elegido: "" (personalizado) | calm | party | memories
+    static final String PRESET_BASE = "fx_presetBase"; // ajustes del pase tal como estaban antes de aplicar un preajuste (JSON)
     static final String TODAY_MIX = "fx_todayMix";     // recuerdos de hoy mezclados con el resto
     static final String KB_EDGE = "fx_kbEdge";         // bordes: hide (la foto va ampliada) | show (empieza entera y se ve el relleno)
     static final String BACKGROUND = "fx_bg";          // relleno de lo que la foto no llena: black | color | blur
@@ -56,6 +60,13 @@ final class Extras {
     static String str(Context c, String key, String def) { return sp(c).getString(key, def); }
 
     static int num(Context c, String key) { return sp(c).getInt(key, 0); }
+
+    /** Nivel de mosaicos. Quien tenía alguno de los tres interruptores antiguos encendidos empieza en «normal». */
+    static String mosaics(Context c) {
+        SharedPreferences s = sp(c);
+        if (s.contains(MOSAICS)) return s.getString(MOSAICS, "off");
+        return s.getBoolean(COLLAGE, false) || s.getBoolean(TRIO3, false) || s.getBoolean(GRID4, false) ? "normal" : "off";
+    }
 
     static String night(Context c) { return str(c, NIGHT, "off"); }
 

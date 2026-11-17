@@ -336,7 +336,7 @@ class Slideshow {
         tvCaption.setEllipsize(android.text.TextUtils.TruncateAt.END);
         tvCaption.setVisibility(View.GONE);
         info.addView(tvCaption);
-        boolean big = Extras.on(ctx, Extras.BIG_CLOCK) && Prefs.clock(ctx);
+        boolean big = false;
         FrameLayout.LayoutParams ip = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM | Gravity.START);
         ip.setMargins(dp(48), 0, dp(big ? 380 : 220), dp(32));   // ancho fijo (hasta la hora): el texto no se recorta
         root.addView(info, ip);
@@ -514,6 +514,8 @@ class Slideshow {
     private void slideAlpha(View v, float al) {
         v.setAlpha(al);
         bgOf(v).setAlpha(al);
+        v.setClipBounds(null);                 // por si venía de una cortinilla a medias
+        bgOf(v).setClipBounds(null);
     }
 
     private void slideToFront(View v) {
@@ -699,7 +701,9 @@ class Slideshow {
         todayDay = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR);
         todayKeys = null;
         if (Extras.on(ctx, Extras.TODAY)) {
-            List<Item> t = FxLogic.onThisDay(l, System.currentTimeMillis(), java.util.TimeZone.getDefault());
+            List<Item> t = Extras.on(ctx, Extras.TODAY_WEEK)
+                    ? FxLogic.onThisWeek(l, System.currentTimeMillis(), java.util.TimeZone.getDefault())
+                    : FxLogic.onThisDay(l, System.currentTimeMillis(), java.util.TimeZone.getDefault());
             if (Extras.on(ctx, Extras.TODAY_MIX)) {
                 // mezclados: se ven todas las fotos, y las de hoy salen más pronto (una sí y una no, mientras haya)
                 if (!t.isEmpty()) { todayKeys = new java.util.HashSet<String>(); for (Item it : t) todayKeys.add(it.key()); }
@@ -1830,11 +1834,29 @@ class Slideshow {
         setInfo(s);
         if (hideVideo) releasePlayer();
         startKenBurns(back);
-        android.animation.ObjectAnimator fa = android.animation.ObjectAnimator.ofFloat(back, View.ALPHA, 1f);
-        android.animation.ObjectAnimator fb = android.animation.ObjectAnimator.ofFloat(bgOf(back), View.ALPHA, 1f);
+        final String tr = Extras.str(ctx, Extras.TRANSITION, "fade");
         final android.animation.AnimatorSet fade = new android.animation.AnimatorSet();
-        fade.playTogether(fa, fb);
-        fade.setDuration(hideVideo ? 800 : FADE_MS);
+        if ("wipe".equals(tr) && back.getWidth() > 0) {
+            // cortinilla: la foto nueva aparece desde la derecha, como si se corriera una cortina
+            slideAlpha(back, 1f);
+            final int w = back.getWidth(), hh = back.getHeight();
+            android.animation.ValueAnimator va = android.animation.ValueAnimator.ofFloat(0f, 1f);
+            va.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
+                public void onAnimationUpdate(android.animation.ValueAnimator an) {
+                    float f = (Float) an.getAnimatedValue();
+                    android.graphics.Rect r = new android.graphics.Rect((int) (w * (1f - f)), 0, w, hh);
+                    back.setClipBounds(r);
+                    bgOf(back).setClipBounds(new android.graphics.Rect(r));
+                }
+            });
+            fade.play(va);
+            fade.setDuration(900);
+        } else {
+            android.animation.ObjectAnimator fa = android.animation.ObjectAnimator.ofFloat(back, View.ALPHA, 1f);
+            android.animation.ObjectAnimator fb = android.animation.ObjectAnimator.ofFloat(bgOf(back), View.ALPHA, 1f);
+            fade.playTogether(fa, fb);
+            fade.setDuration("cut".equals(tr) ? 1 : hideVideo ? 800 : FADE_MS);
+        }
         fade.setInterpolator(new AccelerateDecelerateInterpolator());
         fade.addListener(new android.animation.AnimatorListenerAdapter() {
             boolean cancelled;
@@ -1842,6 +1864,8 @@ class Slideshow {
             public void onAnimationEnd(android.animation.Animator an) {
                 if (cancelled) return;
                 fades.remove(back);
+                back.setClipBounds(null);
+                bgOf(back).setClipBounds(null);
                 front.setImageDrawable(null);
                 slideAlpha(front, 0f);
                 kbStop(front);
@@ -2149,7 +2173,6 @@ class Slideshow {
     /** Debajo de la hora: la fecha (reloj grande) y el tiempo (si están activados). */
     private void updateClockSub() {
         StringBuilder b = new StringBuilder();
-        if (Extras.on(ctx, Extras.BIG_CLOCK)) b.append(new SimpleDateFormat("EEEE, d 'de' MMMM", MetaFetcher.ES).format(new Date()));
         if (Extras.on(ctx, Extras.WEATHER) && weatherTxt.length() > 0) {
             if (b.length() > 0) b.append("   ");
             b.append(weatherTxt);

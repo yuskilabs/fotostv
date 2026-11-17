@@ -530,7 +530,7 @@ public class BrowserActivity extends Activity {
             head.addView(BrowserUi.sbtn(BrowserActivity.this, "Pase", R.drawable.ic_play, new View.OnClickListener() {
                 public void onClick(View v) { if (!sel.isEmpty()) actions.startPase(actions.selected(), false); }
             }));
-            head.addView(BrowserUi.sbtn(BrowserActivity.this, "Con música", R.drawable.ic_play, new View.OnClickListener() {
+            head.addView(BrowserUi.sbtn(BrowserActivity.this, "Con música", R.drawable.ic_music, new View.OnClickListener() {
                 public void onClick(View v) { if (!sel.isEmpty()) actions.startPase(actions.selected(), true); }
             }));
             head.addView(BrowserUi.sbtn(BrowserActivity.this, "Ocultar", R.drawable.ic_visibility_off, new View.OnClickListener() {

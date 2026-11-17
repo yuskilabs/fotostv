@@ -107,9 +107,9 @@ class InfoPanel extends FrameLayout {
 
         // lo que ya se sabe sin descargar nada
         if (it.ts > 0) {
-            addRow(R.drawable.ic_event, "Fecha", MetaFetcher.formatDateTime(it.ts, MetaFetcher.tzFor(c, it)));
+            addRow(R.drawable.ic_date_range, "Fecha", MetaFetcher.formatDateTime(it.ts, MetaFetcher.tzFor(c, it)));
         }
-        if (album != null && album.length() > 0) addRow(R.drawable.ic_albums, "Álbum", album);
+        if (album != null && album.length() > 0) addRow(R.drawable.ic_folder, "Álbum", album);
         String cap = Extras.caption(c, it.key());
         if (cap.length() > 0) addRow(R.drawable.ic_notes, "Pie de foto", cap);
         mapMessage("Cargando información…");
@@ -199,15 +199,15 @@ class InfoPanel extends FrameLayout {
         if (pl != null && pl.length() > 0) {
             final String rg = Nav.regionOf(pl);
             if (rg != null) {
-                addBtn(rightBtns, barBtn("Más de " + Nav.townOf(pl), R.drawable.ic_place, new View.OnClickListener() {
+                addBtn(rightBtns, barBtn("Más de " + Nav.townOf(pl), R.drawable.ic_home, new View.OnClickListener() {
                     public void onClick(View v) { Nav.run(c, Nav.PLACE_TOWN, item, pl); }
                 }));
-                addBtn(rightBtns, barBtn("Más de " + rg, R.drawable.ic_place, new View.OnClickListener() {
+                addBtn(rightBtns, barBtn("Más de " + rg, R.drawable.ic_flight, new View.OnClickListener() {
                     public void onClick(View v) { Nav.run(c, Nav.PLACE_REGION, item, pl); }
                 }));
             } else {
                 // ciudad o sitio sin provincia: la zona (1 km) y el sitio entero
-                if (!Double.isNaN(lat)) addBtn(rightBtns, barBtn("Más de la zona", R.drawable.ic_place, new View.OnClickListener() {
+                if (!Double.isNaN(lat)) addBtn(rightBtns, barBtn("Más de la zona", R.drawable.ic_wallpaper, new View.OnClickListener() {
                     public void onClick(View v) { Nav.runZone(c, item, lat, lon, 1.0); }
                 }));
                 addBtn(rightBtns, barBtn("Más de " + pl, R.drawable.ic_place, new View.OnClickListener() {
@@ -276,16 +276,16 @@ class InfoPanel extends FrameLayout {
         rows.removeAllViews();
         if (file.length() > 0) addRow(R.drawable.ic_file, "Archivo", file);
         if (d.date > 0) {
-            addRow(R.drawable.ic_event, "Fecha", new SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", MetaFetcher.ES).format(new Date(d.date)));
+            addRow(R.drawable.ic_date_range, "Fecha", new SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", MetaFetcher.ES).format(new Date(d.date)));
             if (d.hasTime) addRow(R.drawable.ic_schedule, "Hora", new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date(d.date)));
         }
-        if (place != null) addRow(R.drawable.ic_place, "Lugar", place);
+        if (place != null) addRow(R.drawable.ic_map, "Lugar", place);
         if (!Double.isNaN(d.lat)) { lat = d.lat; lon = d.lon; }
         if (actions && (place == null ? placeName != null : !place.equals(placeName)) || actions && rightBtns.getChildCount() == 0) { placeName = place; buildRight(); }
         if (!Double.isNaN(d.lat)) {
             String c = String.format(Locale.US, "%.5f, %.5f", d.lat, d.lon);
             if (!Double.isNaN(d.alt) && d.alt != 0) c += "  \u00B7  " + Math.round(d.alt) + " m";
-            addRow(R.drawable.ic_place, "Coordenadas y altitud", c);
+            addRow(R.drawable.ic_terrain, "Coordenadas y altitud", c);
         }
         String cam = (d.make + " " + d.model).trim();
         if (d.model.toLowerCase(Locale.US).startsWith(d.make.toLowerCase(Locale.US)) && d.make.length() > 0) cam = d.model;
@@ -302,10 +302,10 @@ class InfoPanel extends FrameLayout {
             addRow(R.drawable.ic_format, "Resolución", d.w + " × " + d.h + String.format(Locale.US, "  ·  %.1f MP", mp));
         }
         String a = albumText();
-        if (a.length() > 0) addRow(R.drawable.ic_albums, "Álbum", a);
+        if (a.length() > 0) addRow(R.drawable.ic_folder, "Álbum", a);
         String capt = Extras.caption(getContext(), item.key());
         if (capt.length() > 0) addRow(R.drawable.ic_notes, "Pie de foto", capt);
-        if (Prefs.favs(getContext()).contains(item.key())) addRow(R.drawable.ic_star, "Favorita", "Sí");
+        if (Prefs.favs(getContext()).contains(item.key())) addRow(R.drawable.ic_heart, "Favorita", "Sí");
         if (Double.isNaN(d.lat)) mapMessage("Esta foto no tiene ubicación GPS");
     }
 

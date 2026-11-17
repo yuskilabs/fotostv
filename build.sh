@@ -3,6 +3,13 @@ set -e
 cd "$(dirname "$0")"
 SDK=/usr/lib/android-sdk/platforms/android-23/android.jar
 rm -rf build && mkdir -p build/gen build/classes
+# «Novedades» dentro de la app: las últimas versiones del historial de cambios
+python3 - <<'PY'
+import re
+t = open("CHANGELOG.md", encoding="utf-8").read()
+secs = re.split(r"(?m)^(?=## )", t)[1:9]
+open("appassets/novedades.txt", "w", encoding="utf-8").write("".join(secs))
+PY
 aapt package -f -m -J build/gen -M AndroidManifest.xml -S res -A appassets -I $SDK -F build/app.unsigned.apk
 javac -source 8 -target 8 -bootclasspath $SDK -encoding UTF-8 -nowarn -Xlint:-options \
   -d build/classes $(find src build/gen -name '*.java')

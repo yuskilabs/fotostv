@@ -74,6 +74,8 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Actualización desde la propia app** (botón «Actualizar»).
 
 ### Dispositivos y extras
+- **Copiar de otra tele** (Ajustes › Casa y móvil): trae por la wifi los álbumes y ajustes de otra tele con FotosTV, escribiendo su dirección y su PIN. **Novedades**: lo que cambió en las últimas versiones; sale solo, una vez, al abrir la app tras actualizar.
+- **Buscar con la voz**: en «Buscar», el botón del micrófono dicta la búsqueda con el reconocimiento de voz de la tele (mando con micrófono).
 - **Inicio automático** del pase tras 1, 2, 5, 10, 15 o 30 minutos sin tocar el mando (pensado para Fire TV) y **cierre automático** del pase pasado un rato (5 min a 2 h, o nunca), por si la tele se apaga.
 - **Fondo de pantalla para Projectivy Launcher** con fotos (y opcionalmente vídeos) de tus álbumes.
 
@@ -81,16 +83,15 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde la 7.4 ya no hay pantalla aparte). Todas vienen **apagadas**: con todo apagado, la app funciona igual que antes, y al apagar una vuelve a ser como era. Al pasar con el mando por cada botón, abajo se explica qué hace.
 
 **Pantalla del pase**
-- **Reloj grande**: hora más grande con el día de la semana y la fecha debajo.
+- **Estilos** (en «Pase de fotos»): «Tranquilo» (lento, sin mosaicos, zoom suave), «Fiesta» (rápido, muchos mosaicos, cortinilla) o «Solo recuerdos» (fotos de esta semana de otros años). Cambian de golpe orden, tiempo, movimiento, mosaicos, transición, recuerdos e información; se guardan en cada perfil, pasan a «Personalizado» si cambias algo a mano y «Deshacer estilo» devuelve todo a como estaba.
+- **Transición**: fundido, corte o cortinilla (la foto nueva aparece desde la derecha).
 - **Tiempo**: temperatura y cielo de tu ciudad junto a la hora (Open-Meteo, cada media hora). La ciudad se escribe en «Ciudad».
-- **Recuerdos de hoy**: «solo» (el salvapantallas enseña únicamente fotos de un día como hoy de años anteriores, si hay al menos 5) o «mezclados» (esas salen antes, una sí y una no, y también se ven todas las demás; con orden aleatorio o inteligente). Con «hace N años» junto a la fecha.
-- **Día y hora**: la fecha de cada foto en el pase lleva también el día de la semana y la hora a la que se hizo, separada con « - ». Con la opción **Fecha** en larga o corta (o sin fecha). La hora es la del lugar donde se hizo la foto (no la de tu casa), y la ficha de metadatos también la enseña.
+- **Recuerdos de hoy**: «solo» (el salvapantallas enseña únicamente fotos de un día como hoy de años anteriores, si hay al menos 5) o «mezclados» (esas salen antes, una sí y una no, y también se ven todas las demás; con orden aleatorio o inteligente). Con «hace N años» junto a la fecha. **Semana entera** amplía los recuerdos a los 3 días antes y después de hoy.
+- **Fecha**: larga, corta, sin fecha o «con día y hora» (el día de la semana y la hora a la que se hizo, separada con « - »). La hora es la del lugar donde se hizo la foto (no la de tu casa), y la ficha de metadatos también la enseña.
 - **Movimiento** (efecto Ken Burns): movimiento lento de cada foto, variado (al azar acercar, alejar, de lado, arriba y abajo o en diagonal) «solo zoom» (acercar y alejar) o siempre el mismo. El movimiento dura justo lo que la foto está en pantalla, así que nunca se para; la velocidad (lenta o normal) cambia lo que recorre en ese tiempo. La foto siempre está algo ampliada, así que nunca asoma un borde vacío.
 - **Bordes**: «tapados» (la foto va ampliada y no se ve el relleno) o «a la vista» (la foto empieza entera, sin zoom, y al moverse se ve el relleno quieto detrás; al alejar empieza ampliada y acaba entera al terminar su tiempo).
 - **Relleno** de lo que la foto no llena (verticales, fotos con otra forma): negro, el color de la foto o la foto muy difuminada, en degradado suave.
-- **Dos verticales**: en el pase, dos fotos verticales del mismo álbum hechas con menos de 15 minutos de diferencia se ven juntas, una al lado de otra y sin bordes, con un solo pie de foto y sin hora.
-- **Tres verticales**: de vez en cuando, tres fotos verticales hechas casi a la vez (menos de 15 minutos) salen juntas, sin bordes, con un solo pie de foto y sin hora (una de cada 14 fotos más o menos; nunca con vídeos).
-- **Cuatro juntas**: de vez en cuando, cuatro fotos horizontales hechas casi a la vez (menos de 15 minutos) salen en cuadrícula, sin bordes, con un solo pie de foto y sin hora.
+- **Mosaicos** (no, pocos, normal, muchos): fotos hechas casi a la vez (menos de 15 minutos) del mismo álbum salen juntas y sin bordes, con un solo pie de foto y sin hora: dos o tres verticales, o cuatro horizontales en cuadrícula. «Normal» es una de cada 14 fotos más o menos, «pocos» la mitad y «muchos» el doble; nunca con vídeos. Sustituye a los tres interruptores de antes.
 - **Autor**: marca de agua muy sutil abajo a la derecha («© Lola» iPhone 12/13, «© Alex» iPhone 14 Pro, «© Pepe» cámaras que no son móvil, «© Lara» archivos que empiezan por PIC); las reglas se editan en la web. Se preparan en segundo plano y entran al pase cuando están listas.
 - **Pies de foto**: con pulsación larga en el mosaico, «Pie de foto»; sale en el pase y en la ficha.
 
@@ -233,7 +234,7 @@ res/                         iconos, banner y textos
 src/com/yuskilabs/fotostv/
   SettingsActivity           pantalla principal
   BrowserActivity            explorador de álbumes (mosaicos)
-  Entry, Tile, Spin, BrowseUtil, BusyBar, DupeScan, EntryOps, Dialogs, BrowserUi, Tiles, BrowserActions   piezas del explorador: álbum, casilla, icono giratorio, funciones sueltas, aviso de trabajo, búsqueda de repetidas, operaciones con los álbumes, diálogos, construcción de la pantalla y acciones (menús, selección, mover, borrar)
+  Entry, Tile, BrowseUtil, BusyBar, DupeScan, EntryOps, Dialogs, BrowserUi, Tiles, BrowserActions   piezas del explorador: álbum, casilla, funciones sueltas, aviso de trabajo, búsqueda de repetidas, operaciones con los álbumes, diálogos, construcción de la pantalla y acciones (menús, selección, mover, borrar)
   PlayerActivity             visor y pase desde el explorador
   PhotoDream, PreviewActivity   salvapantallas y vista previa
   Music                      música de fondo (emisora o carpeta)
@@ -248,6 +249,9 @@ src/com/yuskilabs/fotostv/
   GeoIndex, GeoService       índice de ubicaciones en segundo plano
   AjustesActivity, SettingsBase   pantalla de ajustes única: temas a la izquierda, panel a la derecha (y piezas comunes)
   Extras                     claves de las funciones extra (7.0)
+  Presets                    estilos del pase (Tranquilo, Fiesta, Solo recuerdos), con vuelta al estado inicial
+  TvCopy                     copiar los ajustes de otra tele por la red (con su dirección y PIN)
+  Novedades                  lo nuevo de cada versión, que se enseña al actualizar
   CalendarDialog             calendario mensual de «Ir a la fecha» (7.4)
   FxLogic                    lógica pura de las funciones extra (noche, búsqueda, viajes, repetidas…)
   SearchActivity, Search     buscar por lugar, álbum o fecha
@@ -264,6 +268,7 @@ src/com/yuskilabs/fotostv/
   Prefs, Item, Session, Ui   utilidades
   io/nayuki/qrcodegen        generador del código QR (Project Nayuki, MIT)
 tools/publish.py             publica la APK en dist/ y genera update.json
+tools/test/                  pruebas automáticas de la lógica (./tools/test/run.sh)
 ```
 
 ## Historial de cambios

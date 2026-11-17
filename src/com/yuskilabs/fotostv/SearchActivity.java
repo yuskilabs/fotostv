@@ -18,6 +18,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -75,6 +76,12 @@ public class SearchActivity extends SettingsBase {
         LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(-1, -2);
         glp.topMargin = dp(8);
         root.addView(goBtn, glp);
+        Button micBtn = btn("Buscar con la voz", R.drawable.ic_mic, new View.OnClickListener() {
+            public void onClick(View v) { listen(); }
+        });
+        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(-1, -2);
+        mlp.topMargin = dp(6);
+        root.addView(micBtn, mlp);
         info = text("Cargando tus fotos…", 13, 0xFF9FB3C8);
         info.setPadding(0, dp(8), 0, dp(8));
         root.addView(info);
@@ -89,7 +96,7 @@ public class SearchActivity extends SettingsBase {
             public void afterTextChanged(Editable e) { h.removeCallbacks(update); h.postDelayed(update, 350); }
         });
         input.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            public boolean onEditorAction(TextView v, int action, KeyEvent ev) { return go(); }
+            public boolean onEditorAction(TextView v, int action, KeyEvent ev) { return submit(); }
         });
         // Intro del teclado (si no manda «Buscar») y ↓ del mando: dos maneras de salir del campo sin quedarse atrapado
         input.setOnKeyListener(new View.OnKeyListener() {
@@ -97,7 +104,7 @@ public class SearchActivity extends SettingsBase {
                 if (ev.getAction() != KeyEvent.ACTION_DOWN) return false;
                 // Intro, «Siguiente» (teclados que lo mandan como tecla) y «Buscar»: lanzan la búsqueda
                 if (code == KeyEvent.KEYCODE_ENTER || code == KeyEvent.KEYCODE_NUMPAD_ENTER || code == KeyEvent.KEYCODE_TAB
-                        || code == 261 /* NAVIGATE_NEXT */ || code == KeyEvent.KEYCODE_SEARCH) return go();
+                        || code == 261 /* NAVIGATE_NEXT */ || code == KeyEvent.KEYCODE_SEARCH) return submit();
                 if (code == KeyEvent.KEYCODE_DPAD_DOWN) { View nx = input.focusSearch(View.FOCUS_DOWN); if (nx != null) { nx.requestFocus(); return true; } }
                 return false;
             }
@@ -112,7 +119,7 @@ public class SearchActivity extends SettingsBase {
                         all = a;
                         places = p;
                         info.setText(a.size() + " fotos en tus álbumes (" + p.size() + " con lugar conocido).");
-                        if (openFirst) go(); else update.run();
+                        update.run();
                     }
                 });
             }
@@ -133,7 +140,58 @@ public class SearchActivity extends SettingsBase {
         }
     }
 
-    private boolean openFirst;
+    private String rowsFor = "";     // texto para el que están las sugerencias que se ven
+
+    /**
+     * «Siguiente», Intro o «Buscar» del teclado: si ya hay opciones debajo para ese texto, el foco baja a ellas para elegir
+     * (no se abre nada solo); si no, busca todo lo escrito.
+     */
+    private static final int REQ_VOICE = 41;
+
+    /** Dictado con el micrófono del mando (si la tele trae reconocimiento de voz); el texto dictado se escribe en el campo y salen las opciones. */
+    private void listen() {
+        try {
+            android.content.Intent i = new android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "es-ES");
+            i.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Di un lugar, un álbum, un mes o un año");
+            i.putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+            startActivityForResult(i, REQ_VOICE);
+        } catch (Throwable e) {
+            Toast.makeText(this, "Esta tele no tiene dictado por voz. Escribe la búsqueda con el teclado.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override protected void onActivityResult(int req, int res, android.content.Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req != REQ_VOICE || res != RESULT_OK || data == null) return;
+        java.util.ArrayList<String> r = data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+        if (r == null || r.isEmpty()) return;
+        String t = r.get(0).trim();
+        if (t.length() == 0) return;
+        input.setText(t);
+        input.setSelection(t.length());
+        h.removeCallbacks(update);       // se enseñan las opciones (como al escribir) y se elige una con el mando
+        h.post(update);
+        input.requestFocus();
+    }
+
+    private boolean submit() {
+        String text = input.getText().toString().trim();
+        if (text.length() == 0) return true;
+        if (all == null || places == null) return go();
+        if (!rows.isEmpty() && text.equals(rowsFor)) {
+            try {
+                ((android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+                        .hideSoftInputFromWindow(input.getWindowToken(), 0);
+            } catch (Throwable ignored) { }
+            list.requestFocus();
+            list.setSelection(0);
+            info.setText("Elige una opción con el mando y pulsa OK.");
+            return true;
+        }
+        return go();
+    }
     private Button goBtn;
     private long lastGo;
 
@@ -146,12 +204,11 @@ public class SearchActivity extends SettingsBase {
         lastGo = now;
         final List<Item> a = all;
         final HashMap<String, String> p = places;
-        if (a == null || p == null) {          // las fotos aún se están cargando: se busca en cuanto estén
-            openFirst = true;
-            info.setText("Cargando tus fotos… en cuanto estén, busco «" + text + "».");
+        if (a == null || p == null) {          // las fotos aún se están cargando: no se abre nada solo después
+            info.setText("Todavía estoy cargando tus fotos. Espera un momento y vuelve a pulsar «Buscar».");
+            android.widget.Toast.makeText(this, "Cargando tus fotos… espera un momento.", android.widget.Toast.LENGTH_SHORT).show();
             return true;
         }
-        openFirst = false;
         gen++;                                   // las sugerencias pendientes ya no hacen falta
         h.removeCallbacks(update);
         info.setText("Buscando «" + text + "»…");
@@ -227,6 +284,7 @@ public class SearchActivity extends SettingsBase {
                             if (destroyed || g != gen) return;
                             rows.clear();
                             rows.addAll(s);
+                            rowsFor = q.trim();
                             shown.clear();
                             for (String[] r : rows) {
                                 int i = r[0].lastIndexOf("  ·  ");

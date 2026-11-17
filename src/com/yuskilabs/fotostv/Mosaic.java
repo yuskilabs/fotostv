@@ -44,9 +44,8 @@ final class Mosaic {
     private static final int PAIR_ODDS = 6;                 // dos verticales: una de cada 6 fotos verticales, más o menos
     private final java.util.Random grpRnd = new java.util.Random();
 
-    private boolean collageOn() { return !host.manual() && Extras.on(ctx, Extras.COLLAGE); }
-    private boolean gridOn() { return !host.manual() && Extras.on(ctx, Extras.GRID4); }
-    private boolean trioOn() { return !host.manual() && Extras.on(ctx, Extras.TRIO3); }
+    private String level = "off";
+    private boolean mosaicsOn() { return !host.manual() && !"off".equals(level); }
 
     private static class G {
         Item it;
@@ -98,13 +97,15 @@ final class Mosaic {
     void groupUp(Item it, Slideshow.Slide p) {
         if (host.width() < 1 || host.height() < 1 || p.bmp == null || p.item2 != null) return;
         try { if (MetaFetcher.isVideoStrict(ctx, it)) return; } catch (Throwable t) { return; }
+        level = Extras.mosaics(ctx);
+        if (!mosaicsOn()) return;
         boolean port = portrait(p.bmp);
         if (!port) {
-            if (gridOn() && grpRnd.nextInt(GRID_ODDS) == 0) tryGroup(it, p, 3, false);
+            if (grpRnd.nextInt(FxLogic.mosaicOdds(level, GRID_ODDS)) == 0) tryGroup(it, p, 3, false);
             return;
         }
-        if (trioOn() && grpRnd.nextInt(GRID_ODDS) == 0 && tryGroup(it, p, 2, true)) return;
-        if (collageOn() && grpRnd.nextInt(PAIR_ODDS) == 0) tryGroup(it, p, 1, true);
+        if (grpRnd.nextInt(FxLogic.mosaicOdds(level, GRID_ODDS)) == 0 && tryGroup(it, p, 2, true)) return;
+        if (grpRnd.nextInt(FxLogic.mosaicOdds(level, PAIR_ODDS)) == 0) tryGroup(it, p, 1, true);
     }
 
     private boolean tryGroup(Item it, Slideshow.Slide p, int need, boolean wantPortrait) {

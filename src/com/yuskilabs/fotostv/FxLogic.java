@@ -165,6 +165,115 @@ final class FxLogic {
         return out;
     }
 
+    /** Fotos de esta semana (hasta 3 días antes o después de hoy) de años anteriores. */
+    static List<Item> onThisWeek(List<Item> all, long now, TimeZone tz) {
+        Calendar today = Calendar.getInstance(tz), c = Calendar.getInstance(tz);
+        today.setTimeInMillis(now);
+        int y = today.get(Calendar.YEAR);
+        List<Item> out = new ArrayList<Item>();
+        for (Item it : all) {
+            if (it.ts <= 0) continue;
+            c.setTimeInMillis(it.ts);
+            int cy = c.get(Calendar.YEAR);
+            if (cy >= y) continue;
+            // misma fecha de calendario en el año de la foto (el 29 de febrero cae el 28 si ese año no es bisiesto)
+            Calendar t = Calendar.getInstance(tz);
+            t.clear();
+            t.set(cy, today.get(Calendar.MONTH), 1);
+            t.set(Calendar.DAY_OF_MONTH, Math.min(today.get(Calendar.DAY_OF_MONTH), t.getActualMaximum(Calendar.DAY_OF_MONTH)));
+            long diff = Math.abs(c.getTimeInMillis() - t.getTimeInMillis()) / 86400000L;
+            if (diff <= 3 || diff >= 362) out.add(it);   // 362: por si la semana cruza el fin de año
+        }
+        return out;
+    }
+
+    /** Probabilidad del mosaico según el nivel: «poco» la mitad, «normal» como siempre, «mucho» el doble. Devuelve el divisor (una de cada N). */
+    static int mosaicOdds(String level, int base) {
+        if ("few".equals(level)) return base * 2;
+        if ("many".equals(level)) return Math.max(1, base / 2);
+        return base;
+    }
+
+
+    // ------------------------------------------------------------ preajustes del pase
+    static final String[] PRESET_IDS = {"calm", "party", "memories"};
+    static final String[] PRESET_NAMES = {"Tranquilo", "Fiesta", "Solo recuerdos"};
+
+    /** Los ajustes que fija cada preajuste (Boolean, Integer o String, según cómo se guarde cada uno). */
+    static Map<String, Object> presetValues(String id) {
+        Map<String, Object> m = new java.util.LinkedHashMap<String, Object>();
+        if ("calm".equals(id)) {
+            m.put("order", "smart"); m.put("interval", 30);
+            m.put("fx_kenBurns", true); m.put("fx_kbStyle", "in"); m.put("fx_kbSpeed", "slow");
+            m.put("fx_mosaics", "off"); m.put("fx_transition", "fade");
+            m.put("fx_today", false); m.put("fx_todayMix", false); m.put("fx_todayWeek", false);
+            m.put("showAlbum", false); m.put("showPlace", true); m.put("showDate", true);
+        } else if ("party".equals(id)) {
+            m.put("order", "random"); m.put("interval", 10);
+            m.put("fx_kenBurns", true); m.put("fx_kbStyle", "mix"); m.put("fx_kbSpeed", "normal");
+            m.put("fx_mosaics", "many"); m.put("fx_transition", "wipe");
+            m.put("fx_today", false); m.put("fx_todayMix", false); m.put("fx_todayWeek", false);
+            m.put("showAlbum", true); m.put("showPlace", true); m.put("showDate", true);
+        } else if ("memories".equals(id)) {
+            m.put("order", "smart"); m.put("interval", 30);
+            m.put("fx_kenBurns", true); m.put("fx_kbStyle", "mix"); m.put("fx_kbSpeed", "slow");
+            m.put("fx_mosaics", "few"); m.put("fx_transition", "fade");
+            m.put("fx_today", true); m.put("fx_todayMix", false); m.put("fx_todayWeek", true);
+            m.put("showAlbum", true); m.put("showPlace", true); m.put("showDate", true);
+        }
+        return m;
+    }
+
+    static String presetName(String id) {
+        for (int i = 0; i < PRESET_IDS.length; i++) if (PRESET_IDS[i].equals(id)) return PRESET_NAMES[i];
+        return "Personalizado";
+    }
+
+    /** Siguiente preajuste del ciclo (de «personalizado» al primero). */
+    static String nextPreset(String id) {
+        for (int i = 0; i < PRESET_IDS.length; i++) if (PRESET_IDS[i].equals(id)) return PRESET_IDS[(i + 1) % PRESET_IDS.length];
+        return PRESET_IDS[0];
+    }
+
+    /** ¿Los ajustes de ahora son justo los del preajuste? (lo que falta cuenta como distinto). */
+    static boolean presetMatches(Map<String, ?> now, String id) {
+        Map<String, Object> want = presetValues(id);
+        if (want.isEmpty()) return false;
+        for (Map.Entry<String, Object> e : want.entrySet()) {
+            Object v = now.get(e.getKey());
+            if (v == null || !v.equals(e.getValue())) return false;
+        }
+        return true;
+    }
+
+    /** Guarda como texto los valores de ahora de esas claves (para poder volver a ellos): clave, tipo (b/i/s o - si no existía) y valor. */
+    static String encodeBase(Map<String, ?> now, Set<String> keys) {
+        StringBuilder b = new StringBuilder();
+        for (String k : keys) {
+            Object v = now.get(k);
+            String t = v instanceof Boolean ? "b" : v instanceof Integer ? "i" : v instanceof String ? "s" : "-";
+            b.append(k).append('\t').append(t).append('\t').append(v == null ? "" : String.valueOf(v).replace('\n', ' ').replace('\t', ' ')).append('\n');
+        }
+        return b.toString();
+    }
+
+    /** Lo contrario: clave -> valor (null = no existía y hay que quitarla). */
+    static Map<String, Object> decodeBase(String text) {
+        Map<String, Object> m = new java.util.LinkedHashMap<String, Object>();
+        if (text == null) return m;
+        for (String line : text.split("\n")) {
+            String[] p = line.split("\t", -1);
+            if (p.length < 3 || p[0].length() == 0) continue;
+            try {
+                if ("b".equals(p[1])) m.put(p[0], Boolean.valueOf(p[2]));
+                else if ("i".equals(p[1])) m.put(p[0], Integer.valueOf(p[2]));
+                else if ("s".equals(p[1])) m.put(p[0], p[2]);
+                else m.put(p[0], null);
+            } catch (NumberFormatException ignored) { }
+        }
+        return m;
+    }
+
     /** Años completos entre la foto y hoy (por el año del calendario). */
     static int yearsAgo(long ts, long now, TimeZone tz) {
         Calendar a = Calendar.getInstance(tz), b = Calendar.getInstance(tz);
