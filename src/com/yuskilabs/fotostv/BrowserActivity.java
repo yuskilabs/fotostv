@@ -239,8 +239,8 @@ public class BrowserActivity extends Activity {
             Session.searchQuery = null;
             favSet = Prefs.favs(this);
             e.items = BrowseUtil.visible(e.src, Prefs.hidden(this));
-            applyOrder(e);
-            pickCover(e);
+            EntryOps.applyOrder(e);
+            EntryOps.pickCover(BrowserActivity.this, e);
             entries.add(e);
             loaded = true;
             current = e;
@@ -265,7 +265,7 @@ public class BrowserActivity extends Activity {
             if (current != null && photoGrid != null) {
                 favSet = Prefs.favs(this);
                 current.items = BrowseUtil.visible(current.src, Prefs.hidden(this));
-                reapply(current);
+                EntryOps.reapply(current);
                 ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
                 updateCount();
             }
@@ -354,16 +354,16 @@ public class BrowserActivity extends Activity {
                             continue;
                         }
                     }
-                    list.add(makeEntry(al, d));
+                    list.add(EntryOps.makeEntry(al, d));
                 }
-                final List<Entry> fin = sortEntries(list);
-                final List<Entry> vl = buildVirtual(list);
+                final List<Entry> fin = EntryOps.sortEntries(BrowserActivity.this, list);
+                final List<Entry> vl = EntryOps.buildVirtual(BrowserActivity.this, list);
                 h.post(new Runnable() {
                     public void run() {
                         if (destroyed) return;
                         real = new ArrayList<Entry>(fin);
                         virt = vl;
-                        for (Entry e : real) computeNew(e);
+                        for (Entry e : real) EntryOps.computeNew(BrowserActivity.this, e);
                         refreshOff();
                         compose();
                         loaded = true;
@@ -383,144 +383,15 @@ public class BrowserActivity extends Activity {
     // ------------------------------------------------------------ álbumes virtuales y fotos nuevas (funciones extra)
     private List<Entry> virt = new ArrayList<Entry>();
 
-    /** Álbumes virtuales: búsquedas guardadas, calculadas con las fotos de los álbumes reales. Fuera del hilo de pantalla. */
-    private List<Entry> buildVirtual(List<Entry> reals) {
-        List<Entry> out = new ArrayList<Entry>();
-        List<String[]> defs = Extras.virtualAlbums(this);
-        if (defs.isEmpty()) return out;
-        List<Item> all = new ArrayList<Item>();
-        Set<String> seen = new HashSet<String>();
-        for (Entry e : reals) for (Item it : e.src) if (seen.add(it.key())) all.add(it);
-        java.util.HashMap<String, String> places = Search.places(this);
-        for (String[] d : defs) {
-            Entry v = new Entry();
-            v.kind = 6;
-            v.title = d[0];
-            v.query = d[1];
-            v.url = "virtual:" + d[1];
-            v.src = Search.runSuggestion(all, places, d[1]);
-            v.items = v.src;
-            out.add(v);
-        }
-        return out;
-    }
-
-    /** Fotos del álbum que no estaban la última vez que se abrió. La primera vez solo se apunta lo que hay. */
-    private void computeNew(Entry e) {
-        e.newKeys = new HashSet<String>();
-        if (e.kind != 0 || !Extras.on(this, Extras.NEW_BADGE)) return;
-        Set<String> known = Prefs.meta(this).getStringSet("kn_" + e.url, null);
-        if (known == null) { markKnown(e); return; }
-        for (Item it : e.src) if (!known.contains(it.key())) e.newKeys.add(it.key());
-    }
-
-    private void markKnown(Entry e) {
-        Set<String> ks = new HashSet<String>();
-        for (Item it : e.src) ks.add(it.key());
-        Prefs.meta(this).edit().putStringSet("kn_" + e.url, ks).apply();
-    }
-
-    private Entry makeEntry(Prefs.Album al, AlbumFetcher.AlbumData d) {
-        Entry e = new Entry();
-        e.url = al.url;
-        e.title = al.name.length() > 0 ? al.name : (d.title.length() > 0 ? d.title : "Álbum");
-        for (Item it : d.items) {
-            it.album = e.title;
-            if (it.akey.length() == 0) it.akey = d.key;
-        }
-        e.src = d.items;
-        e.items = d.items;
-        return e;
-    }
-
-    /** Portada del álbum: una foto al azar (la portada elegida en Google no viaja en el enlace). */
-    private void pickCover(Entry e) {
-        e.cover = null;
-        if (e.items.isEmpty()) return;
-        java.util.Random r = new java.util.Random();
-        for (int t = 0; t < 8; t++) {
-            Item it = e.items.get(r.nextInt(e.items.size()));
-            Boolean v = MetaFetcher.cachedVideo(this, it);
-            e.cover = it;
-            if (v == null || !v.booleanValue()) return;
-        }
-    }
-
-    private void applyOrder(Entry e) {
-        if (e.order.length() == 0) { e.view = null; return; }
-        List<Item> l = new ArrayList<Item>(e.items);
-        if ("random".equals(e.order)) {
-            Collections.shuffle(l);
-        } else {
-            final boolean asc = "asc".equals(e.order);
-            Collections.sort(l, new Comparator<Item>() {
-                public int compare(Item x, Item y) {
-                    if (x.ts == 0 && y.ts == 0) return 0;
-                    if (x.ts == 0) return 1;
-                    if (y.ts == 0) return -1;
-                    return asc ? Long.compare(x.ts, y.ts) : Long.compare(y.ts, x.ts);
-                }
-            });
-        }
-        e.view = l;
-    }
-
-    /** Añade delante la entrada «Todos» (todas las fotos de todos los álbumes). */
-
-    /** Aplica el orden elegido: el de la lista (manual) o por la fecha de la última foto de cada álbum. */
-    private List<Entry> sortEntries(List<Entry> list) {
-        final String mode = Prefs.albumSort(this);
-        if (!"newest".equals(mode) && !"oldest".equals(mode)) return list;
-        final boolean newest = "newest".equals(mode);
-        final java.util.Map<Entry, Long> ts = new java.util.IdentityHashMap<Entry, Long>();
-        for (Entry e : list) ts.put(e, BrowseUtil.lastTs(e));
-        List<Entry> l = new ArrayList<Entry>(list);
-        Collections.sort(l, new Comparator<Entry>() {
-            public int compare(Entry a, Entry b) {
-                long x = ts.get(a), y = ts.get(b);
-                if (x == 0 && y == 0) return 0;
-                if (x == 0) return 1;      // sin fecha, al final
-                if (y == 0) return -1;
-                return newest ? Long.compare(y, x) : Long.compare(x, y);
-            }
-        });
-        return l;
-    }
-
-    /** Reordena sin barajar de nuevo lo que ya estaba barajado. */
-    private void reapply(Entry e) {
-        if ("random".equals(e.order) && e.view != null) {
-            java.util.Set<String> now = new HashSet<String>();
-            for (Item x : e.items) now.add(x.key());
-            java.util.Set<String> have = new HashSet<String>();
-            List<Item> nv = new ArrayList<Item>();
-            for (Item x : e.view) if (now.contains(x.key()) && have.add(x.key())) nv.add(x);
-            for (Item x : e.items) if (have.add(x.key())) nv.add(x);
-            e.view = nv;
-        } else applyOrder(e);
-    }
 
 
-    /**
-     * Portada fijada por el usuario si existe y la foto se ve (con varias, una de ellas al azar, que se mantiene
-     * mientras dure la pantalla); si no, una al azar que se mantiene mientras sirva.
-     */
-    private void applyCover(Entry e, java.util.Set<String> hid) {
-        e.coverKeys = Extras.covers(this, e.url);
-        e.coverPinned = false;
-        if (!e.coverKeys.isEmpty()) {
-            List<Item> pinned = new ArrayList<Item>();
-            for (Item it : e.items) if (e.coverKeys.contains(it.key())) pinned.add(it);
-            if (!pinned.isEmpty()) {
-                if (e.cover == null || !pinned.contains(e.cover)) e.cover = pinned.get(new java.util.Random().nextInt(pinned.size()));
-                e.coverPinned = true;
-                return;
-            }
-        }
-        boolean in = false;
-        if (e.cover != null && !hid.contains(e.cover.key())) for (Item it : e.items) if (it == e.cover) { in = true; break; }
-        if (!in) pickCover(e);
-    }
+
+
+
+
+
+
+
 
     /** Rehace las listas que se ven: quita las ocultas, y arma Todas, Favoritos y Ocultas. */
     private final java.util.Map<String, Entry> guestMap = new java.util.HashMap<String, Entry>();
@@ -530,8 +401,8 @@ public class BrowserActivity extends Activity {
         favSet = Prefs.favs(this);
         for (Entry e : real) {
             e.items = BrowseUtil.visible(e.src, hid);
-            reapply(e);
-            applyCover(e, hid);
+            EntryOps.reapply(e);
+            EntryOps.applyCover(BrowserActivity.this, e, hid);
         }
         java.util.LinkedHashMap<String, Item> vis = new java.util.LinkedHashMap<String, Item>();
         java.util.LinkedHashMap<String, Item> hidden = new java.util.LinkedHashMap<String, Item>();
@@ -543,23 +414,23 @@ public class BrowserActivity extends Activity {
         }
         if (allE == null) { allE = new Entry(); allE.kind = 1; allE.title = "Todas"; }
         allE.items = new ArrayList<Item>(vis.values());
-        reapply(allE);
-        if (allE.cover == null || hid.contains(allE.cover.key())) pickCover(allE);
+        EntryOps.reapply(allE);
+        if (allE.cover == null || hid.contains(allE.cover.key())) EntryOps.pickCover(BrowserActivity.this, allE);
         List<Item> favs = new ArrayList<Item>();
         for (Item it : vis.values()) if (favSet.contains(it.key())) favs.add(it);
         if (favs.isEmpty()) favE = null;
         else {
             if (favE == null) { favE = new Entry(); favE.kind = 2; favE.title = "Favoritos"; }
             favE.items = favs;
-            reapply(favE);
-            if (favE.cover == null || !favSet.contains(favE.cover.key())) pickCover(favE);
+            EntryOps.reapply(favE);
+            if (favE.cover == null || !favSet.contains(favE.cover.key())) EntryOps.pickCover(BrowserActivity.this, favE);
         }
         if (hidden.isEmpty()) hidE = null;
         else {
             if (hidE == null) { hidE = new Entry(); hidE.kind = 3; hidE.title = "Ocultas"; }
             hidE.items = new ArrayList<Item>(hidden.values());
-            reapply(hidE);
-            if (hidE.cover == null || !hid.contains(hidE.cover.key())) pickCover(hidE);
+            EntryOps.reapply(hidE);
+            if (hidE.cover == null || !hid.contains(hidE.cover.key())) EntryOps.pickCover(BrowserActivity.this, hidE);
         }
         entries.clear();
         // temporales de invitado: siempre al principio y aparte de todo lo demás
@@ -577,8 +448,8 @@ public class BrowserActivity extends Activity {
                 for (Item it : d.items) { if (it.akey.length() == 0) it.akey = d.key; }
                 ge.src = d.items;
                 ge.items = d.items;
-                applyOrder(ge);
-                pickCover(ge);
+                EntryOps.applyOrder(ge);
+                EntryOps.pickCover(BrowserActivity.this, ge);
                 guestMap.put(g.id, ge);
             }
             ge.title = g.title();
@@ -593,8 +464,8 @@ public class BrowserActivity extends Activity {
         if (Extras.on(this, Extras.VIRTUAL)) {
             for (Entry v : virt) {
                 v.items = BrowseUtil.visible(v.src, hid);
-                reapply(v);
-                if (v.cover == null || hid.contains(v.cover.key()) || !v.items.contains(v.cover)) pickCover(v);
+                EntryOps.reapply(v);
+                if (v.cover == null || hid.contains(v.cover.key()) || !v.items.contains(v.cover)) EntryOps.pickCover(BrowserActivity.this, v);
                 entries.add(v);
             }
         }
@@ -629,7 +500,7 @@ public class BrowserActivity extends Activity {
                         AlbumFetcher.AlbumData d = AlbumFetcher.fetchAlbum(al.url);
                         Prefs.saveAlbumCache(BrowserActivity.this, al.url, d);
                         if (d.partial) continue;   // descarga recortada: se queda la lista que ya hay
-                        fresh.add(makeEntry(al, d));
+                        fresh.add(EntryOps.makeEntry(al, d));
                     } catch (Exception ignored) { }
                 }
                 } finally { }
@@ -648,7 +519,7 @@ public class BrowserActivity extends Activity {
             for (Entry e : real) {
                 if (e.url.equals(f.url) && e.src.size() != f.src.size()) {
                     e.src = f.src;            // se cambia la lista entera, no se modifica la anterior
-                    if (e != current || level != 1) computeNew(e);
+                    if (e != current || level != 1) EntryOps.computeNew(BrowserActivity.this, e);
                     changed = true;
                 }
             }
@@ -696,7 +567,7 @@ public class BrowserActivity extends Activity {
     private void showAlbums() {
         if (placeMode) { finish(); return; }   // desde un lugar, «atrás» vuelve a Lugares
         if (level == 1 && current != null && current.kind == 0 && !current.newKeys.isEmpty()) {
-            markKnown(current);                // ya vistas: dejan de ser nuevas
+            EntryOps.markKnown(BrowserActivity.this, current);                // ya vistas: dejan de ser nuevas
             current.newKeys.clear();
         }
         pSel = false;
@@ -1061,7 +932,7 @@ public class BrowserActivity extends Activity {
                             Extras.setCovers(BrowserActivity.this, e.url, null);   // vuelve a ser al azar (como siempre)
                             e.coverPinned = false;
                             e.coverKeys = new ArrayList<String>();
-                            pickCover(e);
+                            EntryOps.pickCover(BrowserActivity.this, e);
                             if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
                             showToast("Portada quitada: vuelve a ser aleatoria.");
                         }
@@ -1518,7 +1389,7 @@ public class BrowserActivity extends Activity {
                         current.coverPinned = !current.coverKeys.isEmpty();
                         if (a.equals("Quitar de portadas")) { if (current.cover == it) current.cover = null; }
                         else current.cover = it;
-                        if (current.cover == null || !current.coverPinned) applyCover(current, Prefs.hidden(BrowserActivity.this));
+                        if (current.cover == null || !current.coverPinned) EntryOps.applyCover(BrowserActivity.this, current, Prefs.hidden(BrowserActivity.this));
                         if (photoGrid != null) ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
                         showToast(a.equals("Quitar de portadas") ? "Quitada de las portadas del álbum."
                                 : multi ? "Añadida a las portadas del álbum (" + current.coverKeys.size() + ")." : "Portada del álbum fijada.");
@@ -1734,7 +1605,7 @@ public class BrowserActivity extends Activity {
         if (current == null) return;
         current.order = key;
         current.orderSet = true;
-        applyOrder(current);
+        EntryOps.applyOrder(current);
         if (current.onlyVideos) rebuildVids();
         prefetched = -1;
         refreshOrderButtons();

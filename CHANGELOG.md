@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.18
+- Por dentro: la parte del explorador que crea los álbumes, los ordena, elige portadas, marca las fotos nuevas y arma los álbumes virtuales pasa a su propio archivo. Todo funciona igual.
+
 ## 7.17
 - Por dentro: el explorador sigue repartiéndose en piezas (aviso de «trabajando…», búsqueda de repetidas) y se ha quitado un repaso de marcas de vídeo al desplazarse que ya no hacía nada. Todo funciona igual.
 

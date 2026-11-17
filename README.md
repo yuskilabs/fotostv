@@ -233,7 +233,7 @@ res/                         iconos, banner y textos
 src/com/yuskilabs/fotostv/
   SettingsActivity           pantalla principal
   BrowserActivity            explorador de álbumes (mosaicos)
-  Entry, Tile, Spin, BrowseUtil, BusyBar, DupeScan   piezas del explorador: álbum, casilla, icono giratorio, funciones sueltas, aviso de trabajo y búsqueda de repetidas
+  Entry, Tile, Spin, BrowseUtil, BusyBar, DupeScan, EntryOps   piezas del explorador: álbum, casilla, icono giratorio, funciones sueltas, aviso de trabajo, búsqueda de repetidas y operaciones con los álbumes
   PlayerActivity             visor y pase desde el explorador
   PhotoDream, PreviewActivity   salvapantallas y vista previa
   Music                      música de fondo (emisora o carpeta)

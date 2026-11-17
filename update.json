@@ -1,6 +1,6 @@
 {
-  "version": "7.17",
+  "version": "7.18",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 906760,
-  "notes": "- Por dentro: el explorador sigue repartiéndose en piezas (aviso de «trabajando…», búsqueda de repetidas) y se ha quitado un repaso de marcas de vídeo al desplazarse que ya no hacía nada. Todo funciona igual."
+  "notes": "- Por dentro: la parte del explorador que crea los álbumes, los ordena, elige portadas, marca las fotos nuevas y arma los álbumes virtuales pasa a su propio archivo. Todo funciona igual."
 }
