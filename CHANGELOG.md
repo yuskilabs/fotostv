@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.22
+- Por dentro: las acciones del explorador (menús de álbum y de foto, selección, mover, renombrar, borrar, buscar repetidas y recargar) pasan a su propio archivo. El explorador queda en la mitad de líneas. Todo funciona igual.
+
 ## 7.21
 - Por dentro: el explorador reparte en archivos propios la construcción de la pantalla (botones, cabecera, rótulos) y de las cuadrículas y casillas de álbumes y fotos. Todo funciona igual.
 

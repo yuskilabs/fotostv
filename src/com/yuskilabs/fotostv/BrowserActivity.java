@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,42 +27,43 @@ import java.util.concurrent.Executors;
 
 /** Explorador: mosaico de álbumes → mosaico de fotos → pantalla completa. */
 public class BrowserActivity extends Activity {
-    private final Handler h = new Handler(Looper.getMainLooper());
-    private final ExecutorService bg = Executors.newSingleThreadExecutor();
-    private final ExecutorService act = Executors.newSingleThreadExecutor();   // acciones que pide el usuario (no esperan detrás de la carga de álbumes)
-    private boolean placeMode;
-    private final List<Entry> entries = new ArrayList<Entry>();
-    private FrameLayout root;
-    private List<Entry> real = new ArrayList<Entry>();
-    private Entry allE, favE, hidE;
-    private java.util.Set<String> favSet = new HashSet<String>();
-    private InfoPanel infoPanel;
-    private GridView albumGrid, photoGrid;
-    private Entry current;
-    private Thumbs thumbs;
-    private int level;            // 0 = álbumes, 1 = fotos de un álbum
-    private int albumPos;
-    private int W, margin, gap, albumTileW, albumTileH, photoTile;
-    private boolean destroyed, loaded;
-    private int prefetched = -1;
-    private static final int AHEAD = 150;
-    private android.widget.Button orderBtn, fitBtn, kindBtn;
-    private TextView countView;
-    private int scanGen, scanDone, scanTotal;
-    private final ExecutorService scanExec = Executors.newSingleThreadExecutor();
-    private android.widget.Button playBtn;
+    final BrowserActions actions = new BrowserActions(this);
+    final Handler h = new Handler(Looper.getMainLooper());
+    final ExecutorService bg = Executors.newSingleThreadExecutor();
+    final ExecutorService act = Executors.newSingleThreadExecutor();   // acciones que pide el usuario (no esperan detrás de la carga de álbumes)
+    boolean placeMode;
+    final List<Entry> entries = new ArrayList<Entry>();
+    FrameLayout root;
+    List<Entry> real = new ArrayList<Entry>();
+    Entry allE, favE, hidE;
+    java.util.Set<String> favSet = new HashSet<String>();
+    InfoPanel infoPanel;
+    GridView albumGrid, photoGrid;
+    Entry current;
+    Thumbs thumbs;
+    int level;            // 0 = álbumes, 1 = fotos de un álbum
+    int albumPos;
+    int W, margin, gap, albumTileW, albumTileH, photoTile;
+    boolean destroyed, loaded;
+    int prefetched = -1;
+    static final int AHEAD = 150;
+    android.widget.Button orderBtn, fitBtn, kindBtn;
+    TextView countView;
+    int scanGen, scanDone, scanTotal;
+    final ExecutorService scanExec = Executors.newSingleThreadExecutor();
+    android.widget.Button playBtn;
 
-    private int albumCols, photoCols, photoTileH;
-    private String photoShape = "square";
-    private float photoRatio = 1f;
-    private android.widget.Button colsMinus, colsPlus, shapeBtn;
-    private String refocus;
-    private android.widget.Button sortBtn;
-    private static final int[] ALBUM_COLS_RANGE = {2, 10};
-    private static final int[] PHOTO_COLS_RANGE = {2, 14};
-    private static final int TITLE_COLOR = 0xFFFFFFFF;
+    int albumCols, photoCols, photoTileH;
+    String photoShape = "square";
+    float photoRatio = 1f;
+    android.widget.Button colsMinus, colsPlus, shapeBtn;
+    String refocus;
+    android.widget.Button sortBtn;
+    static final int[] ALBUM_COLS_RANGE = {2, 10};
+    static final int[] PHOTO_COLS_RANGE = {2, 14};
+    static final int TITLE_COLOR = 0xFFFFFFFF;
 
-    private void computeLayout() {
+    void computeLayout() {
         albumCols = Prefs.albumCols(this);
         photoCols = Prefs.photoCols(this);
         photoShape = Prefs.photoShape(this);
@@ -76,7 +76,7 @@ public class BrowserActivity extends Activity {
 
 
     /** Control «−  Columnas: N  +» con dos botones y la etiqueta en medio (sin foco). */
-    private LinearLayout colsControl(final String key, final int[] range, final int cur, final String prefKey,
+    LinearLayout colsControl(final String key, final int[] range, final int cur, final String prefKey,
                                      final boolean albums) {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.HORIZONTAL);
@@ -110,7 +110,7 @@ public class BrowserActivity extends Activity {
         return box;
     }
 
-    private void stepCols(int[] range, int cur, int d, String prefKey, boolean albums, String focusKey) {
+    void stepCols(int[] range, int cur, int d, String prefKey, boolean albums, String focusKey) {
         int n = Math.max(range[0], Math.min(range[1], cur + d));
         Prefs.sp(this).edit().putInt(prefKey, n).commit();
         refocus = focusKey;
@@ -121,7 +121,7 @@ public class BrowserActivity extends Activity {
 
 
     /** Arriba a la derecha: «Fecha» (si está activada) y «Mapa» (lugares y mapa de calor de las fotos de este álbum). */
-    private View mapButton() {
+    View mapButton() {
         LinearLayout wrap = new LinearLayout(this);
         wrap.setOrientation(LinearLayout.HORIZONTAL);
         wrap.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
@@ -131,7 +131,7 @@ public class BrowserActivity extends Activity {
         lp2.setMargins(Ui.dp(this, 4), 0, 0, 0);
         if (Extras.on(this, Extras.DATE_JUMP)) {
             wrap.addView(BrowserUi.iconBox(BrowserActivity.this, R.drawable.ic_event, "Fecha", new View.OnClickListener() {
-                public void onClick(View v) { dateJump(); }
+                public void onClick(View v) { actions.dateJump(); }
             }), lp);
         }
         wrap.addView(BrowserUi.iconBox(BrowserActivity.this, R.drawable.ic_map, "Mapa", new View.OnClickListener() {
@@ -147,7 +147,7 @@ public class BrowserActivity extends Activity {
         return wrap;
     }
 
-    private LinearLayout.LayoutParams headParams() {
+    LinearLayout.LayoutParams headParams() {
         LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(-1, Ui.dp(this, 56));
         hp.setMargins(margin, Ui.dp(this, 10), margin, 0);
         return hp;
@@ -251,8 +251,8 @@ public class BrowserActivity extends Activity {
     }
 
     @Override public void onBackPressed() {
-        if (selMode && level == 0) { exitSel(); return; }
-        if (pSel && level == 1) { exitPSel(); return; }
+        if (selMode && level == 0) { actions.exitSel(); return; }
+        if (pSel && level == 1) { actions.exitPSel(); return; }
         if (level == 1) {
             // primer «atrás»: sube a los botones; segundo: vuelve a los álbumes
             if (photoGrid != null && photoGrid.hasFocus() && playBtn != null) playBtn.requestFocus();
@@ -262,7 +262,7 @@ public class BrowserActivity extends Activity {
 
     // ------------------------------------------------------------ datos
     /** «Ir al álbum» desde la ficha del pase: abre ese álbum y se coloca en la foto. */
-    private void applyGoto() {
+    void applyGoto() {
         if (Session.gotoUrl == null || !loaded) return;
         String u = Session.gotoUrl, k = Session.gotoKey;
         Session.gotoUrl = null;
@@ -280,7 +280,7 @@ public class BrowserActivity extends Activity {
         }
     }
 
-    private void loadEntries() {
+    void loadEntries() {
         act.submit(new Runnable() {
             public void run() {
                 final List<Entry> list = new ArrayList<Entry>();
@@ -322,7 +322,7 @@ public class BrowserActivity extends Activity {
     }
 
     // ------------------------------------------------------------ álbumes virtuales y fotos nuevas (funciones extra)
-    private List<Entry> virt = new ArrayList<Entry>();
+    List<Entry> virt = new ArrayList<Entry>();
 
 
 
@@ -335,9 +335,9 @@ public class BrowserActivity extends Activity {
 
 
     /** Rehace las listas que se ven: quita las ocultas, y arma Todas, Favoritos y Ocultas. */
-    private final java.util.Map<String, Entry> guestMap = new java.util.HashMap<String, Entry>();
+    final java.util.Map<String, Entry> guestMap = new java.util.HashMap<String, Entry>();
 
-    private void compose() {
+    void compose() {
         java.util.Set<String> hid = Prefs.hidden(this);
         favSet = Prefs.favs(this);
         for (Entry e : real) {
@@ -414,7 +414,7 @@ public class BrowserActivity extends Activity {
     }
 
     /** Vuelve a pintar la pantalla actual tras ocultar, mostrar o marcar una favorita. */
-    private void refreshAfterChange(int keepPos) {
+    void refreshAfterChange(int keepPos) {
         compose();
         if (current != null && current.onlyVideos) { rebuildVids(); updateCount(); }
         if (level == 0 && albumGrid != null) {
@@ -430,7 +430,7 @@ public class BrowserActivity extends Activity {
     }
 
     /** Actualiza los álbumes desde Google en segundo plano, sin bloquear el mosaico. */
-    private void refreshInBackground() {
+    void refreshInBackground() {
         bg.submit(new Runnable() {
             public void run() {
                 final List<Entry> fresh = new ArrayList<Entry>();
@@ -453,7 +453,7 @@ public class BrowserActivity extends Activity {
         });
     }
 
-    private void applyFresh(List<Entry> fresh) {
+    void applyFresh(List<Entry> fresh) {
         if (destroyed) return;
         boolean changed = false;
         for (Entry f : fresh) {
@@ -471,14 +471,14 @@ public class BrowserActivity extends Activity {
 
 
     // ------------------------------------------------------------ tareas en segundo plano (texto de colores junto al título)
-    private final BusyBar busyBar = new BusyBar(this);
+    final BusyBar busyBar = new BusyBar(this);
 
-    private void busyStart(String label) { busyBar.start(label); }
+    void busyStart(String label) { busyBar.start(label); }
 
-    private void busyEnd(String label) { busyBar.end(label); }
+    void busyEnd(String label) { busyBar.end(label); }
 
     /** «Revisando ubicaciones…» hasta que las fotos revisadas vuelven a tener lugar (o pasan 10 minutos). */
-    private void watchGeo(final Set<String> keys) {
+    void watchGeo(final Set<String> keys) {
         busyStart("Revisando ubicaciones…");
         final long t0 = System.currentTimeMillis();
         new Thread(new Runnable() {
@@ -495,7 +495,7 @@ public class BrowserActivity extends Activity {
     }
 
     // ------------------------------------------------------------ pantallas
-    private void showMessage(String msg) {
+    void showMessage(String msg) {
         level = 0;
         albumGrid = null;
         photoGrid = null;
@@ -505,7 +505,7 @@ public class BrowserActivity extends Activity {
         root.addView(t, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
     }
 
-    private void showAlbums() {
+    void showAlbums() {
         if (placeMode) { finish(); return; }   // desde un lugar, «atrás» vuelve a Lugares
         if (level == 1 && current != null && current.kind == 0 && !current.newKeys.isEmpty()) {
             EntryOps.markKnown(BrowserActivity.this, current);                // ya vistas: dejan de ser nuevas
@@ -513,7 +513,7 @@ public class BrowserActivity extends Activity {
         }
         pSel = false;
         pKeys.clear();
-        endDupeView();
+        actions.endDupeView();
         level = 0;
         photoGrid = null;
         computeLayout();
@@ -528,19 +528,19 @@ public class BrowserActivity extends Activity {
         head.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
         if (selMode) {
             head.addView(BrowserUi.sbtn(BrowserActivity.this, "Pase", R.drawable.ic_play, new View.OnClickListener() {
-                public void onClick(View v) { if (!sel.isEmpty()) startPase(selected(), false); }
+                public void onClick(View v) { if (!sel.isEmpty()) actions.startPase(actions.selected(), false); }
             }));
             head.addView(BrowserUi.sbtn(BrowserActivity.this, "Con música", R.drawable.ic_play, new View.OnClickListener() {
-                public void onClick(View v) { if (!sel.isEmpty()) startPase(selected(), true); }
+                public void onClick(View v) { if (!sel.isEmpty()) actions.startPase(actions.selected(), true); }
             }));
             head.addView(BrowserUi.sbtn(BrowserActivity.this, "Ocultar", R.drawable.ic_visibility_off, new View.OnClickListener() {
-                public void onClick(View v) { if (!sel.isEmpty()) hideEntries(selected(), false); }
+                public void onClick(View v) { if (!sel.isEmpty()) actions.hideEntries(actions.selected(), false); }
             }));
             head.addView(BrowserUi.sbtn(BrowserActivity.this, "Borrar", R.drawable.ic_delete, new View.OnClickListener() {
-                public void onClick(View v) { if (!sel.isEmpty()) confirmDelete(selected()); }
+                public void onClick(View v) { if (!sel.isEmpty()) actions.confirmDelete(actions.selected()); }
             }));
             head.addView(BrowserUi.sbtn(BrowserActivity.this, "Cancelar", R.drawable.ic_close, new View.OnClickListener() {
-                public void onClick(View v) { exitSel(); }
+                public void onClick(View v) { actions.exitSel(); }
             }));
         } else {
             if (!placeMode) head.addView(sortBtn = BrowserUi.sbtn(BrowserActivity.this, albumSortLabel(), R.drawable.ic_down, new View.OnClickListener() {
@@ -560,11 +560,11 @@ public class BrowserActivity extends Activity {
         albumGrid.setAdapter(new AlbumAdapter());
         albumGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
-                if (selMode) { if (pos >= 0 && pos < entries.size()) toggleSel(entries.get(pos)); } else openEntry(pos);
+                if (selMode) { if (pos >= 0 && pos < entries.size()) actions.toggleSel(entries.get(pos)); } else openEntry(pos);
             }
         });
         albumGrid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) { return albumMenu(pos); }
+            public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) { return actions.albumMenu(pos); }
         });
         col.addView(albumGrid, new LinearLayout.LayoutParams(-1, 0, 1f));
         root.addView(col, new FrameLayout.LayoutParams(-1, -1));
@@ -576,433 +576,41 @@ public class BrowserActivity extends Activity {
         refocus = null;
     }
 
-    private String albumSortLabel() {
+    String albumSortLabel() {
         String m = Prefs.albumSort(this);
         return "Álbumes: " + ("newest".equals(m) ? "recientes primero" : "oldest".equals(m) ? "antiguos primero" : "orden manual");
     }
 
-    private boolean selMode;
-    private boolean pSel;
-    private final java.util.HashSet<String> pKeys = new java.util.HashSet<String>();
-    private final java.util.HashSet<Entry> sel = new java.util.HashSet<Entry>();
-    private java.util.Set<String> offUrls = new java.util.HashSet<String>();
+    boolean selMode;
+    boolean pSel;
+    final java.util.HashSet<String> pKeys = new java.util.HashSet<String>();
+    final java.util.HashSet<Entry> sel = new java.util.HashSet<Entry>();
+    java.util.Set<String> offUrls = new java.util.HashSet<String>();
 
-    private void refreshOff() {
+    void refreshOff() {
         java.util.Set<String> o = new java.util.HashSet<String>();
         for (Prefs.Album al : Prefs.albums(this)) if (!al.show) o.add(al.url);
         offUrls = o;
     }
 
-    private void exitSel() {
-        selMode = false;
-        sel.clear();
-        if (level == 0) showAlbums();
-    }
-
-    private List<Entry> selected() {
-        List<Entry> l = new ArrayList<Entry>();
-        for (Entry e : entries) if (sel.contains(e)) l.add(e);
-        return l;
-    }
-
 
     // ---- reordenar álbumes (con el mando)
-    private Entry moveEntry;
-    private List<Entry> moveBackup;
-
-    private void startMove(Entry e) {
-        if (!"manual".equals(Prefs.albumSort(this))) {
-            Prefs.sp(this).edit().putString("albumSort", "manual").commit();
-            showToast("El orden de los álbumes pasa a manual.");
-        }
-        moveEntry = e;
-        moveBackup = new ArrayList<Entry>(real);
-        showToast("Mueve el álbum con las flechas. OK: fijar la posición. Atrás: cancelar.");
-        if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
-    }
-
-    private void applyRealOrder(List<Entry> order) {
-        int off = real.isEmpty() ? entries.size() : Math.max(0, entries.indexOf(real.get(0)));
-        entries.removeAll(real);
-        real = new ArrayList<Entry>(order);
-        entries.addAll(Math.min(off, entries.size()), real);
-    }
-
-    private void moveBy(int delta) {
-        int i = real.indexOf(moveEntry);
-        if (i < 0) return;
-        int n = Math.max(0, Math.min(real.size() - 1, i + delta));
-        if (n == i) return;
-        List<Entry> l = new ArrayList<Entry>(real);
-        l.remove(i);
-        l.add(n, moveEntry);
-        applyRealOrder(l);
-        if (albumGrid != null) {
-            ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
-            albumGrid.setSelection(Math.max(0, entries.indexOf(moveEntry)));
-        }
-    }
-
-    private void endMove(boolean keep) {
-        if (keep) {
-            List<Prefs.Album> old = Prefs.albums(this), nw = new ArrayList<Prefs.Album>();
-            for (Entry x : real) for (Prefs.Album al : old) if (al.url.equals(x.url)) { nw.add(al); break; }
-            for (Prefs.Album al : old) if (!nw.contains(al)) nw.add(al);
-            Prefs.saveAlbums(this, nw);
-            showToast("Posición fijada.");
-        } else if (moveBackup != null) applyRealOrder(moveBackup);
-        moveEntry = null;
-        moveBackup = null;
-        if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
-    }
-
-    /** Cambia el nombre del álbum solo dentro de FotosTV (no toca Google Fotos). */
-    private void renameAlbum(final Entry e) {
-        final android.widget.EditText in = new android.widget.EditText(this);
-        in.setSingleLine(true);
-        in.setTextColor(Color.WHITE);
-        in.setText(e.title);
-        in.setSelection(in.getText().length());
-        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle("Nombre del álbum")
-            .setMessage("Solo cambia aquí, en FotosTV. Déjalo vacío para volver al nombre de Google.")
-            .setView(in)
-            .setPositiveButton("Guardar", new android.content.DialogInterface.OnClickListener() {
-                public void onClick(android.content.DialogInterface d, int w) {
-                    String nm = in.getText().toString().trim();
-                    List<Prefs.Album> l = Prefs.albums(BrowserActivity.this);
-                    for (Prefs.Album al : l) if (al.url.equals(e.url)) al.name = nm;
-                    Prefs.saveAlbums(BrowserActivity.this, l);
-                    String t = nm;
-                    if (t.length() == 0) {
-                        AlbumFetcher.AlbumData cd = Prefs.albumCache(BrowserActivity.this, e.url);
-                        t = cd != null && cd.title.length() > 0 ? cd.title : "Álbum";
-                    }
-                    e.title = t;
-                    for (Item it : e.src) it.album = t;
-                    if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
-                }
-            })
-            .setNegativeButton("Cancelar", null)
-            .show();
-    }
-
-    /** Pulsación larga en un álbum virtual: pase, nombre o borrarlo (las fotos no se tocan). */
-    private void virtualMenu(final Entry e) {
-        final List<Entry> one = new ArrayList<Entry>();
-        one.add(e);
-        Dialogs.iconMenu(BrowserActivity.this, e.title, new String[]{"Pase", "Cambiar nombre", "Borrar álbum virtual"},
-                new int[]{R.drawable.ic_play, R.drawable.ic_tune, R.drawable.ic_delete},
-                new android.content.DialogInterface.OnClickListener() {
-                    public void onClick(android.content.DialogInterface d, int w) {
-                        if (w == 0) startPase(one, false);
-                        else if (w == 1) Dialogs.askName(BrowserActivity.this, "Nombre del álbum virtual", e.title, new Dialogs.NameDone() {
-                            public void done(String name) { renameVirtual(e, name); }
-                        });
-                        else {
-                            List<String[]> l = Extras.virtualAlbums(BrowserActivity.this);
-                            for (int i = l.size() - 1; i >= 0; i--) if (l.get(i)[1].equals(e.query)) l.remove(i);
-                            Extras.saveVirtualAlbums(BrowserActivity.this, l);
-                            virt.remove(e);
-                            if (current == e) current = null;
-                            refreshAfterChange(0);
-                            showToast("Álbum virtual borrado (las fotos siguen en sus álbumes).");
-                        }
-                    }
-                });
-    }
-
-    private void renameVirtual(Entry e, String name) {
-        if (name.length() == 0) return;
-        List<String[]> l = Extras.virtualAlbums(this);
-        for (String[] x : l) if (x[1].equals(e.query)) x[0] = name;
-        Extras.saveVirtualAlbums(this, l);
-        e.title = name;
-        if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
-    }
-
-
-    /** Guarda el mosaico de una búsqueda como álbum virtual (sale en la lista de álbumes y se actualiza solo). */
-    private void saveVirtual() {
-        if (current == null || current.query == null) return;
-        Dialogs.askName(BrowserActivity.this, "Guardar como álbum virtual", current.title, new Dialogs.NameDone() {
-            public void done(String name) {
-                if (name.length() == 0) return;
-                List<String[]> l = Extras.virtualAlbums(BrowserActivity.this);
-                for (int i = l.size() - 1; i >= 0; i--) if (l.get(i)[1].equals(current.query)) l.remove(i);
-                l.add(new String[]{name, current.query});
-                Extras.saveVirtualAlbums(BrowserActivity.this, l);
-                Extras.sp(BrowserActivity.this).edit().putBoolean(Extras.VIRTUAL, true).commit();   // al guardar la primera, la función se activa
-                showToast("Guardado: «" + name + "» sale en la lista de álbumes.");
-            }
-        });
-    }
+    Entry moveEntry;
+    List<Entry> moveBackup;
 
 
     // ------------------------------------------------------------ fotos repetidas (función extra)
-    private volatile boolean dupBusy;
+    volatile boolean dupBusy;
 
-    /** Busca fotos casi iguales hechas seguidas (a menos de 4 s) y las deja marcadas en el mosaico para ocultarlas. */
-    private void findDupes(final Entry e) {
-        if (dupBusy) { showToast("Ya estoy buscando repetidas…"); return; }
-        dupBusy = true;
-        busyStart("Buscando repetidas…");
-        final List<Item> base = new ArrayList<Item>(e.items);
-        act.submit(new Runnable() {
-            public void run() {
-                final DupeScan.Result extra = DupeScan.scan(BrowserActivity.this, base, new DupeScan.Cancel() {
-                    public boolean cancelled() { return destroyed; }
-                });
-                h.post(new Runnable() {
-                    public void run() {
-                        dupBusy = false;
-                        busyEnd("Buscando repetidas…");
-                        if (destroyed) return;
-                        if (extra.dups.isEmpty()) { showToastLong("No he encontrado fotos repetidas en «" + e.title + "»."); return; }
-                        int pos = entries.indexOf(e);
-                        if (pos < 0) return;
-                        if (level != 0 || selMode || moveEntry != null) {   // mientras, has abierto otra cosa: no se cambia de pantalla
-                            pendingDupes = e;
-                            pendingDupeKeys = extra;
-                            showToastLong(extra.dups.size() + (extra.dups.size() == 1 ? " foto repetida" : " fotos repetidas") + " en «" + e.title + "»: ábrelo para verlas marcadas.");
-                            return;
-                        }
-                        openEntry(pos);
-                        markDupes(extra);
-                        showToastLong(extra.dups.size() + (extra.dups.size() == 1 ? " foto repetida marcada" : " fotos repetidas marcadas")
-                                + " (se queda la primera de cada grupo, que sale sin marcar justo antes de las suyas). Pulsa «Ocultar» para quitarlas o desmarca las que quieras.");
-                    }
-                });
-            }
-        });
-    }
+    Entry pendingDupes;
+    DupeScan.Result pendingDupeKeys;
 
-    private Entry pendingDupes;
-    private DupeScan.Result pendingDupeKeys;
+    android.widget.TextView selTitle;
 
-    /** Deja marcadas las repetidas en el mosaico abierto (modo de selección, listas para «Ocultar»). */
-    private void markDupes(DupeScan.Result r) {
-        pSel = true;
-        pKeys.clear();
-        pKeys.addAll(r.dups);
-        // para comparar: cada foto que se queda, con sus repetidas al lado, al principio; el resto sigue en su orden
-        if (current != null) {
-            current.dupFront = null;
-            List<Item> base = current.base();
-            java.util.HashSet<String> there = new java.util.HashSet<String>();
-            for (Item it : base) there.add(it.key());
-            java.util.HashSet<String> used = new java.util.HashSet<String>();
-            List<Item> front = new ArrayList<Item>(base.size());
-            for (List<Item> g : r.groups) {
-                for (Item it : g) if (there.contains(it.key()) && used.add(it.key())) front.add(it);
-            }
-            for (Item it : base) if (!used.contains(it.key())) front.add(it);
-            current.dupFront = front;
-        }
-        showPhotos(0);
-    }
-
-    /** Vuelve al orden de siempre tras comparar repetidas. */
-    private void endDupeView() {
-        if (current != null) current.dupFront = null;
-    }
-
-    private boolean albumMenu(int pos) {
-        if (pos < 0 || pos >= entries.size()) return false;
-        final Entry e = entries.get(pos);
-        if (selMode) { toggleSel(e); return true; }
-        if (e.kind == 0) {
-            final boolean off = offUrls.contains(e.url);
-            final List<Entry> one = new ArrayList<Entry>();
-            one.add(e);
-            final boolean pinned = e.coverPinned;
-            final List<String> lb = new ArrayList<String>(java.util.Arrays.asList("Seleccionar", "Pase", "Pase con música", "Recargar álbum",
-                    off ? "Mostrar álbum" : "Ocultar álbum", "Revisar ubicaciones"));
-            final List<Integer> ic = new ArrayList<Integer>(java.util.Arrays.asList(R.drawable.ic_check, R.drawable.ic_play, R.drawable.ic_tune,
-                    R.drawable.ic_refresh, off ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_place));
-            if (Extras.on(this, Extras.ALBUM_MUSIC)) { lb.add("Música del álbum"); ic.add(R.drawable.ic_music); }
-            if (Extras.on(this, Extras.DUPES)) { lb.add("Buscar repetidas"); ic.add(R.drawable.ic_copy); }
-            if (pinned) { lb.add(e.coverKeys.size() > 1 ? "Quitar portadas" : "Quitar portada"); ic.add(R.drawable.ic_photo); }
-            lb.add("Reordenar álbum"); ic.add(R.drawable.ic_move);
-            lb.add("Cambiar nombre"); ic.add(R.drawable.ic_tune);
-            lb.add("Borrar álbum"); ic.add(R.drawable.ic_delete);
-            int[] ia = new int[ic.size()];
-            for (int i = 0; i < ia.length; i++) ia[i] = ic.get(i);
-            Dialogs.iconMenu(BrowserActivity.this, e.title, lb.toArray(new String[0]), ia,
-                new android.content.DialogInterface.OnClickListener() {
-                    public void onClick(android.content.DialogInterface d, int w) {
-                        String a = lb.get(w);
-                        if (a.equals("Seleccionar")) { selMode = true; sel.clear(); sel.add(e); albumPos = Math.max(0, entries.indexOf(e)); showAlbums(); }
-                        else if (a.equals("Pase")) startPase(one, false);
-                        else if (a.equals("Pase con música")) startPase(one, true);
-                        else if (a.equals("Recargar álbum")) reloadAlbum(e);
-                        else if (a.equals("Revisar ubicaciones")) recheckPlaces(one);
-                        else if (a.equals("Música del álbum")) Dialogs.albumMusic(BrowserActivity.this, e);
-                        else if (a.equals("Buscar repetidas")) findDupes(e);
-                        else if (a.equals("Quitar portada") || a.equals("Quitar portadas")) {
-                            Extras.setCovers(BrowserActivity.this, e.url, null);   // vuelve a ser al azar (como siempre)
-                            e.coverPinned = false;
-                            e.coverKeys = new ArrayList<String>();
-                            EntryOps.pickCover(BrowserActivity.this, e);
-                            if (albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
-                            showToast("Portada quitada: vuelve a ser aleatoria.");
-                        }
-                        else if (a.equals("Reordenar álbum")) startMove(e);
-                        else if (a.equals("Cambiar nombre")) renameAlbum(e);
-                        else if (a.equals("Borrar álbum")) confirmDelete(one);
-                        else hideEntries(one, off);
-                    }
-                });
-            return true;
-        }
-        if (e.kind == 6) { virtualMenu(e); return true; }
-        if (e.kind != 4) return false;
-        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle(e.title)
-            .setMessage("Se borrará ahora mismo del televisor, con todas sus miniaturas y vídeos descargados.")
-            .setPositiveButton("Quitar ahora", new android.content.DialogInterface.OnClickListener() {
-                public void onClick(android.content.DialogInterface d, int w) {
-                    Guest.remove(BrowserActivity.this, e.gid);
-                    if (current == e) current = null;
-                    refreshAfterChange(0);
-                }
-            })
-            .setNegativeButton("Cancelar", null)
-            .show();
-        return true;
-    }
-
-    private void toggleSel(Entry e) {
-        if (e.kind != 0) return;
-        if (!sel.remove(e)) sel.add(e);
-        if (albumGrid != null) {
-            int pos = entries.indexOf(e);
-            ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
-            if (pos >= 0) albumGrid.setSelection(pos);
-        }
-        if (selTitle != null) selTitle.setText(sel.size() + (sel.size() == 1 ? " álbum seleccionado" : " álbumes seleccionados"));
-    }
-
-    private android.widget.TextView selTitle;
-
-    /** Abre un pase con las fotos de los álbumes dados (mezclados), con música o según los ajustes. */
-    private void startPase(List<Entry> es, boolean music) {
-        List<Item> all = new ArrayList<Item>();
-        java.util.HashSet<String> seen = new java.util.HashSet<String>();
-        for (Entry x : es) for (Item it : x.items) if (seen.add(it.key())) all.add(it);
-        if (all.isEmpty()) { showToast("No hay nada que mostrar en esos álbumes."); return; }
-        if (music && Prefs.musicRadio(this).length() == 0 && Prefs.musicFolder(this).length() == 0) {
-            showToast("Elige antes una emisora o una carpeta de música.");
-            music = false;
-        }
-        Session.items = all;
-        Session.order = "random";
-        Session.manual = false;
-        Session.guest = false;
-        Session.guestId = null;
-        Session.startKey = null;
-        Session.lastKey = null;
-        Session.music = music ? 1 : 0;
-        Session.musicUrl = es.size() == 1 && es.get(0).kind == 0 ? BrowseUtil.nullIfEmpty(Extras.albumMusic(this, es.get(0).url)) : null;
-        selMode = false;
-        sel.clear();
-        startActivity(new Intent(this, PlayerActivity.class));
-    }
-
-    /** Oculta (o vuelve a mostrar) los álbumes en el salvapantallas. */
-    private void hideEntries(List<Entry> es, boolean show) {
-        List<Prefs.Album> l = Prefs.albums(this);
-        for (Prefs.Album al : l) for (Entry x : es) if (al.url.equals(x.url)) al.show = show;
-        Prefs.saveAlbums(this, l);
-        if (!show && "all".equals(Prefs.albumMode(this))) Prefs.sp(this).edit().putString("albumMode", "selected").apply();
-        refreshOff();
-        showToast(show ? "Se mostrará en el salvapantallas." : "Oculto del salvapantallas (sigue en esta lista).");
-        exitSel();
-        if (level == 0 && albumGrid != null) ((BaseAdapter) albumGrid.getAdapter()).notifyDataSetChanged();
-    }
-
-    private void confirmDelete(final List<Entry> es) {
-        String m = es.size() == 1 ? "Se quitará «" + es.get(0).title + "» de la lista."
-                : "Se quitarán " + es.size() + " álbumes de la lista.";
-        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle("Borrar álbum")
-            .setMessage(m + "\n\nLas fotos NO se borran de Google Fotos; si lo quieres de vuelta tendrás que añadir el enlace otra vez.")
-            .setPositiveButton("Borrar", new android.content.DialogInterface.OnClickListener() {
-                public void onClick(android.content.DialogInterface d, int w) { deleteEntries(es); }
-            })
-            .setNegativeButton("Cancelar", null)
-            .show();
-    }
-
-    private void deleteEntries(List<Entry> es) {
-        java.util.HashSet<String> urls = new java.util.HashSet<String>();
-        for (Entry x : es) urls.add(x.url);
-        List<Prefs.Album> keep = new ArrayList<Prefs.Album>();
-        for (Prefs.Album al : Prefs.albums(this)) {
-            if (urls.contains(al.url)) Prefs.deleteAlbumCache(this, al.url); else keep.add(al);
-        }
-        Prefs.saveAlbums(this, keep);
-        List<Entry> nr = new ArrayList<Entry>();
-        for (Entry x : real) if (!urls.contains(x.url)) nr.add(x);
-        real = nr;
-        selMode = false;
-        sel.clear();
-        refreshOff();
-        compose();
-        if (entries.isEmpty()) showMessage("No hay álbumes.\nAñádelos desde la web de ajustes de FotosTV.");
-        else showAlbums();
-    }
-
-    private boolean reloading;
-
-    /** Vuelve a leer un solo álbum: fotos nuevas, título y ubicaciones que faltaban. */
-    private void reloadAlbum(final Entry e) {
-        if (e == null || e.kind != 0 || reloading) return;
-        reloading = true;
-        busyStart("Recargando álbum…");
-        final List<Item> old = new ArrayList<Item>(e.src);
-        act.submit(new Runnable() {
-            public void run() {
-                String msg;
-                AlbumFetcher.AlbumData d = null;
-                int regps = 0;
-                try {
-                    d = AlbumFetcher.fetchAlbum(e.url);
-                    if (d.partial) { d = null; msg = "No se ha podido leer el álbum completo. Inténtalo de nuevo."; }
-                    else {
-                        Prefs.saveAlbumCache(BrowserActivity.this, e.url, d);
-                        regps = MetaFetcher.forgetMissingGps(BrowserActivity.this, d.items);
-                        msg = "\u2714 «" + e.title + "» recargado: " + d.items.size() + " elementos"
-                                + (regps > 0 ? ". Se vuelve a buscar la ubicación de " + regps + "." : ".");
-                    }
-                } catch (Throwable ex) {
-                    Diag.e("recargar álbum", ex);
-                    msg = "No se ha podido recargar (¿hay conexión?).";
-                }
-                final AlbumFetcher.AlbumData fd = d;
-                final String fm = msg;
-                h.post(new Runnable() {
-                    public void run() {
-                        reloading = false;
-                        busyEnd("Recargando álbum…");
-                        if (destroyed) return;
-                        if (fd != null) {
-                            for (Item it : fd.items) {
-                                it.album = e.title;
-                                if (it.akey.length() == 0) it.akey = fd.key;
-                            }
-                            e.src = fd.items;
-                            refreshAfterChange(photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
-                        }
-                        showToast(fm);
-                    }
-                });
-            }
-        });
-    }
+    boolean reloading;
 
     /** Aviso que se queda unos segundos más que el normal (el texto largo da tiempo a leerlo). */
-    private void showToastLong(final String s) {
+    void showToastLong(final String s) {
         final android.widget.Toast t1 = android.widget.Toast.makeText(this, s, android.widget.Toast.LENGTH_LONG);
         t1.show();
         h.postDelayed(new Runnable() {
@@ -1014,12 +622,12 @@ public class BrowserActivity extends Activity {
         }, 3000);
     }
 
-    private void showToast(String s) {
+    void showToast(String s) {
         android.widget.Toast.makeText(this, s, android.widget.Toast.LENGTH_LONG).show();
     }
 
     /** Cada medio minuto: retira los temporales caducados y refresca los tiempos que quedan. */
-    private final Runnable guestTick = new Runnable() {
+    final Runnable guestTick = new Runnable() {
         public void run() {
             if (destroyed) return;
             boolean had = !guestMap.isEmpty();
@@ -1034,7 +642,7 @@ public class BrowserActivity extends Activity {
         }
     };
 
-    private void openEntry(int pos) {
+    void openEntry(int pos) {
         if (pos < 0 || pos >= entries.size()) return;
         pSel = false;
         pKeys.clear();
@@ -1048,13 +656,13 @@ public class BrowserActivity extends Activity {
             DupeScan.Result k = pendingDupeKeys;
             pendingDupes = null;
             pendingDupeKeys = null;
-            markDupes(k);
+            actions.markDupes(k);
             return;
         }
         showPhotos(0);
     }
 
-    private void showPhotos(int sel) {
+    void showPhotos(int sel) {
         level = 1;
         albumGrid = null;
         computeLayout();
@@ -1081,7 +689,7 @@ public class BrowserActivity extends Activity {
             w2.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             w2.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
             w2.addView(BrowserUi.iconBox(BrowserActivity.this, R.drawable.ic_event, "Fecha", new View.OnClickListener() {
-                public void onClick(View v) { dateJump(); }
+                public void onClick(View v) { actions.dateJump(); }
             }));
             head.addView(w2);
         }
@@ -1105,7 +713,7 @@ public class BrowserActivity extends Activity {
         row.addView(orderBtn);
         if (current.kind == 5 && current.query != null) {
             row.addView(BrowserUi.sbtn(BrowserActivity.this, "Guardar", R.drawable.ic_albums, new View.OnClickListener() {
-                public void onClick(View v) { saveVirtual(); }
+                public void onClick(View v) { actions.saveVirtual(); }
             }));
         }
         shapeBtn = BrowserUi.sbtn(BrowserActivity.this, BrowseUtil.shapeLabel(photoShape), R.drawable.ic_format, new View.OnClickListener() {
@@ -1132,30 +740,30 @@ public class BrowserActivity extends Activity {
             row.addView(BrowserUi.sbtn(BrowserActivity.this, "Todas", R.drawable.ic_check, new View.OnClickListener() {
                 public void onClick(View v) {
                     for (Item it : current.shown()) pKeys.add(it.key());
-                    refreshPhotoSel();
+                    actions.refreshPhotoSel();
                 }
             }));
             row.addView(BrowserUi.sbtn(BrowserActivity.this, current.kind == 3 ? "Mostrar" : "Ocultar", current.kind == 3 ? R.drawable.ic_visibility : R.drawable.ic_visibility_off,
                     new View.OnClickListener() {
-                public void onClick(View v) { applyPhotoSel(0); }
+                public void onClick(View v) { actions.applyPhotoSel(0); }
             }));
             row.addView(BrowserUi.sbtn(BrowserActivity.this, "A favoritos", R.drawable.ic_star, new View.OnClickListener() {
-                public void onClick(View v) { applyPhotoSel(1); }
+                public void onClick(View v) { actions.applyPhotoSel(1); }
             }));
             row.addView(BrowserUi.sbtn(BrowserActivity.this, "Quitar de favoritos", R.drawable.ic_star_border, new View.OnClickListener() {
-                public void onClick(View v) { applyPhotoSel(2); }
+                public void onClick(View v) { actions.applyPhotoSel(2); }
             }));
             row.addView(BrowserUi.sbtn(BrowserActivity.this, "Revisar ubicación", R.drawable.ic_place, new View.OnClickListener() {
                 public void onClick(View v) {
                     if (pKeys.isEmpty()) { showToast("Marca primero alguna foto o vídeo."); return; }
                     List<Item> l = new ArrayList<Item>();
                     for (Item it : current.shown()) if (pKeys.contains(it.key())) l.add(it);
-                    exitPSel();
-                    recheckItems(l);
+                    actions.exitPSel();
+                    actions.recheckItems(l);
                 }
             }));
             row.addView(BrowserUi.sbtn(BrowserActivity.this, "Cancelar", R.drawable.ic_close, new View.OnClickListener() {
-                public void onClick(View v) { exitPSel(); }
+                public void onClick(View v) { actions.exitPSel(); }
             }));
         }
         // los botones se reparten todo el ancho del mosaico, ni más ni menos (hasta donde acaba la última foto de la primera fila)
@@ -1189,12 +797,12 @@ public class BrowserActivity extends Activity {
         });
         photoGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> p, View v, int pos, long id) {
-                if (pSel) togglePhoto(pos); else openViewer(pos);
+                if (pSel) actions.togglePhoto(pos); else openViewer(pos);
             }
         });
         photoGrid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             public boolean onItemLongClick(AdapterView<?> p, View v, int pos, long id) {
-                if (pSel) togglePhoto(pos); else itemMenu(pos);
+                if (pSel) actions.togglePhoto(pos); else actions.itemMenu(pos);
                 return true;
             }
         });
@@ -1213,190 +821,6 @@ public class BrowserActivity extends Activity {
         refocus = null;
     }
 
-    private void itemMenu(final int pos) {
-        if (current == null || pos < 0 || pos >= current.shown().size()) return;
-        final Item it = current.shown().get(pos);
-        if (current.kind == 4) { showInfo(it); return; }       // los temporales no se ocultan ni se marcan
-        final boolean isHid = Prefs.hidden(this).contains(it.key());
-        final boolean isFav = Prefs.favs(this).contains(it.key());
-        final boolean canCover = current.kind == 0;
-        final boolean multi = Extras.on(this, Extras.MULTI_COVER);
-        final boolean isCover = current.coverKeys.contains(it.key());
-        final List<String> lb = new ArrayList<String>();
-        final List<Integer> ic = new ArrayList<Integer>();
-        lb.add("Seleccionar"); ic.add(R.drawable.ic_check);
-        lb.add(isHid ? "Mostrar" : "Ocultar"); ic.add(isHid ? R.drawable.ic_visibility : R.drawable.ic_visibility_off);
-        lb.add("Ver información"); ic.add(R.drawable.ic_info);
-        lb.add(isFav ? "Quitar de favoritos" : "Añadir a favoritos"); ic.add(isFav ? R.drawable.ic_star_border : R.drawable.ic_star);
-        lb.add("Revisar ubicación"); ic.add(R.drawable.ic_place);
-        if (canCover) {
-            lb.add(multi ? (isCover ? "Quitar de portadas" : "Añadir a portadas") : "Fijar como portada");
-            ic.add(R.drawable.ic_photo);
-        }
-        if (Extras.on(this, Extras.CAPTIONS)) { lb.add("Pie de foto"); ic.add(R.drawable.ic_notes); }
-        final String[] labels = lb.toArray(new String[0]);
-        final int[] icons = new int[ic.size()];
-        for (int i = 0; i < icons.length; i++) icons[i] = ic.get(i);
-        android.widget.ListAdapter ad = new android.widget.ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, labels) {
-            @Override public View getView(int i, View cv, ViewGroup parent) {
-                TextView tv = (TextView) super.getView(i, cv, parent);
-                tv.setTypeface(Ui.REG);
-                tv.setTextColor(Color.WHITE);
-                tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);     // menús más compactos: caben sin desplazar
-                tv.setMinHeight(Ui.dp(BrowserActivity.this, 36));
-                tv.setMinimumHeight(Ui.dp(BrowserActivity.this, 36));
-                tv.setPadding(tv.getPaddingLeft(), Ui.dp(BrowserActivity.this, 6), tv.getPaddingRight(), Ui.dp(BrowserActivity.this, 6));
-                android.graphics.drawable.Drawable d = getResources().getDrawable(icons[i]).mutate();
-                int sz = Ui.dp(BrowserActivity.this, 18);
-                d.setBounds(0, 0, sz, sz);
-                tv.setCompoundDrawables(d, null, null, null);
-                tv.setCompoundDrawablePadding(Ui.dp(BrowserActivity.this, 14));
-                tv.setGravity(Gravity.CENTER_VERTICAL);
-                return tv;
-            }
-        };
-        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setAdapter(ad, new android.content.DialogInterface.OnClickListener() {
-                public void onClick(android.content.DialogInterface d, int which) {
-                    String a = labels[which];
-                    if (a.equals("Seleccionar")) {
-                        pSel = true;
-                        pKeys.clear();
-                        pKeys.add(it.key());
-                        showPhotos(pos);
-                    } else if (a.equals("Mostrar") || a.equals("Ocultar")) {
-                        if (isHid) Prefs.unhide(BrowserActivity.this, it.key()); else Prefs.hide(BrowserActivity.this, it.key());
-                        refreshAfterChange(pos);
-                    } else if (a.equals("Ver información")) {
-                        showInfo(it);
-                    } else if (a.equals("Revisar ubicación")) {
-                        List<Item> l = new ArrayList<Item>();
-                        l.add(it);
-                        recheckItems(l);
-                    } else if (a.equals("Fijar como portada") || a.equals("Añadir a portadas") || a.equals("Quitar de portadas")) {
-                        // sin «Varias portadas» solo se cambia la primera: las demás se guardan por si se vuelve a activar
-                        List<String> keys = Extras.allCovers(BrowserActivity.this, current.url);
-                        if (a.equals("Quitar de portadas")) keys.remove(it.key());
-                        else if (multi) { if (!keys.contains(it.key())) keys.add(it.key()); }
-                        else if (keys.isEmpty()) keys.add(it.key());
-                        else { keys.remove(it.key()); if (keys.isEmpty()) keys.add(it.key()); else keys.set(0, it.key()); }
-                        Extras.setCovers(BrowserActivity.this, current.url, keys);
-                        current.coverKeys = Extras.covers(BrowserActivity.this, current.url);
-                        current.coverPinned = !current.coverKeys.isEmpty();
-                        if (a.equals("Quitar de portadas")) { if (current.cover == it) current.cover = null; }
-                        else current.cover = it;
-                        if (current.cover == null || !current.coverPinned) EntryOps.applyCover(BrowserActivity.this, current, Prefs.hidden(BrowserActivity.this));
-                        if (photoGrid != null) ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
-                        showToast(a.equals("Quitar de portadas") ? "Quitada de las portadas del álbum."
-                                : multi ? "Añadida a las portadas del álbum (" + current.coverKeys.size() + ")." : "Portada del álbum fijada.");
-                    } else if (a.equals("Pie de foto")) {
-                        Dialogs.askName(BrowserActivity.this, "Pie de foto (vacío para quitarlo)", Extras.rawCaption(BrowserActivity.this, it.key()), new Dialogs.NameDone() {
-                            public void done(String text) {
-                                Extras.setCaption(BrowserActivity.this, it.key(), text);
-                                showToast(text.length() == 0 ? "Pie de foto quitado." : "Pie de foto guardado: sale en el pase y en la ficha.");
-                            }
-                        });
-                    } else {
-                        Prefs.toggleFav(BrowserActivity.this, it.key());
-                        refreshAfterChange(pos);
-                    }
-                }
-            }).show();
-    }
-
-    /** «Fecha» (función extra): lista de meses del álbum; al elegir uno, el mosaico va a su primera foto. */
-    private void dateJump() {
-        if (current == null) return;
-        final Entry e = current;
-        final List<Item> l = e.base();
-        final java.util.TreeMap<Integer, Integer> days = new java.util.TreeMap<Integer, Integer>();
-        java.util.TimeZone tz = java.util.TimeZone.getDefault();
-        for (Item it : l) {
-            int k = FxLogic.dayKey(it.ts, tz);
-            if (k < 0) continue;
-            Integer n = days.get(k);
-            days.put(k, n == null ? 1 : n + 1);
-        }
-        if (days.isEmpty()) { showToast("Este álbum no tiene fotos con fecha."); return; }
-        int start = e.dayLo;
-        if (start < 0 && photoGrid != null) {
-            int p = photoGrid.getSelectedItemPosition();
-            List<Item> sh = e.shown();
-            if (p >= 0 && p < sh.size()) start = FxLogic.dayKey(sh.get(p).ts, tz);
-        }
-        new CalendarDialog(this, days, start, e.dayLo >= 0, new CalendarDialog.Listener() {
-            public void onRange(int lo, int hi) { e.dayLo = lo; e.dayHi = hi; showPhotos(0); }
-            public void onAll() { e.dayLo = -1; e.dayHi = -1; showPhotos(0); }
-        }).show();
-    }
-
-    private void togglePhoto(int pos) {
-        if (current == null || pos < 0 || pos >= current.shown().size()) return;
-        String k = current.shown().get(pos).key();
-        if (!pKeys.remove(k)) pKeys.add(k);
-        if (photoGrid != null) {
-            ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
-            photoGrid.setSelection(pos);
-        }
-        updateCount();
-    }
-
-    private void refreshPhotoSel() {
-        if (photoGrid != null) {
-            int p = photoGrid.getSelectedItemPosition();
-            ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
-            if (p >= 0) photoGrid.setSelection(p);
-        }
-        updateCount();
-    }
-
-    private void exitPSel() {
-        int fp = current != null && current.dupFront != null ? 0 : (photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
-        pSel = false;
-        pKeys.clear();
-        endDupeView();
-        showPhotos(fp);
-    }
-
-    /** Vuelve a leer la ubicación y el nombre del lugar de estas fotos (en segundo plano). */
-    private void recheckItems(final List<Item> l) {
-        final Set<String> ks = new HashSet<String>();
-        for (Item it : l) ks.add(it.key());
-        new Thread(new Runnable() {
-            public void run() { try { GeoIndex.recheck(BrowserActivity.this, l); } catch (Throwable ignored) { } }
-        }).start();
-        watchGeo(ks);
-    }
-
-    private void recheckPlaces(List<Entry> es) {
-        List<Item> l = new ArrayList<Item>();
-        for (Entry e : es) l.addAll(e.src);
-        recheckItems(l);
-    }
-
-    /** 0 = ocultar o mostrar, 1 = añadir a favoritas, 2 = quitar de favoritas, para todas las seleccionadas. */
-    private void applyPhotoSel(int what) {
-        if (pKeys.isEmpty()) { showToast("Marca primero alguna foto o vídeo."); return; }
-        List<String> ks = new ArrayList<String>(pKeys);
-        int fp = current != null && current.dupFront != null ? 0 : (photoGrid != null ? photoGrid.getFirstVisiblePosition() : 0);
-        if (what == 0) Prefs.hideAll(this, ks, current.kind != 3);
-        else Prefs.favAll(this, ks, what == 1);
-        showToast(ks.size() + (ks.size() == 1 ? " elemento cambiado." : " elementos cambiados."));
-        pSel = false;
-        pKeys.clear();
-        endDupeView();
-        refreshAfterChange(fp);
-        if (level == 1 && current != null && entries.contains(current)) showPhotos(fp);
-    }
-
-    private void showInfo(Item it) {
-        if (infoPanel != null) return;
-        infoPanel = new InfoPanel(this, it, it.album);
-        root.addView(infoPanel, new FrameLayout.LayoutParams(-1, -1));
-        infoPanel.bringToFront();
-    }
-
     @Override public boolean dispatchKeyEvent(android.view.KeyEvent e) {
         if (infoPanel != null) {                      // cualquier botón cierra la información
             if (e.getAction() == android.view.KeyEvent.ACTION_DOWN) { infoPanel.detach(); infoPanel = null; }
@@ -1405,19 +829,19 @@ public class BrowserActivity extends Activity {
         if (moveEntry != null && level == 0) {        // reordenando un álbum
             int k = e.getKeyCode();
             if (e.getAction() == android.view.KeyEvent.ACTION_DOWN) {
-                if (k == android.view.KeyEvent.KEYCODE_DPAD_LEFT) moveBy(-1);
-                else if (k == android.view.KeyEvent.KEYCODE_DPAD_RIGHT) moveBy(1);
-                else if (k == android.view.KeyEvent.KEYCODE_DPAD_UP) moveBy(-albumCols);
-                else if (k == android.view.KeyEvent.KEYCODE_DPAD_DOWN) moveBy(albumCols);
-                else if (k == android.view.KeyEvent.KEYCODE_DPAD_CENTER || k == android.view.KeyEvent.KEYCODE_ENTER) endMove(true);
-                else if (k == android.view.KeyEvent.KEYCODE_BACK || k == android.view.KeyEvent.KEYCODE_ESCAPE) endMove(false);
+                if (k == android.view.KeyEvent.KEYCODE_DPAD_LEFT) actions.moveBy(-1);
+                else if (k == android.view.KeyEvent.KEYCODE_DPAD_RIGHT) actions.moveBy(1);
+                else if (k == android.view.KeyEvent.KEYCODE_DPAD_UP) actions.moveBy(-albumCols);
+                else if (k == android.view.KeyEvent.KEYCODE_DPAD_DOWN) actions.moveBy(albumCols);
+                else if (k == android.view.KeyEvent.KEYCODE_DPAD_CENTER || k == android.view.KeyEvent.KEYCODE_ENTER) actions.endMove(true);
+                else if (k == android.view.KeyEvent.KEYCODE_BACK || k == android.view.KeyEvent.KEYCODE_ESCAPE) actions.endMove(false);
             }
             return true;
         }
         return super.dispatchKeyEvent(e);
     }
 
-    private void updateCount() {
+    void updateCount() {
         if (countView == null || current == null) return;
         String t;
         if (current.onlyVideos) {
@@ -1439,7 +863,7 @@ public class BrowserActivity extends Activity {
     }
 
     /** Los vídeos ya conocidos de la lista actual, en su orden. */
-    private void rebuildVids() {
+    void rebuildVids() {
         if (current == null) return;
         List<Item> base = current.view != null ? current.view : current.items;
         List<Item> out = new ArrayList<Item>();
@@ -1451,7 +875,7 @@ public class BrowserActivity extends Activity {
     }
 
     /** Alterna entre «Todo» y «Vídeos». Los vídeos se buscan por lotes y se van mostrando según aparecen. */
-    private void toggleKind() {
+    void toggleKind() {
         if (current == null) return;
         current.onlyVideos = !current.onlyVideos;
         scanGen++;
@@ -1472,7 +896,7 @@ public class BrowserActivity extends Activity {
         }
     }
 
-    private void startScan() {
+    void startScan() {
         final int gen = scanGen;
         final Entry e = current;
         final List<Item> base = new ArrayList<Item>(e.view != null ? e.view : e.items);
@@ -1500,7 +924,7 @@ public class BrowserActivity extends Activity {
         });
     }
 
-    private void setOrder(String key) {
+    void setOrder(String key) {
         if (current == null) return;
         current.order = key;
         current.orderSet = true;
@@ -1514,7 +938,7 @@ public class BrowserActivity extends Activity {
         }
     }
 
-    private void refreshOrderButtons() {
+    void refreshOrderButtons() {
         if (orderBtn == null) return;
         String o = current != null ? current.order : "";
         if ("random".equals(o)) { orderBtn.setText("Aleatorio"); Ui.icon(orderBtn, R.drawable.ic_shuffle); }
@@ -1526,10 +950,10 @@ public class BrowserActivity extends Activity {
 
 
 
-    private View.OnClickListener play() { return play(false); }
+    View.OnClickListener play() { return play(false); }
 
     /** Con «music», el pase suena con la emisora o carpeta de música aunque en Ajustes esté apagada. */
-    private View.OnClickListener play(final boolean music) {
+    View.OnClickListener play(final boolean music) {
         return new View.OnClickListener() {
             public void onClick(View v) {
                 if (current == null || current.items.isEmpty()) return;
@@ -1551,7 +975,7 @@ public class BrowserActivity extends Activity {
         };
     }
 
-    private void openViewer(int pos) {
+    void openViewer(int pos) {
         if (current == null || pos < 0 || pos >= current.shown().size()) return;
         Session.items = current.shown();
         Session.order = "keep";
@@ -1567,9 +991,9 @@ public class BrowserActivity extends Activity {
 
 
 
-    private static int r32(int v) { return ((v + 31) / 32) * 32; }
+    static int r32(int v) { return ((v + 31) / 32) * 32; }
 
-    private class AlbumAdapter extends BaseAdapter {
+    class AlbumAdapter extends BaseAdapter {
         public int getCount() { return entries.size(); }
         public Object getItem(int i) { return entries.get(i); }
         public long getItemId(int i) { return i; }
@@ -1613,7 +1037,7 @@ public class BrowserActivity extends Activity {
     }
 
 
-    private class PhotoAdapter extends BaseAdapter {
+    class PhotoAdapter extends BaseAdapter {
         public int getCount() { return current == null ? 0 : current.shown().size(); }
         public Object getItem(int i) { return current.shown().get(i); }
         public long getItemId(int i) { return i; }
@@ -1636,7 +1060,7 @@ public class BrowserActivity extends Activity {
     }
 
     /** Va bajando al disco las miniaturas que vienen detrás de la que se está viendo. */
-    private void prefetchAhead(int pos) {
+    void prefetchAhead(int pos) {
         List<Item> l = current.shown();
         int to = Math.min(l.size() - 1, pos + AHEAD);
         for (int i = Math.max(prefetched + 1, pos + 1); i <= to; i++)
@@ -1644,9 +1068,9 @@ public class BrowserActivity extends Activity {
         if (to > prefetched) prefetched = to;
     }
 
-    private android.graphics.drawable.Drawable selFrameD;
+    android.graphics.drawable.Drawable selFrameD;
 
-    private android.graphics.drawable.Drawable selFrame() {
+    android.graphics.drawable.Drawable selFrame() {
         if (selFrameD == null) {
             GradientDrawable g = new GradientDrawable();
             g.setColor(0x334DA3FF);

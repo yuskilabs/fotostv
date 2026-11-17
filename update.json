@@ -1,6 +1,6 @@
 {
-  "version": "7.21",
+  "version": "7.22",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
-  "size": 910856,
-  "notes": "- Por dentro: el explorador reparte en archivos propios la construcción de la pantalla (botones, cabecera, rótulos) y de las cuadrículas y casillas de álbumes y fotos. Todo funciona igual."
+  "size": 906760,
+  "notes": "- Por dentro: las acciones del explorador (menús de álbum y de foto, selección, mover, renombrar, borrar, buscar repetidas y recargar) pasan a su propio archivo. El explorador queda en la mitad de líneas. Todo funciona igual."
 }
