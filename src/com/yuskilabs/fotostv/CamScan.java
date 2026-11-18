@@ -11,11 +11,15 @@ final class CamScan {
     static volatile boolean running;
     static volatile int done, total;
     static volatile long finishedAt;
+    static volatile int lastTotal;      // cuántas fotos tocaba leer en la última pasada (0 = no faltaba ninguna)
 
     /** Pide la lectura: la hace un servicio (con la pantalla apagada o fuera de la app) y se reanuda sola si el sistema la corta. */
-    static void start(Context ctx) {
+    static void start(Context ctx) { start(ctx, false); }
+
+    /** retry: vuelve a leer también las fotos que quedaron apuntadas como «sin cámara» (por si fue un fallo de lectura). */
+    static void start(Context ctx, boolean retry) {
         if (running) return;
-        Prefs.sp(ctx).edit().putBoolean("camScanOn", true).commit();
+        Prefs.sp(ctx).edit().putBoolean("camScanOn", true).putBoolean("camRetry", retry).commit();
         try { ctx.getApplicationContext().startService(new android.content.Intent(ctx.getApplicationContext(), CamScanService.class)); }
         catch (Throwable t) { Diag.e("leer cámaras", t); begin(ctx, null); }
     }
@@ -31,6 +35,7 @@ final class CamScan {
         done = 0;
         total = 0;
         final Context c = ctx.getApplicationContext();
+        final boolean retry = Prefs.sp(c).getBoolean("camRetry", false);
         new Thread(new Runnable() {
             public void run() {
                 try {
@@ -38,12 +43,14 @@ final class CamScan {
                     HashMap<String, String> known = g.camMap();
                     List<Item> todo = new ArrayList<Item>();
                     for (Item it : Search.allVisible(c)) {
-                        if (known.containsKey(it.key())) continue;
+                        String k = known.get(it.key());
+                        if (k != null && !(retry && k.length() == 0)) continue;
                         Boolean v = MetaFetcher.cachedVideo(c, it);
                         if (v != null && v.booleanValue()) continue;          // los vídeos no tienen EXIF
                         todo.add(it);
                     }
                     total = todo.size();
+                    lastTotal = total;
                     int fails = 0;
                     for (Item it : todo) {
                         if (!running) break;
@@ -65,7 +72,7 @@ final class CamScan {
                     boolean wanted = running;        // false = la paró el usuario
                     running = false;
                     finishedAt = System.currentTimeMillis();
-                    if (wanted) Prefs.sp(c).edit().putBoolean("camScanOn", false).commit();
+                    if (wanted) Prefs.sp(c).edit().putBoolean("camScanOn", false).putBoolean("camRetry", false).commit();
                     if (onEnd != null) onEnd.run();
                 }
             }
@@ -73,5 +80,5 @@ final class CamScan {
     }
 
     static void stop() { running = false; }
-    static void stop(Context c) { running = false; Prefs.sp(c).edit().putBoolean("camScanOn", false).commit(); }
+    static void stop(Context c) { running = false; Prefs.sp(c).edit().putBoolean("camScanOn", false).putBoolean("camRetry", false).commit(); }
 }

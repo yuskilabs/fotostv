@@ -348,7 +348,7 @@ public class AjustesActivity extends SettingsBase {
         Button novBtn = btn("Novedades", R.drawable.ic_new_releases, new View.OnClickListener() {
             public void onClick(View v) { Novedades.showLatest(AjustesActivity.this); }
         });
-        describe(novBtn, "Lo que ha cambiado en las últimas versiones. También se enseña solo, una vez, al abrir la app después de actualizar.");
+        describe(novBtn, "Lo que ha cambiado en las últimas versiones.");
         ch.addView(row(copyTv, novBtn));
 
         // temas a la izquierda, un solo panel a la derecha

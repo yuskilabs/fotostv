@@ -360,6 +360,7 @@ class WebConfigServer extends Thread {
                 o.put("profiles", pr);
             } else o = coreJson();
             o.put("places", GeoIndex.get(ctx).exportPlaces());   // nombres de lugar ya calculados
+            o.put("cams", GeoIndex.get(ctx).exportCams());   // cámaras ya leídas (Estadísticas)
             o.put("geo", GeoIndex.get(ctx).exportGeo());     // coordenadas ya leídas: «clave,lat,lon» por foto
             return o.toString();
         } catch (Exception e) {
@@ -490,9 +491,10 @@ class WebConfigServer extends Thread {
             } else n = importCore(o);
             int geo = GeoIndex.get(ctx).importGeo(o.optString("geo", ""));
             GeoIndex.get(ctx).importPlaces(o.optJSONArray("places"));
+            int cams = GeoIndex.get(ctx).importCams(o.optJSONObject("cams"));
             if (geo > 0) GeoService.start(ctx);
             if (listener != null) { listener.onSaved(); listener.onProfile(); }
-            return "OK\n\u2714 Importado: " + n + " álbumes" + (geo > 0 ? " y la ubicación de " + geo + " fotos" : "") + ". La tele los está comprobando.";
+            return "OK\n\u2714 Importado: " + n + " álbumes" + (geo > 0 ? " y la ubicación de " + geo + " fotos" : "") + (cams > 0 ? (geo > 0 ? ", " : " y ") + "la cámara de " + cams + " fotos" : "") + ". La tele los está comprobando.";
         } catch (Exception e) {
             return "ER\nNo se pudo leer ese texto: " + esc(String.valueOf(e.getMessage()));
         }

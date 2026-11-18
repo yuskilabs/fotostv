@@ -62,6 +62,39 @@ class GeoIndex extends SQLiteOpenHelper {
         getWritableDatabase().insertWithOnConflict("cams", null, v, SQLiteDatabase.CONFLICT_REPLACE);
     }
 
+    /** Cámaras ya leídas (solo las que tienen nombre), para la copia de seguridad y para copiar a otra tele. */
+    org.json.JSONObject exportCams() {
+        org.json.JSONObject o = new org.json.JSONObject();
+        Cursor q = getReadableDatabase().rawQuery("SELECT k, cam FROM cams WHERE cam <> ''", null);
+        try { while (q.moveToNext()) { try { o.put(q.getString(0), q.getString(1)); } catch (org.json.JSONException ignored) { } } } finally { q.close(); }
+        return o;
+    }
+
+    /** Apunta las cámaras de otra tele en las fotos que aquí no tienen cámara conocida. Devuelve cuántas. */
+    int importCams(org.json.JSONObject o) {
+        if (o == null) return 0;
+        HashMap<String, String> mine = camMap();
+        SQLiteDatabase db = getWritableDatabase();
+        int n = 0;
+        db.beginTransaction();
+        try {
+            java.util.Iterator<String> it = o.keys();
+            while (it.hasNext()) {
+                String k = it.next();
+                String cam = o.optString(k, "");
+                String cur = mine.get(k);
+                if (cam.length() == 0 || (cur != null && cur.length() > 0)) continue;
+                ContentValues v = new ContentValues();
+                v.put("k", k);
+                v.put("cam", cam);
+                db.insertWithOnConflict("cams", null, v, SQLiteDatabase.CONFLICT_REPLACE);
+                n++;
+            }
+            db.setTransactionSuccessful();
+        } finally { db.endTransaction(); }
+        return n;
+    }
+
     /** Clave → cámara de las fotos en las que ya se ha mirado («» = sin cámara en el EXIF). */
     HashMap<String, String> camMap() {
         HashMap<String, String> m = new HashMap<String, String>();

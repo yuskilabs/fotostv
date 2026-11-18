@@ -2,7 +2,6 @@ package com.yuskilabs.fotostv;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.SharedPreferences;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -11,12 +10,10 @@ import java.util.List;
 
 /**
  * «Novedades» de cada versión: el historial de cambios viaja dentro de la app (assets/novedades.txt, sacado de
- * CHANGELOG.md al compilar) y se enseña una sola vez al abrir la app tras actualizar.
+ * CHANGELOG.md al compilar) y se enseñan con el botón «Novedades» de Ajustes.
  */
 final class Novedades {
     private Novedades() { }
-
-    private static final String SEEN = "novSeen";
 
     /** Secciones del historial: {versión, texto} de la más nueva a la más antigua. */
     static List<String[]> parse(String md) {
@@ -61,10 +58,6 @@ final class Novedades {
         } catch (Throwable e) { return ""; }
     }
 
-    private static String version(Context c) {
-        try { return c.getPackageManager().getPackageInfo(c.getPackageName(), 0).versionName; } catch (Throwable e) { return ""; }
-    }
-
     private static CharSequence format(List<String[]> secs) {
         StringBuilder b = new StringBuilder();
         for (String[] s : secs) {
@@ -82,17 +75,6 @@ final class Novedades {
                 .setPositiveButton("Entendido", null)
                 .show();
         } catch (Throwable ignored) { }
-    }
-
-    /** Pantalla principal: si la app se ha actualizado desde la última vez, enseña lo nuevo (una sola vez). La primera instalación no enseña nada. */
-    static void showIfNew(Activity a) {
-        SharedPreferences m = Prefs.meta(a);
-        String now = version(a), seen = m.getString(SEEN, "");
-        if (now.length() == 0 || now.equals(seen)) return;
-        m.edit().putString(SEEN, now).commit();
-        if (seen.length() == 0) return;
-        List<String[]> secs = since(parse(load(a)), seen, 4);
-        if (!secs.isEmpty() && !secs.get(0)[0].equals(seen)) dialog(a, secs);
     }
 
     /** Botón «Novedades»: las últimas versiones, cuando se quiera. */

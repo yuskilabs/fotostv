@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.25
+- Estadísticas: «Leer cámaras» ahora ofrece «Leer las que faltan» y «Releer las de sin cámara» (por si alguna se apuntó mal). Si no faltaba ninguna, lo dice en vez de no hacer nada.
+- Copiar de otra tele (y la copia de seguridad) trae también las cámaras ya leídas, para no repetir la lectura en cada tele.
+- Novedades: ya no sale sola al abrir la app tras actualizar (ya se ve al pulsar actualizar); queda el botón «Novedades» en Ajustes.
+
 ## 7.24
 - Copiar de otra tele: el campo de la dirección sale con el teclado de letras (que sí tiene el punto) y ya escrito «192.168.1.», para completar solo el final.
 
@@ -12,7 +17,7 @@ El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/
 - Recuerdos de hoy: nueva opción «Semana entera», con las fotos de los 3 días antes y después de hoy de años anteriores.
 - Transición entre fotos a elegir: fundido, corte o cortinilla.
 - Copiar de otra tele (Ajustes › Casa y móvil): trae los álbumes y ajustes de otra tele por la wifi con su dirección y PIN, sin archivos.
-- Novedades: al abrir la app tras actualizar se enseña lo nuevo, una sola vez; también hay un botón «Novedades» en Ajustes.
+- Novedades: hay un botón «Novedades» en Ajustes.
 - Los tres botones de mosaicos (dos verticales, tres verticales, cuatro juntas) pasan a uno solo, «Mosaicos»: no, pocos, normal o muchos. Quien los tenía encendidos empieza en «normal».
 - Fecha y hora: «Reloj grande» desaparece y «Fecha» incluye ahora la opción «con día y hora» (antes era un botón aparte).
 - Los iconos de cada pantalla ya no se repiten (Ajustes, menús del explorador, ficha de información), con iconos nuevos.

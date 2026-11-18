@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -193,7 +194,11 @@ public class StatsActivity extends SettingsBase {
                 h.postDelayed(this, 1500);
             } else {
                 camBtn.setText("Leer cámaras");
-                if (CamScan.finishedAt > shownAt) { shownAt = CamScan.finishedAt; load(); }
+                if (CamScan.finishedAt > shownAt) {
+                    shownAt = CamScan.finishedAt;
+                    if (CamScan.lastTotal == 0) Toast.makeText(StatsActivity.this, "Ya están leídas todas las fotos. Si crees que faltan cámaras, usa «Releer las de sin cámara».", Toast.LENGTH_LONG).show();
+                    load();
+                }
                 h.postDelayed(this, 3000);
             }
         }
@@ -204,12 +209,22 @@ public class StatsActivity extends SettingsBase {
         if (CamScan.running) { CamScan.stop(this); return; }
         new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle("Leer la cámara de cada foto")
-            .setMessage("Se lee el principio de cada foto (unos 160 KB por foto) para saber con qué cámara se hizo. Con muchas fotos puede tardar y gastar bastantes datos. Puedes pararlo cuando quieras. Sigue en segundo plano aunque salgas de la app o apagues la tele, y se retoma solo si el sistema lo corta.")
-            .setPositiveButton("Empezar", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dlg, int w) { CamScan.start(StatsActivity.this); h.removeCallbacks(camTick); h.post(camTick); }
+            .setMessage("Se lee el principio de cada foto (unos 160 KB por foto) para saber con qué cámara se hizo. Con muchas fotos puede tardar y gastar bastantes datos. Puedes pararlo cuando quieras. Sigue en segundo plano aunque salgas de la app o apagues la tele, y se retoma solo si el sistema lo corta.\n\n«Leer las que faltan» solo mira las fotos que aún no se han leído. «Releer las de sin cámara» vuelve a mirar también las que quedaron sin cámara, por si fue un fallo de lectura (gasta más datos).")
+            .setPositiveButton("Leer las que faltan", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dlg, int w) { startCam(false); }
+            })
+            .setNeutralButton("Releer las de sin cámara", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dlg, int w) { startCam(true); }
             })
             .setNegativeButton("Cancelar", null)
             .show();
+    }
+
+    private void startCam(boolean retry) {
+        CamScan.lastTotal = -1;
+        CamScan.start(this, retry);
+        h.removeCallbacks(camTick);
+        h.post(camTick);
     }
 
     @Override protected void onDestroy() {

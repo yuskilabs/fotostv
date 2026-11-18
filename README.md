@@ -74,7 +74,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Actualización desde la propia app** (botón «Actualizar»).
 
 ### Dispositivos y extras
-- **Copiar de otra tele** (Ajustes › Casa y móvil): trae por la wifi los álbumes y ajustes de otra tele con FotosTV, escribiendo su dirección y su PIN. **Novedades**: lo que cambió en las últimas versiones; sale solo, una vez, al abrir la app tras actualizar.
+- **Copiar de otra tele** (Ajustes › Casa y móvil): trae por la wifi los álbumes y ajustes de otra tele con FotosTV, escribiendo su dirección y su PIN. **Novedades**: lo que cambió en las últimas versiones. Las cámaras ya leídas de Estadísticas también viajan con la copia.
 - **Buscar con la voz**: en «Buscar», el botón del micrófono dicta la búsqueda con el reconocimiento de voz de la tele (mando con micrófono).
 - **Inicio automático** del pase tras 1, 2, 5, 10, 15 o 30 minutos sin tocar el mando (pensado para Fire TV) y **cierre automático** del pase pasado un rato (5 min a 2 h, o nunca), por si la tele se apaga.
 - **Fondo de pantalla para Projectivy Launcher** con fotos (y opcionalmente vídeos) de tus álbumes.
@@ -251,7 +251,7 @@ src/com/yuskilabs/fotostv/
   Extras                     claves de las funciones extra (7.0)
   Presets                    estilos del pase (Tranquilo, Fiesta, Solo recuerdos), con vuelta al estado inicial
   TvCopy                     copiar los ajustes de otra tele por la red (con su dirección y PIN)
-  Novedades                  lo nuevo de cada versión, que se enseña al actualizar
+  Novedades                  lo nuevo de las últimas versiones (botón en Ajustes)
   CalendarDialog             calendario mensual de «Ir a la fecha» (7.4)
   FxLogic                    lógica pura de las funciones extra (noche, búsqueda, viajes, repetidas…)
   SearchActivity, Search     buscar por lugar, álbum o fecha

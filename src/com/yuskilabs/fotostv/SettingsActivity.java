@@ -65,9 +65,6 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
-        getWindow().getDecorView().post(new Runnable() {
-            public void run() { if (!isFinishing()) Novedades.showIfNew(SettingsActivity.this); }
-        });
         String extra = getIntent().getStringExtra("url");
         if (extra != null && extra.trim().length() > 0) {
             List<Prefs.Album> l = Prefs.albums(this);

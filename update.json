@@ -1,6 +1,6 @@
 {
-  "version": "7.24",
+  "version": "7.25",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 923931,
-  "notes": "- Copiar de otra tele: el campo de la dirección sale con el teclado de letras (que sí tiene el punto) y ya escrito «192.168.1.», para completar solo el final."
+  "notes": "- Estadísticas: «Leer cámaras» ahora ofrece «Leer las que faltan» y «Releer las de sin cámara» (por si alguna se apuntó mal). Si no faltaba ninguna, lo dice en vez de no hacer nada.\n- Copiar de otra tele (y la copia de seguridad) trae también las cámaras ya leídas, para no repetir la lectura en cada tele.\n- Novedades: ya no sale sola al abrir la app tras actualizar (ya se ve al pulsar actualizar); queda el botón «Novedades» en Ajustes."
 }
