@@ -148,18 +148,18 @@ public class Tests {
         for (int i = 0; i < FilterData.N; i++) fs.add(new java.util.HashSet<String>());
         fs.get(0).add("2024"); fs.get(0).add("2025"); fs.get(4).add("Zahara de los Atunes");
         String fq = FilterData.encode(fs);
-        java.util.List<java.util.Set<String>> back = FilterData.decode(fq);
-        eq("filtro: años", back.get(0).size(), 2);
-        check("filtro: localidad", back.get(4).contains("Zahara de los Atunes"));
-        check("filtro: vacía", back.get(1).isEmpty());
+        java.util.List<java.util.Set<String>> fback = FilterData.decode(fq);
+        eq("filtro: años", fback.get(0).size(), 2);
+        check("filtro: localidad", fback.get(4).contains("Zahara de los Atunes"));
+        check("filtro: vacía", fback.get(1).isEmpty());
         String[][] ft = new String[FilterData.N][3];
         for (int k = 0; k < FilterData.N; k++) { ft[k][0] = "x"; ft[k][1] = "x"; ft[k][2] = "x"; }
         ft[0][0] = "2024"; ft[4][0] = "Zahara de los Atunes";
         ft[0][1] = "2025"; ft[4][1] = "Otra";
         ft[0][2] = "2023"; ft[4][2] = "Zahara de los Atunes";
-        check("filtro: cumple", FilterData.matches(ft, back, 0, -1));
-        check("filtro: otra localidad no", !FilterData.matches(ft, back, 1, -1));
-        check("filtro: otro año no", !FilterData.matches(ft, back, 2, -1));
+        check("filtro: cumple", FilterData.matches(ft, fback, 0, -1));
+        check("filtro: otra localidad no", !FilterData.matches(ft, fback, 1, -1));
+        check("filtro: otro año no", !FilterData.matches(ft, fback, 2, -1));
 
         System.out.println(ok + " comprobaciones bien, " + bad + " mal.");
         if (bad > 0) System.exit(1);
