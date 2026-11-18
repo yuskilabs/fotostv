@@ -329,8 +329,18 @@ class WebConfigServer extends Thread {
                 int ic = intOf(f.get("icon"), -1);
                 if (ic >= 0) Prefs.setProfileIcon(ctx, id, ic);
             }
+            String code = val(f, "code").trim();
+            String msg = "\u2714 Perfil guardado.";
+            if (code.equals("none")) {
+                Prefs.setCode(ctx, id, null);
+                msg = "\u2714 Código quitado.";
+            } else if (code.length() > 0) {
+                if (!code.matches("\\d{4}")) return "ER\nEl código son 4 cifras.";
+                Prefs.setCode(ctx, id, code);
+                msg = "\u2714 Perfil guardado con su código.";
+            }
             if (listener != null) listener.onProfile();
-            return "OK\n\u2714 Perfil guardado.";
+            return "OK\n" + msg;
         } catch (Throwable t) {
             return "ER\nNo se pudo guardar: " + esc(String.valueOf(t.getMessage()));
         }
@@ -697,7 +707,11 @@ class WebConfigServer extends Thread {
                   .append(",this)' style='background:#22364f;border-radius:10px;padding:6px;box-sizing:border-box;border:2px solid transparent'>");
             sb.append("</div><button type='button' class='sec' onclick=\"document.getElementById('pif').click()\">📷 Usar una foto</button>")
               .append("<input type='file' id='pif' accept='image/*' style='display:none' onchange='pickImg(this)'>")
-              .append("<button type='button' class='sec' onclick='saveProfile()'>Guardar perfil</button><p id='pm' class='muted'></p></div>");
+              .append("<p class='muted'>Código para entrar a este perfil desde la tele (4 cifras). Déjalo vacío para no cambiarlo.")
+              .append(Prefs.hasCode(ctx, pid) ? " Ahora tiene código." : " Ahora no tiene código.").append("</p>")
+              .append("<input id='pc' type='tel' inputmode='numeric' maxlength='4' placeholder='Código de 4 cifras' autocomplete='off'>");
+            if (Prefs.hasCode(ctx, pid)) sb.append("<button type='button' class='sec' onclick=\"saveProfile('none')\">Quitar el código</button>");
+            sb.append("<button type='button' class='sec' onclick='saveProfile()'>Guardar perfil</button><p id='pm' class='muted'></p></div>");
         }
         if (Extras.on(ctx, Extras.REMOTE)) {
             sb.append("<h2>Mando</h2><p class='muted'>Pasa las fotos del pase que esté en marcha en la tele.</p>")
@@ -793,11 +807,11 @@ class WebConfigServer extends Thread {
         + "var c=document.createElement('canvas');c.width=c.height=160;var s=Math.min(im.width,im.height);"
         + "c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,160,160);pImg=c.toDataURL('image/png');pIcon='';"
         + "document.getElementById('ppv').src=pImg;};im.src=r.result;};r.readAsDataURL(f);}"
-        + "function saveProfile(){var m=document.getElementById('pm'),x=new XMLHttpRequest();x.open('POST','/profile');"
+        + "function saveProfile(cd){var m=document.getElementById('pm'),x=new XMLHttpRequest();x.open('POST','/profile');cd=cd||document.getElementById('pc').value;"
         + "x.setRequestHeader('Content-Type','application/x-www-form-urlencoded');"
         + "x.onload=function(){var t=x.responseText,i=t.indexOf('\\n');m.textContent=t.substring(i+1);};"
         + "x.onerror=function(){m.textContent='No hay conexión con la tele.';};"
-        + "x.send('name='+encodeURIComponent(document.getElementById('pn').value)+'&icon='+pIcon+'&img='+encodeURIComponent(pImg));}"
+        + "x.send('name='+encodeURIComponent(document.getElementById('pn').value)+'&icon='+pIcon+'&img='+encodeURIComponent(pImg)+'&code='+encodeURIComponent(cd));}"
         + "function rc(k){var m=document.getElementById('rcm'),x=new XMLHttpRequest();x.open('GET','/rc?k='+k);"
         + "x.onload=function(){m.textContent=x.responseText;};x.onerror=function(){m.textContent='No hay conexión con la tele.';};x.send();}"
         + "function expBk(){var x=new XMLHttpRequest();x.open('GET','/export');"

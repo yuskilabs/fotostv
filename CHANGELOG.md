@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.26
+- Perfiles: cada perfil (también «Familia») puede tener un código de 4 cifras para entrar. Se pone, cambia o quita en Ajustes › Casa y móvil › Perfiles, y se teclea con el mando (arriba y abajo cambian la cifra, derecha pasa a la siguiente, OK confirma).
+- Se pide al pasar a ese perfil (icono junto al QR o «Usar este perfil»), y también para cambiar o quitar el código, borrar el perfil o desactivar los perfiles. Con códigos, el icono del perfil abre una lista para elegir en vez de pasar al siguiente.
+- Si se olvida el código, desde la web del móvil (con el PIN), en «Perfil en uso», se pone uno nuevo o se quita.
+- La copia de seguridad y «Copiar de otra tele» llevan los códigos (solo una huella cifrada, no el número).
+
 ## 7.25
 - Estadísticas: «Leer cámaras» ahora ofrece «Leer las que faltan» y «Releer las de sin cámara» (por si alguna se apuntó mal). Si no faltaba ninguna, lo dice en vez de no hacer nada.
 - Copiar de otra tele (y la copia de seguridad) trae también las cámaras ya leídas, para no repetir la lectura en cada tele.

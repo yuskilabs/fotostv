@@ -467,13 +467,41 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                     Toast.makeText(SettingsActivity.this, "Solo hay el perfil «Familia». Añade más en Ajustes → Casa y móvil → Perfiles.", Toast.LENGTH_LONG).show();
                     return;
                 }
+                if (Prefs.anyCode(SettingsActivity.this)) {
+                    // con códigos, el siguiente podría tener uno y bloquear el paso a los demás: mejor elegir de una lista
+                    String[] labs = new String[l.size()];
+                    for (int i = 0; i < labs.length; i++)
+                        labs[i] = l.get(i)[1] + (l.get(i)[0].equals(String.valueOf(cur)) ? "   (en uso)" : "")
+                            + (Prefs.hasCode(SettingsActivity.this, Integer.parseInt(l.get(i)[0])) ? "   (con código)" : "");
+                    final java.util.List<String[]> ll = l;
+                    new android.app.AlertDialog.Builder(SettingsActivity.this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+                        .setTitle("Perfil")
+                        .setItems(labs, new android.content.DialogInterface.OnClickListener() {
+                            public void onClick(android.content.DialogInterface dd, int which) {
+                                if (ll.get(which)[0].equals(String.valueOf(cur))) return;
+                                switchProfile(Integer.parseInt(ll.get(which)[0]), ll.get(which)[1]);
+                            }
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+                    return;
+                }
                 int nx = (Prefs.profileIndex(SettingsActivity.this, cur) + 1) % l.size();
-                Prefs.setProfile(SettingsActivity.this, Integer.parseInt(l.get(nx)[0]));
-                Toast.makeText(SettingsActivity.this, "Perfil «" + l.get(nx)[1] + "»: sus álbumes, ajustes, PIN y web.", Toast.LENGTH_LONG).show();
-                recreate();
+                switchProfile(Integer.parseInt(l.get(nx)[0]), l.get(nx)[1]);
             }
         });
         return t;
+    }
+
+    /** Pasa a otro perfil; si tiene código, antes se pide. */
+    private void switchProfile(final int id, final String name) {
+        PinPad.enter(this, id, name, new Runnable() {
+            public void run() {
+                Prefs.setProfile(SettingsActivity.this, id);
+                Toast.makeText(SettingsActivity.this, "Perfil «" + name + "»: sus álbumes, ajustes, PIN y web.", Toast.LENGTH_LONG).show();
+                recreate();
+            }
+        });
     }
 
     /** Qué botones extra hay que enseñar (si cambia al volver de Ajustes, la pantalla se rehace). */

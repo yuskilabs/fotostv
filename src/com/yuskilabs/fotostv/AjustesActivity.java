@@ -1032,12 +1032,14 @@ public class AjustesActivity extends SettingsBase {
                 public void onClick(DialogInterface d, int which) {
                     if (which < l.size()) profileMenu(Integer.parseInt(l.get(which)[0]), l.get(which)[1]);
                     else if (which == l.size()) askProfileName("Nuevo perfil", "", -1);
-                    else {
-                        Prefs.setProfile(AjustesActivity.this, 0);
-                        Prefs.meta(AjustesActivity.this).edit().putBoolean("fx_profiles", false).commit();
-                        Toast.makeText(AjustesActivity.this, "Perfiles desactivados: vuelves a «Familia». Los demás perfiles se guardan por si los activas otra vez.", Toast.LENGTH_LONG).show();
-                        recreate();
-                    }
+                    else PinPad.enter(AjustesActivity.this, 0, "Familia", new Runnable() {
+                        public void run() {
+                            Prefs.setProfile(AjustesActivity.this, 0);
+                            Prefs.meta(AjustesActivity.this).edit().putBoolean("fx_profiles", false).commit();
+                            Toast.makeText(AjustesActivity.this, "Perfiles desactivados: vuelves a «Familia». Los demás perfiles se guardan por si los activas otra vez.", Toast.LENGTH_LONG).show();
+                            recreate();
+                        }
+                    });
                 }
             })
             .setNegativeButton("Cerrar", null)
@@ -1046,18 +1048,49 @@ public class AjustesActivity extends SettingsBase {
 
     private void profileMenu(final int id, final String name) {
         final boolean fam = id == 0;
-        final String[] it = fam ? new String[]{"Usar este perfil", "Cambiar el icono"} : new String[]{"Usar este perfil", "Cambiar el icono", "Cambiar el nombre", "Borrar"};
+        final boolean coded = Prefs.hasCode(this, id);
+        final List<String> it = new ArrayList<String>();
+        it.add("Usar este perfil");
+        it.add("Cambiar el icono");
+        if (!fam) it.add("Cambiar el nombre");
+        it.add(coded ? "Cambiar el código" : "Poner un código");
+        if (coded) it.add("Quitar el código");
+        if (!fam) it.add("Borrar");
         new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle(name)
-            .setItems(it, new DialogInterface.OnClickListener() {
+            .setItems(it.toArray(new String[0]), new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface d, int which) {
-                    if (which == 0) {
-                        Prefs.setProfile(AjustesActivity.this, id);
-                        Toast.makeText(AjustesActivity.this, "Perfil «" + name + "» en uso.", Toast.LENGTH_SHORT).show();
-                        recreate();
-                    } else if (which == 1) iconPicker(id, name);
-                    else if (which == 2) askProfileName("Nombre del perfil", name, id);
-                    else confirmDeleteProfile(id, name);
+                    String w = it.get(which);
+                    if (w.equals("Usar este perfil")) {
+                        PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
+                            public void run() {
+                                Prefs.setProfile(AjustesActivity.this, id);
+                                Toast.makeText(AjustesActivity.this, "Perfil «" + name + "» en uso.", Toast.LENGTH_SHORT).show();
+                                recreate();
+                            }
+                        });
+                    } else if (w.equals("Cambiar el icono")) iconPicker(id, name);
+                    else if (w.equals("Cambiar el nombre")) askProfileName("Nombre del perfil", name, id);
+                    else if (w.equals("Poner un código") || w.equals("Cambiar el código")) {
+                        // para cambiarlo hace falta saber el actual
+                        PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
+                            public void run() {
+                                PinPad.setNew(AjustesActivity.this, id, name, new Runnable() {
+                                    public void run() { profileMenu(id, name); }
+                                });
+                            }
+                        });
+                    } else if (w.equals("Quitar el código")) {
+                        PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
+                            public void run() {
+                                Prefs.setCode(AjustesActivity.this, id, null);
+                                Toast.makeText(AjustesActivity.this, "Código de «" + name + "» quitado.", Toast.LENGTH_SHORT).show();
+                                profileMenu(id, name);
+                            }
+                        });
+                    } else PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
+                        public void run() { confirmDeleteProfile(id, name); }
+                    });
                 }
             })
             .setNegativeButton("Atrás", new DialogInterface.OnClickListener() {

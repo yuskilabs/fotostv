@@ -69,6 +69,38 @@ class Prefs {
         return 0;
     }
 
+    // ---- código de 4 cifras de cada perfil (opcional): se guarda solo su huella, nunca el número ----
+    static boolean hasCode(Context c, int id) { return meta(c).getString("fx_pcode_" + id, "").length() > 0; }
+
+    /** ¿Algún perfil tiene código? */
+    static boolean anyCode(Context c) {
+        for (String[] p : profiles(c)) if (hasCode(c, Integer.parseInt(p[0]))) return true;
+        return false;
+    }
+
+    private static String codeHash(int id, String code) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] b = md.digest(("fotostv:" + id + ":" + code).getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < b.length; i++) sb.append(String.format("%02x", b[i] & 0xff));
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    static boolean checkCode(Context c, int id, String code) {
+        String h = meta(c).getString("fx_pcode_" + id, "");
+        return h.length() > 0 && h.equals(codeHash(id, code));
+    }
+
+    /** Pone el código de 4 cifras del perfil; con null o vacío se quita. */
+    static void setCode(Context c, int id, String code) {
+        if (code == null || code.length() == 0) meta(c).edit().remove("fx_pcode_" + id).commit();
+        else meta(c).edit().putString("fx_pcode_" + id, codeHash(id, code)).commit();
+    }
+
     /** Posición del perfil en la lista (para elegir su icono). */
     static int profileIndex(Context c, int id) {
         List<String[]> l = profiles(c);
@@ -105,6 +137,7 @@ class Prefs {
         saveProfiles(c, l);
         c.getSharedPreferences("cfgx_" + id, Context.MODE_PRIVATE).edit().clear().commit();
         clearProfileLook(c, id);
+        setCode(c, id, null);
         if (meta(c).getInt("profileId", 0) == id) setProfile(c, 0);
     }
 
@@ -156,7 +189,8 @@ class Prefs {
         JSONArray l = new JSONArray();
         for (String[] p : profiles(c)) {
             int id = Integer.parseInt(p[0]);
-            JSONObject o = new JSONObject().put("id", id).put("name", p[1]).put("icon", profileIconIdx(c, id));
+            JSONObject o = new JSONObject().put("id", id).put("name", p[1]).put("icon", profileIconIdx(c, id))
+                .put("code", meta(c).getString("fx_pcode_" + id, ""));
             java.io.File f = profileImageFile(c, id);
             if (f != null) {
                 try {
@@ -188,6 +222,10 @@ class Prefs {
             int id = o.optInt("id", 0);
             if (id != 0) { keep.add(new String[]{String.valueOf(id), o.optString("name", "Perfil")}); ids.add(String.valueOf(id)); }
             int ic = o.optInt("icon", -1);
+            if (o.has("code")) {   // las copias anteriores no traen código: no se toca el que haya
+                String cd = o.optString("code", "");
+                if (cd.length() > 0) meta(c).edit().putString("fx_pcode_" + id, cd).commit(); else setCode(c, id, null);
+            }
             String img = o.optString("img", "");
             if (img.length() > 0) {
                 try {
@@ -207,6 +245,7 @@ class Prefs {
                 int id = Integer.parseInt(p[0]);
                 c.getSharedPreferences("cfgx_" + id, Context.MODE_PRIVATE).edit().clear().commit();
                 clearProfileLook(c, id);
+                setCode(c, id, null);
             }
         }
         saveProfiles(c, keep);
