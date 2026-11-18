@@ -677,7 +677,7 @@ class WebConfigServer extends Thread {
 
     /** Mando desde el móvil (función extra): ◀ ▶ OK sobre el pase que esté en marcha en la tele. */
     private String remote(String path) {
-        if (!Extras.on(ctx, Extras.REMOTE)) return "El mando está desactivado (Ajustes \u2192 Casa y móvil).";
+        if (!Extras.on(ctx, Extras.REMOTE)) return "El mando está desactivado (Ajustes \u2192 Móvil y otras teles).";
         int q = path.indexOf("k=");
         String k = q >= 0 ? path.substring(q + 2).split("&")[0] : "";
         final int code = "left".equals(k) ? android.view.KeyEvent.KEYCODE_DPAD_LEFT

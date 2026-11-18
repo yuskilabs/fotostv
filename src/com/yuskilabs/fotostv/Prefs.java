@@ -101,6 +101,39 @@ class Prefs {
         else meta(c).edit().putString("fx_pcode_" + id, codeHash(id, code)).commit();
     }
 
+    // ---- copiar los ajustes (no los álbumes) de un perfil a otro ----
+    private static final String[] SETTING_KEYS = {"interval", "fit", "order", "albumMode", "resume", "video", "sound", "clock",
+        "showAlbum", "showDate", "showPlace", "thumbMB", "videoMB", "musicMode", "musicRadio", "musicFolder", "musicVol", "musicDream",
+        "albumSort", "albumCols", "photoCols", "photoShape", "photoFmt", "vq", "idleMin", "autoStopMin",
+        "pv_all", "pv_fit", "pv_vert", "pv_videos"};
+
+    private static boolean isSetting(String k) {
+        if (k.startsWith("fx_")) return true;
+        for (String x : SETTING_KEYS) if (x.equals(k)) return true;
+        return false;
+    }
+
+    /** Copia los ajustes (pase, mosaicos, transición, estilo, música, funciones extra…) del perfil «from» al «to».
+     *  No toca álbumes, favoritas, ocultas, portadas, pies de foto, álbumes virtuales, PIN, código, nombre ni icono. */
+    static void copySettings(Context c, int from, int to) {
+        if (from == to) return;
+        SharedPreferences a = c.getSharedPreferences(from == 0 ? "cfg" : "cfgx_" + from, Context.MODE_PRIVATE);
+        SharedPreferences b = c.getSharedPreferences(to == 0 ? "cfg" : "cfgx_" + to, Context.MODE_PRIVATE);
+        SharedPreferences.Editor e = b.edit();
+        for (String k : new ArrayList<String>(b.getAll().keySet())) if (isSetting(k)) e.remove(k);
+        for (java.util.Map.Entry<String, ?> en : a.getAll().entrySet()) {
+            String k = en.getKey();
+            Object v = en.getValue();
+            if (!isSetting(k) || v == null) continue;
+            if (v instanceof Boolean) e.putBoolean(k, (Boolean) v);
+            else if (v instanceof Integer) e.putInt(k, (Integer) v);
+            else if (v instanceof Long) e.putLong(k, (Long) v);
+            else if (v instanceof Float) e.putFloat(k, (Float) v);
+            else if (v instanceof String) e.putString(k, (String) v);
+        }
+        e.commit();
+    }
+
     /** Posición del perfil en la lista (para elegir su icono). */
     static int profileIndex(Context c, int id) {
         List<String[]> l = profiles(c);

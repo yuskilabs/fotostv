@@ -47,7 +47,7 @@ App Android TV / Fire TV / Shield que muestra álbumes compartidos de Google Fot
 - Se dice «Estilo» (no «Preajuste») para que el texto quepa en el botón.
 - En «Copiar de otra tele», el campo de dirección usa teclado de texto/URI (el numérico de la tele no tiene punto) y empieza con `192.168.1.`.
 - La cámara de cada foto se cachea por tele; desde 7.25 va también en la copia entre teles y en la copia de seguridad (`cams`). «Leer cámaras» ofrece «Leer las que faltan» y «Releer las de sin cámara».
-- «Novedades» ya no sale sola al abrir tras actualizar (el actualizador ya enseña las notas); queda el botón en Ajustes › Casa y móvil.
+- «Novedades» ya no sale sola al abrir tras actualizar (el actualizador ya enseña las notas); queda el botón en Ajustes › Ayuda y mantenimiento.
 - El fondo de Projectivy y las sugerencias de búsqueda se mantienen como están.
 - La cámara/autor de las marcas de agua se decide por reglas editables en la web.
 

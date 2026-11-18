@@ -1,3 +1,9 @@
+## 7.27
+- Ajustes reorganizado y más claro. Temas: Pase de fotos (qué fotos salen y cuándo), Aspecto del pase (transición, mosaicos, encuadre, movimiento, velocidad, bordes y relleno), Información, Salvapantallas y noche, Música, Vídeo y caché, Explorador, Perfiles, Móvil y otras teles y Ayuda y mantenimiento.
+- Perfiles tiene su propio tema: lista con icono, nombre y estado de cada perfil, y una ficha con Usar, Nombre, Icono o foto, Código, Copiar ajustes de otro perfil y Borrar. «Copiar ajustes de otro» trae todos los ajustes sin tocar álbumes, favoritas, ocultas, código, nombre ni icono.
+- Ayuda y mantenimiento: «Buscar actualización» (al abrir comprueba sola); si hay versión nueva enseña qué trae y un botón para instalarla, y si no, «Última versión». Aquí también están Novedades, Diagnóstico, Revisar ubicaciones y Rehacer nombres.
+- Se quitan los «Estilos» del pase (Tranquilo, Fiesta, Solo recuerdos); sus ajustes se mantienen como estaban.
+
 ## 7.26
 - Perfiles: cada perfil (también «Familia») puede tener un código de 4 cifras para entrar. Se pone, cambia o quita en Ajustes › Casa y móvil › Perfiles, y se teclea con el mando (arriba y abajo cambian la cifra, derecha pasa a la siguiente, OK confirma).
 - Se pide al pasar a ese perfil (icono junto al QR o «Usar este perfil»), y también para cambiar o quitar el código, borrar el perfil o desactivar los perfiles. Con códigos, el icono del perfil abre una lista para elegir en vez de pasar al siguiente.
@@ -35,15 +41,4 @@
 - Buscar repetidas: los avisos se quedan unos 3 segundos más en pantalla.
 - Buscar repetidas: al marcar, el álbum se ordena con cada foto que se queda (sin marcar) seguida de sus repetidas (marcadas), todas al principio, para compararlas. El resto sigue en su orden, y al terminar (ocultar, cancelar o salir) todo vuelve al orden de siempre.
 - Por dentro: los diálogos del explorador (menú con iconos, pedir un nombre, música del álbum) pasan a su propio archivo.
-
-## 7.19
-- Ajustes: al llegar al borde del panel de la derecha ya no salta a la lista de temas (solo «izquierda» vuelve). Los temas pasan a ser filas de icono y texto, con una barra de color en el elegido, para que no parezcan botones.
-- Autor: ahora también sale al ver las fotos a pantalla completa desde el explorador (antes solo en el pase y el salvapantallas).
-- Temporizador y «Cerrar pase»: cuando cierran el pase, el inicio automático no lo vuelve a abrir hasta que abras la app.
-- «Buscar repetidas» y «Recargar álbum» ya no se quedan esperando detrás de la carga de álbumes. Se quita un icono giratorio que nunca se veía.
-- Explorador: nuevo botón «Álbumes: orden manual / recientes primero / antiguos primero» en la lista de álbumes.
-- Búsquedas guardadas: el botón «Guardar» sale siempre en el mosaico de una búsqueda y activa los álbumes virtuales al guardar la primera.
-- Buscar: ahora también por autor («Lola», «Alex 2024», «motril 2022 Alex»), con sugerencias «Fotos de…».
-- Estadísticas: «Leer cámaras» sigue en segundo plano, con la app cerrada o la pantalla apagada, y se retoma si el sistema lo corta.
-- Diagnóstico: ya no apunta como fallo los cortes al saltar de foto, y los fallos de vídeo dicen la causa.
 

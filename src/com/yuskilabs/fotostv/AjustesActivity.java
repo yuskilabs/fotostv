@@ -33,7 +33,7 @@ public class AjustesActivity extends SettingsBase {
     private final Handler h = new Handler(Looper.getMainLooper());
     private Button musicBtn, radioBtn, folderBtn, volBtn, dreamMusicBtn, vqBtn;
     private TextView geoView, hint;
-    private Button cityBtn, placeBtn, profilesBtn;
+    private Button cityBtn, placeBtn;
     private static final String HINT0 = "Pasa por cada botón para ver qué hace. Atrás: volver a la pantalla principal.";
 
     private final Runnable geoTick = new Runnable() {
@@ -126,7 +126,6 @@ public class AjustesActivity extends SettingsBase {
         
 
         // --- ubicaciones
-        LinearLayout cg = card("Ubicaciones", R.drawable.ic_place);
         geoView = text("", 13, 0xFF9FB3C8);
         geoView.setPadding(dp(8), dp(4), dp(8), dp(8));
         geoView.setFocusable(true);
@@ -139,8 +138,7 @@ public class AjustesActivity extends SettingsBase {
                 h.post(geoTick);
             }
         });
-        cg.addView(geoView);
-        Button geoBtn = btn("Revisar ubicaciones", R.drawable.ic_refresh, new View.OnClickListener() {
+        Button geoBtn = btn("Revisar ubicaciones", R.drawable.ic_place, new View.OnClickListener() {
             public void onClick(View v) {
                 new Thread(new Runnable() { public void run() { GeoIndex.recheckPending(AjustesActivity.this); } }).start();
                 Toast.makeText(AjustesActivity.this, "Reviso en segundo plano lo que falta (las fotos sin ubicación y los sitios sin nombre).", Toast.LENGTH_LONG).show();
@@ -151,18 +149,15 @@ public class AjustesActivity extends SettingsBase {
         Button rebuild = btn("Rehacer nombres", R.drawable.ic_format, new View.OnClickListener() {
             public void onClick(View v) { rebuildDialog(); }
         });
-        cg.addView(row(geoBtn, rebuild));
         
 
         // --- salvapantallas
-        LinearLayout cs = card("Salvapantallas", R.drawable.ic_tv);
         Button dream = btn("Elegir salvapantallas", R.drawable.ic_cast, new View.OnClickListener() {
             public void onClick(View v) { openDreamSettings(); }
         });
         Button proj = btn("Fondo para Projectivy", R.drawable.ic_wallpaper, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(AjustesActivity.this, ProjectivyActivity.class)); }
         });
-        cs.addView(row(dream, proj));
         
 
         // --- vídeo y caché
@@ -223,39 +218,38 @@ public class AjustesActivity extends SettingsBase {
         Button transition = cycFx("Transición", Extras.TRANSITION, new String[]{"fade", "cut", "wipe"},
                 new String[]{"fundido", "corte", "cortinilla"}, R.drawable.ic_swap,
                 "Cómo pasa una foto a la siguiente: fundido suave, corte directo o cortinilla (la nueva aparece desde la derecha).");
-        Button preset = presetBtn();
-        Button presetUndo = presetUndoBtn();
         Button todayWeek = fx("Semana entera", Extras.TODAY_WEEK, R.drawable.ic_date_range,
                 "Con «Recuerdos de hoy», incluye también las fotos de los 3 días antes y después de hoy en años anteriores, no solo del día exacto.");
         Button credit = fx("Autor", Extras.CREDIT, R.drawable.ic_person,
                 "Marca de agua muy sutil abajo a la derecha: «© Lola» (iPhone 12 o 13), «© Alex» (iPhone 14 Pro), «© Pepe» (cámara que no es móvil: Leica, Nikon…) o «© Lara» (archivo que empieza por PIC). En las demás, nada. Las reglas se pueden cambiar desde la web de configuración (campo «Autor de las fotos»).");
-        cp.addView(row(preset, presetUndo));
-        cp.addView(row(
-            cyc("Orden", "order", false, new String[]{"random", "norepeat", "smart", "asc", "desc"},
+        Button order = cyc("Orden", "order", false, new String[]{"random", "norepeat", "smart", "asc", "desc"},
                 new String[]{"aleatorio", "sin repetir", "inteligente", "por fecha ↑", "por fecha ↓"}, R.drawable.ic_shuffle,
-                new Cur() { public String get() { return Prefs.order(AjustesActivity.this); } }),
-            cyc("Cambiar cada", "interval", true, new String[]{"5", "10", "30", "60", "180", "300", "600"},
+                new Cur() { public String get() { return Prefs.order(AjustesActivity.this); } });
+        Button every = cyc("Cambiar cada", "interval", true, new String[]{"5", "10", "30", "60", "180", "300", "600"},
                 new String[]{"5 s", "10 s", "30 s", "1 min", "3 min", "5 min", "10 min"}, R.drawable.ic_timer,
-                new Cur() { public String get() { return String.valueOf(Prefs.interval(AjustesActivity.this)); } })));
-        cp.addView(row(
-            cyc("Encuadre", "fit", false, new String[]{"auto", "crop", "fit"},
+                new Cur() { public String get() { return String.valueOf(Prefs.interval(AjustesActivity.this)); } });
+        final Button fitBtn = cyc("Encuadre", "fit", false, new String[]{"auto", "crop", "fit"},
                 new String[]{"auto", "llenar", "completo"}, R.drawable.ic_single,
-                new Cur() { public String get() { return Prefs.fit(AjustesActivity.this); } }),
-            tog("Continuar", "resume", R.drawable.ic_check, new Bool() { public boolean get() { return Prefs.resume(AjustesActivity.this); } })));
+                new Cur() { public String get() { return Prefs.fit(AjustesActivity.this); } });
+        Button resume = tog("Continuar", "resume", R.drawable.ic_check, new Bool() { public boolean get() { return Prefs.resume(AjustesActivity.this); } });
+        // pase: qué fotos salen y cuándo
+        cp.addView(row(order, every));
         cp.addView(row(todayBtn(), todayWeek));
-        cp.addView(row(fav, mosaics));
-        cp.addView(row(transition, placeBtn));
+        cp.addView(row(fav, resume));
+        cp.addView(row(placeBtn, null));
 
         // --- movimiento y relleno
-        LinearLayout cf = card("Movimiento y relleno", R.drawable.ic_fullscreen);
+        LinearLayout cf = card("Aspecto del pase", R.drawable.ic_fullscreen);
         Button speed = cycFx("Velocidad", Extras.KB_SPEED, new String[]{"slow", "normal"}, new String[]{"lenta", "normal"},
                 R.drawable.ic_timer, "Velocidad del movimiento. En las dos, el movimiento dura más que la foto: nunca se para a la vista.");
         Button edge = cycFx("Bordes", Extras.KB_EDGE, new String[]{"hide", "show"}, new String[]{"tapados", "a la vista"},
                 R.drawable.ic_terrain, "Tapados: la foto va algo ampliada y no se ve el relleno. A la vista: la foto empieza entera, sin zoom, y al moverse se ve el relleno (negro, color o difuminado).");
         Button bg = cycFx("Relleno", Extras.BACKGROUND, new String[]{"black", "color", "blur"}, new String[]{"negro", "color", "difuminado"},
                 R.drawable.ic_wallpaper, "Lo que se ve donde la foto no llena la pantalla (verticales, fotos con otra forma, y al moverse): negro, el color de la foto o la foto muy difuminada.");
-        cf.addView(row(motionBtn(), speed));
-        cf.addView(row(edge, bg));
+        cf.addView(row(transition, mosaics));
+        cf.addView(row(fitBtn, motionBtn()));
+        cf.addView(row(speed, edge));
+        cf.addView(row(bg, null));
 
         // --- información en pantalla
         LinearLayout ci = card("Información en pantalla", R.drawable.ic_info);
@@ -285,7 +279,8 @@ public class AjustesActivity extends SettingsBase {
         ci.addView(row(captions, credit));
 
         // --- noche y temporizador
-        LinearLayout cn = card("Noche y temporizador", R.drawable.ic_moon);
+        LinearLayout cn = card("Salvapantallas y noche", R.drawable.ic_tv);
+        cn.addView(row(dream, proj));
         Button night = cycFx("Modo noche", Extras.NIGHT, new String[]{"off", "22-8", "23-7", "0-7"},
                 new String[]{"no", "22 a 8 h", "23 a 7 h", "0 a 7 h"}, R.drawable.ic_schedule,
                 "Durante esas horas el salvapantallas se atenúa (o se apaga) y la música se calla.");
@@ -319,45 +314,65 @@ public class AjustesActivity extends SettingsBase {
         ce.addView(row(covers, news));
         ce.addView(row(dupes, stats));
 
-        // --- casa y móvil
-        LinearLayout ch = card("Casa y móvil", R.drawable.ic_guest);
-        profilesBtn = btn(profilesLabel(), R.drawable.ic_family, new View.OnClickListener() {
-            public void onClick(View v) {
-                if (!Prefs.profilesOn(AjustesActivity.this)) {
-                    Prefs.meta(AjustesActivity.this).edit().putBoolean("fx_profiles", true).commit();
-                    profilesBtn.setText(profilesLabel());
-                }
-                manageProfiles();
-            }
-        });
-        describe(profilesBtn, "Perfiles con sus propios álbumes, ajustes, PIN y web de configuración. «Familia» es el de siempre; los que añadas empiezan vacíos. Se elige en la pantalla principal con el icono junto al QR; aquí se añaden, renombran y borran.");
+        // --- perfiles (panel propio: lista de perfiles y ficha de cada uno)
+        profilesCard = card("Perfiles", R.drawable.ic_family);
+        if (keepTopic < 0) profView = -1;
+        refreshProfiles();
+
+        // --- móvil y otras teles
+        LinearLayout ch = card("Móvil y otras teles", R.drawable.ic_guest);
         Button remote = fx("Mando del móvil", Extras.REMOTE, R.drawable.ic_remote,
                 "La web de ajustes del móvil enseña un mando para pasar fotos, pausar o ver la anterior.");
         Button reload = cycInt("Recargar álbumes", Extras.RELOAD, new int[]{0, 6, 12, 24}, new String[]{"no", "cada 6 h", "cada 12 h", "cada 24 h"},
                 R.drawable.ic_refresh, "Mientras la app esté abierta o en el salvapantallas, vuelve a leer los álbumes de Google cada cierto tiempo.");
-        ch.addView(row(profilesBtn, remote));
-        Button diag = btn("Diagnóstico", R.drawable.ic_terrain, new View.OnClickListener() {
-            public void onClick(View v) { startActivity(new Intent(AjustesActivity.this, DiagActivity.class)); }
-        });
-        describe(diag, "Últimos errores del pase, la búsqueda, los vídeos y el autor, con su hora. Sirve para ver qué falla si algo se queda parado.");
-        ch.addView(row(reload, diag));
         Button copyTv = btn("Copiar de otra tele", R.drawable.ic_cast, new View.OnClickListener() {
             public void onClick(View v) { copyFromTvDialog(); }
         });
         describe(copyTv, "Trae a esta tele los álbumes y todos los ajustes de otra tele con FotosTV, por la wifi y sin archivos. Hace falta su dirección y su PIN (salen en su pantalla principal).");
+        ch.addView(row(remote, copyTv));
+        ch.addView(row(reload, null));
+
+        // --- ayuda y estado
+        LinearLayout cy = card("Ayuda y mantenimiento", R.drawable.ic_notes);
+        Button diag = btn("Diagnóstico", R.drawable.ic_terrain, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(AjustesActivity.this, DiagActivity.class)); }
+        });
+        describe(diag, "Últimos errores del pase, la búsqueda, los vídeos y el autor, con su hora. Sirve para ver qué falla si algo se queda parado.");
         Button novBtn = btn("Novedades", R.drawable.ic_new_releases, new View.OnClickListener() {
             public void onClick(View v) { Novedades.showLatest(AjustesActivity.this); }
         });
         describe(novBtn, "Lo que ha cambiado en las últimas versiones.");
-        ch.addView(row(copyTv, novBtn));
+        Button upd = btn("Buscar actualización", R.drawable.ic_refresh, new View.OnClickListener() {
+            public void onClick(View v) { checkUpdate(); }
+        });
+        describe(upd, "Mira si hay una versión nueva de FotosTV. Si la hay, aquí mismo se ve qué trae y se puede instalar.");
+        updInfo = text("Versión " + Updater.installed(this) + ". Comprobando si hay otra más nueva…", 13, 0xFFBBD0E6);
+        updInfo.setPadding(dp(4), 0, dp(4), dp(4));
+        updNotes = text("", 12, 0xFF9FB3C8);
+        updNotes.setPadding(dp(4), 0, dp(4), dp(8));
+        updNotes.setVisibility(View.GONE);
+        updInstall = btn("Actualizar", R.drawable.ic_download, new View.OnClickListener() {
+            public void onClick(View v) { if (updAvail != null) downloadUpdate(updAvail); }
+        });
+        describe(updInstall, "Descarga la versión nueva y abre la instalación de Android, donde hay que confirmar.");
+        updInstallRow = row(updInstall, null);
+        updInstallRow.setVisibility(View.GONE);
+        cy.addView(row(upd, novBtn));
+        cy.addView(updInfo);
+        cy.addView(updNotes);
+        cy.addView(updInstallRow);
+        cy.addView(row(diag, geoBtn));
+        cy.addView(row(rebuild, null));
+        cy.addView(geoView);
+        checkUpdate();
 
         // temas a la izquierda, un solo panel a la derecha
-        final LinearLayout[] cards = {cp, cf, ci, cn, cm, cv, ce, cs, cg, ch};
-        String[] names = {"Pase de fotos", "Movimiento y relleno", "Información", "Noche y temporizador", "Música",
-            "Vídeo y caché", "Explorador", "Salvapantallas", "Ubicaciones", "Casa y móvil"};
-        int[] icons = {R.drawable.ic_photo, R.drawable.ic_fullscreen, R.drawable.ic_info, R.drawable.ic_moon,
-            R.drawable.ic_music, R.drawable.ic_video, R.drawable.ic_albums, R.drawable.ic_tv, R.drawable.ic_place,
-            R.drawable.ic_guest};
+        final LinearLayout[] cards = {cp, cf, ci, cn, cm, cv, ce, profilesCard, ch, cy};
+        String[] names = {"Pase de fotos", "Aspecto del pase", "Información", "Salvapantallas y noche", "Música",
+            "Vídeo y caché", "Explorador", "Perfiles", "Móvil y otras teles", "Ayuda y mantenimiento"};
+        int[] icons = {R.drawable.ic_photo, R.drawable.ic_fullscreen, R.drawable.ic_info, R.drawable.ic_tv,
+            R.drawable.ic_music, R.drawable.ic_video, R.drawable.ic_albums,
+            R.drawable.ic_family, R.drawable.ic_guest, R.drawable.ic_notes};
         panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         topics = new TopicRow[cards.length];
@@ -784,35 +799,6 @@ public class AjustesActivity extends SettingsBase {
     }
 
     /** Preajuste: ciclo personalizado → Tranquilo → Fiesta → Solo recuerdos; al elegir uno se cambian los ajustes del pase. */
-    private Button presetBtn() {
-        final Button b = btn("Estilo: " + FxLogic.presetName(Presets.current(this)), R.drawable.ic_sparkle, new View.OnClickListener() {
-            public void onClick(View v) {
-                String nx = FxLogic.nextPreset(Presets.current(AjustesActivity.this));
-                Presets.apply(AjustesActivity.this, nx);
-                Toast.makeText(AjustesActivity.this, "Estilo «" + FxLogic.presetName(nx) + "» aplicado. Con «Deshacer estilo» vuelve todo a como estaba.", Toast.LENGTH_LONG).show();
-                keepTopic = topicSel;
-                recreate();
-            }
-        });
-        describe(b, "Elige un estilo, que cambia de golpe varios ajustes del pase: Tranquilo (lento, sin mosaicos, solo zoom suave), Fiesta (rápido, muchos mosaicos, cortinilla) o Solo recuerdos (fotos de esta semana de otros años). Se guarda en este perfil; si cambias algo a mano pasa a «Personalizado».");
-        return b;
-    }
-
-    private Button presetUndoBtn() {
-        final boolean can = Presets.canRevert(this);
-        Button b = btn(can ? "Deshacer estilo" : "Sin estilo aplicado", R.drawable.ic_undo, new View.OnClickListener() {
-            public void onClick(View v) {
-                if (!Presets.canRevert(AjustesActivity.this)) return;
-                Presets.revert(AjustesActivity.this);
-                Toast.makeText(AjustesActivity.this, "Todo vuelve a como estaba antes del primer estilo.", Toast.LENGTH_LONG).show();
-                keepTopic = topicSel;
-                recreate();
-            }
-        });
-        describe(b, "Devuelve los ajustes que cambian los estilos (orden, tiempo, movimiento, mosaicos, transición, recuerdos e información) a como estaban antes de aplicar el primer estilo.");
-        return b;
-    }
-
     // ---- botones con su explicación
     private void describe(final Button b, final String d) {
         b.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -1014,88 +1000,347 @@ public class AjustesActivity extends SettingsBase {
             .show();
     }
 
-    private String profilesLabel() {
-        return "Perfiles: " + (Prefs.profilesOn(this) ? (Prefs.profiles(this).size() - 1 == 0 ? "sí" : Prefs.profiles(this).size() + "") : "no");
+    // ---- actualización dentro de «Ayuda y estado»
+    private TextView updInfo, updNotes;
+    private Button updInstall;
+    private View updInstallRow;
+    private Updater.Info updAvail;
+    private boolean updBusy;
+
+    private void checkUpdate() {
+        if (updBusy) return;
+        updBusy = true;
+        updInfo.setText("Comprobando si hay una versión nueva…");
+        new Thread(new Runnable() {
+            public void run() {
+                Updater.Info i = null;
+                String err = null;
+                try { i = Updater.latest(); } catch (Exception e) { err = String.valueOf(e.getMessage()); }
+                final Updater.Info info = i;
+                final String error = err;
+                h.post(new Runnable() {
+                    public void run() {
+                        updBusy = false;
+                        String cur = Updater.installed(AjustesActivity.this);
+                        updAvail = null;
+                        updNotes.setVisibility(View.GONE);
+                        updInstallRow.setVisibility(View.GONE);
+                        if (error != null) {
+                            updInfo.setText("Versión " + cur + ". No se pudo comprobar (" + error + ").");
+                        } else if (info == null || !Updater.newer(info.version, cur)) {
+                            updInfo.setText("Última versión: " + cur + ".");
+                        } else {
+                            updAvail = info;
+                            updInfo.setText("Hay una versión nueva: " + info.version + " (tienes la " + cur + ").");
+                            String notes = info.notes.length() > 600 ? info.notes.substring(0, 600) + "…" : info.notes;
+                            if (notes.length() > 0) { updNotes.setText(notes); updNotes.setVisibility(View.VISIBLE); }
+                            updInstall.setText("Actualizar a la " + info.version);
+                            updInstallRow.setVisibility(View.VISIBLE);
+                        }
+                    }
+                });
+            }
+        }).start();
     }
 
-    /** Lista de perfiles: elegir uno para usarlo, renombrarlo o borrarlo; añadir uno nuevo o desactivar los perfiles. */
-    private void manageProfiles() {
-        final List<String[]> l = Prefs.profiles(this);
-        final int cur = Prefs.profile(this);
-        final List<String> labs = new ArrayList<String>();
-        for (String[] p : l) labs.add(p[1] + (p[0].equals(String.valueOf(cur)) ? "   (en uso)" : ""));
-        labs.add("＋  Añadir perfil…");
-        labs.add("Desactivar los perfiles");
-        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle("Perfiles")
-            .setItems(labs.toArray(new String[0]), new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface d, int which) {
-                    if (which < l.size()) profileMenu(Integer.parseInt(l.get(which)[0]), l.get(which)[1]);
-                    else if (which == l.size()) askProfileName("Nuevo perfil", "", -1);
-                    else PinPad.enter(AjustesActivity.this, 0, "Familia", new Runnable() {
+    private void downloadUpdate(final Updater.Info info) {
+        if (updBusy) return;
+        updBusy = true;
+        updInfo.setText("Descargando la versión " + info.version + "…");
+        new Thread(new Runnable() {
+            public void run() {
+                java.io.File f = null;
+                String err = null;
+                try {
+                    f = Updater.download(AjustesActivity.this, info, new Updater.Progress() {
+                        public void onPercent(final int p) {
+                            h.post(new Runnable() {
+                                public void run() { updInfo.setText("Descargando la versión " + info.version + "…  " + p + " %"); }
+                            });
+                        }
+                    });
+                } catch (Exception e) { err = String.valueOf(e.getMessage()); }
+                final java.io.File apk = f;
+                final String error = err;
+                h.post(new Runnable() {
+                    public void run() {
+                        updBusy = false;
+                        if (apk == null) {
+                            updInfo.setText("No se pudo descargar (" + error + ").");
+                        } else {
+                            try {
+                                Updater.install(AjustesActivity.this, apk);
+                                updInfo.setText("Descargada. Confirma la instalación en la pantalla que se abre.");
+                            } catch (Exception e) {
+                                updInfo.setText("No se pudo iniciar la instalación (" + e.getMessage() + ").");
+                            }
+                        }
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private LinearLayout profilesCard;
+    private static int profView = -1;   // -1: lista de perfiles; otro número: ficha del perfil con ese id
+
+    private boolean profileExists(int id) {
+        for (String[] p : Prefs.profiles(this)) if (p[0].equals(String.valueOf(id))) return true;
+        return false;
+    }
+
+    /** Rehace el panel «Perfiles» (lista o ficha) y deja el foco dentro. */
+    private void refreshProfiles() {
+        if (profilesCard == null) return;
+        while (profilesCard.getChildCount() > 1) profilesCard.removeViewAt(1);
+        if (profView >= 0 && !profileExists(profView)) profView = -1;
+        if (profView < 0) buildProfileList(); else buildProfileSheet(profView);
+        if (topics != null) profilesCard.requestFocus();
+    }
+
+    private String profileStatus(int id) {
+        return (id == Prefs.profile(this) ? "En uso, " : "") + (Prefs.hasCode(this, id) ? "con código" : "sin código");
+    }
+
+    private ImageView profileAvatar(int id, int size) {
+        ImageView ic = new ImageView(this);
+        Ui.showProfileIcon(ic, id);
+        GradientDrawable sq = new GradientDrawable();
+        sq.setColor(0xFF22364F);
+        sq.setCornerRadius(dp(10));
+        ic.setBackground(sq);
+        ic.setLayoutParams(new LinearLayout.LayoutParams(dp(size), dp(size)));
+        return ic;
+    }
+
+    /** Lista: activar o desactivar los perfiles, un renglón por perfil y «Añadir perfil». */
+    private void buildProfileList() {
+        final boolean on = Prefs.profilesOn(this);
+        Button tg = btn("Perfiles: " + (on ? "sí" : "no"), R.drawable.ic_swap, new View.OnClickListener() {
+            public void onClick(View v) {
+                if (!on) {
+                    Prefs.meta(AjustesActivity.this).edit().putBoolean("fx_profiles", true).commit();
+                    refreshProfiles();
+                } else PinPad.enter(AjustesActivity.this, 0, "Familia", new Runnable() {
+                    public void run() {
+                        Prefs.setProfile(AjustesActivity.this, 0);
+                        Prefs.meta(AjustesActivity.this).edit().putBoolean("fx_profiles", false).commit();
+                        Toast.makeText(AjustesActivity.this, "Perfiles desactivados: vuelves a «Familia». Los demás perfiles se guardan por si los activas otra vez.", Toast.LENGTH_LONG).show();
+                        keepTopic = topicSel;
+                        recreate();
+                    }
+                });
+            }
+        });
+        describe(tg, "Con los perfiles, cada persona tiene sus propios álbumes, ajustes, PIN y web de configuración, y puede protegerlos con un código. Al desactivarlos vuelves a «Familia»; los demás se guardan por si los activas otra vez.");
+        profilesCard.addView(row(tg, null));
+        TextView t = text(on ? "«Familia» es el perfil de siempre. Los nuevos empiezan vacíos. Se cambia de perfil en la pantalla principal, con el icono junto al QR."
+            : "Activa los perfiles para que cada persona tenga sus álbumes, sus ajustes y, si quiere, un código para entrar.", 13, 0xFFBBD0E6);
+        t.setPadding(dp(4), 0, dp(4), dp(10));
+        profilesCard.addView(t);
+        if (!on) return;
+        for (String[] p : Prefs.profiles(this)) profilesCard.addView(profileRow(Integer.parseInt(p[0]), p[1]));
+        Button add = btn("Añadir perfil", R.drawable.ic_add, new View.OnClickListener() {
+            public void onClick(View v) { askProfileName("Nuevo perfil", "", -1); }
+        });
+        describe(add, "Crea un perfil vacío, con los ajustes de fábrica. Luego puedes copiarle los ajustes de otro perfil desde su ficha.");
+        profilesCard.addView(row(add, null));
+    }
+
+    /** Un renglón de la lista: icono (o foto), nombre y estado. Al pulsarlo se abre su ficha. */
+    private View profileRow(final int id, final String name) {
+        LinearLayout r = new LinearLayout(this);
+        r.setOrientation(LinearLayout.HORIZONTAL);
+        r.setGravity(Gravity.CENTER_VERTICAL);
+        r.setFocusable(true);
+        r.setClickable(true);
+        r.setPadding(dp(8), dp(6), dp(12), dp(6));
+        GradientDrawable off = new GradientDrawable();
+        off.setColor(0x1AFFFFFF);
+        off.setCornerRadius(dp(10));
+        off.setStroke(dp(1), 0x33FFFFFF);
+        GradientDrawable on = new GradientDrawable();
+        on.setColor(0x33FFFFFF);
+        on.setCornerRadius(dp(10));
+        on.setStroke(dp(3), 0xFF3D8BFD);
+        android.graphics.drawable.StateListDrawable bg = new android.graphics.drawable.StateListDrawable();
+        bg.addState(new int[]{android.R.attr.state_focused}, on);
+        bg.addState(new int[]{}, off);
+        r.setBackground(bg);
+        r.addView(profileAvatar(id, 44));
+        LinearLayout tx = new LinearLayout(this);
+        tx.setOrientation(LinearLayout.VERTICAL);
+        tx.setPadding(dp(12), 0, 0, 0);
+        TextView nm = text(name, 16, Color.WHITE);
+        nm.setTypeface(Ui.BLACK);
+        nm.setSingleLine(true);
+        nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        tx.addView(nm);
+        tx.addView(text(profileStatus(id), 12, 0xFF9FB3C8));
+        r.addView(tx, new LinearLayout.LayoutParams(0, -2, 1f));
+        r.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) { profView = id; refreshProfiles(); }
+        });
+        r.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            public void onFocusChange(View v, boolean has) {
+                if (has && hint != null) hint.setText("Abre la ficha de «" + name + "»: usarlo, nombre, icono o foto, código, copiar ajustes y borrar.");
+            }
+        });
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(58));
+        lp.setMargins(0, 0, 0, dp(8));
+        r.setLayoutParams(lp);
+        return r;
+    }
+
+    /** Ficha de un perfil: todo lo que se puede hacer con él (antes, parte desde el móvil). */
+    private void buildProfileSheet(final int id) {
+        final String name = Prefs.profileName(this, id);
+        final boolean fam = id == 0;
+        final boolean coded = Prefs.hasCode(this, id);
+        final boolean cur = id == Prefs.profile(this);
+
+        LinearLayout hd = new LinearLayout(this);
+        hd.setOrientation(LinearLayout.HORIZONTAL);
+        hd.setGravity(Gravity.CENTER_VERTICAL);
+        hd.setPadding(dp(4), 0, 0, dp(12));
+        hd.addView(profileAvatar(id, 64));
+        LinearLayout tx = new LinearLayout(this);
+        tx.setOrientation(LinearLayout.VERTICAL);
+        tx.setPadding(dp(14), 0, 0, 0);
+        TextView nm = text(name, 20, Color.WHITE);
+        nm.setTypeface(Ui.BLACK);
+        nm.setSingleLine(true);
+        nm.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        tx.addView(nm);
+        tx.addView(text(profileStatus(id), 13, 0xFF9FB3C8));
+        if (cur) tx.addView(text("PIN de la web del móvil: " + Prefs.webPin(this), 13, 0xFF9FB3C8));
+        hd.addView(tx, new LinearLayout.LayoutParams(0, -2, 1f));
+        profilesCard.addView(hd, new LinearLayout.LayoutParams(-1, -2));
+
+        final List<Button> bs = new ArrayList<Button>();
+        Button back = btn("Todos los perfiles", R.drawable.ic_undo, new View.OnClickListener() {
+            public void onClick(View v) { profView = -1; refreshProfiles(); }
+        });
+        describe(back, "Vuelve a la lista de perfiles.");
+        bs.add(back);
+
+        Button use = cur
+            ? btn("Perfil en uso", R.drawable.ic_check, new View.OnClickListener() {
+                public void onClick(View v) { Toast.makeText(AjustesActivity.this, "«" + name + "» ya está en uso.", Toast.LENGTH_SHORT).show(); }
+            })
+            : btn("Usar este perfil", R.drawable.ic_play, new View.OnClickListener() {
+                public void onClick(View v) {
+                    PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
                         public void run() {
-                            Prefs.setProfile(AjustesActivity.this, 0);
-                            Prefs.meta(AjustesActivity.this).edit().putBoolean("fx_profiles", false).commit();
-                            Toast.makeText(AjustesActivity.this, "Perfiles desactivados: vuelves a «Familia». Los demás perfiles se guardan por si los activas otra vez.", Toast.LENGTH_LONG).show();
+                            Prefs.setProfile(AjustesActivity.this, id);
+                            Toast.makeText(AjustesActivity.this, "Perfil «" + name + "» en uso.", Toast.LENGTH_SHORT).show();
+                            keepTopic = topicSel;
                             recreate();
                         }
                     });
                 }
-            })
-            .setNegativeButton("Cerrar", null)
-            .show();
-    }
+            });
+        describe(use, "Pasa a este perfil: sus álbumes, ajustes, PIN y web. Si tiene código, lo pide.");
+        bs.add(use);
 
-    private void profileMenu(final int id, final String name) {
-        final boolean fam = id == 0;
-        final boolean coded = Prefs.hasCode(this, id);
-        final List<String> it = new ArrayList<String>();
-        it.add("Usar este perfil");
-        it.add("Cambiar el icono");
-        if (!fam) it.add("Cambiar el nombre");
-        it.add(coded ? "Cambiar el código" : "Poner un código");
-        if (coded) it.add("Quitar el código");
-        if (!fam) it.add("Borrar");
-        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle(name)
-            .setItems(it.toArray(new String[0]), new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface d, int which) {
-                    String w = it.get(which);
-                    if (w.equals("Usar este perfil")) {
-                        PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
-                            public void run() {
-                                Prefs.setProfile(AjustesActivity.this, id);
-                                Toast.makeText(AjustesActivity.this, "Perfil «" + name + "» en uso.", Toast.LENGTH_SHORT).show();
-                                recreate();
-                            }
+        if (!fam) {
+            Button rn = btn("Cambiar el nombre", R.drawable.ic_notes, new View.OnClickListener() {
+                public void onClick(View v) { askProfileName("Nombre del perfil", name, id); }
+            });
+            describe(rn, "Cambia el nombre que sale junto al icono del perfil (hasta 20 letras).");
+            bs.add(rn);
+        }
+        Button ic = btn("Icono o foto", R.drawable.ic_wallpaper, new View.OnClickListener() {
+            public void onClick(View v) { iconPicker(id, name); }
+        });
+        describe(ic, "Elige un icono de la muestra o una foto de un archivo. También se puede poner la foto desde la web del móvil.");
+        bs.add(ic);
+
+        Button code = btn(coded ? "Cambiar el código" : "Poner un código", R.drawable.ic_visibility_off, new View.OnClickListener() {
+            public void onClick(View v) {
+                PinPad.enter(AjustesActivity.this, id, name, new Runnable() {   // para cambiarlo hace falta el actual
+                    public void run() {
+                        PinPad.setNew(AjustesActivity.this, id, name, new Runnable() {
+                            public void run() { refreshProfiles(); }
                         });
-                    } else if (w.equals("Cambiar el icono")) iconPicker(id, name);
-                    else if (w.equals("Cambiar el nombre")) askProfileName("Nombre del perfil", name, id);
-                    else if (w.equals("Poner un código") || w.equals("Cambiar el código")) {
-                        // para cambiarlo hace falta saber el actual
-                        PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
-                            public void run() {
-                                PinPad.setNew(AjustesActivity.this, id, name, new Runnable() {
-                                    public void run() { profileMenu(id, name); }
-                                });
-                            }
-                        });
-                    } else if (w.equals("Quitar el código")) {
-                        PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
-                            public void run() {
-                                Prefs.setCode(AjustesActivity.this, id, null);
-                                Toast.makeText(AjustesActivity.this, "Código de «" + name + "» quitado.", Toast.LENGTH_SHORT).show();
-                                profileMenu(id, name);
-                            }
-                        });
-                    } else PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
+                    }
+                });
+            }
+        });
+        describe(code, "Código de 4 cifras que se pide al pasar a este perfil. Se teclea con el mando: arriba y abajo cambian la cifra, derecha avanza, OK confirma.");
+        bs.add(code);
+        if (coded) {
+            Button rm = btn("Quitar el código", R.drawable.ic_visibility, new View.OnClickListener() {
+                public void onClick(View v) {
+                    PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
+                        public void run() {
+                            Prefs.setCode(AjustesActivity.this, id, null);
+                            Toast.makeText(AjustesActivity.this, "Código de «" + name + "» quitado.", Toast.LENGTH_SHORT).show();
+                            refreshProfiles();
+                        }
+                    });
+                }
+            });
+            describe(rm, "Deja el perfil sin código. Si se ha olvidado, se puede quitar desde la web del móvil, con el PIN.");
+            bs.add(rm);
+        }
+
+        Button cp = btn("Copiar ajustes de otro", R.drawable.ic_copy, new View.OnClickListener() {
+            public void onClick(View v) { copySettingsDialog(id, name); }
+        });
+        describe(cp, "Pone en este perfil los ajustes de otro (pase, mosaicos, transición, estilo, música, funciones extra…). No toca los álbumes, favoritas, ocultas, código, nombre ni icono.");
+        bs.add(cp);
+
+        if (!fam) {
+            Button del = btn("Borrar el perfil", R.drawable.ic_delete, new View.OnClickListener() {
+                public void onClick(View v) {
+                    PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
                         public void run() { confirmDeleteProfile(id, name); }
                     });
                 }
+            });
+            describe(del, "Borra el perfil con sus álbumes y todos sus ajustes. No se puede deshacer.");
+            bs.add(del);
+        }
+        for (int i = 0; i < bs.size(); i += 2) profilesCard.addView(row(bs.get(i), i + 1 < bs.size() ? bs.get(i + 1) : null));
+    }
+
+    /** Elige de qué perfil copiar los ajustes y avisa de lo que se cambia. */
+    private void copySettingsDialog(final int id, final String name) {
+        final List<String[]> others = new ArrayList<String[]>();
+        for (String[] p : Prefs.profiles(this)) if (!p[0].equals(String.valueOf(id))) others.add(p);
+        if (others.isEmpty()) {
+            Toast.makeText(this, "No hay otro perfil del que copiar.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String[] labs = new String[others.size()];
+        for (int i = 0; i < labs.length; i++) labs[i] = others.get(i)[1];
+        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Copiar a «" + name + "» los ajustes de…")
+            .setItems(labs, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface d, int which) {
+                    final int from = Integer.parseInt(others.get(which)[0]);
+                    final String fromName = others.get(which)[1];
+                    new AlertDialog.Builder(AjustesActivity.this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+                        .setTitle("¿Copiar los ajustes de «" + fromName + "»?")
+                        .setMessage("Los ajustes de «" + name + "» pasan a ser los de «" + fromName + "». Sus álbumes, favoritas, ocultas, código, nombre e icono no cambian.")
+                        .setPositiveButton("Copiar", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dd, int w) {
+                                PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
+                                    public void run() {
+                                        Prefs.copySettings(AjustesActivity.this, from, id);
+                                        Toast.makeText(AjustesActivity.this, "Ajustes de «" + name + "» copiados de «" + fromName + "».", Toast.LENGTH_LONG).show();
+                                        if (id == Prefs.profile(AjustesActivity.this)) { keepTopic = topicSel; recreate(); }
+                                        else refreshProfiles();
+                                    }
+                                });
+                            }
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+                }
             })
-            .setNegativeButton("Atrás", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface d, int w) { manageProfiles(); }
-            })
+            .setNegativeButton("Cancelar", null)
             .show();
     }
 
@@ -1137,14 +1382,14 @@ public class AjustesActivity extends SettingsBase {
         box.addView(grid);
         final AlertDialog dlg = new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK).setTitle("Icono de «" + name + "»").setView(box)
             .setNegativeButton("Atrás", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface d, int w) { manageProfiles(); }
+                public void onClick(DialogInterface d, int w) { refreshProfiles(); }
             }).create();
         grid.setOnItemClickListener(new android.widget.AdapterView.OnItemClickListener() {
             public void onItemClick(android.widget.AdapterView<?> a, View v, int i, long l) {
                 dlg.dismiss();
-                if (i < n) { Prefs.setProfileIcon(AjustesActivity.this, id, i); manageProfiles(); }
+                if (i < n) { Prefs.setProfileIcon(AjustesActivity.this, id, i); refreshProfiles(); }
                 else if (i == n) pickPhoto(id);
-                else { Prefs.clearProfileLook(AjustesActivity.this, id); manageProfiles(); }
+                else { Prefs.clearProfileLook(AjustesActivity.this, id); refreshProfiles(); }
             }
         });
         dlg.show();
@@ -1158,7 +1403,7 @@ public class AjustesActivity extends SettingsBase {
             startActivityForResult(in, 77);
         } catch (Throwable t) {
             Toast.makeText(this, "Este aparato no tiene selector de archivos. Puedes poner la foto desde la web del móvil (Perfil en uso).", Toast.LENGTH_LONG).show();
-            manageProfiles();
+            refreshProfiles();
         }
     }
 
@@ -1184,7 +1429,7 @@ public class AjustesActivity extends SettingsBase {
             } catch (Throwable ignored) { }
             Toast.makeText(this, ok ? "Foto puesta como icono." : "No se ha podido leer esa imagen.", Toast.LENGTH_SHORT).show();
         }
-        manageProfiles();
+        refreshProfiles();
     }
 
     private void confirmDeleteProfile(final int id, final String name) {
@@ -1195,8 +1440,7 @@ public class AjustesActivity extends SettingsBase {
                 public void onClick(DialogInterface d, int w) {
                     boolean wasCur = Prefs.profile(AjustesActivity.this) == id;
                     Prefs.deleteProfile(AjustesActivity.this, id);
-                    profilesBtn.setText(profilesLabel());
-                    if (wasCur) recreate(); else manageProfiles();
+                    if (wasCur) recreate(); else refreshProfiles();
                 }
             })
             .setNegativeButton("Cancelar", null)
@@ -1217,17 +1461,16 @@ public class AjustesActivity extends SettingsBase {
                 public void onClick(DialogInterface d, int w) {
                     String n = in.getText().toString().trim();
                     if (n.length() > 20) n = n.substring(0, 20);
-                    if (n.length() == 0) { manageProfiles(); return; }
+                    if (n.length() == 0) { refreshProfiles(); return; }
                     if (id < 0) {
                         int nid = Prefs.addProfile(AjustesActivity.this, n);
                         Toast.makeText(AjustesActivity.this, "Perfil «" + n + "» creado, vacío. Pulsa «Usar este perfil» para entrar y añadir sus álbumes.", Toast.LENGTH_LONG).show();
                     } else Prefs.renameProfile(AjustesActivity.this, id, n);
-                    profilesBtn.setText(profilesLabel());
-                    manageProfiles();
+                    refreshProfiles();
                 }
             })
             .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface d, int w) { manageProfiles(); }
+                public void onClick(DialogInterface d, int w) { refreshProfiles(); }
             })
             .show();
     }

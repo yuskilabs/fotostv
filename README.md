@@ -74,7 +74,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Actualización desde la propia app** (botón «Actualizar»).
 
 ### Dispositivos y extras
-- **Copiar de otra tele** (Ajustes › Casa y móvil): trae por la wifi los álbumes y ajustes de otra tele con FotosTV, escribiendo su dirección y su PIN. **Novedades**: lo que cambió en las últimas versiones. Las cámaras ya leídas de Estadísticas también viajan con la copia.
+- **Copiar de otra tele** (Ajustes › Móvil y otras teles): trae por la wifi los álbumes y ajustes de otra tele con FotosTV, escribiendo su dirección y su PIN. **Novedades** (Ajustes › Ayuda y mantenimiento): lo que cambió en las últimas versiones. Las cámaras ya leídas de Estadísticas también viajan con la copia.
 - **Buscar con la voz**: en «Buscar», el botón del micrófono dicta la búsqueda con el reconocimiento de voz de la tele (mando con micrófono).
 - **Inicio automático** del pase tras 1, 2, 5, 10, 15 o 30 minutos sin tocar el mando (pensado para Fire TV) y **cierre automático** del pase pasado un rato (5 min a 2 h, o nunca), por si la tele se apaga.
 - **Fondo de pantalla para Projectivy Launcher** con fotos (y opcionalmente vídeos) de tus álbumes.
@@ -83,7 +83,6 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde la 7.4 ya no hay pantalla aparte). Todas vienen **apagadas**: con todo apagado, la app funciona igual que antes, y al apagar una vuelve a ser como era. Al pasar con el mando por cada botón, abajo se explica qué hace.
 
 **Pantalla del pase**
-- **Estilos** (en «Pase de fotos»): «Tranquilo» (lento, sin mosaicos, zoom suave), «Fiesta» (rápido, muchos mosaicos, cortinilla) o «Solo recuerdos» (fotos de esta semana de otros años). Cambian de golpe orden, tiempo, movimiento, mosaicos, transición, recuerdos e información; se guardan en cada perfil, pasan a «Personalizado» si cambias algo a mano y «Deshacer estilo» devuelve todo a como estaba.
 - **Transición**: fundido, corte o cortinilla (la foto nueva aparece desde la derecha).
 - **Tiempo**: temperatura y cielo de tu ciudad junto a la hora (Open-Meteo, cada media hora). La ciudad se escribe en «Ciudad».
 - **Recuerdos de hoy**: «solo» (el salvapantallas enseña únicamente fotos de un día como hoy de años anteriores, si hay al menos 5) o «mezclados» (esas salen antes, una sí y una no, y también se ven todas las demás; con orden aleatorio o inteligente). Con «hace N años» junto a la fecha. **Semana entera** amplía los recuerdos a los 3 días antes y después de hoy.
@@ -115,10 +114,11 @@ Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde l
 - **Fotos repetidas**: con pulsación larga en un álbum, «Buscar repetidas» marca las casi iguales hechas seguidas para ocultarlas de una vez (se queda la primera de cada grupo).
 - **Estadísticas** (botón en la pantalla principal): fotos por año, lugar, álbum y cámara; cada fila abre sus fotos. «Leer cámaras» averigua la cámara de las fotos que aún no la tienen.
 
-**Casa y móvil**
-- **Perfiles**: «Familia» (el de siempre) y los perfiles que añadas en Ajustes → Casa y móvil → Perfiles, cada uno con sus álbumes, ajustes, PIN y web de configuración; los nuevos empiezan vacíos. En la pantalla principal, a la derecha del QR, hay un icono cuadrado con el nombre del perfil en uso; al pulsarlo se pasa al siguiente y cambian el QR y el PIN. «Familia» lleva un icono de familia y los demás, uno de una sola persona (cambiable). El icono se elige de una muestra o con una foto de un archivo (también desde la web del móvil, donde además se cambia el nombre del perfil en uso). Cada perfil puede llevar un **código de 4 cifras** (se pone en Perfiles, con el mando: arriba/abajo cambian la cifra, derecha avanza, OK confirma) que se pide al pasar a ese perfil; con códigos, el icono abre una lista de perfiles. Si se olvida, se pone otro o se quita desde la web del móvil, en «Perfil en uso». La copia de seguridad incluye todos los perfiles, con su nombre, icono y código (solo la huella).
+**Perfiles, móvil y otras teles**
+- **Perfiles**: «Familia» (el de siempre) y los perfiles que añadas en Ajustes → Perfiles, cada uno con sus álbumes, ajustes, PIN y web de configuración; los nuevos empiezan vacíos. En la pantalla principal, a la derecha del QR, hay un icono cuadrado con el nombre del perfil en uso; al pulsarlo se pasa al siguiente y cambian el QR y el PIN. «Familia» lleva un icono de familia y los demás, uno de una sola persona (cambiable). El icono se elige de una muestra o con una foto de un archivo (también desde la web del móvil, donde además se cambia el nombre del perfil en uso). Cada perfil puede llevar un **código de 4 cifras** (se pone en Perfiles, con el mando: arriba/abajo cambian la cifra, derecha avanza, OK confirma) que se pide al pasar a ese perfil; con códigos, el icono abre una lista de perfiles. Si se olvida, se pone otro o se quita desde la web del móvil, en «Perfil en uso». La copia de seguridad incluye todos los perfiles, con su nombre, icono y código (solo la huella).
 - **Mando del móvil**: la web de ajustes enseña un mando (anterior, pausa, siguiente) para el pase que esté en marcha.
-- **Recargar álbumes**: cada 6, 12 o 24 horas vuelve a leer los álbumes de Google mientras la app o el salvapantallas estén en marcha.
+- **Recargar álbumes** (Ajustes › Móvil y otras teles): cada 6, 12 o 24 horas vuelve a leer los álbumes de Google mientras la app o el salvapantallas estén en marcha.
+- **Ayuda y mantenimiento** (Ajustes): **Buscar actualización** (si hay una nueva, enseña aquí mismo qué trae y un botón para instalarla; si no, «Última versión»), Novedades, Diagnóstico, Revisar ubicaciones y Rehacer nombres.
 
 ## Instalación
 
@@ -249,7 +249,7 @@ src/com/yuskilabs/fotostv/
   GeoIndex, GeoService       índice de ubicaciones en segundo plano
   AjustesActivity, SettingsBase   pantalla de ajustes única: temas a la izquierda, panel a la derecha (y piezas comunes)
   Extras                     claves de las funciones extra (7.0)
-  Presets                    estilos del pase (Tranquilo, Fiesta, Solo recuerdos), con vuelta al estado inicial
+  Presets                    estilos del pase (aparcado: ya no sale en Ajustes; se conserva por si se retoma)
   TvCopy                     copiar los ajustes de otra tele por la red (con su dirección y PIN)
   Novedades                  lo nuevo de las últimas versiones (botón en Ajustes)
   CalendarDialog             calendario mensual de «Ir a la fecha» (7.4)

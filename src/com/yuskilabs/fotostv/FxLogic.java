@@ -208,18 +208,21 @@ final class FxLogic {
             m.put("fx_mosaics", "off"); m.put("fx_transition", "fade");
             m.put("fx_today", false); m.put("fx_todayMix", false); m.put("fx_todayWeek", false);
             m.put("showAlbum", false); m.put("showPlace", true); m.put("showDate", true);
+            m.put("musicMode", "radio"); m.put("musicRadio", "https://stream.antenne.de/relax/stream/mp3");   // Relax Pop
         } else if ("party".equals(id)) {
             m.put("order", "random"); m.put("interval", 10);
             m.put("fx_kenBurns", true); m.put("fx_kbStyle", "mix"); m.put("fx_kbSpeed", "normal");
             m.put("fx_mosaics", "many"); m.put("fx_transition", "wipe");
             m.put("fx_today", false); m.put("fx_todayMix", false); m.put("fx_todayWeek", false);
             m.put("showAlbum", true); m.put("showPlace", true); m.put("showDate", true);
+            m.put("musicMode", "radio"); m.put("musicRadio", "https://stream.antenne.de/party-hits/stream/mp3");   // Fiesta Pop
         } else if ("memories".equals(id)) {
             m.put("order", "smart"); m.put("interval", 30);
             m.put("fx_kenBurns", true); m.put("fx_kbStyle", "mix"); m.put("fx_kbSpeed", "slow");
             m.put("fx_mosaics", "few"); m.put("fx_transition", "fade");
             m.put("fx_today", true); m.put("fx_todayMix", false); m.put("fx_todayWeek", true);
             m.put("showAlbum", true); m.put("showPlace", true); m.put("showDate", true);
+            m.put("musicMode", "radio"); m.put("musicRadio", "https://stream.antenne.de/oldie-antenne/stream/mp3");   // Oldies 70-80-90
         }
         return m;
     }

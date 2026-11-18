@@ -464,7 +464,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
             public void onClick(View v) {
                 java.util.List<String[]> l = Prefs.profiles(SettingsActivity.this);
                 if (l.size() < 2) {
-                    Toast.makeText(SettingsActivity.this, "Solo hay el perfil «Familia». Añade más en Ajustes → Casa y móvil → Perfiles.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(SettingsActivity.this, "Solo hay el perfil «Familia». Añade más en Ajustes → Perfiles.", Toast.LENGTH_LONG).show();
                     return;
                 }
                 if (Prefs.anyCode(SettingsActivity.this)) {

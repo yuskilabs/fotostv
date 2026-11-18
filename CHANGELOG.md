@@ -3,6 +3,12 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.27
+- Ajustes reorganizado y más claro. Temas: Pase de fotos (qué fotos salen y cuándo), Aspecto del pase (transición, mosaicos, encuadre, movimiento, velocidad, bordes y relleno), Información, Salvapantallas y noche, Música, Vídeo y caché, Explorador, Perfiles, Móvil y otras teles y Ayuda y mantenimiento.
+- Perfiles tiene su propio tema: lista con icono, nombre y estado de cada perfil, y una ficha con Usar, Nombre, Icono o foto, Código, Copiar ajustes de otro perfil y Borrar. «Copiar ajustes de otro» trae todos los ajustes sin tocar álbumes, favoritas, ocultas, código, nombre ni icono.
+- Ayuda y mantenimiento: «Buscar actualización» (al abrir comprueba sola); si hay versión nueva enseña qué trae y un botón para instalarla, y si no, «Última versión». Aquí también están Novedades, Diagnóstico, Revisar ubicaciones y Rehacer nombres.
+- Se quitan los «Estilos» del pase (Tranquilo, Fiesta, Solo recuerdos); sus ajustes se mantienen como estaban.
+
 ## 7.26
 - Perfiles: cada perfil (también «Familia») puede tener un código de 4 cifras para entrar. Se pone, cambia o quita en Ajustes › Casa y móvil › Perfiles, y se teclea con el mando (arriba y abajo cambian la cifra, derecha pasa a la siguiente, OK confirma).
 - Se pide al pasar a ese perfil (icono junto al QR o «Usar este perfil»), y también para cambiar o quitar el código, borrar el perfil o desactivar los perfiles. Con códigos, el icono del perfil abre una lista para elegir en vez de pasar al siguiente.
