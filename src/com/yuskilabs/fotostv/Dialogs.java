@@ -40,6 +40,52 @@ final class Dialogs {
         b.setAdapter(ad, l).show();
     }
 
+    /**
+     * Para diálogos con una lista y botones abajo: con izquierda o derecha en la lista, el foco salta al botón de abajo (Aceptar si lo hay);
+     * y con izquierda o derecha más allá del último botón por ese lado, vuelve a la fila de la lista donde estaba.
+     */
+    static android.app.AlertDialog edgeKeys(final android.app.AlertDialog dlg) {
+        try {
+            final android.widget.ListView lv = dlg.getListView();
+            if (lv == null) return dlg;
+            final android.widget.Button[] bs = new android.widget.Button[3];
+            int[] ids = {android.app.AlertDialog.BUTTON_NEUTRAL, android.app.AlertDialog.BUTTON_NEGATIVE, android.app.AlertDialog.BUTTON_POSITIVE};
+            final java.util.List<android.widget.Button> vis = new java.util.ArrayList<android.widget.Button>();
+            for (int i = 0; i < 3; i++) {
+                bs[i] = dlg.getButton(ids[i]);
+                if (bs[i] != null && bs[i].getVisibility() == android.view.View.VISIBLE) vis.add(bs[i]);
+            }
+            if (vis.isEmpty()) return dlg;
+            final android.widget.Button target = bs[2] != null && bs[2].getVisibility() == android.view.View.VISIBLE ? bs[2] : vis.get(vis.size() - 1);
+            final int[] back = {0};
+            lv.setOnKeyListener(new android.view.View.OnKeyListener() {
+                public boolean onKey(android.view.View v, int code, android.view.KeyEvent ev) {
+                    if (code != android.view.KeyEvent.KEYCODE_DPAD_LEFT && code != android.view.KeyEvent.KEYCODE_DPAD_RIGHT) return false;
+                    if (ev.getAction() == android.view.KeyEvent.ACTION_DOWN) {
+                        back[0] = Math.max(0, lv.getSelectedItemPosition());
+                        target.requestFocus();
+                    }
+                    return true;
+                }
+            });
+            final android.widget.Button first = vis.get(0), last = vis.get(vis.size() - 1);
+            android.view.View.OnKeyListener bk = new android.view.View.OnKeyListener() {
+                public boolean onKey(android.view.View v, int code, android.view.KeyEvent ev) {
+                    boolean out = (code == android.view.KeyEvent.KEYCODE_DPAD_LEFT && v == first)
+                        || (code == android.view.KeyEvent.KEYCODE_DPAD_RIGHT && v == last);
+                    if (!out) return false;
+                    if (ev.getAction() == android.view.KeyEvent.ACTION_DOWN) {
+                        lv.requestFocus();
+                        lv.setSelection(Math.min(back[0], Math.max(0, lv.getCount() - 1)));
+                    }
+                    return true;
+                }
+            };
+            for (android.widget.Button b : vis) b.setOnKeyListener(bk);
+        } catch (Throwable t) { /* sin el atajo, el diálogo se maneja como siempre */ }
+        return dlg;
+    }
+
     interface NameDone { void done(String name); }
 
     static void askName(android.content.Context ctx, String title, String current, final NameDone done) {

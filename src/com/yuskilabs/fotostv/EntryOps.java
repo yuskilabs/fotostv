@@ -27,7 +27,7 @@ final class EntryOps {
             v.title = d[0];
             v.query = d[1];
             v.url = "virtual:" + d[1];
-            v.src = Search.runSuggestion(all, places, d[1]);
+            v.src = Search.runSuggestion(c, all, places, d[1]);
             v.items = v.src;
             out.add(v);
         }

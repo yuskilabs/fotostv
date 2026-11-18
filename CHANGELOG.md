@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.30
+- Filtrar: en las listas de valores (Año, Mes…), izquierda o derecha lleva el foco a los botones de abajo (Aceptar), y otra vez izquierda o derecha desde el borde de los botones lo devuelve a la fila donde estabas. Igual en los demás menús de lista con botones (lugar del salvapantallas, carpeta de música, copiar ajustes, elegir perfil).
+- Filtrar: «Ver fotos» ahora es un botón verde grande y centrado, y «Quitar filtros» uno rojizo a su lado.
+- Lo filtrado se puede guardar como álbum virtual: en el mosaico sale el botón «Guardar», igual que en las búsquedas, y el álbum se actualiza solo.
+
 ## 7.29
 - Estadísticas y Filtrar enseñan «Cargando…» con una rueda que gira mientras cuentan las fotos (con muchas fotos tardan unos segundos), en vez de quedarse parados.
 

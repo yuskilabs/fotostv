@@ -112,7 +112,7 @@ Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde l
 - **Varias portadas**: «Añadir a portadas» en varias fotos; cada vez que entras en los álbumes sale una de ellas.
 - **Marcar nuevas**: las fotos añadidas al álbum desde la última vez que lo abriste llevan «NUEVA», y el álbum dice cuántas hay.
 - **Fotos repetidas**: con pulsación larga en un álbum, «Buscar repetidas» marca las casi iguales hechas seguidas para ocultarlas de una vez (se queda la primera de cada grupo).
-- **Estadísticas** (botón en la pantalla principal): fotos por año, lugar, álbum y cámara; cada fila abre sus fotos. El botón **Filtrar** combina año, mes, día, región, localidad, álbum, cámara y autor, eligiendo varios valores en cada uno (dentro de una categoría suman; entre categorías se exige todo), con el número de fotos de cada valor y «Ver fotos (N)». «Leer cámaras» averigua la cámara de las fotos que aún no la tienen y está en Ajustes › Ayuda y mantenimiento.
+- **Estadísticas** (botón en la pantalla principal): fotos por año, lugar, álbum y cámara; cada fila abre sus fotos. El botón **Filtrar** combina año, mes, día, región, localidad, álbum, cámara y autor, eligiendo varios valores en cada uno (dentro de una categoría suman; entre categorías se exige todo), con el número de fotos de cada valor y «Ver fotos (N)»; lo filtrado se guarda como álbum virtual con «Guardar» en el mosaico. En las listas, izquierda/derecha salta a los botones de abajo y vuelve. «Leer cámaras» averigua la cámara de las fotos que aún no la tienen y está en Ajustes › Ayuda y mantenimiento.
 
 **Perfiles, móvil y otras teles**
 - **Perfiles**: «Familia» (el de siempre) y los perfiles que añadas en Ajustes → Perfiles, cada uno con sus álbumes, ajustes, PIN y web de configuración; los nuevos empiezan vacíos. En la pantalla principal, a la derecha del QR, hay un icono cuadrado con el nombre del perfil en uso; al pulsarlo se pasa al siguiente y cambian el QR y el PIN. «Familia» lleva un icono de familia y los demás, uno de una sola persona (cambiable). El icono se elige de una muestra o con una foto de un archivo (también desde la web del móvil, donde además se cambia el nombre del perfil en uso). Cada perfil puede llevar un **código de 4 cifras** (se pone en Perfiles, con el mando: arriba/abajo cambian la cifra, derecha avanza, OK confirma) que se pide al pasar a ese perfil; con códigos, el icono abre una lista de perfiles. Si se olvida, se pone otro o se quita desde la web del móvil, en «Perfil en uso». La copia de seguridad incluye todos los perfiles, con su nombre, icono y código (solo la huella).
@@ -256,7 +256,7 @@ src/com/yuskilabs/fotostv/
   FxLogic                    lógica pura de las funciones extra (noche, búsqueda, viajes, repetidas…)
   SearchActivity, Search     buscar por lugar, álbum o fecha
   TripsActivity, StatsActivity, CamScan   viajes y estadísticas (con la cámara de cada foto)
-  FilterActivity             pantalla Filtrar: varios valores por categoría
+  FilterActivity, FilterData pantalla Filtrar y su lógica (también para álbumes virtuales de filtros)
   Weather                    tiempo de la ciudad elegida (Open-Meteo)
   Guest                      álbumes de invitados
   IdleService                inicio automático (servicio de accesibilidad)

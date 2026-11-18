@@ -724,7 +724,7 @@ public class AjustesActivity extends SettingsBase {
                 && checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             try { requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, 8); } catch (Throwable ignored) { }
         }
-        new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+        Dialogs.edgeKeys(new android.app.AlertDialog.Builder(this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle("Carpeta de música")
             .setItems(fs.toArray(new String[0]), new android.content.DialogInterface.OnClickListener() {
                 public void onClick(android.content.DialogInterface d, int w) {
@@ -732,7 +732,7 @@ public class AjustesActivity extends SettingsBase {
                     refreshMusic();
                 }
             })
-            .setNegativeButton("Cancelar", null).show();
+            .setNegativeButton("Cancelar", null).show());
     }
 
 
@@ -998,7 +998,7 @@ public class AjustesActivity extends SettingsBase {
         }
         String[] labels = new String[rows.size()];
         for (int i = 0; i < labels.length; i++) labels[i] = rows.get(i)[0];
-        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+        Dialogs.edgeKeys(new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle("Salvapantallas de un solo lugar")
             .setItems(labels, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface d, int w) {
@@ -1008,7 +1008,7 @@ public class AjustesActivity extends SettingsBase {
                 }
             })
             .setNegativeButton("Cancelar", null)
-            .show();
+            .show());
     }
 
     // ---- lectura de cámaras en segundo plano (antes en Estadísticas)
@@ -1393,7 +1393,7 @@ public class AjustesActivity extends SettingsBase {
         }
         String[] labs = new String[others.size()];
         for (int i = 0; i < labs.length; i++) labs[i] = others.get(i)[1];
-        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+        Dialogs.edgeKeys(new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle("Copiar a «" + name + "» los ajustes de…")
             .setItems(labs, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface d, int which) {
@@ -1419,7 +1419,7 @@ public class AjustesActivity extends SettingsBase {
                 }
             })
             .setNegativeButton("Cancelar", null)
-            .show();
+            .show());
     }
 
     private int pickId = -1;

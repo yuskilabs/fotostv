@@ -31,7 +31,7 @@ public class FilterActivity extends SettingsBase {
     private static final String[] CATS = {"Año", "Mes", "Día", "Región", "Localidad", "Álbum", "Cámara", "Autor"};
     private static final int[] ICONS = {R.drawable.ic_date_range, R.drawable.ic_event, R.drawable.ic_schedule, R.drawable.ic_map,
         R.drawable.ic_place, R.drawable.ic_albums, R.drawable.ic_camera, R.drawable.ic_person};
-    private static final int N = 8;
+    private static final int N = FilterData.N;
 
     private final Handler h = new Handler(Looper.getMainLooper());
     private final ExecutorService bg = Executors.newSingleThreadExecutor();
@@ -78,7 +78,21 @@ public class FilterActivity extends SettingsBase {
                 refresh();
             }
         });
-        root.addView(row(viewBtn, clearBtn));
+        style(viewBtn, 0xFF1E9E5A, 0xFF35C97A);
+        style(clearBtn, 0xFF5A2B33, 0xFFC0392B);
+        viewBtn.setGravity(android.view.Gravity.CENTER);
+        clearBtn.setGravity(android.view.Gravity.CENTER);
+        viewBtn.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 18);
+        LinearLayout act = new LinearLayout(this);
+        act.setOrientation(LinearLayout.HORIZONTAL);
+        act.setGravity(android.view.Gravity.CENTER);
+        LinearLayout.LayoutParams vp = new LinearLayout.LayoutParams(0, dp(56), 2f);
+        vp.setMargins(0, 0, dp(8), 0);
+        act.addView(viewBtn, vp);
+        act.addView(clearBtn, new LinearLayout.LayoutParams(0, dp(56), 1f));
+        LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(-1, -2);
+        ap.topMargin = dp(10);
+        root.addView(act, ap);
         TextView hint = text("Dentro de una categoría los valores suman (2024 y 2025); entre categorías se piden todas (2025 y Zahara). "
             + "Cámara y autor solo salen en las fotos con la cámara ya leída (Ajustes › Ayuda y mantenimiento › Leer cámaras).", 12, 0xFF9FB3C8);
         hint.setPadding(dp(4), dp(10), dp(4), 0);
@@ -86,9 +100,32 @@ public class FilterActivity extends SettingsBase {
         load();
     }
 
-    private static String nodata(int cat) { return cat <= 2 ? "Sin fecha" : "Sin dato"; }
+    /** Botón con color propio (fuera de la rejilla de categorías): un color en reposo y otro, con borde blanco, al tener el foco. */
+    private void style(Button b, int rest, int focus) {
+        android.graphics.drawable.GradientDrawable on = new android.graphics.drawable.GradientDrawable();
+        on.setColor(focus);
+        on.setCornerRadius(dp(8));
+        on.setStroke(dp(3), Color.WHITE);
+        android.graphics.drawable.GradientDrawable off = new android.graphics.drawable.GradientDrawable();
+        off.setColor(rest);
+        off.setCornerRadius(dp(8));
+        android.graphics.drawable.GradientDrawable dis = new android.graphics.drawable.GradientDrawable();
+        dis.setColor(0xFF1B2A3D);
+        dis.setCornerRadius(dp(8));
+        android.graphics.drawable.StateListDrawable sl = new android.graphics.drawable.StateListDrawable();
+        sl.addState(new int[]{-android.R.attr.state_enabled}, dis);
+        sl.addState(new int[]{android.R.attr.state_focused}, on);
+        sl.addState(new int[]{android.R.attr.state_pressed}, on);
+        sl.addState(new int[]{}, off);
+        b.setBackground(sl);
+        b.setTextColor(new android.content.res.ColorStateList(
+            new int[][]{{-android.R.attr.state_enabled}, {}}, new int[]{0xFF6F7F92, Color.WHITE}));
+        b.setTypeface(Ui.BLACK);
+    }
 
-    private static String cap(String s) { return s.length() == 0 ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1); }
+    private static String nodata(int cat) { return FilterData.nodata(cat); }
+
+    private static String cap(String s) { return FilterData.cap(s); }
 
     /** Datos de cada foto por categoría, calculados una vez. */
     private void load() {
@@ -99,32 +136,7 @@ public class FilterActivity extends SettingsBase {
                 try {
                     a = Search.allVisible(FilterActivity.this);
                     HashMap<String, String> places = Search.places(FilterActivity.this);   // también deja listos los autores
-                    HashMap<String, String> cams;
-                    try { cams = GeoIndex.get(FilterActivity.this).camMap(); } catch (Throwable e) { cams = new HashMap<String, String>(); }
-                    int n = a.size();
-                    t = new String[N][n];
-                    Calendar cal = Calendar.getInstance();
-                    for (int i = 0; i < n; i++) {
-                        Item it = a.get(i);
-                        if (it.ts > 0) {
-                            cal.setTimeInMillis(it.ts);
-                            t[0][i] = String.valueOf(cal.get(Calendar.YEAR));
-                            t[1][i] = cap(FxLogic.MONTHS[cal.get(Calendar.MONTH)]);
-                            t[2][i] = String.valueOf(cal.get(Calendar.DAY_OF_MONTH));
-                        } else { t[0][i] = nodata(0); t[1][i] = nodata(1); t[2][i] = nodata(2); }
-                        String p = places.get(it.key());
-                        if (p == null || p.length() == 0 || "Sin nombre".equals(p)) { t[3][i] = nodata(3); t[4][i] = nodata(4); }
-                        else {
-                            String rg = FxLogic.regionOf(p), tw = FxLogic.townOf(p);
-                            t[3][i] = rg == null ? nodata(3) : rg;
-                            t[4][i] = tw == null ? nodata(4) : tw;
-                        }
-                        t[5][i] = it.album == null || it.album.length() == 0 ? nodata(5) : it.album;
-                        String cm = cams.get(it.key());
-                        t[6][i] = cm == null || cm.length() == 0 ? nodata(6) : cm;
-                        String au = Search.authorOf(it.key());
-                        t[7][i] = au == null || au.length() == 0 ? nodata(7) : au;
-                    }
+                    t = FilterData.attrs(FilterActivity.this, a, places);
                 } catch (Throwable e) {
                     Diag.e("filtrar", e);
                     a = new ArrayList<Item>();
@@ -155,14 +167,7 @@ public class FilterActivity extends SettingsBase {
     }
 
     /** ¿La foto i cumple todas las categorías menos «skip»? (-1: todas) */
-    private static boolean matches(String[][] t, List<Set<String>> s, int i, int skip) {
-        for (int k = 0; k < N; k++) {
-            if (k == skip) continue;
-            Set<String> x = s.get(k);
-            if (!x.isEmpty() && !x.contains(t[k][i])) return false;
-        }
-        return true;
-    }
+    private static boolean matches(String[][] t, List<Set<String>> s, int i, int skip) { return FilterData.matches(t, s, i, skip); }
 
     /** Pone los textos de los botones y cuenta las fotos que quedan. */
     private void refresh() {
@@ -279,7 +284,7 @@ public class FilterActivity extends SettingsBase {
             labs[i] = vals.get(i) + "   (" + n(c == null ? 0 : c) + ")";
             on[i] = sel.get(cat).contains(vals.get(i));
         }
-        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+        Dialogs.edgeKeys(new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle(CATS[cat])
             .setMultiChoiceItems(labs, on, new DialogInterface.OnMultiChoiceClickListener() {
                 public void onClick(DialogInterface d, int which, boolean checked) { on[which] = checked; }
@@ -296,7 +301,7 @@ public class FilterActivity extends SettingsBase {
                 public void onClick(DialogInterface d, int w) { sel.get(cat).clear(); refresh(); }
             })
             .setNegativeButton("Cancelar", null)
-            .show();
+            .show());
     }
 
     /** Abre el mosaico con las fotos que cumplen el filtro, de la más reciente a la más antigua. */
@@ -305,6 +310,9 @@ public class FilterActivity extends SettingsBase {
         final List<Item> a = all;
         if (t == null || a == null) return;
         final List<Set<String>> s = snapshot();
+        boolean anySel = false;
+        for (Set<String> x : s) if (!x.isEmpty()) anySel = true;
+        final String query = anySel ? FilterData.encode(s) : null;
         final StringBuilder title = new StringBuilder();
         for (int i = 0; i < N; i++) {
             if (sel.get(i).isEmpty()) continue;
@@ -320,7 +328,7 @@ public class FilterActivity extends SettingsBase {
                 });
                 h.post(new Runnable() {
                     public void run() {
-                        if (!destroyed) openMosaic(title.length() > 0 ? title.toString() : "Todas las fotos", out, null);
+                        if (!destroyed) openMosaic(title.length() > 0 ? title.toString() : "Todas las fotos", out, query);
                     }
                 });
             }

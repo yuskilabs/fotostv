@@ -1,6 +1,6 @@
 {
-  "version": "7.29",
+  "version": "7.30",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 944411,
-  "notes": "- Estadísticas y Filtrar enseñan «Cargando…» con una rueda que gira mientras cuentan las fotos (con muchas fotos tardan unos segundos), en vez de quedarse parados."
+  "notes": "- Filtrar: en las listas de valores (Año, Mes…), izquierda o derecha lleva el foco a los botones de abajo (Aceptar), y otra vez izquierda o derecha desde el borde de los botones lo devuelve a la fila donde estabas. Igual en los demás menús de lista con botones (lugar del salvapantallas, carpeta de música, copiar ajustes, elegir perfil).\n- Filtrar: «Ver fotos» ahora es un botón verde grande y centrado, y «Quitar filtros» uno rojizo a su lado.\n- Lo filtrado se puede guardar como álbum virtual: en el mosaico sale el botón «Guardar», igual que en las búsquedas, y el álbum se actualiza solo."
 }

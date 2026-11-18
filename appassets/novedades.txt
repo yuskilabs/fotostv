@@ -1,3 +1,8 @@
+## 7.30
+- Filtrar: en las listas de valores (Año, Mes…), izquierda o derecha lleva el foco a los botones de abajo (Aceptar), y otra vez izquierda o derecha desde el borde de los botones lo devuelve a la fila donde estabas. Igual en los demás menús de lista con botones (lugar del salvapantallas, carpeta de música, copiar ajustes, elegir perfil).
+- Filtrar: «Ver fotos» ahora es un botón verde grande y centrado, y «Quitar filtros» uno rojizo a su lado.
+- Lo filtrado se puede guardar como álbum virtual: en el mosaico sale el botón «Guardar», igual que en las búsquedas, y el álbum se actualiza solo.
+
 ## 7.29
 - Estadísticas y Filtrar enseñan «Cargando…» con una rueda que gira mientras cuentan las fotos (con muchas fotos tardan unos segundos), en vez de quedarse parados.
 
@@ -38,7 +43,4 @@
 - Los iconos de cada pantalla ya no se repiten (Ajustes, menús del explorador, ficha de información), con iconos nuevos.
 - Buscar: «Siguiente» en el teclado ya no abre nada después por su cuenta; si hay opciones debajo, pasa a elegirlas.
 - Por dentro: pruebas automáticas de la lógica en `tools/test` (`./tools/test/run.sh`).
-
-## 7.22
-- Por dentro: las acciones del explorador (menús de álbum y de foto, selección, mover, renombrar, borrar, buscar repetidas y recargar) pasan a su propio archivo. El explorador queda en la mitad de líneas. Todo funciona igual.
 

@@ -133,6 +133,11 @@ final class Search {
     }
 
     /** Lanza una sugerencia: búsqueda normal, o un lugar / álbum exacto (con la fecha si la había). */
+    static List<Item> runSuggestion(Context c, List<Item> all, Map<String, String> placeOf, String s) {
+        if (s.length() > 0 && s.charAt(0) == FilterData.PREFIX) return FilterData.run(c, all, placeOf, s);
+        return runSuggestion(all, placeOf, s);
+    }
+
     static List<Item> runSuggestion(List<Item> all, Map<String, String> placeOf, String s) {
         if (s.length() > 0 && (s.charAt(0) == '\u0001' || s.charAt(0) == '\u0002' || s.charAt(0) == '\u0003')) {
             boolean place = s.charAt(0) == '\u0001', auth = s.charAt(0) == '\u0003';

@@ -474,7 +474,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                         labs[i] = l.get(i)[1] + (l.get(i)[0].equals(String.valueOf(cur)) ? "   (en uso)" : "")
                             + (Prefs.hasCode(SettingsActivity.this, Integer.parseInt(l.get(i)[0])) ? "   (con código)" : "");
                     final java.util.List<String[]> ll = l;
-                    new android.app.AlertDialog.Builder(SettingsActivity.this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+                    Dialogs.edgeKeys(new android.app.AlertDialog.Builder(SettingsActivity.this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                         .setTitle("Perfil")
                         .setItems(labs, new android.content.DialogInterface.OnClickListener() {
                             public void onClick(android.content.DialogInterface dd, int which) {
@@ -483,7 +483,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                             }
                         })
                         .setNegativeButton("Cancelar", null)
-                        .show();
+                        .show());
                     return;
                 }
                 int nx = (Prefs.profileIndex(SettingsActivity.this, cur) + 1) % l.size();
