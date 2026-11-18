@@ -748,7 +748,9 @@ public class AjustesActivity extends SettingsBase {
         final android.widget.EditText ip = new android.widget.EditText(this);
         ip.setSingleLine(true);
         ip.setHint("Dirección, por ejemplo 192.168.1.20");
-        ip.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
+        ip.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        ip.setText("192.168.1.");
+        ip.setSelection(ip.getText().length());
         final android.widget.EditText pin = new android.widget.EditText(this);
         pin.setSingleLine(true);
         pin.setHint("PIN de la otra tele");

@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.24
+- Copiar de otra tele: el campo de la dirección sale con el teclado de letras (que sí tiene el punto) y ya escrito «192.168.1.», para completar solo el final.
+
 ## 7.23
 - Estilos del pase: «Tranquilo», «Fiesta» y «Solo recuerdos» cambian de golpe los ajustes del pase. Se guardan en cada perfil, pasan a «Personalizado» si cambias algo a mano y «Deshacer estilo» lo devuelve todo a como estaba.
 - Buscar con la voz: botón con micrófono en «Buscar» (usa el dictado de la tele); el texto dictado sale en el campo con sus opciones.

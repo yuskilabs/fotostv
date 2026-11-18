@@ -1,3 +1,6 @@
+## 7.24
+- Copiar de otra tele: el campo de la dirección sale con el teclado de letras (que sí tiene el punto) y ya escrito «192.168.1.», para completar solo el final.
+
 ## 7.23
 - Estilos del pase: «Tranquilo», «Fiesta» y «Solo recuerdos» cambian de golpe los ajustes del pase. Se guardan en cada perfil, pasan a «Personalizado» si cambias algo a mano y «Deshacer estilo» lo devuelve todo a como estaba.
 - Buscar con la voz: botón con micrófono en «Buscar» (usa el dictado de la tele); el texto dictado sale en el campo con sus opciones.
@@ -38,7 +41,4 @@
 
 ## 7.17
 - Por dentro: el explorador sigue repartiéndose en piezas (aviso de «trabajando…», búsqueda de repetidas) y se ha quitado un repaso de marcas de vídeo al desplazarse que ya no hacía nada. Todo funciona igual.
-
-## 7.16
-- Por dentro: el explorador de álbumes se reparte en piezas más pequeñas (entradas, casillas, icono giratorio y funciones sueltas). Todo funciona igual.
 
