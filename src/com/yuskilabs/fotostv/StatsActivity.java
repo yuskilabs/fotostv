@@ -31,14 +31,18 @@ public class StatsActivity extends SettingsBase {
     private final List<List<List<Item>>> rowItems = new ArrayList<List<List<Item>>>();
     private final List<ListView> lists = new ArrayList<ListView>();
     private TextView info, camInfo;
+    private View loading;
     private volatile boolean destroyed;
     private static final String[] TITLES = {"Por año", "Lugares", "Álbumes", "Cámaras"};
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         LinearLayout root = screen("Estadísticas", "Elige una fila para ver esas fotos, o pulsa Filtrar para combinar varios datos.", R.drawable.ic_stats);
-        info = text("Contando…", 14, Color.WHITE);
+        loading = loadingRow("Cargando… con muchas fotos puede tardar unos segundos");
+        root.addView(loading);
+        info = text("", 14, Color.WHITE);
         info.setPadding(0, 0, 0, dp(10));
+        info.setVisibility(View.GONE);
         root.addView(info);
         Button filterBtn = btn("Filtrar", R.drawable.ic_tune, new View.OnClickListener() {
             public void onClick(View v) { startActivity(new android.content.Intent(StatsActivity.this, FilterActivity.class)); }
@@ -160,6 +164,8 @@ public class StatsActivity extends SettingsBase {
 
     private void show(Data d) {
         String since = d.first < Long.MAX_VALUE ? " · desde " + new java.text.SimpleDateFormat("yyyy", MetaFetcher.ES).format(new java.util.Date(d.first)) : "";
+        loading.setVisibility(View.GONE);
+        info.setVisibility(View.VISIBLE);
         info.setText(n(d.total) + " fotos y vídeos" + since + " · " + n(d.located) + " con lugar · " + n(d.dated) + " con fecha");
         for (int i = 0; i < d.cols.size(); i++) {
             List<String[]> rows = shown.get(i);

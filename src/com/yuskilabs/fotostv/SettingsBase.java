@@ -15,6 +15,21 @@ import android.widget.TextView;
 public abstract class SettingsBase extends Activity {
     protected int dp(int v) { return (int) (v * getResources().getDisplayMetrics().density + 0.5f); }
 
+    /** Fila «Cargando…» con rueda que gira; se quita con setVisibility(GONE) al terminar. */
+    protected LinearLayout loadingRow(String msg) {
+        LinearLayout r = new LinearLayout(this);
+        r.setOrientation(LinearLayout.HORIZONTAL);
+        r.setGravity(Gravity.CENTER_VERTICAL);
+        r.setPadding(0, dp(6), 0, dp(14));
+        android.widget.ProgressBar pb = new android.widget.ProgressBar(this);
+        pb.setIndeterminate(true);
+        r.addView(pb, new LinearLayout.LayoutParams(dp(30), dp(30)));
+        TextView t = text(msg, 18, Color.WHITE);
+        t.setPadding(dp(12), 0, 0, 0);
+        r.addView(t);
+        return r;
+    }
+
     protected TextView text(String s, int sp, int color) {
         TextView t = new TextView(this);
         t.setTypeface(Ui.REG);

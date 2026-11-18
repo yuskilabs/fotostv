@@ -38,6 +38,7 @@ public class FilterActivity extends SettingsBase {
     private final List<Set<String>> sel = new ArrayList<Set<String>>();
     private final Button[] catBtn = new Button[N];
     private TextView info;
+    private View loading;
     private Button viewBtn, clearBtn;
     private volatile List<Item> all;
     private volatile String[][] at;
@@ -47,8 +48,11 @@ public class FilterActivity extends SettingsBase {
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         LinearLayout root = screen("Filtrar", "Elige uno o varios valores en cada categoría. Se enseñan las fotos que cumplan todo a la vez.", R.drawable.ic_tune);
-        info = text("Cargando tus fotos…", 14, Color.WHITE);
+        loading = loadingRow("Cargando… con muchas fotos puede tardar unos segundos");
+        root.addView(loading);
+        info = text("", 14, Color.WHITE);
         info.setPadding(0, 0, 0, dp(10));
+        info.setVisibility(View.GONE);
         root.addView(info);
         for (int i = 0; i < N; i++) sel.add(new HashSet<String>());
         for (int i = 0; i < N; i++) {
@@ -131,6 +135,8 @@ public class FilterActivity extends SettingsBase {
                 h.post(new Runnable() {
                     public void run() {
                         if (destroyed) return;
+                        loading.setVisibility(View.GONE);
+                        info.setVisibility(View.VISIBLE);
                         all = fa;
                         at = ft;
                         for (Button b : catBtn) b.setEnabled(true);

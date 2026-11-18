@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.29
+- Estadísticas y Filtrar enseñan «Cargando…» con una rueda que gira mientras cuentan las fotos (con muchas fotos tardan unos segundos), en vez de quedarse parados.
+
 ## 7.28
 - Buscar entiende más fechas: rangos («junio-agosto 2026», «2023-2025», «del 10 al 20 de agosto 2025»), varios meses («junio julio agosto 2026», que antes solo contaba agosto), días («15 agosto 2025», «15/08/2025»), épocas («verano», «Navidad», «Semana Santa», con o sin año) y varias fechas a la vez («agosto 2024 y agosto 2025»).
 - Pantalla nueva «Filtrar» (desde Estadísticas y desde Buscar): se eligen varios valores de año, mes, día, región, localidad, álbum, cámara y autor. Dentro de una categoría suman y entre categorías se pide todo. Cada valor muestra cuántas fotos tiene, y «Ver fotos» abre el mosaico.

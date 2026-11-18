@@ -1,6 +1,6 @@
 {
-  "version": "7.28",
+  "version": "7.29",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 944411,
-  "notes": "- Buscar entiende más fechas: rangos («junio-agosto 2026», «2023-2025», «del 10 al 20 de agosto 2025»), varios meses («junio julio agosto 2026», que antes solo contaba agosto), días («15 agosto 2025», «15/08/2025»), épocas («verano», «Navidad», «Semana Santa», con o sin año) y varias fechas a la vez («agosto 2024 y agosto 2025»).\n- Pantalla nueva «Filtrar» (desde Estadísticas y desde Buscar): se eligen varios valores de año, mes, día, región, localidad, álbum, cámara y autor. Dentro de una categoría suman y entre categorías se pide todo. Cada valor muestra cuántas fotos tiene, y «Ver fotos» abre el mosaico.\n- «Leer cámaras» pasa de Estadísticas a Ajustes › Ayuda y mantenimiento, con su progreso."
+  "notes": "- Estadísticas y Filtrar enseñan «Cargando…» con una rueda que gira mientras cuentan las fotos (con muchas fotos tardan unos segundos), en vez de quedarse parados."
 }
