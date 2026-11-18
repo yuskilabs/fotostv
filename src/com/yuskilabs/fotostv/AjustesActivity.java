@@ -361,9 +361,16 @@ public class AjustesActivity extends SettingsBase {
         cy.addView(updInfo);
         cy.addView(updNotes);
         cy.addView(updInstallRow);
+        camBtn = btn("Leer cámaras", R.drawable.ic_camera, new View.OnClickListener() {
+            public void onClick(View v) { camAction(); }
+        });
+        describe(camBtn, "Lee la cámara de cada foto, para filtrar por cámara y saber quién la hizo. Se lee el principio de cada foto, así que con muchas fotos tarda y gasta datos. Se puede parar.");
+        camInfo = text("", 12, 0xFF9FB3C8);
+        camInfo.setPadding(dp(8), dp(4), dp(8), dp(8));
         cy.addView(row(diag, geoBtn));
-        cy.addView(row(rebuild, null));
+        cy.addView(row(rebuild, camBtn));
         cy.addView(geoView);
+        cy.addView(camInfo);
         checkUpdate();
 
         // temas a la izquierda, un solo panel a la derecha
@@ -479,10 +486,14 @@ public class AjustesActivity extends SettingsBase {
         super.onStart();
         h.removeCallbacks(geoTick);
         h.post(geoTick);
+        h.removeCallbacks(camTick);
+        h.post(camTick);
+        refreshCamInfo();
     }
 
     @Override protected void onStop() {
         h.removeCallbacks(geoTick);
+        h.removeCallbacks(camTick);
         super.onStop();
     }
 
@@ -1000,7 +1011,74 @@ public class AjustesActivity extends SettingsBase {
             .show();
     }
 
-    // ---- actualización dentro de «Ayuda y estado»
+    // ---- lectura de cámaras en segundo plano (antes en Estadísticas)
+    private Button camBtn;
+    private TextView camInfo;
+    private long camShownAt = System.currentTimeMillis();
+
+    private final Runnable camTick = new Runnable() {
+        public void run() {
+            if (camBtn == null) return;
+            if (CamScan.running) {
+                camBtn.setText("Parar (" + CamScan.done + " de " + CamScan.total + ")");
+                h.postDelayed(this, 1500);
+            } else {
+                camBtn.setText("Leer cámaras");
+                if (CamScan.finishedAt > camShownAt) {
+                    camShownAt = CamScan.finishedAt;
+                    if (CamScan.lastTotal == 0) Toast.makeText(AjustesActivity.this, "Ya están leídas todas las fotos. Si crees que faltan cámaras, usa «Releer las de sin cámara».", Toast.LENGTH_LONG).show();
+                    refreshCamInfo();
+                }
+                h.postDelayed(this, 3000);
+            }
+        }
+    };
+
+    private void refreshCamInfo() {
+        new Thread(new Runnable() {
+            public void run() {
+                int known = 0, total = 0, read = 0;
+                try {
+                    java.util.List<Item> all = Search.allVisible(AjustesActivity.this);
+                    java.util.HashMap<String, String> cams = GeoIndex.get(AjustesActivity.this).camMap();
+                    total = all.size();
+                    for (Item it : all) {
+                        String c = cams.get(it.key());
+                        if (c != null) { read++; if (c.length() > 0) known++; }
+                    }
+                } catch (Throwable e) { Diag.e("cámaras", e); }
+                final String t = total == 0 ? "" : read == 0 ? "Aún no se ha leído ninguna cámara."
+                    : "Cámara conocida en " + String.format(MetaFetcher.ES, "%,d", known) + " de " + String.format(MetaFetcher.ES, "%,d", total) + " fotos.";
+                h.post(new Runnable() {
+                    public void run() { if (camInfo != null) camInfo.setText(t); }
+                });
+            }
+        }).start();
+    }
+
+    private void camAction() {
+        if (CamScan.running) { CamScan.stop(this); return; }
+        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Leer la cámara de cada foto")
+            .setMessage("Se lee el principio de cada foto (unos 160 KB por foto) para saber con qué cámara se hizo. Con muchas fotos puede tardar y gastar bastantes datos. Puedes pararlo cuando quieras y seguir otro día.")
+            .setPositiveButton("Leer las que faltan", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dlg, int w) { startCam(false); }
+            })
+            .setNeutralButton("Releer las de sin cámara", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dlg, int w) { startCam(true); }
+            })
+            .setNegativeButton("Cancelar", null)
+            .show();
+    }
+
+    private void startCam(boolean retry) {
+        CamScan.lastTotal = -1;
+        CamScan.start(this, retry);
+        h.removeCallbacks(camTick);
+        h.post(camTick);
+    }
+
+    // ---- actualización dentro de «Ayuda y mantenimiento»
     private TextView updInfo, updNotes;
     private Button updInstall;
     private View updInstallRow;

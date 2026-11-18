@@ -3,6 +3,11 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.28
+- Buscar entiende más fechas: rangos («junio-agosto 2026», «2023-2025», «del 10 al 20 de agosto 2025»), varios meses («junio julio agosto 2026», que antes solo contaba agosto), días («15 agosto 2025», «15/08/2025»), épocas («verano», «Navidad», «Semana Santa», con o sin año) y varias fechas a la vez («agosto 2024 y agosto 2025»).
+- Pantalla nueva «Filtrar» (desde Estadísticas y desde Buscar): se eligen varios valores de año, mes, día, región, localidad, álbum, cámara y autor. Dentro de una categoría suman y entre categorías se pide todo. Cada valor muestra cuántas fotos tiene, y «Ver fotos» abre el mosaico.
+- «Leer cámaras» pasa de Estadísticas a Ajustes › Ayuda y mantenimiento, con su progreso.
+
 ## 7.27
 - Ajustes reorganizado y más claro. Temas: Pase de fotos (qué fotos salen y cuándo), Aspecto del pase (transición, mosaicos, encuadre, movimiento, velocidad, bordes y relleno), Información, Salvapantallas y noche, Música, Vídeo y caché, Explorador, Perfiles, Móvil y otras teles y Ayuda y mantenimiento.
 - Perfiles tiene su propio tema: lista con icono, nombre y estado de cada perfil, y una ficha con Usar, Nombre, Icono o foto, Código, Copiar ajustes de otro perfil y Borrar. «Copiar ajustes de otro» trae todos los ajustes sin tocar álbumes, favoritas, ocultas, código, nombre ni icono.

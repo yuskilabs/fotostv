@@ -1,3 +1,8 @@
+## 7.28
+- Buscar entiende más fechas: rangos («junio-agosto 2026», «2023-2025», «del 10 al 20 de agosto 2025»), varios meses («junio julio agosto 2026», que antes solo contaba agosto), días («15 agosto 2025», «15/08/2025»), épocas («verano», «Navidad», «Semana Santa», con o sin año) y varias fechas a la vez («agosto 2024 y agosto 2025»).
+- Pantalla nueva «Filtrar» (desde Estadísticas y desde Buscar): se eligen varios valores de año, mes, día, región, localidad, álbum, cámara y autor. Dentro de una categoría suman y entre categorías se pide todo. Cada valor muestra cuántas fotos tiene, y «Ver fotos» abre el mosaico.
+- «Leer cámaras» pasa de Estadísticas a Ajustes › Ayuda y mantenimiento, con su progreso.
+
 ## 7.27
 - Ajustes reorganizado y más claro. Temas: Pase de fotos (qué fotos salen y cuándo), Aspecto del pase (transición, mosaicos, encuadre, movimiento, velocidad, bordes y relleno), Información, Salvapantallas y noche, Música, Vídeo y caché, Explorador, Perfiles, Móvil y otras teles y Ayuda y mantenimiento.
 - Perfiles tiene su propio tema: lista con icono, nombre y estado de cada perfil, y una ficha con Usar, Nombre, Icono o foto, Código, Copiar ajustes de otro perfil y Borrar. «Copiar ajustes de otro» trae todos los ajustes sin tocar álbumes, favoritas, ocultas, código, nombre ni icono.
@@ -36,9 +41,4 @@
 
 ## 7.21
 - Por dentro: el explorador reparte en archivos propios la construcción de la pantalla (botones, cabecera, rótulos) y de las cuadrículas y casillas de álbumes y fotos. Todo funciona igual.
-
-## 7.20
-- Buscar repetidas: los avisos se quedan unos 3 segundos más en pantalla.
-- Buscar repetidas: al marcar, el álbum se ordena con cada foto que se queda (sin marcar) seguida de sus repetidas (marcadas), todas al principio, para compararlas. El resto sigue en su orden, y al terminar (ocultar, cancelar o salir) todo vuelve al orden de siempre.
-- Por dentro: los diálogos del explorador (menú con iconos, pedir un nombre, música del álbum) pasan a su propio archivo.
 

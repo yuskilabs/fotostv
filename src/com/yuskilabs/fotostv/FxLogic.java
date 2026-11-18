@@ -340,29 +340,111 @@ final class FxLogic {
         return true;
     }
 
-    static final class Query {
-        int year = -1, month = -1;              // month: 0-11
-        final List<String> words = new ArrayList<String>();
-        boolean isEmpty() { return year < 0 && month < 0 && words.isEmpty(); }
-        boolean hasDate() { return year >= 0 || month >= 0; }
+    /** Un tramo de fechas, con o sin año. Meses de 0 a 11. Si el final es anterior al inicio (Navidad, invierno), cruza el fin de año. */
+    static final class Spec {
+        int y0 = -1, y1 = -1;      // años en que empieza el tramo (-1: cualquiera)
+        int sm, sd, em, ed;        // desde mes/día hasta mes/día
+        boolean easter;            // Semana Santa: del Domingo de Ramos al de Pascua
     }
 
-    /** «agosto 2025», «Málaga 2024», «Zahara» → año, mes y palabras. */
+    static final class Query {
+        final List<Spec> dates = new ArrayList<Spec>();     // si hay varias, basta con que encaje una
+        String dateText = "";                               // lo escrito que era fecha, para volver a leerlo igual
+        final List<String> words = new ArrayList<String>();
+        boolean isEmpty() { return dates.isEmpty() && words.isEmpty(); }
+        boolean hasDate() { return !dates.isEmpty(); }
+    }
+
+    private static final String YR = "((?:19|20)\\d{2})";
+    private static final String YOPT = "(?:\\s+(?:de\\s+|del\\s+)?" + YR + ")?";
+    private static final String MON = "(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|setiembre|octubre|noviembre|diciembre"
+            + "|sept|sep|ene|feb|abr|jun|jul|oct|nov|dic)\\b";
+    private static final String DAY = "(0?[1-9]|[12]\\d|3[01])";
+    private static final String TO = "(?:\\s*-\\s*|\\s+(?:a|al|hasta)\\s+)";
+    /** Frases de fecha, de más concreta a más general; entre dos que empiezan en el mismo sitio gana la primera. */
+    private static final java.util.regex.Pattern[] DATE_PATS = {
+        java.util.regex.Pattern.compile("\\b(?:del\\s+)?" + DAY + TO + DAY + "\\s+(?:de\\s+)?" + MON + YOPT),          // 0 del 10 al 20 de agosto 2025
+        java.util.regex.Pattern.compile("\\b" + DAY + "[/.-](0?[1-9]|1[0-2])[/.-]" + YR + "\\b"),                          // 1 15/08/2025
+        java.util.regex.Pattern.compile("\\b" + YR + "-(0?[1-9]|1[0-2])-" + DAY + "\\b"),                                  // 2 2025-08-15
+        java.util.regex.Pattern.compile("\\b(?:del?\\s+)?" + DAY + "\\s+(?:de\\s+)?" + MON + YOPT),                     // 3 15 de agosto 2025
+        java.util.regex.Pattern.compile("\\b" + MON + TO + MON + YOPT),                                                      // 4 junio-agosto 2026
+        java.util.regex.Pattern.compile("\\b" + YR + TO + YR + "\\b"),                                                      // 5 2023-2025
+        java.util.regex.Pattern.compile("\\b(verano|primavera|otono|invierno|navidades|navidad|semana\\s+santa)\\b" + YOPT), // 6 verano 2026
+        java.util.regex.Pattern.compile("\\b" + MON + "(?:(?:\\s*,\\s*|\\s+y\\s+|\\s+)" + MON + ")+" + YOPT),           // 7 junio julio agosto 2026
+        java.util.regex.Pattern.compile("\\b" + MON + YOPT),                                                                 // 8 agosto 2025
+        java.util.regex.Pattern.compile("\\b" + YR + "\\b")                                                                  // 9 2025
+    };
+    private static final java.util.regex.Pattern MON_FIND = java.util.regex.Pattern.compile("\\b" + MON);
+
+    /** «agosto 2025», «junio-agosto 2026», «verano», «15/08/2025», «Málaga 2024», «Zahara» → fechas y palabras. */
     static Query parse(String text) {
         Query q = new Query();
-        for (String t : norm(text).split("[^\\p{L}\\p{N}]+")) {
-            if (t.length() == 0) continue;
-            if (t.matches("\\d{4}")) {
-                int y = Integer.parseInt(t);
-                if (y >= 1900 && y <= 2100) { q.year = y; continue; }
+        StringBuilder s = new StringBuilder(norm(text));
+        StringBuilder dt = new StringBuilder();
+        while (true) {
+            java.util.regex.Matcher best = null;
+            int bi = -1;
+            for (int i = 0; i < DATE_PATS.length; i++) {
+                java.util.regex.Matcher m = DATE_PATS[i].matcher(s);
+                if (m.find() && (best == null || m.start() < best.start())) { best = m; bi = i; }
             }
-            int m = monthOf(t);
-            if (m >= 0) { q.month = m; continue; }
+            if (best == null) break;
+            addDates(q, bi, best);
+            if (dt.length() > 0) dt.append(' ');
+            dt.append(s.substring(best.start(), best.end()));
+            for (int i = best.start(); i < best.end(); i++) s.setCharAt(i, ' ');
+        }
+        q.dateText = dt.toString();
+        for (String t : s.toString().split("[^\\p{L}\\p{N}]+")) {
+            if (t.length() == 0) continue;
             boolean stop = false;
-            for (String s : STOP) if (s.equals(t)) { stop = true; break; }
+            for (String w : STOP) if (w.equals(t)) { stop = true; break; }
             if (!stop) q.words.add(t);
         }
         return q;
+    }
+
+    private static int num(String g) { return g == null ? -1 : Integer.parseInt(g); }
+
+    private static Spec spec(int y0, int y1, int sm, int sd, int em, int ed) {
+        Spec p = new Spec();
+        p.y0 = y0; p.y1 = y1; p.sm = sm; p.sd = sd; p.em = em; p.ed = ed;
+        return p;
+    }
+
+    private static void addDates(Query q, int kind, java.util.regex.Matcher m) {
+        int y = (kind == 1 || kind == 2 || kind == 5 || kind == 9) ? -1 : num(m.group(m.groupCount()));
+        switch (kind) {
+            case 0: { int mo = monthOf(m.group(3)); q.dates.add(spec(y, y, mo, num(m.group(1)), mo, num(m.group(2)))); break; }
+            case 1: { int mo = num(m.group(2)) - 1; q.dates.add(spec(num(m.group(3)), num(m.group(3)), mo, num(m.group(1)), mo, num(m.group(1)))); break; }
+            case 2: { int mo = num(m.group(2)) - 1; q.dates.add(spec(num(m.group(1)), num(m.group(1)), mo, num(m.group(3)), mo, num(m.group(3)))); break; }
+            case 3: { int mo = monthOf(m.group(2)); q.dates.add(spec(y, y, mo, num(m.group(1)), mo, num(m.group(1)))); break; }
+            case 4: q.dates.add(spec(y, y, monthOf(m.group(1)), 1, monthOf(m.group(2)), 31)); break;
+            case 5: {
+                int a = num(m.group(1)), b = num(m.group(2));
+                q.dates.add(spec(Math.min(a, b), Math.max(a, b), 0, 1, 11, 31));
+                break;
+            }
+            case 6: {
+                String n = m.group(1);
+                Spec p;
+                if (n.startsWith("verano")) p = spec(y, y, 5, 21, 8, 22);
+                else if (n.startsWith("primavera")) p = spec(y, y, 2, 20, 5, 20);
+                else if (n.startsWith("otono")) p = spec(y, y, 8, 23, 11, 20);
+                else if (n.startsWith("invierno")) p = spec(y, y, 11, 21, 2, 19);
+                else if (n.startsWith("navid")) p = spec(y, y, 11, 20, 0, 6);
+                else { p = spec(y, y, 0, 1, 11, 31); p.easter = true; }
+                q.dates.add(p);
+                break;
+            }
+            case 7: {
+                java.util.regex.Matcher f = MON_FIND.matcher(m.group(0));
+                while (f.find()) { int mo = monthOf(f.group(1)); q.dates.add(spec(y, y, mo, 1, mo, 31)); }
+                break;
+            }
+            case 8: { int mo = monthOf(m.group(1)); q.dates.add(spec(y, y, mo, 1, mo, 31)); break; }
+            default: q.dates.add(spec(num(m.group(1)), num(m.group(1)), 0, 1, 11, 31)); break;
+        }
     }
 
     /** Abreviaturas que no se confunden con palabras normales («mar» o «may» no cuentan como mes). */
@@ -380,9 +462,41 @@ final class FxLogic {
         if (ts <= 0) return false;
         Calendar c = Calendar.getInstance(tz);
         c.setTimeInMillis(ts);
-        if (q.year >= 0 && c.get(Calendar.YEAR) != q.year) return false;
-        if (q.month >= 0 && c.get(Calendar.MONTH) != q.month) return false;
-        return true;
+        int y = c.get(Calendar.YEAR), m = c.get(Calendar.MONTH), d = c.get(Calendar.DAY_OF_MONTH);
+        for (Spec s : q.dates) if (specMatches(s, y, m, d)) return true;
+        return false;
+    }
+
+    private static boolean yearIn(Spec s, int y) { return s.y0 < 0 || (y >= s.y0 && y <= s.y1); }
+
+    /** ¿Cae el día (año, mes 0-11, día) dentro del tramo? */
+    static boolean specMatches(Spec s, int y, int m, int d) {
+        if (s.easter) {
+            if (!yearIn(s, y)) return false;
+            int e = easterOrdinal(y);
+            int o = new java.util.GregorianCalendar(y, m, d).get(Calendar.DAY_OF_YEAR);
+            return o >= e - 7 && o <= e;
+        }
+        int key = m * 100 + d, a = s.sm * 100 + s.sd, b = s.em * 100 + s.ed;
+        if (a <= b) return key >= a && key <= b && yearIn(s, y);
+        if (key >= a) return yearIn(s, y);          // la parte de antes del fin de año
+        if (key <= b) return yearIn(s, y - 1);      // la parte de después: el tramo empezó el año anterior
+        return false;
+    }
+
+    private static final java.util.concurrent.ConcurrentHashMap<Integer, Integer> EASTER = new java.util.concurrent.ConcurrentHashMap<Integer, Integer>();
+
+    /** Día del año (1-366) del Domingo de Pascua. */
+    static int easterOrdinal(int y) {
+        Integer c = EASTER.get(y);
+        if (c != null) return c;
+        int a = y % 19, b = y / 100, cc = y % 100, d = b / 4, e = b % 4, f = (b + 8) / 25, g = (b - f + 1) / 3;
+        int h = (19 * a + b - d - g + 15) % 30, i = cc / 4, k = cc % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+        int mm = (a + 11 * h + 22 * l) / 451;
+        int month = (h + l - 7 * mm + 114) / 31, day = ((h + l - 7 * mm + 114) % 31) + 1;
+        int o = new java.util.GregorianCalendar(y, month - 1, day).get(Calendar.DAY_OF_YEAR);
+        EASTER.put(y, o);
+        return o;
     }
 
     // ------------------------------------------------------------ viajes y salidas

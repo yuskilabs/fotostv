@@ -41,7 +41,7 @@ public class SearchActivity extends SettingsBase {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
-        LinearLayout root = screen("Buscar", "Escribe un lugar, el nombre de un álbum, un mes o un año («Zahara», «agosto 2025», «Lara 2024»).", R.drawable.ic_search);
+        LinearLayout root = screen("Buscar", "Escribe un lugar, un álbum o una fecha: «Zahara», «junio-agosto 2026», «verano 2025», «Navidad», «15/08/2025», «Lara 2024».", R.drawable.ic_search);
         input = new EditText(this) {
             // Atrás llega aquí antes que al teclado: así se sale aunque el teclado (el de Fire TV, por ejemplo) no lo suelte
             @Override public boolean onKeyPreIme(int code, KeyEvent ev) {
@@ -52,7 +52,7 @@ public class SearchActivity extends SettingsBase {
         input.setSingleLine(true);
         input.setTextColor(Color.WHITE);
         input.setHintTextColor(0xFF7C93AD);
-        input.setHint("Lugar, álbum, autor, mes o año…");
+        input.setHint("Lugar, álbum, autor o fecha…");
         input.setTypeface(Ui.REG);
         input.setTextSize(20);
         input.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
@@ -82,6 +82,12 @@ public class SearchActivity extends SettingsBase {
         LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(-1, -2);
         mlp.topMargin = dp(6);
         root.addView(micBtn, mlp);
+        Button filterBtn = btn("Filtrar por varios datos", R.drawable.ic_tune, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new android.content.Intent(SearchActivity.this, FilterActivity.class)); }
+        });
+        LinearLayout.LayoutParams flp = new LinearLayout.LayoutParams(-1, -2);
+        flp.topMargin = dp(6);
+        root.addView(filterBtn, flp);
         info = text("Cargando tus fotos…", 13, 0xFF9FB3C8);
         info.setPadding(0, dp(8), 0, dp(8));
         root.addView(info);
@@ -154,7 +160,7 @@ public class SearchActivity extends SettingsBase {
             android.content.Intent i = new android.content.Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             i.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "es-ES");
-            i.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Di un lugar, un álbum, un mes o un año");
+            i.putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Di un lugar, un álbum o una fecha");
             i.putExtra(android.speech.RecognizerIntent.EXTRA_MAX_RESULTS, 1);
             startActivityForResult(i, REQ_VOICE);
         } catch (Throwable e) {

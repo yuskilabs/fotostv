@@ -150,11 +150,7 @@ final class Search {
         return filter(all, placeOf, s);
     }
 
-    private static String dateText(FxLogic.Query q) {
-        String m = q.month >= 0 ? FxLogic.MONTHS[q.month] : "";
-        String y = q.year >= 0 ? String.valueOf(q.year) : "";
-        return (m + " " + y).trim();
-    }
+    private static String dateText(FxLogic.Query q) { return q.dateText; }
 
     private static void inc(Map<String, Integer> m, String k) {
         Integer o = m.get(k);

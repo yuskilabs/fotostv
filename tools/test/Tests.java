@@ -27,6 +27,8 @@ public class Tests {
         return c.getTimeInMillis();
     }
 
+    static boolean dm(String q, long ts) { return FxLogic.dateMatches(FxLogic.parse(q), ts, UTC); }
+
     static List<Item> items(long... ts) {
         List<Item> l = new ArrayList<Item>();
         for (int i = 0; i < ts.length; i++) l.add(new Item("u" + i, ts[i]));
@@ -90,6 +92,41 @@ public class Tests {
         places.put(s.get(0).key(), "Motril, Granada");
         eq("buscar por lugar", Search.filter(s, places, "motril").size(), 1);
         eq("buscar por año", Search.filter(s, places, "2024").size(), 2);
+
+        // ---- fechas: rangos, días sueltos, épocas
+        check("junio julio agosto 2026: julio", dm("junio julio agosto 2026", at(2026, 7, 15)));
+        check("junio julio agosto 2026: junio", dm("junio julio agosto 2026", at(2026, 6, 2)));
+        check("junio julio agosto 2026: septiembre no", !dm("junio julio agosto 2026", at(2026, 9, 2)));
+        check("junio julio agosto 2026: otro año no", !dm("junio julio agosto 2026", at(2025, 7, 15)));
+        check("junio-agosto 2026 incluye julio", dm("junio-agosto 2026", at(2026, 7, 15)));
+        check("de junio a agosto 2026", dm("de junio a agosto 2026", at(2026, 8, 31)));
+        check("junio-agosto 2026 no incluye mayo", !dm("junio-agosto 2026", at(2026, 5, 31)));
+        check("2023-2025 incluye 2024", dm("2023-2025", at(2024, 3, 3)));
+        check("2023-2025 no incluye 2026", !dm("2023-2025", at(2026, 3, 3)));
+        check("15 de agosto de 2025", dm("15 de agosto de 2025", at(2025, 8, 15)));
+        check("15 agosto 2025: otro día no", !dm("15 agosto 2025", at(2025, 8, 16)));
+        check("15/08/2025", dm("15/08/2025", at(2025, 8, 15)));
+        check("2025-08-15", dm("2025-08-15", at(2025, 8, 15)));
+        check("del 10 al 20 de agosto 2025: 20", dm("del 10 al 20 de agosto 2025", at(2025, 8, 20)));
+        check("del 10 al 20 de agosto 2025: 21 no", !dm("del 10 al 20 de agosto 2025", at(2025, 8, 21)));
+        check("agosto 2024 y agosto 2025: 2025", dm("agosto 2024 y agosto 2025", at(2025, 8, 3)));
+        check("agosto 2024 y agosto 2025: 2024", dm("agosto 2024 y agosto 2025", at(2024, 8, 3)));
+        check("agosto 2024 y agosto 2025: 2023 no", !dm("agosto 2024 y agosto 2025", at(2023, 8, 3)));
+        check("verano 2026: julio", dm("verano 2026", at(2026, 7, 1)));
+        check("verano 2026: 21 de junio", dm("verano 2026", at(2026, 6, 21)));
+        check("verano 2026: 20 de junio no", !dm("verano 2026", at(2026, 6, 20)));
+        check("verano sin año: cualquier año", dm("verano", at(2019, 8, 1)));
+        check("navidad 2025: 25 de diciembre de 2025", dm("navidad 2025", at(2025, 12, 25)));
+        check("navidad 2025: 3 de enero de 2026", dm("navidad 2025", at(2026, 1, 3)));
+        check("navidad 2025: 3 de enero de 2025 no", !dm("navidad 2025", at(2025, 1, 3)));
+        check("navidad sin año: enero", dm("navidad", at(2021, 1, 5)));
+        check("semana santa 2026 (5 de abril es Pascua)", dm("semana santa 2026", at(2026, 4, 5)));
+        check("semana santa 2026: Domingo de Ramos", dm("semana santa 2026", at(2026, 3, 29)));
+        check("semana santa 2026: 6 de abril no", !dm("semana santa 2026", at(2026, 4, 6)));
+        check("sin fecha no encaja con una fecha", !dm("agosto 2025", 0));
+        FxLogic.Query qw = FxLogic.parse("Lara junio-agosto 2026");
+        eq("palabras que no son fecha", qw.words.toString(), "[lara]");
+        eq("la fecha escrita se conserva", FxLogic.parse(FxLogic.parse("Zahara junio-agosto 2026").dateText).dates.size(), 1);
 
         // ---- novedades
         String md = "# Historial\n\n## 7.2\n- Uno\n- Dos\n\n## 7.1\n- Antiguo\n";

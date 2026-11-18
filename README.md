@@ -105,20 +105,20 @@ Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde l
 - **Más favoritas**: con el orden «inteligente», las favoritas salen tres veces más a menudo.
 
 **Explorador**
-- **Buscar** (barra discreta en la pantalla principal, encima de los botones; se llega subiendo con el mando): por lugar, nombre del álbum, autor, mes o año («Zahara», «agosto 2025», «Lola 2024»). Se lanza con «Buscar» del teclado, Intro, «Siguiente» o el botón «Buscar» de la pantalla; Atrás cierra el teclado y, a la segunda, sale.
+- **Buscar** (barra discreta en la pantalla principal, encima de los botones; se llega subiendo con el mando): por lugar, nombre del álbum, autor o fecha («Zahara», «Lola 2024»). Las fechas admiten rangos («junio-agosto 2026», «2023-2025», «del 10 al 20 de agosto 2025»), varios meses («junio julio agosto 2026»), días («15 agosto 2025», «15/08/2025»), épocas («verano 2025», «Navidad», «Semana Santa 2026») y varias fechas a la vez («agosto 2024 y agosto 2025»). El botón «Filtrar por varios datos» abre la pantalla Filtrar. Se lanza con «Buscar» del teclado, Intro, «Siguiente» o el botón «Buscar» de la pantalla; Atrás cierra el teclado y, a la segunda, sale.
 - **Álbumes virtuales**: el resultado de una búsqueda se guarda como álbum (botón «Guardar» del mosaico) y se actualiza solo. Se borran con pulsación larga.
 - **Saltar por fecha**: icono «Fecha» (junto al de «Mapa», arriba a la derecha del mosaico) que abre un calendario mensual: izquierda/derecha cambia de mes (o de año, si lo seleccionas) y al elegir un día se ven solo sus fotos; OK en el mes o en el año muestra todas las de ese mes o año.
 - **Viajes** (botón en la pantalla principal): agrupa solas las fotos hechas en días seguidos, con su lugar y fechas.
 - **Varias portadas**: «Añadir a portadas» en varias fotos; cada vez que entras en los álbumes sale una de ellas.
 - **Marcar nuevas**: las fotos añadidas al álbum desde la última vez que lo abriste llevan «NUEVA», y el álbum dice cuántas hay.
 - **Fotos repetidas**: con pulsación larga en un álbum, «Buscar repetidas» marca las casi iguales hechas seguidas para ocultarlas de una vez (se queda la primera de cada grupo).
-- **Estadísticas** (botón en la pantalla principal): fotos por año, lugar, álbum y cámara; cada fila abre sus fotos. «Leer cámaras» averigua la cámara de las fotos que aún no la tienen.
+- **Estadísticas** (botón en la pantalla principal): fotos por año, lugar, álbum y cámara; cada fila abre sus fotos. El botón **Filtrar** combina año, mes, día, región, localidad, álbum, cámara y autor, eligiendo varios valores en cada uno (dentro de una categoría suman; entre categorías se exige todo), con el número de fotos de cada valor y «Ver fotos (N)». «Leer cámaras» averigua la cámara de las fotos que aún no la tienen y está en Ajustes › Ayuda y mantenimiento.
 
 **Perfiles, móvil y otras teles**
 - **Perfiles**: «Familia» (el de siempre) y los perfiles que añadas en Ajustes → Perfiles, cada uno con sus álbumes, ajustes, PIN y web de configuración; los nuevos empiezan vacíos. En la pantalla principal, a la derecha del QR, hay un icono cuadrado con el nombre del perfil en uso; al pulsarlo se pasa al siguiente y cambian el QR y el PIN. «Familia» lleva un icono de familia y los demás, uno de una sola persona (cambiable). El icono se elige de una muestra o con una foto de un archivo (también desde la web del móvil, donde además se cambia el nombre del perfil en uso). Cada perfil puede llevar un **código de 4 cifras** (se pone en Perfiles, con el mando: arriba/abajo cambian la cifra, derecha avanza, OK confirma) que se pide al pasar a ese perfil; con códigos, el icono abre una lista de perfiles. Si se olvida, se pone otro o se quita desde la web del móvil, en «Perfil en uso». La copia de seguridad incluye todos los perfiles, con su nombre, icono y código (solo la huella).
 - **Mando del móvil**: la web de ajustes enseña un mando (anterior, pausa, siguiente) para el pase que esté en marcha.
 - **Recargar álbumes** (Ajustes › Móvil y otras teles): cada 6, 12 o 24 horas vuelve a leer los álbumes de Google mientras la app o el salvapantallas estén en marcha.
-- **Ayuda y mantenimiento** (Ajustes): **Buscar actualización** (si hay una nueva, enseña aquí mismo qué trae y un botón para instalarla; si no, «Última versión»), Novedades, Diagnóstico, Revisar ubicaciones y Rehacer nombres.
+- **Ayuda y mantenimiento** (Ajustes): **Buscar actualización** (si hay una nueva, enseña aquí mismo qué trae y un botón para instalarla; si no, «Última versión»), Novedades, Diagnóstico, Revisar ubicaciones, Rehacer nombres y Leer cámaras.
 
 ## Instalación
 
@@ -256,6 +256,7 @@ src/com/yuskilabs/fotostv/
   FxLogic                    lógica pura de las funciones extra (noche, búsqueda, viajes, repetidas…)
   SearchActivity, Search     buscar por lugar, álbum o fecha
   TripsActivity, StatsActivity, CamScan   viajes y estadísticas (con la cámara de cada foto)
+  FilterActivity             pantalla Filtrar: varios valores por categoría
   Weather                    tiempo de la ciudad elegida (Open-Meteo)
   Guest                      álbumes de invitados
   IdleService                inicio automático (servicio de accesibilidad)

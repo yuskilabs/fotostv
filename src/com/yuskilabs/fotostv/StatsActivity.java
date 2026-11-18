@@ -31,16 +31,21 @@ public class StatsActivity extends SettingsBase {
     private final List<List<List<Item>>> rowItems = new ArrayList<List<List<Item>>>();
     private final List<ListView> lists = new ArrayList<ListView>();
     private TextView info, camInfo;
-    private Button camBtn;
     private volatile boolean destroyed;
     private static final String[] TITLES = {"Por año", "Lugares", "Álbumes", "Cámaras"};
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
-        LinearLayout root = screen("Estadísticas", "Elige una fila para ver esas fotos.", R.drawable.ic_stats);
+        LinearLayout root = screen("Estadísticas", "Elige una fila para ver esas fotos, o pulsa Filtrar para combinar varios datos.", R.drawable.ic_stats);
         info = text("Contando…", 14, Color.WHITE);
         info.setPadding(0, 0, 0, dp(10));
         root.addView(info);
+        Button filterBtn = btn("Filtrar", R.drawable.ic_tune, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new android.content.Intent(StatsActivity.this, FilterActivity.class)); }
+        });
+        LinearLayout.LayoutParams flp = new LinearLayout.LayoutParams(-1, -2);
+        flp.bottomMargin = dp(10);
+        root.addView(filterBtn, flp);
         LinearLayout cols = new LinearLayout(this);
         cols.setOrientation(LinearLayout.HORIZONTAL);
         for (int i = 0; i < TITLES.length; i++) {
@@ -68,10 +73,6 @@ public class StatsActivity extends SettingsBase {
                 camInfo = text("", 12, 0xFF9FB3C8);
                 camInfo.setPadding(0, dp(6), 0, dp(4));
                 c.addView(camInfo);
-                camBtn = btn("Leer cámaras", R.drawable.ic_camera, new View.OnClickListener() {
-                    public void onClick(View v) { camAction(); }
-                });
-                c.addView(camBtn, new LinearLayout.LayoutParams(-1, dp(46)));
             }
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -1, 1f);
             lp.setMargins(i == 0 ? 0 : dp(8), 0, i == TITLES.length - 1 ? 0 : dp(8), 0);
@@ -79,7 +80,6 @@ public class StatsActivity extends SettingsBase {
         }
         root.addView(cols, new LinearLayout.LayoutParams(-1, 0, 1f));
         load();
-        h.post(camTick);
     }
 
     private void load() {
@@ -176,56 +176,14 @@ public class StatsActivity extends SettingsBase {
             }
             ((BaseAdapter) lists.get(i).getAdapter()).notifyDataSetChanged();
         }
-        camInfo.setText(d.camRead == 0 ? "La cámara se apunta al revisar las ubicaciones o al abrir la ficha de una foto."
-                : "Cámara conocida en " + n(d.camKnown) + " de " + n(d.total) + " fotos.");
-        // el foco, a la primera lista con datos (no a «Leer cámaras», que era lo único que se podía elegir mientras cargaba)
+        camInfo.setText(d.camRead == 0 ? "Aún no se ha leído ninguna cámara. Para leerlas: Ajustes › Ayuda y mantenimiento › Leer cámaras."
+                : "Cámara conocida en " + n(d.camKnown) + " de " + n(d.total) + " fotos. Para leer las que faltan: Ajustes › Ayuda y mantenimiento.");
+        // el foco, a la primera lista con datos (no al botón Filtrar, que se puede elegir mientras carga)
         View f = getCurrentFocus();
-        if (f == null || f == camBtn) for (ListView lv : lists) if (lv.getCount() > 0) { lv.requestFocus(); break; }
+        if (f == null || f instanceof Button) for (ListView lv : lists) if (lv.getCount() > 0) { lv.requestFocus(); break; }
     }
 
     private static String n(int v) { return String.format(MetaFetcher.ES, "%,d", v); }
-
-    // ---- lectura de cámaras en segundo plano
-    private final Runnable camTick = new Runnable() {
-        public void run() {
-            if (destroyed) return;
-            if (CamScan.running) {
-                camBtn.setText("Parar (" + CamScan.done + " de " + CamScan.total + ")");
-                h.postDelayed(this, 1500);
-            } else {
-                camBtn.setText("Leer cámaras");
-                if (CamScan.finishedAt > shownAt) {
-                    shownAt = CamScan.finishedAt;
-                    if (CamScan.lastTotal == 0) Toast.makeText(StatsActivity.this, "Ya están leídas todas las fotos. Si crees que faltan cámaras, usa «Releer las de sin cámara».", Toast.LENGTH_LONG).show();
-                    load();
-                }
-                h.postDelayed(this, 3000);
-            }
-        }
-    };
-    private long shownAt = System.currentTimeMillis();
-
-    private void camAction() {
-        if (CamScan.running) { CamScan.stop(this); return; }
-        new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle("Leer la cámara de cada foto")
-            .setMessage("Se lee el principio de cada foto (unos 160 KB por foto) para saber con qué cámara se hizo. Con muchas fotos puede tardar y gastar bastantes datos. Puedes pararlo cuando quieras. Sigue en segundo plano aunque salgas de la app o apagues la tele, y se retoma solo si el sistema lo corta.\n\n«Leer las que faltan» solo mira las fotos que aún no se han leído. «Releer las de sin cámara» vuelve a mirar también las que quedaron sin cámara, por si fue un fallo de lectura (gasta más datos).")
-            .setPositiveButton("Leer las que faltan", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dlg, int w) { startCam(false); }
-            })
-            .setNeutralButton("Releer las de sin cámara", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dlg, int w) { startCam(true); }
-            })
-            .setNegativeButton("Cancelar", null)
-            .show();
-    }
-
-    private void startCam(boolean retry) {
-        CamScan.lastTotal = -1;
-        CamScan.start(this, retry);
-        h.removeCallbacks(camTick);
-        h.post(camTick);
-    }
 
     @Override protected void onDestroy() {
         destroyed = true;
