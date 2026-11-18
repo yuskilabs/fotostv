@@ -107,7 +107,6 @@ class Slideshow {
     private final java.util.Map<View, android.animation.Animator> fades = new java.util.HashMap<View, android.animation.Animator>();
     private volatile String weatherTxt = "";
     /** Pase en marcha (para el mando desde el móvil). */
-    static volatile Slideshow active;
     private boolean showingA = true, running, waiting, playingVideo, paused;
     private InfoPanel panel;
     private boolean resumeAfterInfo;
@@ -219,8 +218,6 @@ class Slideshow {
         h.post(clockTick);
         if (cfg == null) h.post(nightTick);
         if (Extras.on(ctx, Extras.WEATHER)) h.post(weatherTick);
-        active = this;
-        if (Extras.on(ctx, Extras.REMOTE)) openRemote();
         vcache.clean(keepVideos());
 
         if (cfg != null) {
@@ -243,8 +240,6 @@ class Slideshow {
 
     void stop() {
         running = false;
-        if (active == this) active = null;
-        if (rcServer != null) { rcServer.close(); rcServer = null; }
         kbStopAll();
         if (nightOn) { nightOn = false; Music.night(false); }
         if (panel != null) { panel.detach(); panel = null; }
@@ -307,18 +302,20 @@ class Slideshow {
         videoHolder.addView(videoView, new FrameLayout.LayoutParams(-1, -1));
         root.addView(videoHolder, new FrameLayout.LayoutParams(-1, -1));
 
+        final boolean top = Extras.infoTop(ctx);          // información y hora arriba en vez de abajo
+        final float ts = Extras.textScale(ctx);           // tamaño del texto
         shade = new View(ctx);
-        shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
+        shade.setBackground(new GradientDrawable(top ? GradientDrawable.Orientation.TOP_BOTTOM : GradientDrawable.Orientation.BOTTOM_TOP,
                 new int[]{0x99000000, 0x00000000}));
-        root.addView(shade, new FrameLayout.LayoutParams(-1, (int) (hgt * 0.32f), Gravity.BOTTOM));
+        root.addView(shade, new FrameLayout.LayoutParams(-1, (int) (hgt * 0.32f * Math.max(1f, ts)), top ? Gravity.TOP : Gravity.BOTTOM));
 
         info = new LinearLayout(ctx);
         info.setOrientation(LinearLayout.VERTICAL);
-        tvAlbum = text(28, Gravity.START);
+        tvAlbum = text(Math.round(28 * ts), Gravity.START);
         tvAlbum.setTypeface(Ui.BLACK);
         tvAlbum.setAlpha(0.8f);
-        tvDate = text(19, Gravity.START);
-        tvPlace = text(27, Gravity.START);
+        tvDate = text(Math.round(19 * ts), Gravity.START);
+        tvPlace = text(Math.round(27 * ts), Gravity.START);
         tvPlace.setTypeface(Ui.HAND);
         // una sola línea cada una: así una fecha larga nunca se parte ni se corta («18 de diciembre de»)
         TextView[] lines = {tvAlbum, tvDate, tvPlace};
@@ -330,29 +327,29 @@ class Slideshow {
         info.addView(tvAlbum);
         info.addView(tvDate);
         info.addView(tvPlace);
-        tvCaption = text(24, Gravity.START);   // pie de foto (función extra)
+        tvCaption = text(Math.round(24 * ts), Gravity.START);   // pie de foto (función extra)
         tvCaption.setTypeface(Ui.HAND);
         tvCaption.setMaxLines(2);
         tvCaption.setEllipsize(android.text.TextUtils.TruncateAt.END);
         tvCaption.setVisibility(View.GONE);
         info.addView(tvCaption);
         boolean big = false;
-        FrameLayout.LayoutParams ip = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM | Gravity.START);
-        ip.setMargins(dp(48), 0, dp(big ? 380 : 220), dp(32));   // ancho fijo (hasta la hora): el texto no se recorta
+        FrameLayout.LayoutParams ip = new FrameLayout.LayoutParams(-1, -2, (top ? Gravity.TOP : Gravity.BOTTOM) | Gravity.START);
+        ip.setMargins(dp(48), top ? dp(32) : 0, dp(Math.round((big ? 380 : 220) * ts)), top ? 0 : dp(32));   // ancho fijo (hasta la hora): el texto no se recorta
         root.addView(info, ip);
 
         clockBox = new LinearLayout(ctx);
         clockBox.setOrientation(LinearLayout.VERTICAL);
         clockBox.setGravity(Gravity.END);
-        clock = text(big ? 92 : 46, Gravity.END);
+        clock = text(Math.round((big ? 92 : 46) * ts), Gravity.END);
         clock.setTypeface(Ui.BLACK);
         if (big) clock.setIncludeFontPadding(false);
         clockBox.addView(clock);
-        clockSub = text(big ? 22 : 20, Gravity.END);
+        clockSub = text(Math.round((big ? 22 : 20) * ts), Gravity.END);
         clockSub.setVisibility(View.GONE);
         clockBox.addView(clockSub);
-        FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
-        cp.setMargins(0, 0, dp(48), dp(28));
+        FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-2, -2, (top ? Gravity.TOP : Gravity.BOTTOM) | Gravity.END);
+        cp.setMargins(0, top ? dp(28) : 0, dp(48), top ? 0 : dp(28));
         root.addView(clockBox, cp);
         clockBox.setVisibility(Prefs.clock(ctx) ? View.VISIBLE : View.GONE);
 
@@ -365,16 +362,16 @@ class Slideshow {
         pauseBadge.setPadding(dp(18), dp(8), dp(18), dp(8));
         pauseBadge.setBackground(pill());
         pauseBadge.setVisibility(View.GONE);
-        FrameLayout.LayoutParams pp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
-        pp.setMargins(0, dp(28), dp(40), 0);
+        FrameLayout.LayoutParams pp = new FrameLayout.LayoutParams(-2, -2, (top ? Gravity.BOTTOM : Gravity.TOP) | Gravity.END);
+        pp.setMargins(0, top ? 0 : dp(28), dp(40), top ? dp(120) : 0);
         root.addView(pauseBadge, pp);
 
         toast = text(20, Gravity.CENTER);
         toast.setPadding(dp(22), dp(10), dp(22), dp(10));
         toast.setBackground(pill());
         toast.setVisibility(View.GONE);
-        FrameLayout.LayoutParams tp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        tp.setMargins(0, dp(28), 0, 0);
+        FrameLayout.LayoutParams tp = new FrameLayout.LayoutParams(-2, -2, (top ? Gravity.BOTTOM : Gravity.TOP) | Gravity.CENTER_HORIZONTAL);
+        tp.setMargins(0, top ? 0 : dp(28), 0, top ? dp(120) : 0);
         root.addView(toast, tp);
 
         progRow = new LinearLayout(ctx);
@@ -584,12 +581,19 @@ class Slideshow {
                 info.requestLayout();
                 info.setAlpha(0f);
                 info.animate().alpha(1f).setDuration(600).start();
+                h.removeCallbacks(infoHide);
+                if (Extras.num(ctx, Extras.INFO_SHOW) > 0) h.postDelayed(infoHide, Extras.num(ctx, Extras.INFO_SHOW) * 1000L);
             }
         };
         if (info.getVisibility() == View.VISIBLE && info.getAlpha() > 0.05f)
             info.animate().alpha(0f).setDuration(300).withEndAction(apply).start();
         else apply.run();
     }
+
+    /** «Cuánto se ve»: pasados unos segundos, el texto de la foto se esconde (la hora se queda). */
+    private final Runnable infoHide = new Runnable() {
+        public void run() { if (running && info != null) info.animate().alpha(0f).setDuration(800).start(); }
+    };
 
     /** Lugar con un pin blanco delante (dibujo propio, no depende de la fuente del dispositivo). */
     private void setPlace(String place) {
@@ -695,6 +699,19 @@ class Slideshow {
                 java.util.Set<String> ks = GeoIndex.get(ctx).keysAt(place, Extras.on(ctx, Extras.PLACE_REGION));
                 List<Item> f = new ArrayList<Item>();
                 for (Item it : l) if (ks.contains(it.key())) f.add(it);
+                if (!f.isEmpty()) l = f;
+            } catch (Throwable ignored) { }
+        }
+        if (Extras.on(ctx, Extras.ONLY_FAV)) {
+            java.util.Set<String> fs = Prefs.favs(ctx);
+            List<Item> f = new ArrayList<Item>();
+            for (Item it : l) if (fs.contains(it.key())) f.add(it);
+            if (!f.isEmpty()) l = f;
+        }
+        String pf = Extras.str(ctx, Extras.PASE_FILTER, "");
+        if (pf.length() > 0 && pf.charAt(0) == FilterData.PREFIX) {
+            try {
+                List<Item> f = FilterData.run(ctx, l, Search.places(ctx), pf);
                 if (!f.isEmpty()) l = f;
             } catch (Throwable ignored) { }
         }
@@ -1640,40 +1657,6 @@ class Slideshow {
         }
     }
 
-    // ------------------------------------------------------------ mando desde el móvil (función extra)
-    private WebConfigServer rcServer;
-
-    /** Durante el pase la pantalla principal cierra su web: el pase abre la suya en el mismo puerto (si está libre). */
-    private void openRemote() {
-        final int sess = session;
-        new Thread(new Runnable() {
-            public void run() {
-                final WebConfigServer srv = new WebConfigServer(ctx, null);
-                if (!srv.openExact()) return;               // la tiene abierta la pantalla principal: ya sirve
-                h.post(new Runnable() {
-                    public void run() {
-                        if (!running || sess != session || rcServer != null) { srv.close(); return; }
-                        rcServer = srv;
-                        srv.start();
-                    }
-                });
-            }
-        }, "remote-web").start();
-    }
-
-    private Runnable keyListener;
-
-    /** Lo que hay que hacer cuando se usa el mando del móvil (el salvapantallas rearma su cierre automático). */
-    void setKeyListener(Runnable r) { keyListener = r; }
-
-    /** Tecla que llega del móvil: como el mando (con la ficha abierta, la cierra). */
-    void remoteKey(int code) {
-        if (!running) return;
-        if (keyListener != null) keyListener.run();
-        if (panel != null) { closeInfo(); return; }
-        onKey(code);
-    }
-
     boolean infoOpen() { return panel != null; }
 
     /** Atrás dentro de la ficha: si el foco está en el mapa, lo saca del mapa (y no cierra la ficha). */
@@ -1999,7 +1982,8 @@ class Slideshow {
                     h.post(progTick);
                     p.start();   // también en pausa: hace falta para pintar el primer fotograma
                     int dur = p.getDuration();
-                    if (!paused) h.postDelayed(videoTimeout, (dur > 0 ? dur : 5 * 60 * 1000) + 15000L);
+                    int cap = manual() ? 0 : Extras.num(ctx, Extras.VIDEO_MAX) * 1000;   // «Duración máxima»: pasado ese rato, a lo siguiente
+                    if (!paused) h.postDelayed(videoTimeout, cap > 0 && (dur <= 0 || cap < dur) ? cap : (dur > 0 ? dur : 5 * 60 * 1000) + 15000L);
                     h.postDelayed(revealLater, 2500);   // por si el reproductor no avisa del primer fotograma
                 }
             });
@@ -2229,7 +2213,7 @@ class Slideshow {
         }
         boolean black = Extras.nightBlack(ctx);
         if (on) {
-            nightView.setAlpha(black ? 1f : 0.72f);
+            nightView.setAlpha(black ? 1f : Extras.nightDimAlpha(ctx));
             nightView.setVisibility(View.VISIBLE);
             nightView.bringToFront();
             info.setVisibility(View.INVISIBLE);

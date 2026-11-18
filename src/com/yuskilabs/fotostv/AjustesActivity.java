@@ -122,7 +122,15 @@ public class AjustesActivity extends SettingsBase {
         cm.addView(row(musicBtn, volBtn));
         cm.addView(row(radioBtn, folderBtn));
         cm.addView(row(dreamMusicBtn, albumMusic));
-        cm.addView(row(duck, null));
+        Button musicFade = cycInt("Al empezar", Extras.MUSIC_FADE, new int[]{0, 5, 15, 30}, new String[]{"de golpe", "sube en 5 s", "sube en 15 s", "sube en 30 s"},
+                R.drawable.ic_up, "Cuando empieza la música, el volumen sube poco a poco en vez de sonar de golpe.");
+        Button musicStop = cycFx("Callar desde", Extras.MUSIC_STOP, new String[]{"off", "21", "22", "23", "0"},
+                new String[]{"no", "21 h", "22 h", "23 h", "0 h"}, R.drawable.ic_timer,
+                "La música se calla desde esa hora hasta las 8 de la mañana, aunque el modo noche esté apagado. La imagen sigue.");
+        Button musicOrder = cycFx("Canciones", Extras.MUSIC_ORDER, new String[]{"shuffle", "order"}, new String[]{"aleatorias", "en orden"},
+                R.drawable.ic_shuffle, "Solo con música de una carpeta: las canciones suenan al azar o por orden de nombre.");
+        cm.addView(row(duck, musicFade));
+        cm.addView(row(musicStop, musicOrder));
         
 
         // --- ubicaciones
@@ -161,7 +169,7 @@ public class AjustesActivity extends SettingsBase {
         
 
         // --- vídeo y caché
-        LinearLayout cv = card("Vídeo, caché y ocultas", R.drawable.ic_video);
+        LinearLayout cv = card("Vídeo y caché", R.drawable.ic_video);
         vqBtn = btn(vqLabel(), R.drawable.ic_hd, new View.OnClickListener() {
             public void onClick(View v) {
                 String q = Prefs.vq(AjustesActivity.this);
@@ -183,24 +191,13 @@ public class AjustesActivity extends SettingsBase {
             cyc("Vídeos", "videoMB", true, new String[]{"300", "500", "1000", "1500", "3000"},
                 new String[]{"300 MB", "500 MB", "1 GB", "1,5 GB", "3 GB"}, R.drawable.ic_file,
                 new Cur() { public String get() { return String.valueOf(Prefs.videoMB(AjustesActivity.this)); } })));
-        final int nh = Prefs.hidden(this).size();
-        Button unhide = btn(nh == 0 ? "No hay fotos ocultas" : "Mostrar de nuevo las " + nh + " ocultas", R.drawable.ic_visibility, new View.OnClickListener() {
-            public void onClick(View v) {
-                if (Prefs.hidden(AjustesActivity.this).isEmpty()) return;
-                new android.app.AlertDialog.Builder(AjustesActivity.this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-                    .setTitle("Fotos ocultas")
-                    .setMessage("Todas las fotos ocultas volverán a mostrarse.")
-                    .setPositiveButton("Mostrarlas", new android.content.DialogInterface.OnClickListener() {
-                        public void onClick(android.content.DialogInterface d, int w) {
-                            Prefs.clearHidden(AjustesActivity.this);
-                            Toast.makeText(AjustesActivity.this, "Hecho: ya no hay fotos ocultas.", Toast.LENGTH_SHORT).show();
-                            ((Button) v).setText("No hay fotos ocultas");
-                        }
-                    })
-                    .setNegativeButton("Cancelar", null).show();
-            }
+        Button videoMax = cycInt("Duración máxima", Extras.VIDEO_MAX, new int[]{0, 15, 30, 60, 120}, new String[]{"entero", "15 s", "30 s", "1 min", "2 min"},
+                R.drawable.ic_timer, "Cada vídeo se ve como mucho ese rato en el pase y el salvapantallas, y luego pasa a lo siguiente. Con «entero» se ve hasta el final.");
+        Button cacheUsed = btn("Ver caché usada", R.drawable.ic_info, new View.OnClickListener() {
+            public void onClick(View v) { showCacheUsed(); }
         });
-        cv.addView(row(unhide, null));
+        describe(cacheUsed, "Cuánto ocupan ahora las miniaturas y los vídeos guardados, frente al máximo elegido.");
+        cv.addView(row(videoMax, cacheUsed));
         
 
         // --- pase de fotos
@@ -231,12 +228,17 @@ public class AjustesActivity extends SettingsBase {
         final Button fitBtn = cyc("Encuadre", "fit", false, new String[]{"auto", "crop", "fit"},
                 new String[]{"auto", "llenar", "completo"}, R.drawable.ic_single,
                 new Cur() { public String get() { return Prefs.fit(AjustesActivity.this); } });
-        Button resume = tog("Continuar", "resume", R.drawable.ic_check, new Bool() { public boolean get() { return Prefs.resume(AjustesActivity.this); } });
+        Button onlyFav = fx("Solo favoritas", Extras.ONLY_FAV, R.drawable.ic_heart,
+                "El pase y el salvapantallas enseñan solo las fotos marcadas como favoritas (si hay alguna).");
+        paseFilterBtn = btn(paseFilterLabel(), R.drawable.ic_tune, new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(AjustesActivity.this, FilterActivity.class).putExtra("pase", true)); }
+        });
+        describe(paseFilterBtn, "Elige año, mes, día, región, localidad, álbum, cámara o autor: el pase y el salvapantallas usarán solo las fotos que cumplan todo. Se suma a «Un solo lugar» y «Solo favoritas».");
         // pase: qué fotos salen y cuándo
         cp.addView(row(order, every));
         cp.addView(row(todayBtn(), todayWeek));
-        cp.addView(row(fav, resume));
-        cp.addView(row(placeBtn, null));
+        cp.addView(row(fav, onlyFav));
+        cp.addView(row(placeBtn, paseFilterBtn));
 
         // --- movimiento y relleno
         LinearLayout cf = card("Aspecto del pase", R.drawable.ic_fullscreen);
@@ -249,7 +251,9 @@ public class AjustesActivity extends SettingsBase {
         cf.addView(row(transition, mosaics));
         cf.addView(row(fitBtn, motionBtn()));
         cf.addView(row(speed, edge));
-        cf.addView(row(bg, null));
+        Button textSize = cycFx("Tamaño del texto", Extras.TEXT_SIZE, new String[]{"normal", "small", "big"}, new String[]{"normal", "pequeño", "grande"},
+                R.drawable.ic_format, "Tamaño de la fecha, el lugar, el álbum, los pies de foto y la hora sobre la foto.");
+        cf.addView(row(bg, textSize));
 
         // --- información en pantalla
         LinearLayout ci = card("Información en pantalla", R.drawable.ic_info);
@@ -277,19 +281,35 @@ public class AjustesActivity extends SettingsBase {
             tog("Hora", "clock", R.drawable.ic_schedule, new Bool() { public boolean get() { return Prefs.clock(AjustesActivity.this); } })));
         ci.addView(row(weather, cityBtn));
         ci.addView(row(captions, credit));
+        Button infoPos = cycFx("Posición", Extras.INFO_POS, new String[]{"bottom", "top"}, new String[]{"abajo", "arriba"}, R.drawable.ic_move,
+                "Dónde salen la información de la foto y la hora: abajo (como siempre) o arriba.");
+        Button infoShow = cycInt("Se ve", Extras.INFO_SHOW, new int[]{0, 5, 10, 20}, new String[]{"siempre", "5 s", "10 s", "20 s"}, R.drawable.ic_visibility,
+                "Cuánto rato se ve el texto de cada foto (álbum, fecha, lugar, pie). Pasado ese rato se esconde; la hora se queda.");
+        ci.addView(row(infoPos, infoShow));
 
-        // --- noche y temporizador
-        LinearLayout cn = card("Salvapantallas y noche", R.drawable.ic_tv);
-        cn.addView(row(dream, proj));
-        Button night = cycFx("Modo noche", Extras.NIGHT, new String[]{"off", "22-8", "23-7", "0-7"},
-                new String[]{"no", "22 a 8 h", "23 a 7 h", "0 a 7 h"}, R.drawable.ic_schedule,
-                "Durante esas horas el salvapantallas se atenúa (o se apaga) y la música se calla.");
-        Button nightMode = cycFx("De noche", Extras.NIGHT_MODE, new String[]{"dim", "black"}, new String[]{"tenue", "pantalla negra"},
-                R.drawable.ic_visibility_off, "Tenue: fotos muy oscuras, sin textos. Pantalla negra: el salvapantallas no enseña nada a esas horas.");
+        // --- salvapantallas, y dentro la noche
+        LinearLayout cn = card("Salvapantallas", R.drawable.ic_tv);
+        Button wake = twoFx("Al despertar", "resume", "de cero", "seguir", R.drawable.ic_undo,
+                "Cuando el salvapantallas vuelve a empezar: seguir por la foto donde se quedó la última vez, o empezar de cero.");
         Button timer = cycInt("Temporizador", Extras.TIMER, new int[]{0, 15, 30, 60, 90}, new String[]{"no", "15 min", "30 min", "1 h", "1 h 30"},
                 R.drawable.ic_timer, "Cualquier pase (también el salvapantallas) se cierra solo pasado ese tiempo, aunque se use el mando. Después el inicio automático no lo vuelve a abrir hasta que abras la app. «Cerrar pase» (pantalla principal) es distinto: cierra el pase abierto solo si no tocas el mando en ese rato.");
+        cn.addView(row(dream, proj));
+        cn.addView(row(wake, timer));
+        TextView nightHead = text("Noche", 16, 0xFF7FB2FF);
+        nightHead.setTypeface(Ui.BLACK);
+        nightHead.setPadding(dp(4), dp(10), 0, dp(6));
+        cn.addView(nightHead);
+        Button night = cycFx("Modo noche", Extras.NIGHT, new String[]{"off", "22-8", "23-7", "0-7"},
+                new String[]{"no", "22 a 8 h", "23 a 7 h", "0 a 7 h"}, R.drawable.ic_schedule,
+                "Durante esas horas el salvapantallas se atenúa (o se apaga) y la música se calla (o baja, según «Música de noche»).");
+        Button nightMode = cycFx("De noche", Extras.NIGHT_MODE, new String[]{"dim", "black"}, new String[]{"tenue", "pantalla negra"},
+                R.drawable.ic_visibility_off, "Tenue: fotos muy oscuras, sin textos. Pantalla negra: el salvapantallas no enseña nada a esas horas.");
+        Button nightMusic = cycFx("Música", Extras.NIGHT_MUSIC, new String[]{"off", "low", "keep"}, new String[]{"se calla", "baja", "sigue"},
+                R.drawable.ic_volume, "Qué hace la música durante el modo noche: callarse, bajar mucho el volumen o seguir igual.");
+        Button nightDim = cycFx("Oscuridad", Extras.NIGHT_DIM, new String[]{"normal", "soft", "strong"}, new String[]{"normal", "suave", "fuerte"},
+                R.drawable.ic_moon, "Cuánto se oscurecen las fotos en el modo noche tenue.");
         cn.addView(row(night, nightMode));
-        cn.addView(row(timer, null));
+        cn.addView(row(nightMusic, nightDim));
 
         // --- explorador
         LinearLayout ce = card("Explorador", R.drawable.ic_albums);
@@ -309,28 +329,44 @@ public class AjustesActivity extends SettingsBase {
                 "Pulsación larga en un álbum, «Buscar repetidas»: marca las fotos casi iguales hechas seguidas para ocultarlas de una vez.");
         Button stats = fx("Estadísticas", Extras.STATS, R.drawable.ic_stats,
                 "Botón «Estadísticas» en la pantalla principal: fotos por año, lugar, álbum y cámara (con filtro por cámara).");
+        final int nh = Prefs.hidden(this).size();
+        Button unhide = btn(nh == 0 ? "No hay fotos ocultas" : "Mostrar las " + nh + " ocultas", R.drawable.ic_visibility, new View.OnClickListener() {
+            public void onClick(View v) {
+                if (Prefs.hidden(AjustesActivity.this).isEmpty()) return;
+                new android.app.AlertDialog.Builder(AjustesActivity.this, android.app.AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+                    .setTitle("Fotos ocultas")
+                    .setMessage("Todas las fotos ocultas volverán a mostrarse.")
+                    .setPositiveButton("Mostrarlas", new android.content.DialogInterface.OnClickListener() {
+                        public void onClick(android.content.DialogInterface d, int w) {
+                            Prefs.clearHidden(AjustesActivity.this);
+                            Toast.makeText(AjustesActivity.this, "Hecho: ya no hay fotos ocultas.", Toast.LENGTH_SHORT).show();
+                            ((Button) v).setText("No hay fotos ocultas");
+                        }
+                    })
+                    .setNegativeButton("Cancelar", null).show();
+            }
+        });
+        describe(unhide, "Las fotos que has ocultado vuelven a verse en sus álbumes.");
+        Button hideAlbum = twoFx("Álbum Ocultas", Extras.HIDE_OCULTAS, "visible", "escondido", R.drawable.ic_visibility_off,
+                "El álbum «Ocultas» sale en la lista de álbumes (si hay fotos ocultas) o se esconde de ella. Las fotos ocultas siguen ocultas.");
         ce.addView(row(search, virt));
         ce.addView(row(jump, trips));
         ce.addView(row(covers, news));
         ce.addView(row(dupes, stats));
+        ce.addView(row(hideAlbum, unhide));
 
         // --- perfiles (panel propio: lista de perfiles y ficha de cada uno)
         profilesCard = card("Perfiles", R.drawable.ic_family);
         if (keepTopic < 0) profView = -1;
         refreshProfiles();
 
-        // --- móvil y otras teles
-        LinearLayout ch = card("Móvil y otras teles", R.drawable.ic_guest);
-        Button remote = fx("Mando del móvil", Extras.REMOTE, R.drawable.ic_remote,
-                "La web de ajustes del móvil enseña un mando para pasar fotos, pausar o ver la anterior.");
+        // --- copiar de otra tele y recarga (ahora en Ayuda y mantenimiento)
         Button reload = cycInt("Recargar álbumes", Extras.RELOAD, new int[]{0, 6, 12, 24}, new String[]{"no", "cada 6 h", "cada 12 h", "cada 24 h"},
                 R.drawable.ic_refresh, "Mientras la app esté abierta o en el salvapantallas, vuelve a leer los álbumes de Google cada cierto tiempo.");
         Button copyTv = btn("Copiar de otra tele", R.drawable.ic_cast, new View.OnClickListener() {
             public void onClick(View v) { copyFromTvDialog(); }
         });
         describe(copyTv, "Trae a esta tele los álbumes y todos los ajustes de otra tele con FotosTV, por la wifi y sin archivos. Hace falta su dirección y su PIN (salen en su pantalla principal).");
-        ch.addView(row(remote, copyTv));
-        ch.addView(row(reload, null));
 
         // --- ayuda y estado
         LinearLayout cy = card("Ayuda y mantenimiento", R.drawable.ic_notes);
@@ -369,17 +405,18 @@ public class AjustesActivity extends SettingsBase {
         camInfo.setPadding(dp(8), dp(4), dp(8), dp(8));
         cy.addView(row(diag, geoBtn));
         cy.addView(row(rebuild, camBtn));
+        cy.addView(row(copyTv, reload));
         cy.addView(geoView);
         cy.addView(camInfo);
         checkUpdate();
 
         // temas a la izquierda, un solo panel a la derecha
-        final LinearLayout[] cards = {cp, cf, ci, cn, cm, cv, ce, profilesCard, ch, cy};
-        String[] names = {"Pase de fotos", "Aspecto del pase", "Información", "Salvapantallas y noche", "Música",
-            "Vídeo y caché", "Explorador", "Perfiles", "Móvil y otras teles", "Ayuda y mantenimiento"};
+        final LinearLayout[] cards = {cp, cf, ci, cn, cm, cv, ce, profilesCard, cy};
+        String[] names = {"Pase de fotos", "Aspecto del pase", "Información", "Salvapantallas", "Música",
+            "Vídeo y caché", "Explorador", "Perfiles", "Ayuda y mantenimiento"};
         int[] icons = {R.drawable.ic_photo, R.drawable.ic_fullscreen, R.drawable.ic_info, R.drawable.ic_tv,
             R.drawable.ic_music, R.drawable.ic_video, R.drawable.ic_albums,
-            R.drawable.ic_family, R.drawable.ic_guest, R.drawable.ic_notes};
+            R.drawable.ic_family, R.drawable.ic_notes};
         panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         topics = new TopicRow[cards.length];
@@ -484,6 +521,7 @@ public class AjustesActivity extends SettingsBase {
 
     @Override protected void onStart() {
         super.onStart();
+        if (paseFilterBtn != null) paseFilterBtn.setText(paseFilterLabel());
         h.removeCallbacks(geoTick);
         h.post(geoTick);
         h.removeCallbacks(camTick);
@@ -501,6 +539,34 @@ public class AjustesActivity extends SettingsBase {
     private String vqLabel() {
         String q = Prefs.vq(this);
         return "Vídeos: " + ("hd".equals(q) ? "calidad alta" : "sd".equals(q) ? "calidad media" : "calidad auto");
+    }
+
+    private Button paseFilterBtn;
+
+    private String paseFilterLabel() {
+        String q = Extras.str(this, Extras.PASE_FILTER, "");
+        if (q.length() == 0 || q.charAt(0) != FilterData.PREFIX) return "Filtrar: no";
+        int n = 0;
+        for (java.util.Set<String> s : FilterData.decode(q)) if (!s.isEmpty()) n++;
+        return "Filtrar: " + (n == 1 ? "1 dato" : n + " datos");
+    }
+
+    private static long dirBytes(java.io.File d) {
+        long t = 0;
+        java.io.File[] fs = d == null ? null : d.listFiles();
+        if (fs != null) for (java.io.File f : fs) t += f.isDirectory() ? dirBytes(f) : f.length();
+        return t;
+    }
+
+    private void showCacheUsed() {
+        new Thread(new Runnable() {
+            public void run() {
+                final long th = dirBytes(new java.io.File(getCacheDir(), "thumbs")), vd = dirBytes(new java.io.File(getCacheDir(), "videos"));
+                final String m = "Miniaturas: " + (th / (1024 * 1024)) + " MB de " + Prefs.thumbMB(AjustesActivity.this) + " MB.\nVídeos: "
+                    + (vd / (1024 * 1024)) + " MB de " + Prefs.videoMB(AjustesActivity.this) + " MB.";
+                h.post(new Runnable() { public void run() { if (!isFinishing()) Toast.makeText(AjustesActivity.this, m, Toast.LENGTH_LONG).show(); } });
+            }
+        }).start();
     }
 
     private void clearCache() {

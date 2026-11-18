@@ -40,6 +40,18 @@ final class Extras {
     static final String FAV_BOOST = "fx_favBoost";     // favoritas más a menudo (orden inteligente)
     static final String ALBUM_MUSIC = "fx_albumMusic"; // música propia de cada álbum
     static final String SOFT_DUCK = "fx_softDuck";     // con vídeo con sonido, la música baja en vez de callarse
+    static final String TEXT_SIZE = "fx_textSize";     // tamaño del texto del pase: small | normal | big
+    static final String INFO_POS = "fx_infoPos";       // información y hora: bottom (abajo) | top (arriba)
+    static final String INFO_SHOW = "fx_infoShow";     // segundos que se ve el texto de cada foto (0 = siempre)
+    static final String PASE_FILTER = "fx_paseFilter"; // filtro de «Filtrar» que limita las fotos del pase y el salvapantallas ("" = ninguno)
+    static final String ONLY_FAV = "fx_onlyFav";       // el pase y el salvapantallas solo con favoritas
+    static final String NIGHT_MUSIC = "fx_nightMusic"; // música de noche: off (se calla) | low (baja) | keep (sigue igual)
+    static final String NIGHT_DIM = "fx_nightDim";     // oscuridad del modo noche tenue: soft | normal | strong
+    static final String MUSIC_FADE = "fx_musicFade";   // segundos que tarda la música en llegar al volumen (0 = de golpe)
+    static final String MUSIC_STOP = "fx_musicStop";   // hora a partir de la cual la música se calla hasta las 8: off | 21 | 22 | 23 | 0
+    static final String MUSIC_ORDER = "fx_musicOrder"; // canciones de la carpeta: shuffle | order
+    static final String VIDEO_MAX = "fx_videoMax";     // segundos máximos de cada vídeo en el pase (0 = entero)
+    static final String HIDE_OCULTAS = "fx_hideOcultas";   // esconde el álbum «Ocultas» de la lista de álbumes
     static final String TIMER = "fx_timer";            // temporizador del pase (minutos, 0 = no)
     // explorador
     static final String SEARCH = "fx_search";          // botón «Buscar»
@@ -50,7 +62,6 @@ final class Extras {
     static final String NEW_BADGE = "fx_new";          // marcar fotos nuevas
     static final String DUPES = "fx_dupes";            // buscar fotos repetidas
     static final String STATS = "fx_stats";            // botón «Estadísticas» (con filtro por cámara)
-    static final String REMOTE = "fx_remote";          // mando desde el móvil
     static final String RELOAD = "fx_reload";          // recarga automática de álbumes (horas, 0 = no)
 
     static SharedPreferences sp(Context c) { return Prefs.sp(c); }
@@ -66,6 +77,20 @@ final class Extras {
         SharedPreferences s = sp(c);
         if (s.contains(MOSAICS)) return s.getString(MOSAICS, "off");
         return s.getBoolean(COLLAGE, false) || s.getBoolean(TRIO3, false) || s.getBoolean(GRID4, false) ? "normal" : "off";
+    }
+
+    /** Escala del texto del pase. */
+    static float textScale(Context c) {
+        String v = str(c, TEXT_SIZE, "normal");
+        return "small".equals(v) ? 0.85f : "big".equals(v) ? 1.3f : 1f;
+    }
+
+    static boolean infoTop(Context c) { return "top".equals(str(c, INFO_POS, "bottom")); }
+
+    /** Opacidad del velo del modo noche tenue. */
+    static float nightDimAlpha(Context c) {
+        String v = str(c, NIGHT_DIM, "normal");
+        return "soft".equals(v) ? 0.55f : "strong".equals(v) ? 0.88f : 0.72f;
     }
 
     static String night(Context c) { return str(c, NIGHT, "off"); }

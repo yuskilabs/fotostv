@@ -38,6 +38,7 @@ public class FilterActivity extends SettingsBase {
     private final List<Set<String>> sel = new ArrayList<Set<String>>();
     private final Button[] catBtn = new Button[N];
     private TextView info;
+    private boolean pase;
     private View loading;
     private Button viewBtn, clearBtn;
     private volatile List<Item> all;
@@ -47,14 +48,21 @@ public class FilterActivity extends SettingsBase {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
-        LinearLayout root = screen("Filtrar", "Elige uno o varios valores en cada categoría. Se enseñan las fotos que cumplan todo a la vez.", R.drawable.ic_tune);
+        pase = getIntent().getBooleanExtra("pase", false);
+        LinearLayout root = pase
+            ? screen("Filtro del pase", "Elige qué fotos usan el pase y el salvapantallas: solo las que cumplan todo a la vez. Se aplica además de «Un solo lugar» y «Solo favoritas».", R.drawable.ic_tune)
+            : screen("Filtrar", "Elige uno o varios valores en cada categoría. Se enseñan las fotos que cumplan todo a la vez.", R.drawable.ic_tune);
         loading = loadingRow("Cargando… con muchas fotos puede tardar unos segundos");
         root.addView(loading);
         info = text("", 14, Color.WHITE);
         info.setPadding(0, 0, 0, dp(10));
         info.setVisibility(View.GONE);
         root.addView(info);
-        for (int i = 0; i < N; i++) sel.add(new HashSet<String>());
+        if (pase) {    // parte de lo que ya estaba elegido para el pase
+            String q = Extras.str(this, Extras.PASE_FILTER, "");
+            if (q.length() > 0 && q.charAt(0) == FilterData.PREFIX) sel.addAll(FilterData.decode(q));
+        }
+        while (sel.size() < N) sel.add(new HashSet<String>());
         for (int i = 0; i < N; i++) {
             final int cat = i;
             catBtn[i] = btn(label(i), ICONS[i], new View.OnClickListener() {
@@ -68,13 +76,14 @@ public class FilterActivity extends SettingsBase {
             lp.bottomMargin = dp(8);
             root.addView(r, lp);
         }
-        viewBtn = btn("Ver fotos", R.drawable.ic_photo, new View.OnClickListener() {
-            public void onClick(View v) { showPhotos(); }
+        viewBtn = btn(pase ? "Usar en el pase" : "Ver fotos", pase ? R.drawable.ic_check : R.drawable.ic_photo, new View.OnClickListener() {
+            public void onClick(View v) { if (pase) usePase(); else showPhotos(); }
         });
         viewBtn.setEnabled(false);
         clearBtn = btn("Quitar filtros", R.drawable.ic_close, new View.OnClickListener() {
             public void onClick(View v) {
                 for (Set<String> s : sel) s.clear();
+                if (pase) { Prefs.sp(FilterActivity.this).edit().remove(Extras.PASE_FILTER).commit(); }
                 refresh();
             }
         });
@@ -189,7 +198,7 @@ public class FilterActivity extends SettingsBase {
                         for (Set<String> x : sel) if (!x.isEmpty()) any = true;
                         info.setText(n(count) + (count == 1 ? " foto" : " fotos") + (any ? " con este filtro" : " en total (sin filtros)")
                             + " · de " + n(a.size()));
-                        viewBtn.setText("Ver fotos (" + n(count) + ")");
+                        viewBtn.setText((pase ? "Usar en el pase (" : "Ver fotos (") + n(count) + ")");
                         viewBtn.setEnabled(count > 0);
                         clearBtn.setEnabled(any);
                     }
@@ -302,6 +311,16 @@ public class FilterActivity extends SettingsBase {
             })
             .setNegativeButton("Cancelar", null)
             .show());
+    }
+
+    /** Guarda lo elegido como filtro del pase y del salvapantallas, y vuelve a Ajustes. */
+    private void usePase() {
+        boolean any = false;
+        for (Set<String> x : sel) if (!x.isEmpty()) any = true;
+        if (any) Prefs.sp(this).edit().putString(Extras.PASE_FILTER, FilterData.encode(snapshot())).commit();
+        else Prefs.sp(this).edit().remove(Extras.PASE_FILTER).commit();
+        Toast.makeText(this, any ? "El pase y el salvapantallas usarán solo estas fotos." : "Sin filtro: el pase usa todas las fotos.", Toast.LENGTH_LONG).show();
+        finish();
     }
 
     /** Abre el mosaico con las fotos que cumplen el filtro, de la más reciente a la más antigua. */

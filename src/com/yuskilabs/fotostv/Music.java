@@ -144,6 +144,7 @@ class Music {
     private static Context app;
     private static MediaPlayer mp;
     private static boolean active, ducked, nightMute;
+    private static long fadeStart;
     private static int retries, gen;
     private static List<File> files;
     private static int idx;
@@ -182,13 +183,16 @@ class Music {
         active = true;
         retries = 0;
         gen++;
+        fadeStart = System.currentTimeMillis();
+        h.removeCallbacks(volTick);
+        h.postDelayed(volTick, 1000);
         if ("folder".equals(mode(app))) scanThenPlay(); else next();
     }
 
     static void stop() {
         active = false;
         gen++;
-        h.removeCallbacksAndMessages(null);
+        h.removeCallbacksAndMessages(null);   // también el reloj de volumen
         release();
         files = null;
     }
@@ -205,12 +209,34 @@ class Music {
         applyVol();
     }
 
+    /** Cada segundo: sube el volumen del fundido y vigila la hora de «Parar a esta hora». */
+    private static final Runnable volTick = new Runnable() {
+        public void run() {
+            if (!active) return;
+            applyVol();
+            h.postDelayed(this, 1000);
+        }
+    };
+
+    /** ¿Estamos entre la hora de «Parar a esta hora» y las 8 de la mañana? */
+    private static boolean stopTime() {
+        String w = Extras.str(app, Extras.MUSIC_STOP, "off");
+        if ("off".equals(w)) return false;
+        return FxLogic.inWindow(w + "-8", java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY));
+    }
+
     private static void applyVol() {
         MediaPlayer m = mp;
         if (m == null || app == null) return;
         float v = (float) Math.pow(Prefs.musicVol(app) / 100.0, 2);   // curva suave: a medio control suena bajito
         if (ducked) v = Extras.on(app, Extras.SOFT_DUCK) ? v * 0.2f : 0f;
-        if (nightMute) v = 0f;
+        if (nightMute) {
+            String nm = Extras.str(app, Extras.NIGHT_MUSIC, "off");
+            v = "keep".equals(nm) ? v : "low".equals(nm) ? v * 0.2f : 0f;
+        }
+        if (stopTime()) v = 0f;
+        int fade = Extras.num(app, Extras.MUSIC_FADE) * 1000;
+        if (fade > 0) v *= Math.min(1f, (System.currentTimeMillis() - fadeStart) / (float) fade);
         try { m.setVolume(v, v); } catch (Exception ignored) { }
     }
 
@@ -230,7 +256,8 @@ class Music {
             public void run() {
                 final List<File> found = new ArrayList<File>();
                 scan(new File(path), 0, found);
-                Collections.shuffle(found);
+                if ("order".equals(Extras.str(app, Extras.MUSIC_ORDER, "shuffle"))) Collections.sort(found);
+                else Collections.shuffle(found);
                 h.post(new Runnable() {
                     public void run() {
                         if (g != gen || !active) return;
@@ -282,7 +309,7 @@ class Music {
                 m.setDataSource(url);
             } else {
                 if (files == null || files.isEmpty()) { active = false; return; }
-                if (idx >= files.size()) { idx = 0; Collections.shuffle(files); }
+                if (idx >= files.size()) { idx = 0; if (!"order".equals(Extras.str(app, Extras.MUSIC_ORDER, "shuffle"))) Collections.shuffle(files); }
                 m.setDataSource(files.get(idx++).getPath());
             }
             m.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {

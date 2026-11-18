@@ -209,9 +209,6 @@ class WebConfigServer extends Thread {
             int off = 0;
             while (off < len) { int n = in.read(buf, off, len - off); if (n < 0) break; off += n; }
             body = addMany(parseForm(new String(buf, 0, off, "UTF-8")));
-        } else if (path.startsWith("/rc")) {
-            body = remote(path);
-            ctype = "text/plain; charset=utf-8";
         } else if (path.startsWith("/progress")) {
             body = progress();
         } else if ("POST".equals(method) && path.startsWith("/add")) {
@@ -675,23 +672,6 @@ class WebConfigServer extends Thread {
         return sb.toString();
     }
 
-    /** Mando desde el móvil (función extra): ◀ ▶ OK sobre el pase que esté en marcha en la tele. */
-    private String remote(String path) {
-        if (!Extras.on(ctx, Extras.REMOTE)) return "El mando está desactivado (Ajustes \u2192 Móvil y otras teles).";
-        int q = path.indexOf("k=");
-        String k = q >= 0 ? path.substring(q + 2).split("&")[0] : "";
-        final int code = "left".equals(k) ? android.view.KeyEvent.KEYCODE_DPAD_LEFT
-                : "right".equals(k) ? android.view.KeyEvent.KEYCODE_DPAD_RIGHT
-                : "ok".equals(k) ? android.view.KeyEvent.KEYCODE_DPAD_CENTER : 0;
-        final Slideshow s = Slideshow.active;
-        if (s == null) return "Ahora mismo no hay ningún pase en marcha en la tele.";
-        if (code == 0) return "En marcha.";
-        new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
-            public void run() { s.remoteKey(code); }
-        });
-        return "left".equals(k) ? "\u25C0 Anterior" : "right".equals(k) ? "Siguiente \u25B6" : "Pausa / continuar";
-    }
-
     private String form() {
         String mode = Prefs.albumMode(ctx);
         StringBuilder sb = new StringBuilder();
@@ -712,13 +692,6 @@ class WebConfigServer extends Thread {
               .append("<input id='pc' type='tel' inputmode='numeric' maxlength='4' placeholder='Código de 4 cifras' autocomplete='off'>");
             if (Prefs.hasCode(ctx, pid)) sb.append("<button type='button' class='sec' onclick=\"saveProfile('none')\">Quitar el código</button>");
             sb.append("<button type='button' class='sec' onclick='saveProfile()'>Guardar perfil</button><p id='pm' class='muted'></p></div>");
-        }
-        if (Extras.on(ctx, Extras.REMOTE)) {
-            sb.append("<h2>Mando</h2><p class='muted'>Pasa las fotos del pase que esté en marcha en la tele.</p>")
-              .append("<div class='row2'><button type='button' class='sec' onclick=\"rc('left')\">\u25C0 Anterior</button>")
-              .append("<button type='button' class='sec' onclick=\"rc('ok')\">\u275A\u275A Pausa</button>")
-              .append("<button type='button' class='sec' onclick=\"rc('right')\">Siguiente \u25B6</button></div>")
-              .append("<p id='rcm' class='muted'></p>");
         }
         sb.append("<form method='post' action='/save'>");
         sb.append("<h2>Copia de seguridad</h2><p class='muted'>Para pasar álbumes (con su orden, nombres y portadas), ajustes (también los de las funciones extra), perfiles, favoritas y ubicaciones ya revisadas a otro dispositivo: pulsa «Exportar» (se copia solo al portapapeles), y en el otro pégalo aquí y pulsa «Importar» (sustituye lo que haya). También puedes «Exportar a archivo» e «Importar archivo».</p>")
@@ -812,8 +785,6 @@ class WebConfigServer extends Thread {
         + "x.onload=function(){var t=x.responseText,i=t.indexOf('\\n');m.textContent=t.substring(i+1);};"
         + "x.onerror=function(){m.textContent='No hay conexión con la tele.';};"
         + "x.send('name='+encodeURIComponent(document.getElementById('pn').value)+'&icon='+pIcon+'&img='+encodeURIComponent(pImg)+'&code='+encodeURIComponent(cd));}"
-        + "function rc(k){var m=document.getElementById('rcm'),x=new XMLHttpRequest();x.open('GET','/rc?k='+k);"
-        + "x.onload=function(){m.textContent=x.responseText;};x.onerror=function(){m.textContent='No hay conexión con la tele.';};x.send();}"
         + "function expBk(){var x=new XMLHttpRequest();x.open('GET','/export');"
         + "x.onload=function(){var a=document.getElementById('bk'),m=document.getElementById('bkm');a.value=x.responseText;a.focus();a.select();"
         + "var done=function(ok){m.textContent=ok?'\u2714 Copiado al portapapeles ('+Math.round(x.responseText.length/1024)+' KB). Pégalo en el otro dispositivo con «Importar».':'No he podido copiar solo: el texto está seleccionado, copia con Ctrl+C.';};"

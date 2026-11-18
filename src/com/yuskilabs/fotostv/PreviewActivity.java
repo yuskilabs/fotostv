@@ -31,7 +31,6 @@ public class PreviewActivity extends Activity {
             root.animate().alpha(1f).setDuration(1800).start();
         }
         show = new Slideshow(this, root, true);
-        show.setKeyListener(new Runnable() { public void run() { armStop(); } });   // el mando del móvil también cuenta
     }
 
     @Override public void finish() {

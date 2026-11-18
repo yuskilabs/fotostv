@@ -24,7 +24,6 @@ public class PhotoDream extends DreamService {
         FrameLayout root = new FrameLayout(this);
         setContentView(root);
         show = new Slideshow(this, root, false);
-        show.setKeyListener(new Runnable() { public void run() { armStop(); } });   // el mando del móvil también cuenta
     }
 
     private boolean eatBackUp;     // Atrás cerró la ficha: al soltarla no debe salir del salvapantallas

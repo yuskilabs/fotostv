@@ -66,7 +66,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - Dura 2 horas (puede haber varios a la vez), sale al principio de «Ver álbumes» y, al caducar, se borra todo rastro.
 
 ### Configuración
-- **Pantalla Ajustes** en la tele, con tarjetas por secciones: presentación (orden, tiempo por foto, encuadre, continuar, vídeos y sonido), información en pantalla, música, vídeo, caché y fotos ocultas, ubicaciones y salvapantallas.
+- **Pantalla Ajustes** en la tele, con tarjetas por secciones: pase de fotos y su aspecto (orden, tiempo por foto, encuadre, filtro), información en pantalla, música, vídeo y caché, explorador (con las fotos ocultas), perfiles y ayuda y mantenimiento (copiar de otra tele, recarga, ubicaciones, cámaras).
 - **Página web local** que sirve la propia tele, con **código QR** (con OK sobre el código se ve en grande) y PIN: añadir enlaces (uno a uno o en lote), nombre, reordenar o ocultar álbumes, quitarlos, emisora propia y copia de seguridad.
 - **Copia de seguridad**: exportar e importar, copiando y pegando o con archivo, con álbumes (orden, nombres y portadas), todos los ajustes, fotos ocultas, favoritas, coordenadas ya revisadas y nombres de lugar.
 - **Pulsación larga** en un álbum o foto: menú con iconos (ocultar, información, favoritos, seleccionar, revisar ubicación…).
@@ -74,7 +74,7 @@ Pensada para **Android TV** (probada en una Nvidia Shield TV 2017 con Android TV
 - **Actualización desde la propia app** (botón «Actualizar»).
 
 ### Dispositivos y extras
-- **Copiar de otra tele** (Ajustes › Móvil y otras teles): trae por la wifi los álbumes y ajustes de otra tele con FotosTV, escribiendo su dirección y su PIN. **Novedades** (Ajustes › Ayuda y mantenimiento): lo que cambió en las últimas versiones. Las cámaras ya leídas de Estadísticas también viajan con la copia.
+- **Copiar de otra tele** (Ajustes › Ayuda y mantenimiento): trae por la wifi los álbumes y ajustes de otra tele con FotosTV, escribiendo su dirección y su PIN. **Novedades** (Ajustes › Ayuda y mantenimiento): lo que cambió en las últimas versiones. Las cámaras ya leídas de Estadísticas también viajan con la copia.
 - **Buscar con la voz**: en «Buscar», el botón del micrófono dicta la búsqueda con el reconocimiento de voz de la tele (mando con micrófono).
 - **Inicio automático** del pase tras 1, 2, 5, 10, 15 o 30 minutos sin tocar el mando (pensado para Fire TV) y **cierre automático** del pase pasado un rato (5 min a 2 h, o nunca), por si la tele se apaga.
 - **Fondo de pantalla para Projectivy Launcher** con fotos (y opcionalmente vídeos) de tus álbumes.
@@ -95,13 +95,21 @@ Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde l
 - **Pies de foto**: con pulsación larga en el mosaico, «Pie de foto»; sale en el pase y en la ficha.
 
 **Noche, temporizador y música**
-- **Modo noche** (22 a 8 h, 23 a 7 h o 0 a 7 h): el salvapantallas se atenúa (o se queda en negro) y la música y los vídeos se callan. Si tocas el mando, despierta durante 15 minutos.
+- **Modo noche** (Ajustes › Salvapantallas › Noche; 22 a 8 h, 23 a 7 h o 0 a 7 h): el salvapantallas se atenúa (o se queda en negro) y los vídeos se callan. La música se calla, baja o sigue («Música») y la oscuridad de lo tenue se elige («Oscuridad»). Si tocas el mando, despierta durante 15 minutos.
+- **Al despertar** (Ajustes › Salvapantallas): el salvapantallas sigue por la foto donde se quedó o empieza de cero.
 - **Temporizador**: cualquier pase se cierra solo tras 15 min, 30 min, 1 h o 1 h 30, aunque se use el mando.
 - **Música por álbum**: con pulsación larga en un álbum, «Música del álbum» elige su emisora, que suena en el pase de ese álbum.
 - **Con vídeo: bajar música**: con un vídeo con sonido, la música baja en vez de callarse.
 
 **Salvapantallas**
 - **Solo un lugar**: el salvapantallas enseña solo las fotos de una provincia, isla, país o localidad.
+- **Filtrar** (Ajustes › Pase de fotos): la misma pantalla Filtrar, para que el pase y el salvapantallas usen solo las fotos que cumplan lo elegido; con «Usar en el pase» se guarda.
+- **Solo favoritas**: el pase y el salvapantallas enseñan solo las favoritas (si hay).
+- **Tamaño del texto** (Ajustes › Aspecto del pase): pequeño, normal o grande para fecha, lugar, álbum, pies de foto y hora.
+- **Posición** y **Se ve** (Ajustes › Información): la información y la hora, abajo o arriba, y cuánto rato se ve el texto de cada foto.
+- **Música** (Ajustes › Música): **Al empezar** (el volumen sube poco a poco), **Callar desde** (21, 22, 23 o 0 h hasta las 8) y **Canciones** (al azar o en orden, con música de carpeta).
+- **Vídeo y caché**: **Duración máxima** de cada vídeo en el pase y **Ver caché usada**.
+- **Álbum Ocultas** (Ajustes › Explorador): lo esconde de la lista de álbumes, y «Mostrar las N ocultas» vuelve a mostrar las fotos ocultas.
 - **Más favoritas**: con el orden «inteligente», las favoritas salen tres veces más a menudo.
 
 **Explorador**
@@ -114,10 +122,9 @@ Están en **Ajustes**, junto a los demás ajustes y ordenadas por temas (desde l
 - **Fotos repetidas**: con pulsación larga en un álbum, «Buscar repetidas» marca las casi iguales hechas seguidas para ocultarlas de una vez (se queda la primera de cada grupo).
 - **Estadísticas** (botón en la pantalla principal): fotos por año, lugar, álbum y cámara; cada fila abre sus fotos. El botón **Filtrar** combina año, mes, día, región, localidad, álbum, cámara y autor, eligiendo varios valores en cada uno (dentro de una categoría suman; entre categorías se exige todo), con el número de fotos de cada valor y «Ver fotos (N)»; lo filtrado se guarda como álbum virtual con «Guardar» en el mosaico. En las listas, izquierda/derecha salta a los botones de abajo y vuelve. «Leer cámaras» averigua la cámara de las fotos que aún no la tienen y está en Ajustes › Ayuda y mantenimiento.
 
-**Perfiles, móvil y otras teles**
+**Perfiles y mantenimiento**
 - **Perfiles**: «Familia» (el de siempre) y los perfiles que añadas en Ajustes → Perfiles, cada uno con sus álbumes, ajustes, PIN y web de configuración; los nuevos empiezan vacíos. En la pantalla principal, a la derecha del QR, hay un icono cuadrado con el nombre del perfil en uso; al pulsarlo se pasa al siguiente y cambian el QR y el PIN. «Familia» lleva un icono de familia y los demás, uno de una sola persona (cambiable). El icono se elige de una muestra o con una foto de un archivo (también desde la web del móvil, donde además se cambia el nombre del perfil en uso). Cada perfil puede llevar un **código de 4 cifras** (se pone en Perfiles, con el mando: arriba/abajo cambian la cifra, derecha avanza, OK confirma) que se pide al pasar a ese perfil; con códigos, el icono abre una lista de perfiles. Si se olvida, se pone otro o se quita desde la web del móvil, en «Perfil en uso». La copia de seguridad incluye todos los perfiles, con su nombre, icono y código (solo la huella).
-- **Mando del móvil**: la web de ajustes enseña un mando (anterior, pausa, siguiente) para el pase que esté en marcha.
-- **Recargar álbumes** (Ajustes › Móvil y otras teles): cada 6, 12 o 24 horas vuelve a leer los álbumes de Google mientras la app o el salvapantallas estén en marcha.
+- **Recargar álbumes** (Ajustes › Ayuda y mantenimiento): cada 6, 12 o 24 horas vuelve a leer los álbumes de Google mientras la app o el salvapantallas estén en marcha.
 - **Ayuda y mantenimiento** (Ajustes): **Buscar actualización** (si hay una nueva, enseña aquí mismo qué trae y un botón para instalarla; si no, «Última versión»), Novedades, Diagnóstico, Revisar ubicaciones, Rehacer nombres y Leer cámaras.
 
 ## Instalación
@@ -213,7 +220,7 @@ Todas las APK deben ir firmadas con la misma clave para que Android acepte la ac
 
 - Los enlaces de los álbumes y los ajustes se guardan **solo en el dispositivo**.
 - La app se conecta a: la emisora de música que elijas (si la activas), Google Fotos (para leer los álbumes compartidos), GitHub (para buscar actualizaciones), para poner nombre a los lugares y dibujar el mapa a OpenStreetMap (Nominatim y sus teselas; se le envían las coordenadas de las fotos con GPS) y, solo si activas el tiempo, a Open-Meteo (se le envía el nombre de la ciudad y sus coordenadas).
-- La página de configuración es accesible desde cualquier dispositivo de tu red local mientras la pantalla principal está abierta (y durante un pase, si el mando del móvil está activado), y pide un **PIN** de 4 cifras que sale en la tele (el código QR ya lo lleva). No uses la app en redes que no sean de confianza.
+- La página de configuración es accesible desde cualquier dispositivo de tu red local mientras la pantalla principal está abierta y pide un **PIN** de 4 cifras que sale en la tele (el código QR ya lo lleva). No uses la app en redes que no sean de confianza.
 - Quien tenga el enlace de un álbum puede verlo: no compartas enlaces de álbumes privados.
 
 ## Limitaciones conocidas

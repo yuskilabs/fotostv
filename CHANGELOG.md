@@ -3,6 +3,14 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.31
+- Ajustes: «Móvil y otras teles» desaparece. «Copiar de otra tele» y «Recargar álbumes» pasan a Ayuda y mantenimiento. El mando del móvil se elimina (también de la web de ajustes).
+- Pase de fotos: botón «Filtrar» (la pantalla Filtrar elige qué fotos usan el pase y el salvapantallas) y «Solo favoritas». «Continuar» pasa a «Al despertar» en Salvapantallas.
+- Aspecto del pase: «Tamaño del texto» (pequeño, normal, grande). Información: «Posición» (abajo o arriba) y «Se ve» (siempre o unos segundos).
+- «Salvapantallas y noche» pasa a «Salvapantallas», con una sección Noche: Modo noche, De noche, Música de noche (se calla, baja o sigue) y Oscuridad.
+- Música: «Al empezar» (el volumen sube poco a poco), «Callar desde» (hora a partir de la cual se calla hasta las 8) y «Canciones» (al azar o en orden).
+- Vídeo y caché: «Duración máxima» de cada vídeo y «Ver caché usada». Las fotos ocultas se mueven al Explorador, con «Álbum Ocultas» para esconder ese álbum de la lista.
+
 ## 7.30
 - Filtrar: en las listas de valores (Año, Mes…), izquierda o derecha lleva el foco a los botones de abajo (Aceptar), y otra vez izquierda o derecha desde el borde de los botones lo devuelve a la fila donde estabas. Igual en los demás menús de lista con botones (lugar del salvapantallas, carpeta de música, copiar ajustes, elegir perfil).
 - Filtrar: «Ver fotos» ahora es un botón verde grande y centrado, y «Quitar filtros» uno rojizo a su lado.

@@ -410,7 +410,7 @@ public class BrowserActivity extends Activity {
                 entries.add(v);
             }
         }
-        if (hidE != null) entries.add(hidE);
+        if (hidE != null && !Extras.on(this, Extras.HIDE_OCULTAS)) entries.add(hidE);
     }
 
     /** Vuelve a pintar la pantalla actual tras ocultar, mostrar o marcar una favorita. */
