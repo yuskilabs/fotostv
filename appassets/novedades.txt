@@ -1,3 +1,6 @@
+## 7.32
+- Ajustes › Perfiles: al abrir la ficha de un perfil, o al volver a «Todos los perfiles», el foco se queda en el panel (antes saltaba al menú de la izquierda y cambiaba de sección). Al volver a la lista, el foco queda en el perfil que estabas viendo.
+
 ## 7.31
 - Ajustes: «Móvil y otras teles» desaparece. «Copiar de otra tele» y «Recargar álbumes» pasan a Ayuda y mantenimiento. El mando del móvil se elimina (también de la web de ajustes).
 - Pase de fotos: botón «Filtrar» (la pantalla Filtrar elige qué fotos usan el pase y el salvapantallas) y «Solo favoritas». «Continuar» pasa a «Al despertar» en Salvapantallas.
@@ -35,7 +38,4 @@
 - Estadísticas: «Leer cámaras» ahora ofrece «Leer las que faltan» y «Releer las de sin cámara» (por si alguna se apuntó mal). Si no faltaba ninguna, lo dice en vez de no hacer nada.
 - Copiar de otra tele (y la copia de seguridad) trae también las cámaras ya leídas, para no repetir la lectura en cada tele.
 - Novedades: ya no sale sola al abrir la app tras actualizar (ya se ve al pulsar actualizar); queda el botón «Novedades» en Ajustes.
-
-## 7.24
-- Copiar de otra tele: el campo de la dirección sale con el teclado de letras (que sí tiene el punto) y ya escrito «192.168.1.», para completar solo el final.
 

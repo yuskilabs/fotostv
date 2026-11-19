@@ -432,7 +432,7 @@ public class AjustesActivity extends SettingsBase {
             });
             tr.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 public void onFocusChange(View v, boolean has) {
-                    if (has) { showTopic(k); if (hint != null) hint.setText(HINT0); }
+                    if (has && !keepPanel) { showTopic(k); if (hint != null) hint.setText(HINT0); }
                     ((TopicRow) v).setFocusedLook(has);
                 }
             });
@@ -542,6 +542,7 @@ public class AjustesActivity extends SettingsBase {
     }
 
     private Button paseFilterBtn;
+    private boolean keepPanel;
 
     private String paseFilterLabel() {
         String q = Extras.str(this, Extras.PASE_FILTER, "");
@@ -1236,10 +1237,24 @@ public class AjustesActivity extends SettingsBase {
     /** Rehace el panel «Perfiles» (lista o ficha) y deja el foco dentro. */
     private void refreshProfiles() {
         if (profilesCard == null) return;
+        final boolean live = topics != null;
+        final int before = profView;
+        keepPanel = live;      // al quitar el botón con foco, Android lo pasa a los temas: que no cambien el panel
         while (profilesCard.getChildCount() > 1) profilesCard.removeViewAt(1);
         if (profView >= 0 && !profileExists(profView)) profView = -1;
         if (profView < 0) buildProfileList(); else buildProfileSheet(profView);
-        if (topics != null) profilesCard.requestFocus();
+        if (live) {
+            View target = null;
+            if (before >= 0 && profView < 0) {    // de la ficha a la lista: el foco al renglón de ese perfil
+                for (int i = 1; i < profilesCard.getChildCount() && target == null; i++) {
+                    Object t = profilesCard.getChildAt(i).getTag();
+                    if (t instanceof Integer && ((Integer) t).intValue() == before) target = profilesCard.getChildAt(i);
+                }
+            }
+            if (target != null) target.requestFocus();
+            else for (int i = 1; i < profilesCard.getChildCount(); i++) if (profilesCard.getChildAt(i).requestFocus()) break;
+            keepPanel = false;
+        }
     }
 
     private String profileStatus(int id) {
@@ -1298,6 +1313,7 @@ public class AjustesActivity extends SettingsBase {
         r.setGravity(Gravity.CENTER_VERTICAL);
         r.setFocusable(true);
         r.setClickable(true);
+        r.setTag(Integer.valueOf(id));
         r.setPadding(dp(8), dp(6), dp(12), dp(6));
         GradientDrawable off = new GradientDrawable();
         off.setColor(0x1AFFFFFF);

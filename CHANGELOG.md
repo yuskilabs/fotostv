@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.32
+- Ajustes › Perfiles: al abrir la ficha de un perfil, o al volver a «Todos los perfiles», el foco se queda en el panel (antes saltaba al menú de la izquierda y cambiaba de sección). Al volver a la lista, el foco queda en el perfil que estabas viendo.
+
 ## 7.31
 - Ajustes: «Móvil y otras teles» desaparece. «Copiar de otra tele» y «Recargar álbumes» pasan a Ayuda y mantenimiento. El mando del móvil se elimina (también de la web de ajustes).
 - Pase de fotos: botón «Filtrar» (la pantalla Filtrar elige qué fotos usan el pase y el salvapantallas) y «Solo favoritas». «Continuar» pasa a «Al despertar» en Salvapantallas.
