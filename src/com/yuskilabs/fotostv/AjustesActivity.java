@@ -449,7 +449,9 @@ public class AjustesActivity extends SettingsBase {
         lp.setMargins(0, 0, dp(14), 0);
         cols.addView(ls, lp);
         ScrollView sv = new ScrollView(this);
+        panelScroll = sv;
         sv.setVerticalScrollBarEnabled(false);
+        panel.setPadding(0, 0, 0, dp(30));      // la última fila no queda pegada al borde de abajo
         sv.addView(panel, new ViewGroup.LayoutParams(-1, -2));
         cols.addView(sv, new LinearLayout.LayoutParams(0, -1, 1f));
         showTopic(0);
@@ -464,6 +466,7 @@ public class AjustesActivity extends SettingsBase {
         topics[kt >= 0 && kt < topics.length ? kt : 0].requestFocus();
     }
 
+    private ScrollView panelScroll;
     private LinearLayout panel;
     private TopicRow[] topics;
     private LinearLayout topicList;
@@ -476,6 +479,17 @@ public class AjustesActivity extends SettingsBase {
         panel.removeAllViews();
         panel.addView(cardList[i], new LinearLayout.LayoutParams(-1, -2));
         for (int k = 0; k < topics.length; k++) topics[k].setSelectedLook(k == i);
+    }
+
+    /** Desplaza el panel lo justo para que la vista con foco se vea entera, con un margen. */
+    private void showInScroll(View v) {
+        if (panelScroll == null || v == null || !inPanel(v)) return;
+        android.graphics.Rect r = new android.graphics.Rect();
+        v.getDrawingRect(r);
+        panel.offsetDescendantRectToMyCoords(v, r);
+        int top = r.top - dp(12), bottom = r.bottom + dp(12), y = panelScroll.getScrollY(), hh = panelScroll.getHeight();
+        if (bottom > y + hh) panelScroll.smoothScrollTo(0, bottom - hh);
+        else if (top < y) panelScroll.smoothScrollTo(0, Math.max(0, top));
     }
 
     private boolean inPanel(View v) {
@@ -498,7 +512,12 @@ public class AjustesActivity extends SettingsBase {
                     View n = f.focusSearch(dir);
                     if (n == null || !inPanel(n)) {          // borde del panel: izquierda vuelve a los temas; el resto, se queda
                         if (dir == View.FOCUS_LEFT) topics[Math.max(0, topicSel)].requestFocus();
+                        else if (dir == View.FOCUS_DOWN && panelScroll != null) panelScroll.smoothScrollBy(0, dp(140));   // por si queda algo cortado debajo
                         return true;
+                    }
+                    if ((dir == View.FOCUS_DOWN || dir == View.FOCUS_UP) && panelScroll != null) {
+                        final View target = n;
+                        h.post(new Runnable() { public void run() { showInScroll(target); } });
                     }
                 } else if (f.getParent() == topicList) {
                     if (dir == View.FOCUS_RIGHT) { cardList[Math.max(0, topicSel)].requestFocus(); return true; }

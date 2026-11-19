@@ -1,6 +1,6 @@
 {
-  "version": "7.32",
+  "version": "7.33",
   "apk": "https://raw.githubusercontent.com/yuskilabs/fotostv/main/dist/FotosTV.apk",
   "size": 948507,
-  "notes": "- Ajustes › Perfiles: al abrir la ficha de un perfil, o al volver a «Todos los perfiles», el foco se queda en el panel (antes saltaba al menú de la izquierda y cambiaba de sección). Al volver a la lista, el foco queda en el perfil que estabas viendo."
+  "notes": "- Ajustes: los paneles largos (por ejemplo Perfiles con varios perfiles) se desplazan para que la fila con foco se vea entera, con más margen al final, y ya no se quedan cortados por abajo."
 }
