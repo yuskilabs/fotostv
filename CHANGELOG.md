@@ -3,6 +3,9 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 7.34
+- Ajustes: al subir hasta el primer botón de un panel (por ejemplo «Perfiles: sí»), el panel sube del todo y se ve el título.
+
 ## 7.33
 - Ajustes: los paneles largos (por ejemplo Perfiles con varios perfiles) se desplazan para que la fila con foco se vea entera, con más margen al final, y ya no se quedan cortados por abajo.
 

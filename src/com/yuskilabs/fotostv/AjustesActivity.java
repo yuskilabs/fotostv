@@ -484,6 +484,8 @@ public class AjustesActivity extends SettingsBase {
     /** Desplaza el panel lo justo para que la vista con foco se vea entera, con un margen. */
     private void showInScroll(View v) {
         if (panelScroll == null || v == null || !inPanel(v)) return;
+        View up = v.focusSearch(View.FOCUS_UP);
+        if (up == null || !inPanel(up)) { panelScroll.smoothScrollTo(0, 0); return; }   // el primer botón: arriba del todo, con el título
         android.graphics.Rect r = new android.graphics.Rect();
         v.getDrawingRect(r);
         panel.offsetDescendantRectToMyCoords(v, r);
@@ -513,6 +515,7 @@ public class AjustesActivity extends SettingsBase {
                     if (n == null || !inPanel(n)) {          // borde del panel: izquierda vuelve a los temas; el resto, se queda
                         if (dir == View.FOCUS_LEFT) topics[Math.max(0, topicSel)].requestFocus();
                         else if (dir == View.FOCUS_DOWN && panelScroll != null) panelScroll.smoothScrollBy(0, dp(140));   // por si queda algo cortado debajo
+                        else if (dir == View.FOCUS_UP && panelScroll != null) panelScroll.smoothScrollTo(0, 0);        // primer botón: se ve el título
                         return true;
                     }
                     if ((dir == View.FOCUS_DOWN || dir == View.FOCUS_UP) && panelScroll != null) {
