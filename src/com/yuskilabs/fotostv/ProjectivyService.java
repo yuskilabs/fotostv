@@ -110,8 +110,8 @@ public class ProjectivyService extends Service {
     private static List<String[]> build(final Context c) {
         List<Item> pool = new ArrayList<Item>();
         boolean anyVert = !"no".equals(vert(c));
-        Set<String> hidden = Prefs.hidden(c);
-        for (Prefs.Album a : Prefs.albums(c)) {
+        Set<String> hidden = Prefs.hiddenAll(c);
+        for (Prefs.Album a : Prefs.albumsAll(c)) {
             if (!allOn(c) && !albumOn(c, a.url)) continue;
             AlbumFetcher.AlbumData d = Prefs.albumCache(c, a.url);
             if (d == null) continue;

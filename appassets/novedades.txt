@@ -1,3 +1,10 @@
+## 8.0
+- Compartir álbumes entre perfiles: en Ajustes › Perfiles, al abrir un perfil, el botón «Compartir» elige en qué otros perfiles se ven sus álbumes (en la lista, el pase, el salvapantallas y las búsquedas), con el nombre del perfil de origen junto al título.
+- Los álbumes compartidos son de solo lectura: no se pueden renombrar, borrar, reordenar ni ocultar desde el otro perfil.
+- Lo que un perfil oculta no se ve en ningún sitio, tampoco en los perfiles con los que comparte.
+- Varios perfiles pueden compartir con el mismo (por ejemplo con Familia) y se juntan sin límite. Al dejar de compartir, cada perfil vuelve a lo suyo.
+- La copia de seguridad guarda con quién comparte cada perfil. Al borrar un perfil se quitan sus comparticiones.
+
 ## 7.34
 - Ajustes: al subir hasta el primer botón de un panel (por ejemplo «Perfiles: sí»), el panel sube del todo y se ve el título.
 
@@ -27,10 +34,4 @@
 - Buscar entiende más fechas: rangos («junio-agosto 2026», «2023-2025», «del 10 al 20 de agosto 2025»), varios meses («junio julio agosto 2026», que antes solo contaba agosto), días («15 agosto 2025», «15/08/2025»), épocas («verano», «Navidad», «Semana Santa», con o sin año) y varias fechas a la vez («agosto 2024 y agosto 2025»).
 - Pantalla nueva «Filtrar» (desde Estadísticas y desde Buscar): se eligen varios valores de año, mes, día, región, localidad, álbum, cámara y autor. Dentro de una categoría suman y entre categorías se pide todo. Cada valor muestra cuántas fotos tiene, y «Ver fotos» abre el mosaico.
 - «Leer cámaras» pasa de Estadísticas a Ajustes › Ayuda y mantenimiento, con su progreso.
-
-## 7.27
-- Ajustes reorganizado y más claro. Temas: Pase de fotos (qué fotos salen y cuándo), Aspecto del pase (transición, mosaicos, encuadre, movimiento, velocidad, bordes y relleno), Información, Salvapantallas y noche, Música, Vídeo y caché, Explorador, Perfiles, Móvil y otras teles y Ayuda y mantenimiento.
-- Perfiles tiene su propio tema: lista con icono, nombre y estado de cada perfil, y una ficha con Usar, Nombre, Icono o foto, Código, Copiar ajustes de otro perfil y Borrar. «Copiar ajustes de otro» trae todos los ajustes sin tocar álbumes, favoritas, ocultas, código, nombre ni icono.
-- Ayuda y mantenimiento: «Buscar actualización» (al abrir comprueba sola); si hay versión nueva enseña qué trae y un botón para instalarla, y si no, «Última versión». Aquí también están Novedades, Diagnóstico, Revisar ubicaciones y Rehacer nombres.
-- Se quitan los «Estilos» del pase (Tranquilo, Fiesta, Solo recuerdos); sus ajustes se mantienen como estaban.
 

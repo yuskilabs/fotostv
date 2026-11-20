@@ -40,7 +40,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                     final String st;
                     String x;
                     try { x = GeoIndex.status(SettingsActivity.this); } catch (Throwable e) { x = ""; }
-                    boolean none = Prefs.albums(SettingsActivity.this).isEmpty();   // un perfil sin álbumes: nada que resumir
+                    boolean none = Prefs.albumsAll(SettingsActivity.this).isEmpty();   // un perfil sin álbumes: nada que resumir
                     st = none ? "" : x;
                     final boolean empty = none;
                     h.post(new Runnable() { public void run() { if (geoView != null) {
@@ -818,7 +818,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
                     sb.setSpan(new ForegroundColorSpan(0xFFFFB454), gs, sb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
                 if (!guests.isEmpty()) sb.append("\n");
-                List<Prefs.Album> albums = Prefs.albums(SettingsActivity.this);
+                List<Prefs.Album> albums = Prefs.albumsAll(SettingsActivity.this);
                 if (albums.isEmpty()) sb.append("Todavía no hay ningún álbum.");
                 boolean all = "all".equals(Prefs.albumMode(SettingsActivity.this));
                 if (!albums.isEmpty())
@@ -890,7 +890,7 @@ public class SettingsActivity extends Activity implements WebConfigServer.Listen
     }
 
     private void checkAlbum() {
-        final List<Prefs.Album> albums = Prefs.albums(this);
+        final List<Prefs.Album> albums = Prefs.albumsAll(this);
         updateStatus("Recargando álbumes…");
         new Thread(new Runnable() {
             public void run() {

@@ -233,16 +233,22 @@ final class BrowserActions {
             final List<Entry> one = new ArrayList<Entry>();
             one.add(e);
             final boolean pinned = e.coverPinned;
-            final List<String> lb = new ArrayList<String>(java.util.Arrays.asList("Seleccionar", "Pase", "Pase con música", "Recargar álbum",
-                    off ? "Mostrar álbum" : "Ocultar álbum", "Revisar ubicaciones"));
-            final List<Integer> ic = new ArrayList<Integer>(java.util.Arrays.asList(R.drawable.ic_check, R.drawable.ic_play, R.drawable.ic_music,
-                    R.drawable.ic_refresh, off ? R.drawable.ic_visibility : R.drawable.ic_visibility_off, R.drawable.ic_place));
+            final boolean mine = e.owner.length() == 0;
+            final List<String> lb = new ArrayList<String>(java.util.Arrays.asList("Pase", "Pase con música", "Recargar álbum", "Revisar ubicaciones"));
+            final List<Integer> ic = new ArrayList<Integer>(java.util.Arrays.asList(R.drawable.ic_play, R.drawable.ic_music,
+                    R.drawable.ic_refresh, R.drawable.ic_place));
+            if (mine) {
+                lb.add(0, "Seleccionar"); ic.add(0, R.drawable.ic_check);
+                lb.add(4, off ? "Mostrar álbum" : "Ocultar álbum"); ic.add(4, off ? R.drawable.ic_visibility : R.drawable.ic_visibility_off);
+            }
             if (Extras.on(host, Extras.ALBUM_MUSIC)) { lb.add("Música del álbum"); ic.add(R.drawable.ic_volume); }
             if (Extras.on(host, Extras.DUPES)) { lb.add("Buscar repetidas"); ic.add(R.drawable.ic_copy); }
             if (pinned) { lb.add(e.coverKeys.size() > 1 ? "Quitar portadas" : "Quitar portada"); ic.add(R.drawable.ic_photo); }
-            lb.add("Reordenar álbum"); ic.add(R.drawable.ic_move);
-            lb.add("Cambiar nombre"); ic.add(R.drawable.ic_format);
-            lb.add("Borrar álbum"); ic.add(R.drawable.ic_delete);
+            if (e.owner.length() == 0) {      // los álbumes que comparte otro perfil son de solo lectura
+                lb.add("Reordenar álbum"); ic.add(R.drawable.ic_move);
+                lb.add("Cambiar nombre"); ic.add(R.drawable.ic_format);
+                lb.add("Borrar álbum"); ic.add(R.drawable.ic_delete);
+            }
             int[] ia = new int[ic.size()];
             for (int i = 0; i < ia.length; i++) ia[i] = ic.get(i);
             Dialogs.iconMenu(host, e.title, lb.toArray(new String[0]), ia,
@@ -290,7 +296,7 @@ final class BrowserActions {
     }
 
     void toggleSel(Entry e) {
-        if (e.kind != 0) return;
+        if (e.kind != 0 || e.owner.length() > 0) return;
         if (!host.sel.remove(e)) host.sel.add(e);
         if (host.albumGrid != null) {
             int pos = host.entries.indexOf(e);
@@ -487,7 +493,7 @@ final class BrowserActions {
                         host.current.coverPinned = !host.current.coverKeys.isEmpty();
                         if (a.equals("Quitar de portadas")) { if (host.current.cover == it) host.current.cover = null; }
                         else host.current.cover = it;
-                        if (host.current.cover == null || !host.current.coverPinned) EntryOps.applyCover(host, host.current, Prefs.hidden(host));
+                        if (host.current.cover == null || !host.current.coverPinned) EntryOps.applyCover(host, host.current, Prefs.hiddenAll(host));
                         if (host.photoGrid != null) ((BaseAdapter) host.photoGrid.getAdapter()).notifyDataSetChanged();
                         host.showToast(a.equals("Quitar de portadas") ? "Quitada de las portadas del álbum."
                                 : multi ? "Añadida a las portadas del álbum (" + host.current.coverKeys.size() + ")." : "Portada del álbum fijada.");

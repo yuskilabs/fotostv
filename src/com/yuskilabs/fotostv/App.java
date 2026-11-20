@@ -68,7 +68,7 @@ public class App extends Application {
                 m.edit().putLong("autoReload", System.currentTimeMillis()).apply();
                 new Thread(new Runnable() {
                     public void run() {
-                        for (Prefs.Album al : Prefs.albums(App.this)) {
+                        for (Prefs.Album al : Prefs.albumsAll(App.this)) {
                             try { Prefs.saveAlbumCache(App.this, al.url, AlbumFetcher.fetchAlbum(al.url)); } catch (Throwable ignored) { }
                         }
                     }

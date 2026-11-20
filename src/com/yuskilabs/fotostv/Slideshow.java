@@ -642,7 +642,7 @@ class Slideshow {
     private synchronized void rebuild(List<Item> list) {
         list = filterForScreensaver(list);
         boolean keep = "keep".equals(order());
-        java.util.Set<String> hidden = keep ? new java.util.HashSet<String>() : Prefs.hidden(ctx);
+        java.util.Set<String> hidden = keep ? new java.util.HashSet<String>() : Prefs.hiddenAll(ctx);
         all = new ArrayList<Item>();
         java.util.Set<String> keys = new java.util.HashSet<String>();
         for (Item it : list) if (!hidden.contains(it.key()) && keys.add(it.key())) all.add(it);
@@ -1132,7 +1132,7 @@ class Slideshow {
         while (running && guard++ < 50 && count(2) < AHEAD && count(0) < 2 && count(1) < 2 && queue.size() < 8) {
             Item it = nextItem();
             if (it == null) break;
-            if (Prefs.hidden(ctx).contains(it.key())) continue;
+            if (Prefs.hiddenAll(ctx).contains(it.key())) continue;
             startBuild(it);
         }
     }
@@ -1246,7 +1246,7 @@ class Slideshow {
             return;
         }
         fails = 0;
-        if (Prefs.hidden(ctx).contains(t.item.key())) {
+        if (Prefs.hiddenAll(ctx).contains(t.item.key())) {
             queue.remove(t);
             prefetch();
             return;

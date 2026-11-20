@@ -29,7 +29,7 @@ class Nav {
     }
 
     private static Prefs.Album albumOf(Context c, Item it, AlbumFetcher.AlbumData[] out) {
-        for (Prefs.Album al : Prefs.albums(c)) {
+        for (Prefs.Album al : Prefs.albumsAll(c)) {
             AlbumFetcher.AlbumData d = Prefs.albumCache(c, al.url);
             if (d == null) continue;
             boolean hit = it.akey.length() > 0 && it.akey.equals(d.key);

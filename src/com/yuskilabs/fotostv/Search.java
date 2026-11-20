@@ -16,10 +16,10 @@ final class Search {
 
     /** Todas las fotos de los álbumes, sin repetir y sin las ocultas, con el nombre de su álbum. */
     static List<Item> allVisible(Context c) {
-        Set<String> hid = Prefs.hidden(c);
+        Set<String> hid = Prefs.hiddenAll(c);
         Set<String> seen = new HashSet<String>();
         List<Item> out = new ArrayList<Item>();
-        for (Prefs.Album al : Prefs.albums(c)) {
+        for (Prefs.Album al : Prefs.albumsAll(c)) {
             AlbumFetcher.AlbumData d = Prefs.albumCache(c, al.url);
             if (d == null) continue;
             String title = al.name.length() > 0 ? al.name : d.title;

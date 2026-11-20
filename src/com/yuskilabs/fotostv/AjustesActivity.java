@@ -1396,6 +1396,17 @@ public class AjustesActivity extends SettingsBase {
         tx.addView(nm);
         tx.addView(text(profileStatus(id), 13, 0xFF9FB3C8));
         if (cur) tx.addView(text("PIN de la web del móvil: " + Prefs.webPin(this), 13, 0xFF9FB3C8));
+        StringBuilder fromNames = new StringBuilder();
+        for (String[] p : Prefs.profiles(this)) {
+            int o = Integer.parseInt(p[0]);
+            if (o != id && Prefs.sharedWith(this, o).contains(id)) { if (fromNames.length() > 0) fromNames.append(", "); fromNames.append(p[1]); }
+        }
+        if (fromNames.length() > 0) {
+            TextView ft = text("Ve también los álbumes de: " + fromNames, 13, 0xFF9FB3C8);
+            ft.setSingleLine(true);
+            ft.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            tx.addView(ft);
+        }
         hd.addView(tx, new LinearLayout.LayoutParams(0, -2, 1f));
         profilesCard.addView(hd, new LinearLayout.LayoutParams(-1, -2));
 
@@ -1467,6 +1478,13 @@ public class AjustesActivity extends SettingsBase {
             bs.add(rm);
         }
 
+        int nShared = Prefs.sharedWith(this, id).size();
+        Button share = btn(nShared == 0 ? "Compartir: no" : "Compartir: " + nShared, R.drawable.ic_albums, new View.OnClickListener() {
+            public void onClick(View v) { shareDialog(id, name); }
+        });
+        describe(share, "Los álbumes de este perfil se ven también en los perfiles que elijas (lista, pase, salvapantallas y búsquedas), con el nombre de este perfil al lado. Son de solo lectura y lo que se oculte aquí no se ve en ningún sitio. Al quitarlo, cada perfil vuelve a lo suyo.");
+        bs.add(share);
+
         Button cp = btn("Copiar ajustes de otro", R.drawable.ic_copy, new View.OnClickListener() {
             public void onClick(View v) { copySettingsDialog(id, name); }
         });
@@ -1485,6 +1503,43 @@ public class AjustesActivity extends SettingsBase {
             bs.add(del);
         }
         for (int i = 0; i < bs.size(); i += 2) profilesCard.addView(row(bs.get(i), i + 1 < bs.size() ? bs.get(i + 1) : null));
+    }
+
+    /** Elige con qué perfiles comparte «id» sus álbumes. Para cambiarlo hace falta su código, si lo tiene. */
+    private void shareDialog(final int id, final String name) {
+        final List<String[]> others = new ArrayList<String[]>();
+        for (String[] p : Prefs.profiles(this)) if (!p[0].equals(String.valueOf(id))) others.add(p);
+        if (others.isEmpty()) {
+            Toast.makeText(this, "No hay otro perfil con quien compartir.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final java.util.Set<Integer> now = Prefs.sharedWith(this, id);
+        String[] labs = new String[others.size()];
+        final boolean[] on = new boolean[others.size()];
+        for (int i = 0; i < labs.length; i++) {
+            labs[i] = others.get(i)[1];
+            on[i] = now.contains(Integer.parseInt(others.get(i)[0]));
+        }
+        Dialogs.edgeKeys(new AlertDialog.Builder(this, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle("Los álbumes de «" + name + "» se ven en…")
+            .setMultiChoiceItems(labs, on, new DialogInterface.OnMultiChoiceClickListener() {
+                public void onClick(DialogInterface d, int which, boolean checked) { on[which] = checked; }
+            })
+            .setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface d, int w) {
+                    PinPad.enter(AjustesActivity.this, id, name, new Runnable() {
+                        public void run() {
+                            java.util.Set<Integer> to = new java.util.HashSet<Integer>();
+                            for (int i = 0; i < on.length; i++) if (on[i]) to.add(Integer.valueOf(Integer.parseInt(others.get(i)[0])));
+                            Prefs.setSharedWith(AjustesActivity.this, id, to);
+                            Toast.makeText(AjustesActivity.this, to.isEmpty() ? "«" + name + "» ya no comparte sus álbumes." : "Álbumes de «" + name + "» compartidos.", Toast.LENGTH_LONG).show();
+                            refreshProfiles();
+                        }
+                    });
+                }
+            })
+            .setNegativeButton("Cancelar", null)
+            .show());
     }
 
     /** Elige de qué perfil copiar los ajustes y avisa de lo que se cambia. */

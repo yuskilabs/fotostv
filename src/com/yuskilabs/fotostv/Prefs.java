@@ -171,7 +171,18 @@ class Prefs {
         c.getSharedPreferences("cfgx_" + id, Context.MODE_PRIVATE).edit().clear().commit();
         clearProfileLook(c, id);
         setCode(c, id, null);
+        forgetShares(c, id);
         if (meta(c).getInt("profileId", 0) == id) setProfile(c, 0);
+    }
+
+    /** Al borrar un perfil: ya no comparte nada y los demás dejan de compartirle. */
+    private static void forgetShares(Context c, int id) {
+        meta(c).edit().remove("fx_share_" + id).commit();
+        for (String[] p : profiles(c)) {
+            int o = Integer.parseInt(p[0]);
+            java.util.Set<Integer> s = sharedWith(c, o);
+            if (s.remove(Integer.valueOf(id))) setSharedWith(c, o, s);
+        }
     }
 
     // ---- icono del perfil: uno de la lista (posición) o una foto propia (archivo pimg_<id>.png) ----
@@ -223,7 +234,7 @@ class Prefs {
         for (String[] p : profiles(c)) {
             int id = Integer.parseInt(p[0]);
             JSONObject o = new JSONObject().put("id", id).put("name", p[1]).put("icon", profileIconIdx(c, id))
-                .put("code", meta(c).getString("fx_pcode_" + id, ""));
+                .put("code", meta(c).getString("fx_pcode_" + id, "")).put("share", meta(c).getString("fx_share_" + id, ""));
             java.io.File f = profileImageFile(c, id);
             if (f != null) {
                 try {
@@ -259,6 +270,10 @@ class Prefs {
                 String cd = o.optString("code", "");
                 if (cd.length() > 0) meta(c).edit().putString("fx_pcode_" + id, cd).commit(); else setCode(c, id, null);
             }
+            if (o.has("share")) {   // las copias anteriores no traen lo que se comparte: no se toca
+                String sh = o.optString("share", "");
+                if (sh.length() > 0) meta(c).edit().putString("fx_share_" + id, sh).commit(); else meta(c).edit().remove("fx_share_" + id).commit();
+            }
             String img = o.optString("img", "");
             if (img.length() > 0) {
                 try {
@@ -279,6 +294,7 @@ class Prefs {
                 c.getSharedPreferences("cfgx_" + id, Context.MODE_PRIVATE).edit().clear().commit();
                 clearProfileLook(c, id);
                 setCode(c, id, null);
+                meta(c).edit().remove("fx_share_" + id).commit();
             }
         }
         saveProfiles(c, keep);
@@ -362,19 +378,87 @@ class Prefs {
     static class Album {
         String url, name;
         boolean show;
+        int owner = -1;          // -1: del perfil en uso; si no, id del perfil que lo comparte (solo lectura)
+        String ownerName = "";
         Album(String url, String name, boolean show) { this.url = url; this.name = name; this.show = show; }
     }
 
-    static List<Album> albums(Context c) {
+    private static SharedPreferences spOf(Context c, int id) {
+        return c.getSharedPreferences(id == 0 ? "cfg" : "cfgx_" + id, Context.MODE_PRIVATE);
+    }
+
+    /** Los álbumes propios del perfil en uso: lo que se edita, se ordena y se guarda. */
+    static List<Album> albums(Context c) { return parseAlbums(sp(c)); }
+
+    // ---- compartir fotos entre perfiles (8.0): cada perfil elige con qué perfiles comparte sus álbumes ----
+    /** Ids de los perfiles con los que «owner» comparte sus álbumes. */
+    static java.util.Set<Integer> sharedWith(Context c, int owner) {
+        java.util.Set<Integer> s = new java.util.HashSet<Integer>();
+        for (String x : meta(c).getString("fx_share_" + owner, "").split(",")) {
+            try { if (x.length() > 0) s.add(Integer.parseInt(x.trim())); } catch (Exception ignored) { }
+        }
+        return s;
+    }
+
+    static void setSharedWith(Context c, int owner, java.util.Collection<Integer> to) {
+        StringBuilder sb = new StringBuilder();
+        for (Integer i : new java.util.TreeSet<Integer>(to)) { if (i.intValue() == owner) continue; if (sb.length() > 0) sb.append(','); sb.append(i); }
+        if (sb.length() == 0) meta(c).edit().remove("fx_share_" + owner).commit();
+        else meta(c).edit().putString("fx_share_" + owner, sb.toString()).commit();
+    }
+
+    private static boolean profileExistsId(Context c, int id) {
+        for (String[] p : profiles(c)) if (p[0].equals(String.valueOf(id))) return true;
+        return false;
+    }
+
+    /** Perfiles que comparten sus álbumes con el perfil en uso (solo con los perfiles activados). */
+    static List<Integer> sharingToMe(Context c) {
+        List<Integer> out = new ArrayList<Integer>();
+        if (!profilesOn(c)) return out;
+        int me = profile(c);
+        for (String[] p : profiles(c)) {
+            int id = Integer.parseInt(p[0]);
+            if (id != me && sharedWith(c, id).contains(me)) out.add(id);
+        }
+        return out;
+    }
+
+    /** Álbumes propios y, detrás, los que otros perfiles comparten con este (con «owner» puesto). Solo para leer. */
+    static List<Album> albumsAll(Context c) {
+        List<Album> l = albums(c);
+        List<Integer> os = sharingToMe(c);
+        if (os.isEmpty()) return l;
+        java.util.Set<String> have = new java.util.HashSet<String>();
+        for (Album a : l) have.add(a.url);
+        for (int o : os) {
+            for (Album a : parseAlbums(spOf(c, o))) {
+                if (!have.add(a.url)) continue;
+                a.owner = o;
+                a.ownerName = profileName(c, o);
+                l.add(a);
+            }
+        }
+        return l;
+    }
+
+    /** Fotos ocultas por este perfil y por los que le comparten álbumes: lo que alguien ocultó no se ve en ningún sitio. */
+    static java.util.Set<String> hiddenAll(Context c) {
+        java.util.Set<String> h = hidden(c);
+        for (int o : sharingToMe(c)) h.addAll(spOf(c, o).getStringSet("hidden", new java.util.HashSet<String>()));
+        return h;
+    }
+
+    private static List<Album> parseAlbums(SharedPreferences sp) {
         List<Album> l = new ArrayList<Album>();
         try {
-            JSONArray a = new JSONArray(sp(c).getString("albums", "[]"));
+            JSONArray a = new JSONArray(sp.getString("albums", "[]"));
             for (int i = 0; i < a.length(); i++) {
                 JSONObject o = a.getJSONObject(i);
                 l.add(new Album(o.getString("url"), o.optString("name", ""), o.optBoolean("show", true)));
             }
         } catch (Exception ignored) { }
-        String old = sp(c).getString("url", "");   // versión 1
+        String old = sp.getString("url", "");   // versión 1
         if (l.isEmpty() && old.length() > 0) l.add(new Album(old, "", true));
         return l;
     }
@@ -391,7 +475,7 @@ class Prefs {
     static List<Album> activeAlbums(Context c) {
         boolean all = "all".equals(albumMode(c));
         List<Album> out = new ArrayList<Album>();
-        for (Album a : albums(c)) if (all || a.show) out.add(a);
+        for (Album a : albumsAll(c)) if (all || a.show) out.add(a);
         return out;
     }
 

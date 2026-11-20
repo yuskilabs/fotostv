@@ -104,7 +104,7 @@ public class ProjectivyActivity extends Activity {
             public void run() { put("pv_vert", next(vert, new String[]{"no", "blur", "fill"})); }
         }));
         list.addView(head("ÁLBUMES"));
-        final List<Prefs.Album> albums = Prefs.albums(this);
+        final List<Prefs.Album> albums = Prefs.albumsAll(this);
         list.addView(item((ProjectivyService.allOn(this) ? "\u2611  " : "\u2610  ") + "Todas (todos los álbumes, también los que añadas)", new Runnable() {
             public void run() {
                 ProjectivyService.sp(ProjectivyActivity.this).edit().putBoolean("pv_all", !ProjectivyService.allOn(ProjectivyActivity.this)).apply();

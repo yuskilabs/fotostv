@@ -178,7 +178,7 @@ public class BrowserActivity extends Activity {
             Session.placeTitle = null;
             Session.searchQuery = null;
             favSet = Prefs.favs(this);
-            e.items = BrowseUtil.visible(e.src, Prefs.hidden(this));
+            e.items = BrowseUtil.visible(e.src, Prefs.hiddenAll(this));
             EntryOps.applyOrder(e);
             EntryOps.pickCover(BrowserActivity.this, e);
             entries.add(e);
@@ -204,7 +204,7 @@ public class BrowserActivity extends Activity {
         if (placeMode) {
             if (current != null && photoGrid != null) {
                 favSet = Prefs.favs(this);
-                current.items = BrowseUtil.visible(current.src, Prefs.hidden(this));
+                current.items = BrowseUtil.visible(current.src, Prefs.hiddenAll(this));
                 EntryOps.reapply(current);
                 ((BaseAdapter) photoGrid.getAdapter()).notifyDataSetChanged();
                 updateCount();
@@ -284,7 +284,7 @@ public class BrowserActivity extends Activity {
         act.submit(new Runnable() {
             public void run() {
                 final List<Entry> list = new ArrayList<Entry>();
-                for (Prefs.Album al : Prefs.albums(BrowserActivity.this)) {
+                for (Prefs.Album al : Prefs.albumsAll(BrowserActivity.this)) {
                     if (destroyed) return;
                     AlbumFetcher.AlbumData d = Prefs.albumCache(BrowserActivity.this, al.url);
                     if (d == null) {
@@ -435,7 +435,7 @@ public class BrowserActivity extends Activity {
             public void run() {
                 final List<Entry> fresh = new ArrayList<Entry>();
                 try {
-                for (Prefs.Album al : Prefs.albums(BrowserActivity.this)) {
+                for (Prefs.Album al : Prefs.albumsAll(BrowserActivity.this)) {
                     if (destroyed) return;
                     try {
                         AlbumFetcher.AlbumData d = AlbumFetcher.fetchAlbum(al.url);
@@ -589,7 +589,7 @@ public class BrowserActivity extends Activity {
 
     void refreshOff() {
         java.util.Set<String> o = new java.util.HashSet<String>();
-        for (Prefs.Album al : Prefs.albums(this)) if (!al.show) o.add(al.url);
+        for (Prefs.Album al : Prefs.albumsAll(this)) if (!al.show) o.add(al.url);
         offUrls = o;
     }
 

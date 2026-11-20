@@ -3,6 +3,13 @@
 Todas las versiones de FotosTV, de la más reciente a la más antigua.
 El formato sigue la idea de [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
+## 8.0
+- Compartir álbumes entre perfiles: en Ajustes › Perfiles, al abrir un perfil, el botón «Compartir» elige en qué otros perfiles se ven sus álbumes (en la lista, el pase, el salvapantallas y las búsquedas), con el nombre del perfil de origen junto al título.
+- Los álbumes compartidos son de solo lectura: no se pueden renombrar, borrar, reordenar ni ocultar desde el otro perfil.
+- Lo que un perfil oculta no se ve en ningún sitio, tampoco en los perfiles con los que comparte.
+- Varios perfiles pueden compartir con el mismo (por ejemplo con Familia) y se juntan sin límite. Al dejar de compartir, cada perfil vuelve a lo suyo.
+- La copia de seguridad guarda con quién comparte cada perfil. Al borrar un perfil se quitan sus comparticiones.
+
 ## 7.34
 - Ajustes: al subir hasta el primer botón de un panel (por ejemplo «Perfiles: sí»), el panel sube del todo y se ve el título.
 

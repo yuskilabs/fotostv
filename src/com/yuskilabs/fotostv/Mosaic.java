@@ -61,7 +61,7 @@ final class Mosaic {
         List<Item> out = new ArrayList<Item>();
         if (it.ts <= 0) return out;
         List<Item> snap = host.items();
-        java.util.Set<String> hid = Prefs.hidden(ctx);
+        java.util.Set<String> hid = Prefs.hiddenAll(ctx);
         try {
             for (int i = 0; i < snap.size(); i++) {
                 Item q = snap.get(i);

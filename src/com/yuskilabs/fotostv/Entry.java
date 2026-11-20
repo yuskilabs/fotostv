@@ -8,6 +8,7 @@ import java.util.Set;
 class Entry {
     String title = "";
     String url = "";
+    String owner = "";        // nombre del perfil que comparte este álbum ("" = propio); los compartidos son de solo lectura
     int kind;                 // 0 álbum normal, 1 Todas, 2 Favoritos, 3 Ocultas, 4 temporal de invitado, 5 lugar o búsqueda, 6 álbum virtual
     String gid = "";          // (temporal) identificador
     long expires;             // (temporal) cuándo caduca

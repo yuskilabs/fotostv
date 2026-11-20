@@ -166,7 +166,7 @@ class GeoIndex extends SQLiteOpenHelper {
     /** Todas las fotos de los álbumes (clave → foto), sin repetidas. */
     static HashMap<String, Item> allItems(Context c, List<Item> order) {
         HashMap<String, Item> m = new HashMap<String, Item>();
-        for (Prefs.Album al : Prefs.albums(c)) {
+        for (Prefs.Album al : Prefs.albumsAll(c)) {
             AlbumFetcher.AlbumData d = Prefs.albumCache(c, al.url);
             if (d == null) continue;
             for (Item x : d.items) {
@@ -385,7 +385,7 @@ class GeoIndex extends SQLiteOpenHelper {
     static List<Item> itemsOf(Context c, HashSet<String> ks) {
         List<Item> res = new ArrayList<Item>();
         if (ks.isEmpty()) return res;
-        for (Prefs.Album al : Prefs.albums(c)) {
+        for (Prefs.Album al : Prefs.albumsAll(c)) {
             AlbumFetcher.AlbumData d = Prefs.albumCache(c, al.url);
             if (d == null) continue;
             String title = al.name.length() > 0 ? al.name : d.title;

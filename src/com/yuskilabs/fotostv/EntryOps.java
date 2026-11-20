@@ -49,9 +49,11 @@ final class EntryOps {
     static Entry makeEntry(Prefs.Album al, AlbumFetcher.AlbumData d) {
         Entry e = new Entry();
         e.url = al.url;
-        e.title = al.name.length() > 0 ? al.name : (d.title.length() > 0 ? d.title : "Álbum");
+        String base = al.name.length() > 0 ? al.name : (d.title.length() > 0 ? d.title : "Álbum");
+        e.owner = al.owner >= 0 ? al.ownerName : "";
+        e.title = e.owner.length() > 0 ? base + " · " + e.owner : base;
         for (Item it : d.items) {
-            it.album = e.title;
+            it.album = base;
             if (it.akey.length() == 0) it.akey = d.key;
         }
         e.src = d.items;
